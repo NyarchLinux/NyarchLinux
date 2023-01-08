@@ -1,0 +1,24 @@
+Automate GRUB install after an update with Pacman hook:
+
+Create a file /etc/pacman.d/hooks/grub-update.hook
+
+$ sudo mkdir /etc/pacman.d/hooks
+$ sudo nano /etc/pacman.d/hooks/grub-update.hook
+
+Add the following lines:
+
+[Trigger]
+Operation = Upgrade
+Type = Package
+Target = grub
+
+[Action]
+Description = Reinstall grub when it updates...
+When = PostTransaction
+Exec = /bin/sh -c "/usr/local/bin/grubinstall.sh"
+
+Save and close the file.
+
+grub-update-hook.txt
+# Revision: 2022.12.06 -- by eznix (https://sourceforge.net/projects/ezarch/)
+# (GNU/General Public License version 3.0)

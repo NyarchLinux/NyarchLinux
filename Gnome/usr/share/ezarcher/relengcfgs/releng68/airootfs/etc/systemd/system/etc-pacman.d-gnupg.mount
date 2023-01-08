@@ -1,0 +1,8 @@
+[Unit]
+Description=Temporary /etc/pacman.d/gnupg directory
+
+[Mount]
+What=ramfs
+Where=/etc/pacman.d/gnupg
+Type=ramfs
+Options=mode=0755

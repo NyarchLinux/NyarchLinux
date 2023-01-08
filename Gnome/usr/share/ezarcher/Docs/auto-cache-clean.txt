@@ -1,0 +1,37 @@
+Managing the package cache
+
+check how many cached packages are available in my cache folder.
+$ sudo ls /var/cache/pacman/pkg/ | wc -l
+
+
+check the total disk space used by the cache folder.
+$ du -sh /var/cache/pacman/pkg/
+
+
+Automatically clean the package cache using pacman hooks.
+
+To do so, create a file /etc/pacman.d/hooks/clean_package_cache.hook:
+
+$ sudo mkdir /etc/pacman.d/hooks
+$ sudo nano /etc/pacman.d/hooks/clean_package_cache.hook
+
+Add the following lines:
+
+[Trigger]
+Operation = Upgrade
+Operation = Install
+Operation = Remove
+Type = Package
+Target = *
+[Action]
+Description = Cleaning pacman cache...
+When = PostTransaction
+Exec = /usr/bin/paccache -rk 1
+
+Save and close the file.
+
+From now on, the package cache will be cleaned automatically after every pacman transactions (like upgrade, install, remove). 
+You don’t have to run paccache command manually every time.
+
+# Revision: 2022.12.06 -- by eznix (https://sourceforge.net/projects/ezarch/)
+# (GNU/General Public License version 3.0)

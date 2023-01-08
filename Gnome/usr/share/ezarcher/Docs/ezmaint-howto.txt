@@ -1,0 +1,95 @@
+The ezmaint script attempts to collect various common maintenance tasks that help keep an Arch based system healthy and lean. Below is the menu of the script and the individual functions that perform the actions.
+
+-------------------------------------
+ Ezarcher Maintenance Script
+-------------------------------------
+
+  1) Run system update
+  2) Reset all pacman keys
+  3) Regenerate mirrorlist
+  4) Clean package cache
+  5) Cleanup journal space
+  6) Clean user cache on next boot
+  7) Enable Bluetooth service
+  8) Enable Firewalld service
+
+  X) Exit
+
+Enter your choice: 
+
+-----
+1. Run system update:
+
+  pacman -Syu
+
+This command will perform a full system upgrade.
+-----
+2. Reset all pacman keys:
+
+rm /var/lib/pacman/sync/*
+rm -rf /etc/pacman.d/gnupg/*
+pacman-key --init
+pacman-key --populate
+pacman -S --noconfirm archlinux-keyring
+
+Thes commands will clear the old GNUPG keyring files and will initialize, populate, and reinstall the archlinux keyring
+-----
+3. Regenerate mirrorlist:
+
+  reflector --country 'United States' --latest 10 --sort rate --protocol https --save /etc/pacman.d/mirrorlist
+
+This command runs reflector and generates a new mirrorlist file based on the options specified in the command. My defaults are to select the recently updated within the last six hours that are hosted on https servers in the United States. Please look at the man page for reflector if you want to change the options.
+-----
+4. Clean package cache:
+
+  pacman -Scc
+
+This command will perform an aggressive cleaning of the package cache and ask to remove all package cache contents for poth installed and uninstalled packages. If you wish to roll-back packages, this option should not be used.
+-----
+5. Cleanup journal space:
+
+  journalctl --vacuum-time=2weeks
+
+This command will removed any journal logs older than two weeks and free up space.
+-----
+6. Cleanup user cache folder:
+
+  echo "[Unit]
+Description=Clean primary user cache on boot.
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /usr/local/bin/clnusercache.sh
+
+[Install]
+WantedBy=multi-user.target" > /usr/lib/systemd/system/clnusercache.service
+
+  echo "#!/bin/bash
+rm -r /home/*/.cache/*
+rm /etc/systemd/system/multi-user.target.wants/clnusercache.service" > /usr/local/bin/clnusercache.sh
+
+  chmod +x /usr/local/bin/clnusercache.sh
+
+  ln -sf /usr/lib/systemd/system/clnusercache.service /etc/systemd/system/multi-user.target.wants/clnusercache.service
+
+This option will create a systemd unit to delete all contents of the user's .cache folder upon the next reboot and then remove the systemd. The .cache folder typically contains temporary working files of the desktop and user programs. The contents of the .cache folder can be examined by opening the file manager and viewing hidden files inside the user's home folder in the .cache folder. Please review the files to be deleted before using this option if you are concerned or just curious.
+-----
+7. Enable Bluetooth service:
+
+  systemctl enable --now bluetooth.service
+
+This command enables and starts the Bluetooth service.
+-----
+8. Enable Firewalld Service:
+
+systemctl enable firewalld.service
+systemctl start firewalld.service
+
+These commands enable and start the Firewalld service.
+
+I hope these various functions come in handy. I must give credit to EF Tech Made Simple for his inspiration in the choice and implementation of these functions. Please view his video describing these maintenance tips here: https://youtu.be/wwSkFi3h2nI
+-----
+
+ezmaint-howto.txt
+# Revision: 2022.12.06 -- by eznix (https://sourceforge.net/projects/ezarch/)
+# (GNU/General Public License version 3.0)

@@ -1,0 +1,14 @@
+# remove from airootfs!
+# custom ezarcher hook
+[Trigger]
+Operation = Install
+Type = Package
+Target = glibc
+
+[Action]
+Description = Run locale-gen...
+When = PostTransaction
+Depends = glibc
+Depends = sed
+Depends = sh
+Exec = /bin/sh -c "locale-gen"

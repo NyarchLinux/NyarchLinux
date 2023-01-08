@@ -1,0 +1,193 @@
+#!/bin/bash
+
+# ezarcher maintenance
+# Revision: 2022.12.06 -- by eznix (https://sourceforge.net/projects/ezarch/)
+# (GNU/General Public License version 3.0)
+
+# ---------------------------------------
+# Define Functions:
+# ---------------------------------------
+
+handlerror () {
+  clear
+  set -uo pipefail
+  trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
+}
+
+welcomer () {
+  clear
+  echo "==================================================="
+  echo "=                                                 ="
+  echo "=     Ezarcher Maintenance Script                 ="
+  echo "=                                                 ="
+  echo "=                                                 ="
+  echo "=     Revision: 2022.12.06                        ="
+  echo "=                                                 ="
+  echo "=     Brought to you by eznix                     ="
+  echo "=     https://sourceforge.net/projects/ezarch/    ="
+  echo "=                                                 ="
+  echo -e "=================================================== \n"
+  sleep 4
+}
+
+enbluetooth () {
+  clear
+  systemctl enable --now bluetooth.service
+  clear
+  echo -e "\n"
+  clear
+}
+
+journalcln () {
+  clear
+  journalctl --vacuum-time=2weeks
+  clear
+  echo -e "\n"
+  echo "Journal directory cleaned"
+  sleep 2
+  clear
+}
+
+sysupdate () {
+  clear
+  pacman -Syu
+  clear
+  echo -e "\n"
+  echo "Full system upgrade finished"
+  sleep 2
+  clear
+}
+
+pkgsccache () {
+  clear
+  pacman -Scc
+  clear
+  echo -e "\n"
+  echo "Package cache cleaned"
+  sleep 2
+  clear
+}
+
+keysreset () {
+  clear
+  rm /var/lib/pacman/sync/*
+  rm -rf /etc/pacman.d/gnupg/*
+  pacman-key --init
+  pacman-key --populate
+  pacman -S --noconfirm archlinux-keyring
+  clear
+  echo -e "\n"
+  echo "All pacman keys are reset"
+  sleep 2
+  clear
+}
+
+usercachecln () {
+  clear
+  echo "[Unit]
+Description=Clean primary user cache on boot.
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /usr/local/bin/clnusercache.sh
+
+[Install]
+WantedBy=multi-user.target" > /usr/lib/systemd/system/clnusercache.service
+  echo "#!/bin/bash 
+rm -r /home/*/.cache/*
+rm /etc/systemd/system/multi-user.target.wants/clnusercache.service" > /usr/local/bin/clnusercache.sh
+  chmod +x /usr/local/bin/clnusercache.sh
+  ln -sf /usr/lib/systemd/system/clnusercache.service /etc/systemd/system/multi-user.target.wants/clnusercache.service
+  clear
+  echo -e "\n"
+  echo "User's cache directory cleaned on next boot"
+  sleep 3
+  clear
+}
+
+runreflector () {
+  clear
+  reflector --country 'United States' --latest 10 --sort rate --protocol https --save /etc/pacman.d/mirrorlist
+  clear
+  echo -e "\n"
+  echo "Mirrorlist regenerated"
+  sleep 2
+  clear
+}
+
+enfirewall () {
+  clear
+  systemctl enable firewalld.service
+  systemctl start firewalld.service
+  clear
+  echo "Firewalld Service is enabled"
+  sleep 2
+  clear
+}
+
+mainmenu () { while true
+do
+  clear
+  echo "-------------------------------------"
+  echo " Ezarcher Maintenance Script"
+  echo "-------------------------------------"
+  echo ""
+  echo "  1) Run system update"
+  echo "  2) Reset all pacman keys"
+  echo "  3) Regenerate mirrorlist"
+  echo "  4) Clean package cache"
+  echo "  5) Cleanup journal space"
+  echo "  6) Clean user cache on next boot"
+  echo "  7) Enable Bluetooth service"
+  echo "  8) Enable Firewalld service"
+
+  echo ""
+  echo "  X) Exit"
+  echo -e "\n"
+  read -p "Enter your choice: " optionA
+  case $optionA in
+    1 ) sysupdate ;;
+    2 ) keysreset ;;
+    3 ) runreflector ;;
+    4 ) pkgsccache ;;
+    5 ) journalcln ;;
+    6 ) usercachecln ;;
+    7 ) enbluetooth ;;
+    8 ) enfirewall ;;
+
+    x|X ) exit;;
+    * ) invalid ;;
+  esac
+done
+}
+
+ROOTUSER () {
+  if [[ "$EUID" = 0 ]]; then
+    continue
+  else
+    echo "Please Run As Root"
+    sleep 2
+    exit
+  fi
+}
+
+ROOTUSER
+handlerror
+welcomer
+mainmenu
+
+done
+
+# Disclaimer:
+# THIS SOFTWARE IS PROVIDED BY EZNIX “AS IS” AND ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+# EVENT SHALL EZNIX BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+# IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+# END
