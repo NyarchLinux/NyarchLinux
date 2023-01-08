@@ -10,7 +10,6 @@ bind
 brltty
 broadcom-wl-dkms
 btrfs-progs
-clonezilla
 cryptsetup
 darkhttpd
 ddrescue
@@ -43,7 +42,6 @@ irssi
 iw
 iwd
 jfsutils
-kitty-terminfo
 less
 libfido2
 libusb-compat
@@ -249,7 +247,6 @@ wireplumber
 # pulseaudio-bluetooth
 # pulseaudio-equalizer
 # pulseaudio-jack
-simplescreenrecorder
 sox
 transcode
 smplayer
