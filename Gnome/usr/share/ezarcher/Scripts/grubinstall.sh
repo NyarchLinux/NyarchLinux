@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # grubinstall script
-# Revision: 2022.12.06 -- by eznix (https://sourceforge.net/projects/ezarch/)
+# Revision: 2023.01.15 -- by eznix (https://sourceforge.net/projects/ezarch/)
 # (GNU/General Public License version 3.0)
 
 if [ -d "/sys/firmware/efi" ]; then
-  grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ezarcher --recheck
+  grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ezarcher --recheck
   grub-mkconfig -o /boot/grub/grub.cfg
 else
   LRDEV=$(findmnt -n -o SOURCE / | cut -c1-8)
