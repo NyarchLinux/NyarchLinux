@@ -28,4 +28,8 @@ file_permissions=(
   ["/usr/local/bin/ezarch.uefi"]="0:0:755"
   ["/usr/local/bin/ezmaint"]="0:0:755"
   ["/usr/local/bin/grubinstall.sh"]="0:0:755"
+  ["/var/lib/flatpak"]="0:0:755"
+  ["/var/lib/flatpak/"]="0:0:755"
+  ["/var/lib/flatpak/app"]="0:0:755"
+  ["/var/lib/flatpak/runtime"]="0:0:755"
 )
