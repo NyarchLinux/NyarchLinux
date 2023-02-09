@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2034
 
-iso_name="ezarcher-gnome"
-iso_label="EZARCHER-GNOME_$(date +%y%m%d)"
-iso_publisher="Ezarcher Linux <https://sourceforge.net/projects/ezarch/>"
-iso_application="Ezarcher DVD"
+iso_name="nyarch-gnome"
+iso_label="NYARCH-GNOME_$(date +%y%m%d)"
+iso_publisher="Nyarch Linux <https://nyarchlinux.moe>"
+iso_application="Nyarchlinux DVD"
 iso_version="$(date +%y%m%d)"
 install_dir="arch"
 buildmodes=('iso')
