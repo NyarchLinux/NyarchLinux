@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   inkscape:version="1.0 (4035a4fb49, 2020-05-01)"
+   sodipodi:docname="gnacs-symbolic.svg"
+   width="64"
+   height="64"
+   version="1.1"
+   id="svg24">
+  <sodipodi:namedview
+     inkscape:document-rotation="0"
+     inkscape:current-layer="svg24"
+     inkscape:window-maximized="1"
+     inkscape:window-y="40"
+     inkscape:window-x="0"
+     inkscape:cy="32"
+     inkscape:cx="-17.084746"
+     inkscape:zoom="3.6875"
+     showgrid="false"
+     id="namedview947"
+     inkscape:window-height="898"
+     inkscape:window-width="1920"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0"
+     guidetolerance="10"
+     gridtolerance="10"
+     objecttolerance="10"
+     borderopacity="1"
+     bordercolor="#666666"
+     pagecolor="#ffffff" />
+  <metadata
+     id="metadata30">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs28" />
+  <path
+     style="opacity:1;fill:#cccccc;stroke-width:2.03367"
+     d="M 31.907086,3.5291852 A 4.0677519,4.0677519 0 0 0 29.090924,4.7207911 L 4.6908283,29.120888 a 4.0677519,4.0677519 0 0 0 0,5.75148 L 29.094898,59.280412 a 4.0677519,4.0677519 0 0 0 5.751479,0 L 53.991499,40.135291 H 42.484566 L 31.970636,50.64922 13.318045,31.99663 31.966665,13.348011 42.484566,23.865911 H 53.991499 L 34.842406,4.7207911 a 4.0677519,4.0677519 0 0 0 -2.93532,-1.1916059 z m 4.130896,24.4040718 a 4.0677519,4.0677519 0 1 0 0,8.13469 h 20.336726 a 4.0677519,4.0677519 0 1 0 0,-8.13469 z"
+     id="path8" />
+</svg>

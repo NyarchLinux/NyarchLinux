@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface domain="blur-my-shell@aunetx">
+  <template class="Overview" parent="AdwPreferencesPage">
+    <property name="name">overview</property>
+    <property name="title" translatable="yes">Overview</property>
+    <property name="icon-name">overview-symbolic</property>
+
+    <child>
+      <object class="AdwPreferencesGroup">
+        <property name="title" translatable="yes">Background blur</property>
+        <property name="description" translatable="yes">Add blur to the overview background, using the wallpaper picture.</property>
+        <property name="header-suffix">
+          <object class="GtkSwitch" id="overview_blur">
+            <property name="valign">center</property>
+          </object>
+        </property>
+
+        <child>
+          <object class="CustomizeRow" id="overview_customize">
+            <property name="sensitive" bind-source="overview_blur" bind-property="state" bind-flags="sync-create" />
+          </object>
+        </child>
+
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Overview components style</property>
+            <property name="subtitle" translatable="yes">The semi-transparent style for the dash, search entry/results, and application folders.</property>
+            <property name="sensitive" bind-source="overview_blur" bind-property="state" bind-flags="sync-create" />
+            <property name="activatable-widget">overview_style_components</property>
+
+            <child>
+              <object class="GtkDropDown" id="overview_style_components">
+                <property name="valign">center</property>
+                <property name="model">overview_style_components_model</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+
+    <child>
+      <object class="AdwPreferencesGroup">
+        <property name="title" translatable="yes">Application folder blur</property>
+        <property name="description" translatable="yes">Makes the background of application folder dialogs blurred.</property>
+        <property name="header-suffix">
+          <object class="GtkSwitch" id="appfolder_blur">
+            <property name="valign">center</property>
+          </object>
+        </property>
+
+        <child>
+          <object class="CustomizeRow" id="appfolder_customize">
+            <property name="sensitive" bind-source="appfolder_blur" bind-property="state" bind-flags="sync-create" />
+          </object>
+        </child>
+
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Application folder dialogs style</property>
+            <property name="subtitle" translatable="yes">The semi-transparent style for the application folder dialogs.</property>
+            <property name="sensitive" bind-source="appfolder_blur" bind-property="state" bind-flags="sync-create" />
+            <property name="activatable-widget">appfolder_style_dialogs</property>
+
+            <child>
+              <object class="GtkDropDown" id="appfolder_style_dialogs">
+                <property name="valign">center</property>
+                <property name="model">appfolder_style_dialogs_model</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+
+  <object class="GtkStringList" id="overview_style_components_model">
+    <items>
+      <item translatable="yes">Do not style</item>
+      <item translatable="yes">Light</item>
+      <item translatable="yes">Dark</item>
+      <item translatable="yes">Transparent</item>
+    </items>
+  </object>
+
+  <object class="GtkStringList" id="appfolder_style_dialogs_model">
+    <items>
+      <item translatable="yes">Do not style</item>
+      <item translatable="yes">Transparent</item>
+      <item translatable="yes">Light</item>
+      <item translatable="yes">Dark</item>
+    </items>
+  </object>
+</interface>

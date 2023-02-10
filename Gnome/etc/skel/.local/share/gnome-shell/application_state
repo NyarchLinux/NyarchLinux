@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<application-state>
+  <context id="">
+    <application id="org.gnome.Extensions.desktop" score="11.000274658203125" last-seen="1675984904"/>
+    <application id="github-desktop.desktop" score="0.00244140625" last-seen="1675941332"/>
+    <application id="org.gnome.Evince.desktop" score="0" last-seen="1675935358"/>
+    <application id="org.gnome.FileRoller.desktop" score="6.103515625e-05" last-seen="1675855214"/>
+    <application id="org.gnome.Devhelp.desktop" score="0" last-seen="1675935518"/>
+    <application id="code-oss.desktop" score="19332.647613525391" last-seen="1675970760"/>
+    <application id="org.gnome.tweaks.desktop" score="6" last-seen="1675984471"/>
+    <application id="org.gnome.Sysprof.desktop" score="0" last-seen="1675939666"/>
+    <application id="gnome-background-panel.desktop" score="0" last-seen="0"/>
+    <application id="org.gnome.Builder.desktop" score="0.00128173828125" last-seen="1675954227"/>
+    <application id="org.gnome.Software.desktop" score="3.11175537109375" last-seen="1675984406"/>
+    <application id="org.gnome.Shell.Extensions.desktop" score="17" last-seen="1675985101"/>
+    <application id="org.gnome.Console.desktop" score="32.00360107421875" last-seen="1675970307"/>
+    <application id="org.gnome.Nautilus.desktop" score="13.892242431640625" last-seen="1675984177"/>
+    <application id="com.github.donadigo.appeditor.desktop" score="0.000396728515625" last-seen="1675942299"/>
+    <application id="org.gnome.dspy.desktop" score="0" last-seen="1675935493"/>
+    <application id="info.febvre.Komikku.desktop" score="0" last-seen="1675960742"/>
+    <application id="org.telegram.desktop.desktop" score="5.00048828125" last-seen="1675970801"/>
+    <application id="org.gnome.Terminal.desktop" score="0.75262451171875" last-seen="1675964651"/>
+    <application id="firefox.desktop" score="207.82577514648438" last-seen="1675985089"/>
+    <application id="org.gnome.Meld.desktop" score="0.002777099609375" last-seen="1675938649"/>
+    <application id="geany.desktop" score="0" last-seen="1675960222"/>
+    <application id="vmware-workstation.desktop" score="0" last-seen="1675939029"/>
+    <application id="com.mattjakeman.ExtensionManager.desktop" score="19" last-seen="1675985103"/>
+    <application id="vmware-player.desktop" score="425.93740844726562" last-seen="1675970302"/>
+    <application id="gimp.desktop" score="63" last-seen="1675984174"/>
+    <application id="org.gnome.Settings.desktop" score="2.0009765625" last-seen="1675984950"/>
+  </context>
+</application-state>

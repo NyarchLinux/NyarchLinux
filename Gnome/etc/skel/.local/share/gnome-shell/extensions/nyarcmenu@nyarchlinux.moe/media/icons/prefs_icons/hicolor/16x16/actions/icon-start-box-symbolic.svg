@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   inkscape:version="1.0 (4035a4fb49, 2020-05-01)"
+   sodipodi:docname="start-box-symbolic.svg"
+   width="64"
+   height="64"
+   version="1.1"
+   id="svg24">
+  <sodipodi:namedview
+     inkscape:document-rotation="0"
+     inkscape:current-layer="svg24"
+     inkscape:window-maximized="1"
+     inkscape:window-y="40"
+     inkscape:window-x="0"
+     inkscape:cy="32"
+     inkscape:cx="-17.084746"
+     inkscape:zoom="3.6875"
+     showgrid="false"
+     id="namedview973"
+     inkscape:window-height="898"
+     inkscape:window-width="1920"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0"
+     guidetolerance="10"
+     gridtolerance="10"
+     objecttolerance="10"
+     borderopacity="1"
+     bordercolor="#666666"
+     pagecolor="#ffffff" />
+  <metadata
+     id="metadata30">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs28" />
+  <g
+     id="g4166"
+     transform="matrix(0.8892122,0,0,0.8892122,3.4988805,3.5)">
+    <g
+       transform="translate(0,-320)"
+       id="g14">
+      <g
+         id="g12">
+        <g
+           id="g10">
+          <rect
+             style="fill:#cccccc;stroke-width:0.166811"
+             id="rect2"
+             height="21.333334"
+             width="28.493921"
+             y="320"
+             x="0.052099448" />
+          <rect
+             style="fill:#cccccc;stroke-width:0.166573"
+             id="rect4"
+             height="35.453808"
+             width="28.493921"
+             y="320.10172"
+             x="35.558182" />
+          <rect
+             style="fill:#cccccc;stroke-width:0.167208"
+             id="rect6"
+             height="21.435028"
+             width="28.493921"
+             y="362.66666"
+             x="35.558182" />
+          <rect
+             style="fill:#cccccc;stroke-width:0.16705"
+             id="rect8"
+             height="35.657196"
+             width="28.493921"
+             y="348.44449"
+             x="0.052099448" />
+        </g>
+      </g>
+    </g>
+    <g
+       transform="translate(0,-320)"
+       id="g16" />
+    <g
+       transform="translate(0,-320)"
+       id="g18" />
+    <g
+       transform="translate(0,-320)"
+       id="g20" />
+    <g
+       transform="translate(0,-320)"
+       id="g22" />
+    <g
+       transform="translate(0,-320)"
+       id="g24" />
+    <g
+       transform="translate(0,-320)"
+       id="g26" />
+    <g
+       transform="translate(0,-320)"
+       id="g28" />
+    <g
+       transform="translate(0,-320)"
+       id="g30" />
+    <g
+       transform="translate(0,-320)"
+       id="g32" />
+    <g
+       transform="translate(0,-320)"
+       id="g34" />
+    <g
+       transform="translate(0,-320)"
+       id="g36" />
+    <g
+       transform="translate(0,-320)"
+       id="g38" />
+    <g
+       transform="translate(0,-320)"
+       id="g40" />
+    <g
+       transform="translate(0,-320)"
+       id="g42" />
+    <g
+       transform="translate(0,-320)"
+       id="g44" />
+  </g>
+</svg>

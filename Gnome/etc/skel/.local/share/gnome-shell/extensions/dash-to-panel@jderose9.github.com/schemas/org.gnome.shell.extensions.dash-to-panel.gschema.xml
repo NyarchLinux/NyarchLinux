@@ -1,0 +1,1278 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="gnome-shell-extensions">
+  <enum id='org.gnome.shell.extensions.dash-to-panel.dotStyle'>
+    <value value='0' nick='DOTS'/>
+    <value value='1' nick='SQUARES'/>
+    <value value='2' nick='DASHES'/>
+    <value value='3' nick='SEGMENTED'/>
+    <value value='4' nick='SOLID'/>
+    <value value='5' nick='CILIORA'/>
+    <value value='6' nick='METRO'/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.dash-to-panel.clickAction'>
+    <value value='0' nick='RAISE'/>
+    <value value='1' nick='MINIMIZE'/>
+    <value value='2' nick='LAUNCH'/>
+    <value value='3' nick='CYCLE'/>
+    <value value='4' nick='CYCLE-MIN'/>
+    <value value='5' nick='QUIT'/>
+    <value value='6' nick='TOGGLE-SHOWPREVIEW'/>
+    <value value='7' nick='TOGGLE-CYCLE'/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.dash-to-panel.scrollAction'>
+    <value value='0' nick='NOTHING'/>
+    <value value='1' nick='SWITCH_WORKSPACE'/>
+    <value value='2' nick='CYCLE_WINDOWS'/>
+    <value value='3' nick='PASS_THROUGH'/>
+    <value value='4' nick='CHANGE_VOLUME'/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.dash-to-panel.hotkeyPrefix'>
+    <value value='0' nick='Super'/>
+    <value value='1' nick='SuperAlt'/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.dash-to-panel.hotkeyOverlay'>
+    <value value='0' nick='NEVER'/>
+    <value value='1' nick='TEMPORARILY'/>
+    <value value='2' nick='ALWAYS'/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.dash-to-panel.position'>
+    <value value='0' nick='BOTTOM'/>
+    <value value='1' nick='TOP'/>
+    <value value='2' nick='LEFT'/>
+    <value value='3' nick='RIGHT'/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.dash-to-panel.proximityBehavior'>
+    <value value='0' nick='ALL_WINDOWS'/>
+    <value value='1' nick='FOCUSED_WINDOWS'/>
+    <value value='2' nick='MAXIMIZED_WINDOWS'/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.dash-to-panel.fontWeight'>
+    <value value='0' nick='inherit'/>
+    <value value='1' nick='normal'/>
+    <value value='2' nick='lighter'/>
+    <value value='3' nick='bold'/>
+    <value value='4' nick='bolder'/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.dash-to-panel.hotkeyNumberKeys'>
+    <value value='0' nick='NUM_ROW'/>
+    <value value='1' nick='NUM_KEYPAD'/>
+    <value value='2' nick='BOTH'/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.dash-to-panel.appIconHoverAnimationType'>
+    <value value='0' nick='SIMPLE'/>
+    <value value='1' nick='RIPPLE'/>
+    <value value='2' nick='PLANK'/>
+  </enum>
+  <schema path="/org/gnome/shell/extensions/dash-to-panel/" id="org.gnome.shell.extensions.dash-to-panel">
+    <key name="panel-position" enum="org.gnome.shell.extensions.dash-to-panel.position">
+      <default>'BOTTOM'</default>
+      <summary>Panel position (Deprecated)</summary>
+      <description>Panel is shown on the Bottom or Top of the screen.</description>
+    </key>
+    <key name="panel-element-positions-monitors-sync" type="b">
+      <default>true</default>
+      <summary>Sync element positions</summary>
+      <description>Sync panel element positions on all monitors.</description>
+    </key>
+    <key name="panel-positions" type="s">
+      <default>'{}'</default>
+      <summary>Panel positions</summary>
+      <description>Panel positions (JSON).</description>
+    </key>
+    <key name="panel-element-positions" type="s">
+      <default>'{}'</default>
+      <summary>Panel element positions</summary>
+      <description>Panel element positions (JSON).</description>
+    </key>
+    <key type="s" name="panel-lengths">
+      <default>'{}'</default>
+      <summary>Percentages of screen edge for panel to span</summary>
+      <description>Length of the panels, in percent (JSON).</description>
+    </key>
+    <key type="s" name="panel-anchors">
+      <default>'{}'</default>
+      <summary>Positions along screen edge</summary>
+      <description>Where to show the panels if it is not the full length of the screen edge (JSON).</description>
+    </key>
+    <key type="s" name="panel-sizes">
+      <default>'{}'</default>
+      <summary>Panel sizes</summary>
+      <description>Sizes of panels, in pixels.</description>
+    </key>
+    <key type="i" name="panel-size">
+      <default>48</default>
+      <summary>Panel size (Deprecated)</summary>
+      <description>Set the size of the panel.</description>
+    </key>
+    <key type="b" name="desktop-line-use-custom-color">
+      <default>false</default>
+      <summary>Override Show Desktop line color</summary>
+      <description>Replace current Show Desktop button line color</description>
+    </key>
+    <key type="s" name="desktop-line-custom-color">
+      <default>"rgba(200,200,200,0.2)"</default>
+      <summary>Custom Show Desktop line color</summary>
+      <description>Custom Show Desktop button line color</description>
+    </key>
+    <key name="dot-position" enum="org.gnome.shell.extensions.dash-to-panel.position">
+      <default>'BOTTOM'</default>
+      <summary>Dot position</summary>
+      <description>Running indicators are shown on the Bottom or Top of the screen.</description>
+    </key>
+    <key name="dot-style-focused" enum="org.gnome.shell.extensions.dash-to-panel.dotStyle">
+      <default>'METRO'</default>
+      <summary>Style of the running indicator (focused)</summary>
+      <description>Style of the running indicator for the icon for the currently focused application</description>
+    </key>
+    <key name="dot-style-unfocused" enum="org.gnome.shell.extensions.dash-to-panel.dotStyle">
+      <default>'METRO'</default>
+      <summary>Style of the running indicator (unfocused)</summary>
+      <description>Style of the running indicator for the icon for applications which are not currently focused</description>
+    </key>
+    <key type="b" name="dot-color-dominant">
+      <default>false</default>
+      <summary>Running indicator dominant color</summary>
+      <description>Whether to use the app icon's dominant color for .app-well-running-dot</description>
+    </key>
+    <key type="b" name="dot-color-override">
+      <default>false</default>
+      <summary>Running indicator color override</summary>
+      <description>Whether to override the theme background color for .app-well-running-dot</description>
+    </key>
+    <key type="s" name="dot-color-1">
+      <default>"#5294e2"</default>
+      <summary>Color of running indicator (1 window)</summary>
+      <description>Customize the color of the running indicator when one window is running for that application</description>
+    </key>
+    <key type="s" name="dot-color-2">
+      <default>"#5294e2"</default>
+      <summary>Color of running indicator (2 windows)</summary>
+      <description>Customize the color of the running indicator when two windows are running for that application</description>
+    </key>
+    <key type="s" name="dot-color-3">
+      <default>"#5294e2"</default>
+      <summary>Color of running indicator (3 windows)</summary>
+      <description>Customize the color of the running indicator when three windows are running for that application</description>
+    </key>
+    <key type="s" name="dot-color-4">
+      <default>"#5294e2"</default>
+      <summary>Color of running indicator (4+ windows)</summary>
+      <description>Customize the color of the running indicator when four or more windows are running for that application</description>
+    </key>
+    <key type="b" name="dot-color-unfocused-different">
+      <default>false</default>
+      <summary>Unfocused color is different than focused</summary>
+      <description>Whether to apply a 2nd color scheme to the indicator when the app is not focused</description>
+    </key>
+    <key type="s" name="dot-color-unfocused-1">
+      <default>"#5294e2"</default>
+      <summary>Color of unfocused running indicator (1 window)</summary>
+      <description>Customize the color of the unfocused running indicator when one window is running for that application</description>
+    </key>
+    <key type="s" name="dot-color-unfocused-2">
+      <default>"#5294e2"</default>
+      <summary>Color of unfocused running indicator (2 windows)</summary>
+      <description>Customize the color of the unfocused running indicator when two windows are running for that application</description>
+    </key>
+    <key type="s" name="dot-color-unfocused-3">
+      <default>"#5294e2"</default>
+      <summary>Color of unfocused running indicator (3 windows)</summary>
+      <description>Customize the color of the unfocused running indicator when three windows are running for that application</description>
+    </key>
+    <key type="s" name="dot-color-unfocused-4">
+      <default>"#5294e2"</default>
+      <summary>Color of unfocused running indicator (4+ windows)</summary>
+      <description>Customize the color of the unfocused running indicator when four or more windows are running for that application</description>
+    </key>
+    <key type="i" name="dot-size">
+      <default>3</default>
+      <summary>Running indicator height</summary>
+      <description>Height of the running indicator line/diameter of window indicator dots</description>
+    </key>
+    <key type="b" name="focus-highlight">
+      <default>true</default>
+      <summary>Highlight icon of focused application</summary>
+      <description>Whether to highlight the background of the currently focused application's icon</description>
+    </key>
+    <key type="b" name="focus-highlight-dominant">
+      <default>false</default>
+      <summary>Highlight icon dominant color</summary>
+      <description>Base the active window highlight color on that application's icon</description>
+    </key>
+    <key type="s" name="focus-highlight-color">
+      <default>"#EEEEEE"</default>
+      <summary>Color of highlight of focused application</summary>
+      <description>Customize the color of the highlight of the focused application</description>
+    </key>
+    <key type="i" name="focus-highlight-opacity">
+      <default>25</default>
+      <summary>Opacity of highlight of focused application</summary>
+      <description>Customize the opacity of the highlight of the focused application</description>
+    </key>
+    <key type="b" name="stockgs-keep-dash">
+      <default>false</default>
+      <summary>Keep dash</summary>
+      <description>Whether to keep the stock gnome-shell dash while in overview</description>
+    </key>
+    <key type="b" name="stockgs-keep-top-panel">
+      <default>false</default>
+      <summary>Keep top panel</summary>
+      <description>Whether to keep the stock gnome-shell top panel</description>
+    </key>
+    <key type="b" name="stockgs-panelbtn-click-only">
+      <default>false</default>
+      <summary>Panel menu buttons require click</summary>
+      <description>Whether to activate the panel menu buttons on hover or on click</description>
+    </key>
+    <key type="b" name="stockgs-force-hotcorner">
+      <default>false</default>
+      <summary>Force hot corner</summary>
+      <description>Wheter to force having an Activities hot corner on the primary monitor</description>
+    </key>
+    <key type="b" name="taskbar-locked">
+      <default>false</default>
+      <summary>Lock the taskbar</summary>
+      <description>Specifies if the user can modify the taskbar</description>
+    </key>
+    <key type="b" name="trans-use-custom-bg">
+      <default>false</default>
+      <summary>Override theme background color</summary>
+      <description>Replace current theme background color for the panel</description>
+    </key>
+    <key type="s" name="trans-bg-color">
+      <default>"#000"</default>
+      <summary>Custom background color</summary>
+      <description>Custom background color for the panel</description>
+    </key>
+    <key type="b" name="trans-use-custom-opacity">
+      <default>false</default>
+      <summary>Custom background color</summary>
+      <description>Replace current theme background color for the panel</description>
+    </key>
+    <key type="b" name="trans-use-dynamic-opacity">
+      <default>false</default>
+      <summary>Dynamic opacity</summary>
+      <description>Enable dynamic opacity</description>
+    </key>
+    <key type="d" name="trans-panel-opacity">
+      <default>0.4</default>
+      <summary>Panel opacity</summary>
+      <description>Custom opacity for the panel</description>
+    </key>
+    <key name="trans-dynamic-behavior" enum="org.gnome.shell.extensions.dash-to-panel.proximityBehavior">
+      <default>'ALL_WINDOWS'</default>
+      <summary>Dynamic opacity behavior</summary>
+      <description>Dictates which window type affects the panel opacity</description>
+    </key>
+    <key type="i" name="trans-dynamic-distance">
+      <default>20</default>
+      <summary>Distance to change opacity</summary>
+      <description>The distance a window needs to be from the panel to change opacity</description>
+    </key>
+    <key type="d" name="trans-dynamic-anim-target">
+      <default>0.8</default>
+      <summary>Modified panel opacity</summary>
+      <description>Modified opacity for the panel when a window is near</description>
+    </key>
+    <key type="i" name="trans-dynamic-anim-time">
+      <default>300</default>
+      <summary>Opacity change duration</summary>
+      <description>The duration of the animation when the opacity changes</description>
+    </key>
+    <key type="b" name="trans-use-custom-gradient">
+      <default>false</default>
+      <summary>Custom gradient</summary>
+      <description>Replace current theme gradient for the panel</description>
+    </key>
+    <key type="s" name="trans-gradient-top-color">
+      <default>"#000"</default>
+      <summary>Custom gradient top color</summary>
+      <description>Custom gradient top color for the panel</description>
+    </key>
+    <key type="d" name="trans-gradient-top-opacity">
+      <default>0</default>
+      <summary>Custom gradient top opacity</summary>
+      <description>Custom gradient top opacity for the panel</description>
+    </key>
+    <key type="s" name="trans-gradient-bottom-color">
+      <default>"#000"</default>
+      <summary>Custom gradient bottom color</summary>
+      <description>Custom gradient bottom color for the panel</description>
+    </key>
+    <key type="d" name="trans-gradient-bottom-opacity">
+      <default>0.2</default>
+      <summary>Custom gradient bottom opacity</summary>
+      <description>Custom gradient bottom opacity for the panel</description>
+    </key>
+    <key type="b" name="intellihide">
+      <default>false</default>
+      <summary>Intellihide</summary>
+      <description>Whether to intelligently hide the panel</description>
+    </key>
+    <key type="b" name="intellihide-hide-from-windows">
+      <default>false</default>
+      <summary>Only hide from windows</summary>
+      <description>Dictates if the dash should only hide when in conflict with windows</description>
+    </key>
+    <key name="intellihide-behaviour" enum="org.gnome.shell.extensions.dash-to-panel.proximityBehavior">
+      <default>'FOCUSED_WINDOWS'</default>
+      <summary>Intellihide behaviour</summary>
+      <description>Dictates how to intelligently hide the panel</description>
+    </key>
+    <key type="b" name="intellihide-use-pressure">
+      <default>false</default>
+      <summary>Intellihide pressure</summary>
+      <description>To reveal the panel, pressure needs to be applied to the edege of the screen</description>
+    </key>
+    <key type="i" name="intellihide-pressure-threshold">
+      <default>100</default>
+      <summary>Intellihide pressure threshold</summary>
+      <description>The pressure needed to reveal the panel</description>
+    </key>
+    <key type="i" name="intellihide-pressure-time">
+      <default>1000</default>
+      <summary>Intellihide pressure time</summary>
+      <description>The numer of milliseconds that the pressure needs to be applied to reveal the panel</description>
+    </key>
+    <key type="b" name="intellihide-show-in-fullscreen">
+      <default>false</default>
+      <summary>Intellihide pressure</summary>
+      <description>Allow the panel to be revealed while an application is in fullscreen mode</description>
+    </key>
+    <key type="b" name="intellihide-only-secondary">
+      <default>false</default>
+      <summary>Intellihide only secondary</summary>
+      <description>Whether to only hide secondary panels</description>
+    </key>
+    <key type="i" name="intellihide-animation-time">
+      <default>200</default>
+      <summary>Intellihide animation time</summary>
+      <description>The animation time (ms) to hide and reveal the panel</description>
+    </key>
+    <key type="i" name="intellihide-close-delay">
+      <default>400</default>
+      <summary>Intellihide close delay</summary>
+      <description>The delay (ms) before hiding the panel</description>
+    </key>
+    <key type="s" name="intellihide-key-toggle-text">
+      <default>"&lt;Super&gt;i"</default>
+      <summary>Keybinding toggle intellihide</summary>
+      <description>Keybinding to reveal the panel while in intellihide mode</description>
+    </key>
+    <key type="as" name="intellihide-key-toggle">
+      <default><![CDATA[['<Super>i']]]></default>
+      <summary>Keybinding toggle intellihide</summary>
+      <description>Keybinding to reveal the panel while in intellihide mode</description>
+    </key>
+    <key type="i" name="intellihide-enable-start-delay">
+      <default>2000</default>
+      <summary>Intellihide enable start delay</summary>
+      <description>The delay before enabling intellihide on start</description>
+    </key>
+    <key type="s" name="show-apps-icon-file">
+      <default>""</default>
+      <summary>Custom Show Applications icon</summary>
+      <description>Customize the Show Applications icon</description>
+    </key>
+    <key type="i" name="show-apps-icon-side-padding">
+      <default>8</default>
+      <summary>Show Applications icon side padding</summary>
+      <description>Customize the Show Applications icon side padding</description>
+    </key>
+    <key type="b" name="show-apps-override-escape">
+      <default>true</default>
+      <summary>Override escape key</summary>
+      <description>Override the escape key to return to the desktop when entering the overview using the Show Applications button</description>
+    </key>
+    <key type="as" name="show-apps-button-context-menu-commands">
+     <default>[]</default>
+     <summary>Show Apps button context menu commands</summary>
+     <description>Commands to add to the Show Apps button right click menu</description>
+    </key>
+    <key type="as" name="show-apps-button-context-menu-titles">
+     <default>[]</default>
+     <summary>Show Apps button context menu titles</summary>
+     <description>Titles for commands added to Show Apps button right click menu</description>
+    </key>
+    <key type="as" name="panel-context-menu-commands">
+     <default>[]</default>
+     <summary>Panel context menu commands</summary>
+     <description>Commands to add to the panel right click menu</description>
+    </key>
+    <key type="as" name="panel-context-menu-titles">
+     <default>[]</default>
+     <summary>Panel context menu titles</summary>
+     <description>Titles for commands added to panel right click menu</description>
+    </key>
+    <key type="b" name="show-activities-button">
+      <default>false</default>
+      <summary>Show activities button</summary>
+      <description>Show activities button on the left hand side of the taskbar</description>
+    </key>
+    <key type="i" name="showdesktop-button-width">
+      <default>8</default>
+      <summary>Width of show Desktop button</summary>
+      <description>Customize the width of the show Desktop button</description>
+    </key>
+    <key type="b" name="show-showdesktop-hover">
+      <default>false</default>
+      <summary>Show desktop on hover</summary>
+      <description>Show the desktop on mouse hover</description>
+    </key>
+    <key type="i" name="show-showdesktop-delay">
+      <default>1000</default>
+      <summary>Delay show desktop</summary>
+      <description>Delay before showing the desktop</description>
+    </key>
+    <key type="i" name="show-showdesktop-time">
+      <default>300</default>
+      <summary>Show desktop animation time</summary>
+      <description>Window fade animation time when showing the destop</description>
+    </key>
+    <key type="b" name="show-appmenu">
+      <default>false</default>
+      <summary>Show appMenu button</summary>
+      <description>Show appMenu on the right hand side of the panel</description>
+    </key>
+    <key type="b" name="show-window-previews">
+      <default>true</default>
+      <summary>Show window preview</summary>
+      <description>Show preview of running window on hover of app icon</description>
+    </key>
+    <key type="b" name="show-tooltip">
+      <default>true</default>
+      <summary>Show tooltip</summary>
+      <description>Show tooltip on hover of app icon</description>
+    </key>
+    <key type="b" name="show-running-apps">
+      <default>true</default>
+      <summary>Show running apps</summary>
+      <description>Show or hide running application icons in the dash</description>
+    </key>
+    <key type="b" name="show-favorites">
+      <default>true</default>
+      <summary>Show favorites apps</summary>
+      <description>Show or hide favorite application icons in the dash</description>
+    </key>
+    <key type="i" name="show-window-previews-timeout">
+      <default>400</default>
+      <summary>Icon enter display time</summary>
+      <description>Amount of time after entering icon to wait before displaying window preview if icon is not clicked or mouse has not left.</description>
+    </key>
+    <key type="b" name="peek-mode">
+      <default>true</default>
+      <summary>Enable peek mode</summary>
+      <description>Peek a window upon hover for some time</description>
+    </key>
+    <key type="b" name="window-preview-show-title">
+      <default>true</default>
+      <summary>Display title in preview</summary>
+      <description>Display window title in preview</description>
+    </key>
+    <key type="b" name="window-preview-manual-styling">
+      <default>false</default>
+      <summary>Window previews manual styling</summary>
+      <description>This defines if the default window previews styling should be applied</description>
+    </key>
+    <key name="window-preview-title-position" enum="org.gnome.shell.extensions.dash-to-panel.position">
+      <default>'TOP'</default>
+      <summary>Title position</summary>
+      <description>Position of the window title, close button and icon in preview.</description>
+    </key>
+    <key type="s" name="window-preview-title-font-color">
+      <default>"#dddddd"</default>
+      <summary>Window previews title font color</summary>
+      <description>This defines the window preview titles font color.</description>
+    </key>
+    <key type="i" name="window-preview-title-font-size">
+      <default>14</default>
+      <summary>Window previews title font size</summary>
+      <description>This defines the window preview titles font size.</description>
+    </key>
+    <key type="b" name="window-preview-use-custom-icon-size">
+      <default>false</default>
+      <summary>Window previews use custom icon size</summary>
+      <description>Window previews use custom application icon size.</description>
+    </key>
+    <key type="i" name="window-preview-custom-icon-size">
+      <default>16</default>
+      <summary>Window previews custom icon size</summary>
+      <description>Window previews custom application icon size.</description>
+    </key>
+    <key type="i" name="window-preview-animation-time">
+      <default>260</default>
+      <summary>Window previews animation time</summary>
+      <description>This defines the window previews animation time.</description>
+    </key>
+    <key name="window-preview-title-font-weight" enum="org.gnome.shell.extensions.dash-to-panel.fontWeight">
+      <default>'inherit'</default>
+      <summary>Font weight of window preview titles</summary>
+      <description>This defines the font weight of window preview titles. Supported values: inherit (from theme), normal, lighter, bold and bolder.</description>
+    </key>
+    <key type="i" name="window-preview-size">
+      <default>240</default>
+      <summary>Window previews size</summary>
+      <description>Preferred window previews size</description>
+    </key>
+    <key type="b" name="window-preview-fixed-x">
+      <default>false</default>
+      <summary>Fixed aspect ratio X</summary>
+      <description>This defines if the window previews use a fixed aspect ratio X.</description>
+    </key>
+    <key type="b" name="window-preview-fixed-y">
+      <default>true</default>
+      <summary>Fixed aspect ratio Y</summary>
+      <description>This defines if the window previews use a fixed aspect ratio Y.</description>
+    </key>
+    <key type="i" name="window-preview-padding">
+      <default>8</default>
+      <summary>Window previews padding</summary>
+      <description>The padding of the window previews</description>
+    </key>
+    <key type="i" name="window-preview-aspect-ratio-x">
+      <default>16</default>
+      <summary>Aspect ratio X</summary>
+      <description>The window previews respected aspect ratio X.</description>
+    </key>
+    <key type="i" name="window-preview-aspect-ratio-y">
+      <default>9</default>
+      <summary>Aspect ratio Y</summary>
+      <description>The window previews respected aspect ratio Y.</description>
+    </key>
+    <key type="b" name="window-preview-hide-immediate-click">
+      <default>false</default>
+      <summary>Immediate hide on icon click</summary>
+      <description>The window previews immediately hide when an application icon is clicked.</description>
+    </key>
+    <key type="b" name="isolate-workspaces">
+      <default>false</default>
+      <summary>Provide workspace isolation</summary>
+      <description>Dash shows only windows from the current workspace</description>
+    </key>
+     <key type="b" name="overview-click-to-exit">
+      <default>false</default>
+      <summary>Close overview by clicking in empty space</summary>
+      <description>Close overview or app grid by clicking in empty space</description>
+    </key>
+    <key type="b" name="hide-overview-on-startup">
+      <default>false</default>
+      <summary>Hide overview on startup</summary>
+      <description>Hide overview on startup, which would be shown by default at gnome startup.</description>
+    </key>
+    <key type="b" name="group-apps">
+      <default>true</default>
+      <summary>Group applications</summary>
+      <description>Dash groups the application instances under the same icon</description>
+    </key>
+    <key type="i" name="group-apps-label-font-size">
+      <default>14</default>
+      <summary>Application title font size</summary>
+      <description>When the applications are ungrouped, this defines the application titles font size.</description>
+    </key>
+    <key name="group-apps-label-font-weight" enum="org.gnome.shell.extensions.dash-to-panel.fontWeight">
+      <default>'inherit'</default>
+      <summary>Font weight of application titles</summary>
+      <description>When the applications are ungrouped, this defines font weight of application titles. Supported values: inherit (from theme), normal, lighter, bold and bolder.</description>
+    </key>
+    <key type="s" name="group-apps-label-font-color">
+      <default>"#dddddd"</default>
+      <summary>Application title font color</summary>
+      <description>When the applications are ungrouped, this defines the application titles font color.</description>
+    </key>
+    <key type="s" name="group-apps-label-font-color-minimized">
+      <default>"#dddddd"</default>
+      <summary>Minimized application title font color</summary>
+      <description>When the applications are ungrouped, this defines the titles font color for minimized applications.</description>
+    </key>
+    <key type="i" name="group-apps-label-max-width">
+      <default>160</default>
+      <summary>Application title max width</summary>
+      <description>When the applications are ungrouped, this defines the application titles maximum width.</description>
+    </key>
+    <key type="b" name="group-apps-use-fixed-width">
+      <default>true</default>
+      <summary>Use a fixed width for the application titles</summary>
+      <description>The application titles all have the same width, even if their texts are shorter than the maximum width. The maximum width value is used as the fixed width.</description>
+    </key>
+    <key type="b" name="group-apps-underline-unfocused">
+      <default>true</default>
+      <summary>Display running indicators on unfocused applications</summary>
+      <description>When the applications are ungrouped, this defines if running applications should display an indicator.</description>
+    </key>
+    <key type="b" name="group-apps-use-launchers">
+      <default>false</default>
+      <summary>Use favorite icons as application launchers</summary>
+      <description>When the applications are ungrouped, this defines if running applications stay separate from the favorite icons.</description>
+    </key>
+    <key type="i" name="primary-monitor">
+      <default>0</default>
+      <summary>Primary monitor index</summary>
+      <description>Specifies the index of the primary monitor.</description>
+    </key>
+    <key type="b" name="multi-monitors">
+      <default>true</default>
+      <summary>Display panels on all monitors</summary>
+      <description>Specifies if a panel is shown on every monitors</description>
+    </key>
+    <key type="ai" name="available-monitors">
+     <default>[]</default>
+     <summary>Available monitors</summary>
+     <description>Available gnome-shell (Mutter) monitors, internal use</description>
+    </key>
+    <key type="b" name="isolate-monitors">
+      <default>false</default>
+      <summary>Provide monitor isolation</summary>
+      <description>Dash shows only windows from the current monitor</description>
+    </key>
+    <key type="b" name="show-favorites-all-monitors">
+      <default>true</default>
+      <summary>Display the favorites on all monitors</summary>
+      <description>Specifies if every panel should display the favorite applications. If false, the favorite appplications are only displayed on the primary monitor.</description>
+    </key>
+    <key type="b" name="customize-click">
+      <default>true</default>
+      <summary>Customize click behaviour</summary>
+      <description>Customize action on various mouse events</description>
+    </key>
+    <key type="b" name="minimize-shift">
+      <default>true</default>
+      <summary>Minimize on shift+click</summary>
+    </key>
+    <key type="b" name="activate-single-window">
+      <default>true</default>
+      <summary>Activate only one window</summary>
+    </key>
+    <key name="click-action" enum="org.gnome.shell.extensions.dash-to-panel.clickAction">
+      <default>'CYCLE-MIN'</default>
+      <summary>Action when clicking on a running app</summary>
+      <description>Set the action that is executed when clicking on the icon of a running application</description>
+    </key>
+    <key name="shift-click-action" enum="org.gnome.shell.extensions.dash-to-panel.clickAction">
+      <default>'MINIMIZE'</default>
+      <summary>Action when shift+clicking on a running app</summary>
+      <description>Set the action that is executed when shift+clicking on the icon of a running application</description>
+    </key>
+    <key name="middle-click-action" enum="org.gnome.shell.extensions.dash-to-panel.clickAction">
+      <default>'LAUNCH'</default>
+      <summary>Action when clicking on a running app</summary>
+      <description>Set the action that is executed when middle-clicking on the icon of a running application</description>
+    </key>
+    <key name="shift-middle-click-action" enum="org.gnome.shell.extensions.dash-to-panel.clickAction">
+      <default>'LAUNCH'</default>
+      <summary>Action when clicking on a running app</summary>
+      <description>Set the action that is executed when shift+middle-clicking on the icon of a running application</description>
+    </key>
+    <key name="scroll-panel-action" enum="org.gnome.shell.extensions.dash-to-panel.scrollAction">
+      <default>'SWITCH_WORKSPACE'</default>
+      <summary>Action when scrolling over the panel</summary>
+      <description>Set the action that is executed when scrolling over the panel</description>
+    </key>
+    <key type="i" name="scroll-panel-delay">
+      <default>0</default>
+      <summary>Delay between panel mouse scroll events</summary>
+      <description>Set the minimum delay between panel mouse scroll events</description>
+    </key>
+    <key type="b" name="scroll-panel-show-ws-popup">
+      <default>true</default>
+      <summary>Show the workspace switch head-up when workspace is changed by scrolling on the panel</summary>
+    </key>
+    <key name="scroll-icon-action" enum="org.gnome.shell.extensions.dash-to-panel.scrollAction">
+      <default>'CYCLE_WINDOWS'</default>
+      <summary>Action when scrolling over a running app</summary>
+      <description>Set the action that is executed when scrolling over a running application</description>
+    </key>
+    <key type="i" name="scroll-icon-delay">
+      <default>0</default>
+      <summary>Delay between icon mouse scroll events</summary>
+      <description>Set the minimum delay between icon mouse scroll events</description>
+    </key>
+    <key type="i" name="leave-timeout">
+      <default>100</default>
+      <summary>Icon leave preview timeout</summary>
+      <description>Amount of time to leave preview windows open when the mouse has left the application's icon.</description>
+    </key>
+    <key type="i" name="enter-peek-mode-timeout">
+      <default>500</default>
+      <summary>Enter window peeking mode timeout</summary>
+      <description>Amount of time of inactivity to enter the window peeking mode when the mouse has entered a window preview.</description>
+    </key>
+    <key type="i" name="peek-mode-opacity">
+      <default>40</default>
+      <summary>Window peeking mode opacity</summary>
+      <description>All windows except for the peeked one have their opacity set to the same value.</description>
+    </key>
+    <key type="b" name="preview-middle-click-close">
+      <default>true</default>
+      <summary>Middle click preview to close window</summary>
+      <description>Middle click on the window preview to close that window</description>
+    </key>
+    <key type="b" name="preview-use-custom-opacity">
+      <default>true</default>
+      <summary>Window previews use custom opacity</summary>
+      <description>Window previews background use a different opacity from the panel</description>
+    </key>
+    <key type="i" name="preview-custom-opacity">
+      <default>80</default>
+      <summary>Window previews background opacity</summary>
+      <description>Window previews use this custom background opacity.</description>
+    </key>
+    <key type="i" name="tray-size">
+      <default>0</default>
+      <summary>Tray font size</summary>
+      <description>Set the size of the tray font. (0 for default)</description>
+    </key>
+    <key type="i" name="leftbox-size">
+        <default>0</default>
+        <summary>Leftbox font size</summary>
+        <description>Set the size of the leftBox font. (0 for default)</description>
+    </key>
+    <key type="i" name="appicon-margin">
+        <default>8</default>
+        <summary>App icon margin</summary>
+        <description>Set the margin for application icons in the embedded dash.</description>
+    </key>
+    <key type="i" name="appicon-padding">
+        <default>4</default>
+        <summary>App icon padding</summary>
+        <description>Set the padding for application icons in the embedded dash.</description>
+    </key>
+    <key type="i" name="tray-padding">
+        <default>-1</default>
+        <summary>Tray item padding</summary>
+        <description>Set the size of the tray padding. (-1 for default)</description>
+    </key>
+    <key type="i" name="leftbox-padding">
+        <default>-1</default>
+        <summary>Leftbox item padding</summary>
+        <description>Set the size of the leftBox padding. (-1 for default)</description>
+    </key>
+    <key type="i" name="status-icon-padding">
+        <default>-1</default>
+        <summary>Status icon padding</summary>
+        <description>Set the size of the aggregate (status) menu icon padding. (-1 for default)</description>
+    </key>
+    <key type="b" name="animate-app-switch">
+      <default>true</default>
+      <summary>Animate running indicator when open/closing/switching applications</summary>
+    </key>
+    <key type="b" name="animate-window-launch">
+      <default>true</default>
+      <summary>Animate when new window launched</summary>
+    </key>
+    <key type="b" name="animate-appicon-hover">
+      <default>false</default>
+      <summary>Animate app icon on hover</summary>
+    </key>
+    <key name="animate-appicon-hover-animation-type" enum="org.gnome.shell.extensions.dash-to-panel.appIconHoverAnimationType">
+      <default>'SIMPLE'</default>
+      <summary>App icon hover animation type</summary>
+    </key>
+    <key type="a{sd}" name="animate-appicon-hover-animation-convexity">
+      <default>{'RIPPLE':2,'PLANK':1}</default>
+      <summary>App icon hover animation curve convexity (1 is linear, more is convex, less is concave)</summary>
+    </key>
+    <key type="a{su}" name="animate-appicon-hover-animation-duration">
+      <default>{'SIMPLE':160,'RIPPLE':130,'PLANK':100}</default>
+      <summary>App icon hover animation duration in milliseconds</summary>
+    </key>
+    <key type="a{si}" name="animate-appicon-hover-animation-extent">
+      <default>{'RIPPLE':4,'PLANK':4}</default>
+      <summary>App icon hover animation extent (maximum number of animated icons)</summary>
+    </key>
+    <key type="a{si}" name="animate-appicon-hover-animation-rotation">
+      <default>{'SIMPLE':0,'RIPPLE':10,'PLANK':0}</default>
+      <summary>App icon hover animation rotation in degrees</summary>
+    </key>
+    <key type="a{sd}" name="animate-appicon-hover-animation-travel">
+      <default>{'SIMPLE':0.30,'RIPPLE':0.40,'PLANK':0}</default>
+      <summary>App icon hover animation travel translation in relation to the app icon size</summary>
+    </key>
+    <key type="a{sd}" name="animate-appicon-hover-animation-zoom">
+      <default>{'SIMPLE':1,'RIPPLE':1.25,'PLANK':2}</default>
+      <summary>App icon hover animation zoom scale in relation to the app icon size</summary>
+    </key>
+    <key type="b" name="secondarymenu-contains-appmenu">
+      <default>true</default>
+      <summary>Integrate items from the gnome appmenu into the right click menu</summary>
+    </key>
+    <key type="b" name="secondarymenu-contains-showdetails">
+      <default>false</default>
+      <summary>Display Show Details to open Gnome Software from right click menu</summary>
+    </key>
+    <key type="s" name="shortcut-text">
+      <default>"&lt;Super&gt;q"</default>
+      <summary>Keybinding to show the dock and the number overlay.</summary>
+      <description>Behavior depends on hotkeys-show-dock and hotkeys-overlay.</description>
+    </key>
+    <key type="as" name="shortcut">
+      <default><![CDATA[['<Super>q']]]></default>
+      <summary>Keybinding to show the dock and the number overlay.</summary>
+      <description>Behavior depends on hotkeys-show-dock and hotkeys-overlay.</description>
+    </key>
+    <key type="i" name="shortcut-timeout">
+      <default>2000</default>
+      <summary>Timeout to hide the dock, in seconds</summary>
+      <description>Sets the time duration before the dock is hidden again.</description>
+    </key>
+    <key type="i" name="overlay-timeout">
+      <default>750</default>
+      <summary>Timeout to hide the dock, in seconds</summary>
+      <description>Sets the time duration before the dock is hidden again.</description>
+    </key>
+    <key name="hotkeys-overlay-combo" enum="org.gnome.shell.extensions.dash-to-panel.hotkeyOverlay">
+      <default>'TEMPORARILY'</default>
+      <summary>Transitivity of the number overlay</summary>
+      <description>You can choose between NEVER, TEMPORARILY and ALWAYS.</description>
+    </key>
+    <key type="b" name="hot-keys">
+      <default>false</default>
+      <summary>Super Hot-Keys</summary>
+      <description>Launch and switch between dash items using Super+(0-9)</description>
+    </key>
+    <key name="hotkey-prefix-text" enum="org.gnome.shell.extensions.dash-to-panel.hotkeyPrefix">
+      <default>'Super'</default>
+      <summary>Prefix to use for hotkeys</summary>
+      <description>You can choose between Super or SuperAlt as the prefix for hotkeys.</description>
+    </key>
+    <key type="b" name="shortcut-previews">
+      <default>false</default>
+      <summary>Show window previews</summary>
+      <description>When multiple instances of the application are available, show their window previews</description>
+    </key>
+    <key name="shortcut-num-keys" enum="org.gnome.shell.extensions.dash-to-panel.hotkeyNumberKeys">
+      <default>'BOTH'</default>
+      <summary>Hotkeys number keys</summary>
+      <description>Which number keys are used for the hotkeys</description>
+    </key>
+    <key name="app-ctrl-hotkey-1" type="as">
+      <default><![CDATA[['<Ctrl><Super>1']]]></default>
+      <summary>Keybinding to launch 1st dash app</summary>
+      <description>
+        Keybinding to launch 1st app.
+      </description>
+    </key>
+    <key name="app-ctrl-hotkey-2" type="as">
+      <default><![CDATA[['<Ctrl><Super>2']]]></default>
+      <summary>Keybinding to launch 2nd dash app</summary>
+      <description>
+        Keybinding to launch 2nd app.
+      </description>
+    </key>
+    <key name="app-ctrl-hotkey-3" type="as">
+      <default><![CDATA[['<Ctrl><Super>3']]]></default>
+      <summary>Keybinding to launch 3rd dash app</summary>
+      <description>
+        Keybinding to launch 3rd app.
+      </description>
+    </key>
+    <key name="app-ctrl-hotkey-4" type="as">
+      <default><![CDATA[['<Ctrl><Super>4']]]></default>
+      <summary>Keybinding to launch 4th dash app</summary>
+      <description>
+        Keybinding to launch 4th app.
+      </description>
+    </key>
+    <key name="app-ctrl-hotkey-5" type="as">
+      <default><![CDATA[['<Ctrl><Super>5']]]></default>
+      <summary>Keybinding to launch 5th dash app</summary>
+      <description>
+        Keybinding to launch 5th app.
+      </description>
+    </key>
+    <key name="app-ctrl-hotkey-6" type="as">
+      <default><![CDATA[['<Ctrl><Super>6']]]></default>
+      <summary>Keybinding to launch 6th dash app</summary>
+      <description>
+        Keybinding to launch 6th app.
+      </description>
+    </key>
+    <key name="app-ctrl-hotkey-7" type="as">
+      <default><![CDATA[['<Ctrl><Super>7']]]></default>
+      <summary>Keybinding to launch 7th dash app</summary>
+      <description>
+        Keybinding to launch 7th app.
+      </description>
+    </key>
+    <key name="app-ctrl-hotkey-8" type="as">
+      <default><![CDATA[['<Ctrl><Super>8']]]></default>
+      <summary>Keybinding to launch 8th dash app</summary>
+      <description>
+        Keybinding to launch 8th app.
+      </description>
+    </key>
+    <key name="app-ctrl-hotkey-9" type="as">
+      <default><![CDATA[['<Ctrl><Super>9']]]></default>
+      <summary>Keybinding to launch 9th dash app</summary>
+      <description>
+        Keybinding to launch 9th app.
+      </description>
+    </key>
+    <key name="app-ctrl-hotkey-10" type="as">
+      <default><![CDATA[['<Ctrl><Super>0']]]></default>
+      <summary>Keybinding to launch 10th dash app</summary>
+      <description>
+        Keybinding to launch 10th app.
+      </description>
+    </key>
+    <key name="app-shift-hotkey-1" type="as">
+      <default><![CDATA[['<Shift><Super>1']]]></default>
+      <summary>Keybinding to trigger 1st dash app with shift behavior</summary>
+      <description>
+        Keybinding to trigger 1st app with shift behavior.
+      </description>
+    </key>
+    <key name="app-shift-hotkey-2" type="as">
+      <default><![CDATA[['<Shift><Super>2']]]></default>
+      <summary>Keybinding to trigger 2nd dash app with shift behavior</summary>
+      <description>
+        Keybinding to trigger 2nd app with shift behavior.
+      </description>
+    </key>
+    <key name="app-shift-hotkey-3" type="as">
+      <default><![CDATA[['<Shift><Super>3']]]></default>
+      <summary>Keybinding to trigger 3rd dash app with shift behavior</summary>
+      <description>
+        Keybinding to trigger 3rd app with shift behavior.
+      </description>
+    </key>
+    <key name="app-shift-hotkey-4" type="as">
+      <default><![CDATA[['<Shift><Super>4']]]></default>
+      <summary>Keybinding to trigger 4th dash app with shift behavior</summary>
+      <description>
+        Keybinding to trigger 4th app with shift behavior.
+      </description>
+    </key>
+    <key name="app-shift-hotkey-5" type="as">
+      <default><![CDATA[['<Shift><Super>5']]]></default>
+      <summary>Keybinding to trigger 5th dash app with shift behavior</summary>
+      <description>
+        Keybinding to trigger 5th app with shift behavior.
+      </description>
+    </key>
+    <key name="app-shift-hotkey-6" type="as">
+      <default><![CDATA[['<Shift><Super>6']]]></default>
+      <summary>Keybinding to trigger 6th dash app with shift behavior</summary>
+      <description>
+        Keybinding to trigger 6th app with shift behavior.
+      </description>
+    </key>
+    <key name="app-shift-hotkey-7" type="as">
+      <default><![CDATA[['<Shift><Super>7']]]></default>
+      <summary>Keybinding to trigger 7th dash app with shift behavior</summary>
+      <description>
+        Keybinding to trigger 7th app with shift behavior.
+      </description>
+    </key>
+    <key name="app-shift-hotkey-8" type="as">
+      <default><![CDATA[['<Shift><Super>8']]]></default>
+      <summary>Keybinding to trigger 8th dash app with shift behavior</summary>
+      <description>
+        Keybinding to trigger 8th app with shift behavior.
+      </description>
+    </key>
+    <key name="app-shift-hotkey-9" type="as">
+      <default><![CDATA[['<Shift><Super>9']]]></default>
+      <summary>Keybinding to trigger 9th dash app with shift behavior</summary>
+      <description>
+        Keybinding to trigger 9th app with shift behavior.
+      </description>
+    </key>
+    <key name="app-shift-hotkey-10" type="as">
+      <default><![CDATA[['<Shift><Super>0']]]></default>
+      <summary>Keybinding to trigger 10th dash app with shift behavior</summary>
+      <description>
+        Keybinding to trigger 10th app with shift behavior.
+      </description>
+    </key>
+    <key name="app-hotkey-1" type="as">
+      <default><![CDATA[['<Super>1']]]></default>
+      <summary>Keybinding to trigger 1st dash app</summary>
+      <description>
+        Keybinding to either show or launch the 1st application in the dash.
+      </description>
+    </key>
+    <key name="app-hotkey-2" type="as">
+      <default><![CDATA[['<Super>2']]]></default>
+      <summary>Keybinding to trigger 2nd dash app</summary>
+      <description>
+        Keybinding to either show or launch the 2nd application in the dash.
+      </description>
+    </key>
+    <key name="app-hotkey-3" type="as">
+      <default><![CDATA[['<Super>3']]]></default>
+      <summary>Keybinding to trigger 3rd dash app</summary>
+      <description>
+        Keybinding to either show or launch the 3rd application in the dash.
+      </description>
+    </key>
+    <key name="app-hotkey-4" type="as">
+      <default><![CDATA[['<Super>4']]]></default>
+      <summary>Keybinding to trigger 4th dash app</summary>
+      <description>
+        Keybinding to either show or launch the 4th application in the dash.
+      </description>
+    </key>
+    <key name="app-hotkey-5" type="as">
+      <default><![CDATA[['<Super>5']]]></default>
+      <summary>Keybinding to trigger 5th dash app</summary>
+      <description>
+        Keybinding to either show or launch the 5th application in the dash.
+      </description>
+    </key>
+    <key name="app-hotkey-6" type="as">
+      <default><![CDATA[['<Super>6']]]></default>
+      <summary>Keybinding to trigger 6th dash app</summary>
+      <description>
+        Keybinding to either show or launch the 6th application in the dash.
+      </description>
+    </key>
+    <key name="app-hotkey-7" type="as">
+      <default><![CDATA[['<Super>7']]]></default>
+      <summary>Keybinding to trigger 7th dash app</summary>
+      <description>
+        Keybinding to either show or launch the 7th application in the dash.
+      </description>
+    </key>
+    <key name="app-hotkey-8" type="as">
+      <default><![CDATA[['<Super>8']]]></default>
+      <summary>Keybinding to trigger 8th dash app</summary>
+      <description>
+        Keybinding to either show or launch the 8th application in the dash.
+      </description>
+    </key>
+    <key name="app-hotkey-9" type="as">
+      <default><![CDATA[['<Super>9']]]></default>
+      <summary>Keybinding to trigger 9th dash app</summary>
+      <description>
+        Keybinding to either show or launch the 9th application in the dash.
+      </description>
+    </key>
+    <key name="app-hotkey-10" type="as">
+      <default><![CDATA[['<Super>0']]]></default>
+      <summary>Keybinding to trigger 10th dash app</summary>
+      <description>
+        Keybinding to either show or launch the 10th application in the dash.
+      </description>
+    </key>
+    <key name="app-ctrl-hotkey-kp-1" type="as">
+      <default><![CDATA[['<Ctrl><Super>KP_1']]]></default>
+      <summary>Keybinding to launch 1st dash app</summary>
+      <description>
+        Keybinding to launch 1st app.
+      </description>
+    </key>
+    <key name="app-ctrl-hotkey-kp-2" type="as">
+      <default><![CDATA[['<Ctrl><Super>KP_2']]]></default>
+      <summary>Keybinding to launch 2nd dash app</summary>
+      <description>
+        Keybinding to launch 2nd app.
+      </description>
+    </key>
+    <key name="app-ctrl-hotkey-kp-3" type="as">
+      <default><![CDATA[['<Ctrl><Super>KP_3']]]></default>
+      <summary>Keybinding to launch 3rd dash app</summary>
+      <description>
+        Keybinding to launch 3rd app.
+      </description>
+    </key>
+    <key name="app-ctrl-hotkey-kp-4" type="as">
+      <default><![CDATA[['<Ctrl><Super>KP_4']]]></default>
+      <summary>Keybinding to launch 4th dash app</summary>
+      <description>
+        Keybinding to launch 4th app.
+      </description>
+    </key>
+    <key name="app-ctrl-hotkey-kp-5" type="as">
+      <default><![CDATA[['<Ctrl><Super>KP_5']]]></default>
+      <summary>Keybinding to launch 5th dash app</summary>
+      <description>
+        Keybinding to launch 5th app.
+      </description>
+    </key>
+    <key name="app-ctrl-hotkey-kp-6" type="as">
+      <default><![CDATA[['<Ctrl><Super>KP_6']]]></default>
+      <summary>Keybinding to launch 6th dash app</summary>
+      <description>
+        Keybinding to launch 6th app.
+      </description>
+    </key>
+    <key name="app-ctrl-hotkey-kp-7" type="as">
+      <default><![CDATA[['<Ctrl><Super>KP_7']]]></default>
+      <summary>Keybinding to launch 7th dash app</summary>
+      <description>
+        Keybinding to launch 7th app.
+      </description>
+    </key>
+    <key name="app-ctrl-hotkey-kp-8" type="as">
+      <default><![CDATA[['<Ctrl><Super>KP_8']]]></default>
+      <summary>Keybinding to launch 8th dash app</summary>
+      <description>
+        Keybinding to launch 8th app.
+      </description>
+    </key>
+    <key name="app-ctrl-hotkey-kp-9" type="as">
+      <default><![CDATA[['<Ctrl><Super>KP_9']]]></default>
+      <summary>Keybinding to launch 9th dash app</summary>
+      <description>
+        Keybinding to launch 9th app.
+      </description>
+    </key>
+    <key name="app-ctrl-hotkey-kp-10" type="as">
+      <default><![CDATA[['<Ctrl><Super>KP_0']]]></default>
+      <summary>Keybinding to launch 10th dash app</summary>
+      <description>
+        Keybinding to launch 10th app.
+      </description>
+    </key>
+    <key name="app-shift-hotkey-kp-1" type="as">
+      <default><![CDATA[['<Shift><Super>KP_1']]]></default>
+      <summary>Keybinding to trigger 1st dash app with shift behavior</summary>
+      <description>
+        Keybinding to trigger 1st app with shift behavior.
+      </description>
+    </key>
+    <key name="app-shift-hotkey-kp-2" type="as">
+      <default><![CDATA[['<Shift><Super>KP_2']]]></default>
+      <summary>Keybinding to trigger 2nd dash app with shift behavior</summary>
+      <description>
+        Keybinding to trigger 2nd app with shift behavior.
+      </description>
+    </key>
+    <key name="app-shift-hotkey-kp-3" type="as">
+      <default><![CDATA[['<Shift><Super>KP_3']]]></default>
+      <summary>Keybinding to trigger 3rd dash app with shift behavior</summary>
+      <description>
+        Keybinding to trigger 3rd app with shift behavior.
+      </description>
+    </key>
+    <key name="app-shift-hotkey-kp-4" type="as">
+      <default><![CDATA[['<Shift><Super>KP_4']]]></default>
+      <summary>Keybinding to trigger 4th dash app with shift behavior</summary>
+      <description>
+        Keybinding to trigger 4th app with shift behavior.
+      </description>
+    </key>
+    <key name="app-shift-hotkey-kp-5" type="as">
+      <default><![CDATA[['<Shift><Super>KP_5']]]></default>
+      <summary>Keybinding to trigger 5th dash app with shift behavior</summary>
+      <description>
+        Keybinding to trigger 5th app with shift behavior.
+      </description>
+    </key>
+    <key name="app-shift-hotkey-kp-6" type="as">
+      <default><![CDATA[['<Shift><Super>KP_6']]]></default>
+      <summary>Keybinding to trigger 6th dash app with shift behavior</summary>
+      <description>
+        Keybinding to trigger 6th app with shift behavior.
+      </description>
+    </key>
+    <key name="app-shift-hotkey-kp-7" type="as">
+      <default><![CDATA[['<Shift><Super>KP_7']]]></default>
+      <summary>Keybinding to trigger 7th dash app with shift behavior</summary>
+      <description>
+        Keybinding to trigger 7th app with shift behavior.
+      </description>
+    </key>
+    <key name="app-shift-hotkey-kp-8" type="as">
+      <default><![CDATA[['<Shift><Super>KP_8']]]></default>
+      <summary>Keybinding to trigger 8th dash app with shift behavior</summary>
+      <description>
+        Keybinding to trigger 8th app with shift behavior.
+      </description>
+    </key>
+    <key name="app-shift-hotkey-kp-9" type="as">
+      <default><![CDATA[['<Shift><Super>KP_9']]]></default>
+      <summary>Keybinding to trigger 9th dash app with shift behavior</summary>
+      <description>
+        Keybinding to trigger 9th app with shift behavior.
+      </description>
+    </key>
+    <key name="app-shift-hotkey-kp-10" type="as">
+      <default><![CDATA[['<Shift><Super>KP_0']]]></default>
+      <summary>Keybinding to trigger 10th dash app with shift behavior</summary>
+      <description>
+        Keybinding to trigger 10th app with shift behavior.
+      </description>
+    </key>
+    <key name="app-hotkey-kp-1" type="as">
+      <default><![CDATA[['<Super>KP_1']]]></default>
+      <summary>Keybinding to trigger 1st dash app</summary>
+      <description>
+        Keybinding to either show or launch the 1st application in the dash.
+      </description>
+    </key>
+    <key name="app-hotkey-kp-2" type="as">
+      <default><![CDATA[['<Super>KP_2']]]></default>
+      <summary>Keybinding to trigger 2nd dash app</summary>
+      <description>
+        Keybinding to either show or launch the 2nd application in the dash.
+      </description>
+    </key>
+    <key name="app-hotkey-kp-3" type="as">
+      <default><![CDATA[['<Super>KP_3']]]></default>
+      <summary>Keybinding to trigger 3rd dash app</summary>
+      <description>
+        Keybinding to either show or launch the 3rd application in the dash.
+      </description>
+    </key>
+    <key name="app-hotkey-kp-4" type="as">
+      <default><![CDATA[['<Super>KP_4']]]></default>
+      <summary>Keybinding to trigger 4th dash app</summary>
+      <description>
+        Keybinding to either show or launch the 4th application in the dash.
+      </description>
+    </key>
+    <key name="app-hotkey-kp-5" type="as">
+      <default><![CDATA[['<Super>KP_5']]]></default>
+      <summary>Keybinding to trigger 5th dash app</summary>
+      <description>
+        Keybinding to either show or launch the 5th application in the dash.
+      </description>
+    </key>
+    <key name="app-hotkey-kp-6" type="as">
+      <default><![CDATA[['<Super>KP_6']]]></default>
+      <summary>Keybinding to trigger 6th dash app</summary>
+      <description>
+        Keybinding to either show or launch the 6th application in the dash.
+      </description>
+    </key>
+    <key name="app-hotkey-kp-7" type="as">
+      <default><![CDATA[['<Super>KP_7']]]></default>
+      <summary>Keybinding to trigger 7th dash app</summary>
+      <description>
+        Keybinding to either show or launch the 7th application in the dash.
+      </description>
+    </key>
+    <key name="app-hotkey-kp-8" type="as">
+      <default><![CDATA[['<Super>KP_8']]]></default>
+      <summary>Keybinding to trigger 8th dash app</summary>
+      <description>
+        Keybinding to either show or launch the 8th application in the dash.
+      </description>
+    </key>
+    <key name="app-hotkey-kp-9" type="as">
+      <default><![CDATA[['<Super>KP_9']]]></default>
+      <summary>Keybinding to trigger 9th dash app</summary>
+      <description>
+        Keybinding to either show or launch the 9th application in the dash.
+      </description>
+    </key>
+    <key name="app-hotkey-kp-10" type="as">
+      <default><![CDATA[['<Super>KP_0']]]></default>
+      <summary>Keybinding to trigger 10th dash app</summary>
+      <description>
+        Keybinding to either show or launch the 10th application in the dash.
+      </description>
+    </key>
+     <key type="b" name="progress-show-bar">
+      <default>true</default>
+      <summary>Show progress bar on app icon</summary>
+      <description>Whether to show progress bar overlay on app icon, for supported applications.</description>
+    </key>
+    <key type="b" name="progress-show-count">
+      <default>true</default>
+      <summary>Show badge count on app icon</summary>
+      <description>Whether to show badge count overlay on app icon, for supported applications.</description>
+    </key>
+  </schema>
+</schemalist>

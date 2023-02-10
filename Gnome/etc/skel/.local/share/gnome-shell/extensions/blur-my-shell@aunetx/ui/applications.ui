@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface domain="blur-my-shell@aunetx">
+  <template class="Applications" parent="AdwPreferencesPage">
+    <property name="name">applications</property>
+    <property name="title" translatable="yes">Applications</property>
+    <property name="icon-name">applications-symbolic</property>
+
+    <child>
+      <object class="AdwPreferencesGroup">
+        <property name="title" translatable="yes">Applications blur (beta)</property>
+        <property name="description" translatable="yes">Adds blur to the applications. This is still beta functionality.
+To get the best results possible, make sure to choose the option “No artifact” in the “General → Hack level” preference.
+        </property>
+        <property name="header-suffix">
+          <object class="GtkSwitch" id="blur">
+            <property name="valign">center</property>
+          </object>
+        </property>
+
+        <child>
+          <object class="CustomizeRow" id="customize">
+            <property name="sensitive" bind-source="blur" bind-property="state" bind-flags="sync-create" />
+          </object>
+        </child>
+
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Opacity</property>
+            <property name="subtitle" translatable="yes">The opacity of the window on top of the blur effect, a higher value will be more legible.</property>
+            <property name="activatable-widget">opacity</property>
+            <property name="sensitive" bind-source="blur" bind-property="state" bind-flags="sync-create" />
+
+            <child>
+              <object class="GtkScale" id="opacity_scale">
+                <property name="valign">center</property>
+                <property name="hexpand">true</property>
+                <property name="width-request">200px</property>
+                <property name="draw-value">true</property>
+                <property name="value-pos">right</property>
+                <property name="orientation">horizontal</property>
+                <property name="digits">0</property>
+                <property name="adjustment">opacity</property>
+              </object>
+            </child>
+          </object>
+        </child>
+
+
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Blur on overview</property>
+            <property name="subtitle" translatable="yes">Forces the blur to be properly shown on all workspaces on overview.
+This may cause some latency or performance issues.</property>
+            <property name="activatable-widget">blur_on_overview</property>
+            <property name="sensitive" bind-source="blur" bind-property="state" bind-flags="sync-create" />
+
+            <child>
+              <object class="GtkSwitch" id="blur_on_overview">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Enable all by default</property>
+            <property name="subtitle" translatable="yes">Adds blur behind all windows by default.
+Not recommended because of performance and stability issues.</property>
+            <property name="activatable-widget">enable_all</property>
+            <property name="sensitive" bind-source="blur" bind-property="state" bind-flags="sync-create" />
+
+            <child>
+              <object class="GtkSwitch" id="enable_all">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+
+    <child>
+      <object class="AdwPreferencesGroup" id="whitelist">
+        <property name="title" translatable="yes">Whitelist</property>
+        <property name="description" translatable="yes">A list of windows to blur.</property>
+        <property name="sensitive" bind-source="blur" bind-property="state" bind-flags="sync-create" />
+        <property name="header-suffix">
+          <object class="GtkButton" id="add_window_whitelist">
+            <property name="halign">start</property>
+            <property name="valign">center</property>
+            <child>
+              <object class="GtkBox">
+                <property name="margin-start">12</property>
+                <property name="margin-end">12</property>
+                <child>
+                  <object class="GtkImage">
+                    <property name="margin-end">6</property>
+                    <property name="icon-name">add-window-symbolic</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label" translatable="yes">Add Window</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <style>
+              <class name="circular" />
+              <class name="suggested-action" />
+            </style>
+          </object>
+        </property>
+
+        <!-- WINDOW ROW WIDGETS GO HERE -->
+      </object>
+    </child>
+
+    <child>
+      <object class="AdwPreferencesGroup" id="blacklist">
+        <property name="title" translatable="yes">Blacklist</property>
+        <property name="description" translatable="yes">A list of windows not to blur.</property>
+        <property name="sensitive" bind-source="blur" bind-property="state" bind-flags="sync-create" />
+        <property name="header-suffix">
+          <object class="GtkButton" id="add_window_blacklist">
+            <property name="halign">start</property>
+            <property name="valign">center</property>
+            <child>
+              <object class="GtkBox">
+                <property name="margin-start">12</property>
+                <property name="margin-end">12</property>
+                <child>
+                  <object class="GtkImage">
+                    <property name="margin-end">6</property>
+                    <property name="icon-name">list-add-symbolic</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label" translatable="yes">Add Window</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <style>
+              <class name="circular" />
+              <class name="suggested-action" />
+            </style>
+          </object>
+        </property>
+
+        <!-- WINDOW ROW WIDGETS GO HERE -->
+      </object>
+    </child>
+  </template>
+
+  <object class="GtkAdjustment" id="opacity">
+    <property name="lower">25</property>
+    <property name="upper">255</property>
+    <property name="step-increment">1</property>
+  </object>
+</interface>

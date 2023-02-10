@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface domain="blur-my-shell@aunetx">
+  <template class="Other" parent="AdwPreferencesPage">
+    <property name="name">other</property>
+    <property name="title" translatable="yes">Other</property>
+    <property name="icon-name">other-symbolic</property>
+
+    <child>
+      <object class="AdwPreferencesGroup">
+        <property name="title" translatable="yes">Lockscreen blur</property>
+        <property name="description" translatable="yes">Change the blur of the lockscreen to use this extension's preferences.</property>
+        <property name="header-suffix">
+          <object class="GtkSwitch" id="lockscreen_blur">
+            <property name="valign">center</property>
+          </object>
+        </property>
+
+        <child>
+          <object class="CustomizeRow" id="lockscreen_customize">
+            <property name="sensitive" bind-source="lockscreen_blur" bind-property="state" bind-flags="sync-create" />
+          </object>
+        </child>
+      </object>
+    </child>
+
+    <child>
+      <object class="AdwPreferencesGroup">
+        <property name="title" translatable="yes">Screenshot blur</property>
+        <property name="description" translatable="yes">Add blur to the background of the window selector in the screenshot UI.</property>
+        <property name="header-suffix">
+          <object class="GtkSwitch" id="screenshot_blur">
+            <property name="valign">center</property>
+          </object>
+        </property>
+
+        <child>
+          <object class="CustomizeRow" id="screenshot_customize">
+            <property name="sensitive" bind-source="screenshot_blur" bind-property="state" bind-flags="sync-create" />
+          </object>
+        </child>
+      </object>
+    </child>
+
+    <child>
+      <object class="AdwPreferencesGroup">
+        <property name="title" translatable="yes">Window list extension blur</property>
+        <property name="description" translatable="yes">Make the window-list extension blurred, if it is used.</property>
+        <property name="header-suffix">
+          <object class="GtkSwitch" id="window_list_blur">
+            <property name="valign">center</property>
+          </object>
+        </property>
+
+        <child>
+          <object class="CustomizeRow" id="window_list_customize">
+            <property name="sensitive" bind-source="window_list_blur" bind-property="state" bind-flags="sync-create" />
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

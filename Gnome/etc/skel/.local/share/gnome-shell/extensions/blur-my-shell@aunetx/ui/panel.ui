@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface domain="blur-my-shell@aunetx">
+  <template class="Panel" parent="AdwPreferencesPage">
+    <property name="name">panel</property>
+    <property name="title" translatable="yes">Panel</property>
+    <property name="icon-name">bottom-panel-symbolic</property>
+
+    <child>
+      <object class="AdwPreferencesGroup">
+        <property name="title" translatable="yes">Panel blur</property>
+        <property name="description" translatable="yes">Blur the top panel using the background image.</property>
+        <property name="header-suffix">
+          <object class="GtkSwitch" id="blur">
+            <property name="valign">center</property>
+          </object>
+        </property>
+
+        <child>
+          <object class="CustomizeRow" id="customize">
+            <property name="sensitive" bind-source="blur" bind-property="state" bind-flags="sync-create" />
+          </object>
+        </child>
+
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Static blur</property>
+            <property name="subtitle" translatable="yes">Uses a static blurred image, more performant and stable.</property>
+            <property name="activatable-widget">static_blur</property>
+            <property name="sensitive" bind-source="blur" bind-property="state" bind-flags="sync-create" />
+
+            <child>
+              <object class="GtkSwitch" id="static_blur">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Disable in overview</property>
+            <property name="subtitle" translatable="yes">Disables the blur from the panel when entering the overview.</property>
+            <property name="activatable-widget">unblur_in_overview</property>
+            <property name="sensitive" bind-source="blur" bind-property="state" bind-flags="sync-create" />
+
+            <child>
+              <object class="GtkSwitch" id="unblur_in_overview">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+
+        <child>
+          <object class="AdwExpanderRow" id="override_background">
+            <property name="title" translatable="yes">Override background</property>
+            <property name="subtitle" translatable="yes">Override the background of the panel to use a transparent or semi-transparent one.
+Recommended unless you want to customize your GNOME theme.</property>
+            <property name="show-enable-switch">true</property>
+            <property name="sensitive" bind-source="blur" bind-property="state" bind-flags="sync-create" />
+
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Background style</property>
+                <property name="subtitle" translatable="yes">The transparent/semi-transparent style for the panel background.</property>
+                <property name="activatable-widget">style_panel</property>
+
+                <child>
+                  <object class="GtkDropDown" id="style_panel">
+                    <property name="valign">center</property>
+                    <property name="model">style_panel_model</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Disable when a window is near</property>
+                <property name="subtitle" translatable="yes">Disables the transparency of the panel when a window is near it.</property>
+                <property name="activatable-widget">override_background_dynamically</property>
+
+                <child>
+                  <object class="GtkSwitch" id="override_background_dynamically">
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+
+    <child>
+      <object class="AdwPreferencesGroup">
+        <property name="title" translatable="yes">Compatibility</property>
+        <property name="description" translatable="yes">Various options to provide compatibility with other extensions.</property>
+        <property name="sensitive" bind-source="blur" bind-property="state" bind-flags="sync-create" />
+
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Hidetopbar extension</property>
+            <property name="subtitle" translatable="yes">Does not disable the blur in overview, best used with static blur.</property>
+            <property name="activatable-widget">hidetopbar_compatibility</property>
+            <property name="sensitive" bind-source="unblur_in_overview" bind-property="state" bind-flags="sync-create" />
+
+            <child>
+              <object class="GtkSwitch" id="hidetopbar_compatibility">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+
+  <object class="GtkStringList" id="style_panel_model">
+    <items>
+      <item translatable="yes">Transparent</item>
+      <item translatable="yes">Light</item>
+      <item translatable="yes">Dark</item>
+    </items>
+  </object>
+</interface>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   inkscape:version="1.0 (4035a4fb49, 2020-05-01)"
+   sodipodi:docname="equal-symbolic.svg"
+   width="64"
+   height="64"
+   version="1.1"
+   id="svg24">
+  <sodipodi:namedview
+     inkscape:document-rotation="0"
+     inkscape:current-layer="svg24"
+     inkscape:window-maximized="1"
+     inkscape:window-y="40"
+     inkscape:window-x="0"
+     inkscape:cy="32"
+     inkscape:cx="-17.084746"
+     inkscape:zoom="3.6875"
+     showgrid="false"
+     id="namedview950"
+     inkscape:window-height="898"
+     inkscape:window-width="1920"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0"
+     guidetolerance="10"
+     gridtolerance="10"
+     objecttolerance="10"
+     borderopacity="1"
+     bordercolor="#666666"
+     pagecolor="#ffffff" />
+  <metadata
+     id="metadata30">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs28" />
+  <g
+     id="g840"
+     style="fill:#cccccc"
+     transform="matrix(1.4249304,0,0,1.4249304,-2.1913721,-2.1983296)">
+    <path
+       id="path2-8"
+       d="m 25.480469,4 c -5.2381,0 -9.484375,3.4776 -9.484375,9 0,5.5224 4.5976,8.643 9,10 4.3046,1.3268 9.96875,5.4776 9.96875,11 0,5.5224 -4.246275,10 -9.484375,10 10.225,0 18.515625,-8.9552 18.515625,-20 0,-11.0448 -8.290325,-20 -18.515625,-20 z M 26,10 a 4,4 0 0 1 4,4 4,4 0 0 1 -4,4 4,4 0 0 1 -4,-4 4,4 0 0 1 4,-4 z"
+       style="fill:#cccccc" />
+    <path
+       id="path4"
+       d="m 22.509766,4 c -10.225,0 -18.5156254,8.955 -18.5156254,20 0,11.045 8.2903254,20 18.5156254,20 5.2381,0 9.484375,-3.4776 9.484375,-9 0,-5.5224 -4.5976,-8.643 -9,-10 -4.3046,-1.3268 -9.96875,-5.4776 -9.96875,-11 0,-5.5224 4.246275,-10 9.484375,-10 z M 22,32 a 4,4 0 0 1 4,4 4,4 0 0 1 -4,4 4,4 0 0 1 -4,-4 4,4 0 0 1 4,-4 z"
+       style="fill:#cccccc" />
+    <g
+       id="g10"
+       transform="translate(-310.29,-250.22)"
+       style="opacity:0.2;fill:#cccccc" />
+  </g>
+</svg>

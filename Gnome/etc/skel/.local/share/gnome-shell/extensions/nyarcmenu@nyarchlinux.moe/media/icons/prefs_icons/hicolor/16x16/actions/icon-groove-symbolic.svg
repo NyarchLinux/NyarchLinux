@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   inkscape:version="1.0 (4035a4fb49, 2020-05-01)"
+   sodipodi:docname="groove-symbolic.svg"
+   width="64"
+   height="64"
+   version="1.1"
+   id="svg24">
+  <sodipodi:namedview
+     inkscape:document-rotation="0"
+     inkscape:current-layer="svg24"
+     inkscape:window-maximized="1"
+     inkscape:window-y="40"
+     inkscape:window-x="0"
+     inkscape:cy="32"
+     inkscape:cx="-17.084746"
+     inkscape:zoom="3.6875"
+     showgrid="false"
+     id="namedview949"
+     inkscape:window-height="898"
+     inkscape:window-width="1920"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0"
+     guidetolerance="10"
+     gridtolerance="10"
+     objecttolerance="10"
+     borderopacity="1"
+     bordercolor="#666666"
+     pagecolor="#ffffff" />
+  <metadata
+     id="metadata30">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs28" />
+  <g
+     id="g3472"
+     transform="matrix(1.425,0,0,1.425,-2.2,-2.2)">
+    <path
+       style="fill:#cccccc"
+       d="M 24,4 C 12.92,4 4,12.92 4,24 4,35.08 12.92,44 24,44 35.08,44 44,35.08 44,24 44,12.92 35.08,4 24,4 Z m 0.572266,6.005859 a 14,14 0 0 1 7.794922,2.775391 l -2.140626,2.140625 a 11,11 0 0 0 -14.007812,1.28125 11,11 0 0 0 0,15.554687 11,11 0 0 0 15.556641,0 11,11 0 0 0 2.578125,-11.423828 l -4.148438,2.394532 -2,-3.462891 6.927734,-4 0.02344,0.382813 0.04102,-0.04102 a 14,14 0 0 1 -1.300782,18.273437 14,14 0 0 1 -19.798828,0 14,14 0 0 1 0,-19.800781 14,14 0 0 1 10.47461,-4.074219 z"
+       id="rect2" />
+    <g
+       id="g22"
+       transform="rotate(-30,23.998652,23.981918)"
+       style="fill:#71c1ff" />
+  </g>
+</svg>

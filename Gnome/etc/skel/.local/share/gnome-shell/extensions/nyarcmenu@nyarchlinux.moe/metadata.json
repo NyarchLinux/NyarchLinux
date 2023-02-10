@@ -1,0 +1,11 @@
+{
+"extension-id": "nyarcmenu",
+"uuid": "nyarcmenu@nyarchlinux.moe",
+"settings-schema": "org.gnome.shell.extensions.nyarcmenu",
+"gettext-domain": "nyarcmenu",
+"name": "NyArcMenu",
+"description": "Fork of ArcMenu, Application Menu Extension for GNOME",
+"version": 43,
+"shell-version": [ "42", "43" ],
+"url": "https://gitlab.com/arcmenu/ArcMenu"
+}

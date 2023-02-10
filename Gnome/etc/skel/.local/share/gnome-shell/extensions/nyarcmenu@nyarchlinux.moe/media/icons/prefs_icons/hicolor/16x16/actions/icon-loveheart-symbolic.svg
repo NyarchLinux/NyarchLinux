@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   inkscape:version="1.0 (4035a4fb49, 2020-05-01)"
+   sodipodi:docname="loveheart-symbolic.svg"
+   width="64"
+   height="64"
+   version="1.1"
+   id="svg24">
+  <sodipodi:namedview
+     inkscape:document-rotation="0"
+     inkscape:current-layer="svg24"
+     inkscape:window-maximized="1"
+     inkscape:window-y="40"
+     inkscape:window-x="0"
+     inkscape:cy="32"
+     inkscape:cx="-17.084746"
+     inkscape:zoom="3.6875"
+     showgrid="false"
+     id="namedview948"
+     inkscape:window-height="898"
+     inkscape:window-width="1920"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0"
+     guidetolerance="10"
+     gridtolerance="10"
+     objecttolerance="10"
+     borderopacity="1"
+     bordercolor="#666666"
+     pagecolor="#ffffff" />
+  <metadata
+     id="metadata30">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs28" />
+  <path
+     style="fill:#cccccc;stroke-width:1.425"
+     d="M 32.000001,3.5 A 28.500001,28.500001 0 0 0 3.5,32.000001 28.500001,28.500001 0 0 0 32.000001,60.5 28.500001,28.500001 0 0 0 60.5,32.000001 28.500001,28.500001 0 0 0 32.000001,3.5 Z m 0,8.550001 a 19.95,19.95 0 0 1 19.949998,19.95 19.95,19.95 0 0 1 -19.949998,19.949998 19.95,19.95 0 0 1 -19.95,-19.949998 19.95,19.95 0 0 1 19.95,-19.95 z M 25.445558,22.025 C 21.20833,22.0265 17.75,25.208372 17.75,29.15 c 0,2.051432 0.928898,3.922003 2.418604,5.224073 L 31.807958,44.825001 43.831396,34.374073 C 45.321591,33.072571 46.25,31.202002 46.25,29.15 c 0,-3.942499 -3.459831,-7.125 -7.698341,-7.125 -2.793098,0 -5.210075,1.369921 -6.551658,3.442823 C 30.656835,23.39562 28.240246,22.025925 25.448342,22.025 Z"
+     id="circle4" />
+</svg>
