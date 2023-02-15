@@ -425,3 +425,15 @@ neofetch
 nodejs
 npm
 geary
+
+# Webapp Manager
+
+python-beautifulsoup4
+python-configobj
+python-gobject
+python-pillow
+python-setproctitle
+python-tldextract
+dconf
+xapp
+webapp-manager
