@@ -427,7 +427,6 @@ npm
 geary
 
 # Webapp Manager
-
 python-beautifulsoup4
 python-configobj
 python-gobject
@@ -437,3 +436,12 @@ python-tldextract
 dconf
 xapp
 webapp-manager
+# Appimagelauncher
+cairo
+hicolor-icon-theme
+libappimage
+libbsd
+libxpm
+qt5-base
+shared-mime-info
+appimagelauncher
