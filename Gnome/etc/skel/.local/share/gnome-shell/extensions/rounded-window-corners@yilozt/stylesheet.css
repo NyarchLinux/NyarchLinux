@@ -1,0 +1,6 @@
+.shadow {
+  box-shadow: 0px 0px 0px 0px rgba(83, 83, 83, 0.0);
+  transition-duration: 300ms;
+  transition-property: box-shadow;
+  transition-timing-function: linear;
+}

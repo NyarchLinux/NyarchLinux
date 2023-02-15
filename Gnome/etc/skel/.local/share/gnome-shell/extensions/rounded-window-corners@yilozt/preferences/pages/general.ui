@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.0" />
+  <template class="RoundedWindowCornersPrefsGeneral" parent="GtkBox">
+    <property name="orientation">vertical</property>
+    <property name="spacing">12</property>
+    <child>
+      <object class="GtkLabel">
+        <property name="halign">start</property>
+        <property name="label" translatable="yes">Applications</property>
+        <style>
+          <class name="heading" />
+        </style>
+      </object>
+    </child>
+    <child>
+      <object class="GtkLabel">
+        <property name="wrap">true</property>
+        <property name="xalign">0</property>
+        <property name="wrap-mode">word-char</property>
+        <property name="max-width-chars">25</property>
+        <property name="halign">fill</property>
+        <property name="label" translatable="yes">Some applications written using LibAdwaita or LibHandy already have native rounded corners, so we can skip them through these settings</property>
+        <style>
+          <class name="caption" />
+        </style>
+      </object>
+    </child>
+    <child>
+      <object class="GtkListBox" id="applications_group">
+        <property name="selection-mode">none</property>
+        <style>
+          <class name="frame"></class>
+        </style>
+        <child>
+          <object class="GtkListBoxRow">
+            <child>
+              <object class="GtkBox">
+                <child>
+                  <object class="GtkBox">
+                    <property name="valign">center</property>
+                    <property name="hexpand">true</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="halign">start</property>
+                        <property name="label" translatable="yes">Skip LibAdwaita Applications</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSwitch" id="skip_libadwaita_app_switch">
+                    <property name="visible">true</property>
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkListBoxRow">
+            <child>
+              <object class="GtkBox">
+                <child>
+                  <object class="GtkBox">
+                    <property name="valign">center</property>
+                    <property name="hexpand">true</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="halign">start</property>
+                        <property name="label" translatable="yes">Skip LibHandy Applications</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSwitch" id="skip_libhandy_app_switch">
+                    <property name="visible">true</property>
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkListBoxRow" id="edit_shadow_row">
+            <child>
+              <object class="GtkBox">
+                <child>
+                  <object class="GtkBox">
+                    <property name="valign">center</property>
+                    <property name="hexpand">true</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="halign">start</property>
+                        <property name="label" translatable="yes">Window Shadow</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="halign">start</property>
+                        <property name="label" translatable="yes">Customize the shadow of the rounded corner window</property>
+                        <style>
+                          <class name="caption"/>
+                        </style>  
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkImage">
+                    <property name="icon_name">go-next-symbolic</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <style>
+          <class name="rich-list" />
+        </style>
+      </object>
+    </child>
+    <child>
+      <object class="GtkLabel">
+        <property name="halign">start</property>
+        <property name="label" translatable="yes">Global Settings</property>
+        <style>
+          <class name="heading" />
+        </style>
+      </object>
+    </child>
+    <child>
+      <object class="GtkLabel">
+        <property name="halign">start</property>
+        <property name="wrap">true</property>
+        <property name="xalign">0</property>
+        <property name="label" translatable="yes">This settings will try to effects all windows</property>
+        <style>
+          <class name="caption" />
+        </style>
+      </object>
+    </child>
+    <child>
+      <object class="GtkListBox" id="global_settings_preferences_group">
+        <property name="selection-mode">none</property>
+        <style>
+          <class name="frame"></class>
+          <class name="rich-list" />
+        </style>
+        <child>
+          <object class="GtkListBoxRow">
+            <child>
+              <object class="GtkBox">
+                <child>
+                  <object class="GtkBox">
+                    <property name="valign">center</property>
+                    <property name="hexpand">true</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="halign">start</property>
+                        <property name="label" translatable="yes">Border Width</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkScale" id="border_width_scale">
+                    <property name="visible">true</property>
+                    <property name="valign">center</property>
+                    <property name="width-request">280</property>
+                    <property name="draw-value">true</property>
+                    <property name="round-digits">0</property>
+                    <property name="orientation">horizontal</property>
+                    <property name="adjustment">border_width_ajustment</property>
+                    <property name="value-pos">right</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkListBoxRow">
+            <child>
+              <object class="GtkBox">
+                <child>
+                  <object class="GtkBox">
+                    <property name="valign">center</property>
+                    <property name="hexpand">true</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="halign">start</property>
+                        <property name="label" translatable="yes">Border Color</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkColorButton" id="border_color_button">
+                    <property name="visible">true</property>
+                    <property name="valign">center</property>
+                    <property name="use-alpha">true</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkLabel">
+        <property name="halign">start</property>
+        <property name="label" translatable="yes">Tweaks</property>
+        <style>
+          <class name="heading" />
+        </style>
+      </object>
+    </child>
+    <child>
+      <object class="GtkListBox">
+        <property name="selection-mode">none</property>
+        <style>
+          <class name="frame"></class>
+          <class name="rich-list" />
+        </style>
+        <child>
+          <object class="GtkListBoxRow">
+            <child>
+              <object class="GtkBox">
+                <child>
+                  <object class="GtkBox">
+                    <property name="valign">center</property>
+                    <property name="hexpand">true</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="halign">start</property>
+                        <property name="label" translatable="yes">Try to add rounded corners to Kitty Terminal in Wayland</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="halign">start</property>
+                        <property name="use-markup">true</property>
+                        <property name="label" translatable="yes">Tweak clip paddings for Kitty Terminal</property>
+                        <style>
+                          <class name="caption"/>
+                        </style>  
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSwitch" id="tweak_kitty_switch">
+                    <property name="visible">true</property>
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkListBoxRow">
+            <child>
+              <object class="GtkBox">
+                <child>
+                  <object class="GtkBox">
+                    <property name="valign">center</property>
+                    <property name="hexpand">true</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="halign">start</property>
+                        <property name="label" translatable="yes">Add Settings Entry in right-click menu of Background</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSwitch" id="preferences_entry_switch">
+                    <property name="visible">true</property>
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkLabel">
+        <property name="halign">start</property>
+        <property name="label" translatable="yes">Debug</property>
+        <style>
+          <class name="heading" />
+        </style>
+      </object>
+    </child>
+    <child>
+      <object class="GtkListBox">
+        <property name="selection-mode">none</property>
+        <style>
+          <class name="frame"></class>
+          <class name="rich-list" />
+        </style>
+        <child>
+          <object class="GtkListBoxRow">
+            <child>
+              <object class="GtkBox">
+                <child>
+                  <object class="GtkBox">
+                    <property name="valign">center</property>
+                    <property name="hexpand">true</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="halign">start</property>
+                        <property name="label" translatable="yes">Enable Log</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="halign">start</property>
+                        <property name="use-markup">true</property>
+                        <property name="label" translatable="yes">Run &lt;i&gt;journalctl -o cat -f /usr/bin/gnome-shell&lt;/i&gt; in terminal to see the log</property>
+                        <style>
+                          <class name="caption"/>
+                        </style>  
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSwitch" id="enable_log_switch">
+                    <property name="visible">true</property>
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkLabel">
+        <property name="halign">start</property>
+        <property name="label" translatable="yes">Reset Preferences</property>
+        <style>
+          <class name="heading" />
+        </style>
+      </object>
+    </child>
+    <child>
+      <object class="GtkButton" id="reset_preferences_btn">
+        <property name="label" translatable="yes">Open Reset Preferences Dialog</property>
+        <property name="halign">start</property>
+        <style>
+          <class name="destructive-action"/>
+        </style>
+      </object>
+    </child>
+  </template>
+
+  <object class="GtkAdjustment" id="border_width_ajustment">
+    <property name="lower">-20</property>
+    <property name="upper">20</property>
+    <property name="page-increment">1</property>
+    <property name="step-increment">1</property>
+  </object>
+
+</interface>

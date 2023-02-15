@@ -1,0 +1,122 @@
+
+/* Device Menu
+
+PopupMenu.PopupMenuSection.gsconnect-device-section
+    PopupMenu.PopupMenuSection.gsconnect-device-menu
+        PopupMenu.PopupSeparatorMenuItem
+            StLabel.gsconnect-device-name
+            StBoxLayout.gsconnect-device-battery
+        PopupMenu.PopupMenuSection
+            StBoxLayout.gsconnect-list-box
+            StBoxLayout (Submenu Container)
+*/
+.gsconnect-device-section {
+}
+
+/* Title Bar */
+.gsconnect-device-name {
+    font-weight: bold;
+}
+
+.gsconnect-device-menu .popup-separator-menu-item {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* Battery Widget */
+.gsconnect-device-battery {
+    spacing: 3px;
+}
+
+.gsconnect-device-battery StLabel {
+    font-size: 0.75em;
+}
+
+.gsconnect-device-battery StIcon {
+    icon-size: 16px;
+}
+
+/* Signal Strength Widget */
+.gsconnect-device-signal-strength {
+    spacing: 3px;
+}
+
+.gsconnect-device-signal-strength StLabel {
+    font-size: 0.75em;
+}
+
+.gsconnect-device-signal-strength StIcon {
+    icon-size: 16px;
+}
+
+/* List Box */
+.gsconnect-list-box {
+}
+
+
+/* Device Panel Indicator
+
+PanelMenu.Button.gsconnect-device-indicator
+    PopupMenu.PopupMenu
+        PopupMenu.PopupMenuSection.gsconnect-device-menu
+            PopupMenu.PopupSeparatorMenuItem
+                StLabel.gsconnect-device-name
+                StBoxLayout.gsconnect-device-battery
+            PopupMenu.PopupMenuSection
+                StBoxLayout.gsconnect-icon-box
+                StBoxLayout (Submenu Container)
+ */
+.gsconnect-device-indicator {
+    -st-icon-style: symbolic;
+}
+
+/* Icon Box */
+.gsconnect-icon-box {
+    margin: 0em 2em 0.5em;
+    spacing: 6px;
+}
+
+.gsconnect-icon-button {
+    border-radius: 1em;
+    padding: 0.5em;
+}
+
+.gsconnect-icon-button:hover, .gsconnect-icon-button:focus {
+    background-color: rgba(255, 255, 255, 0.125);
+}
+
+.gsconnect-icon-button StIcon {
+    icon-size: 1em;
+}
+
+
+/* Tooltip
+
+StBin.gsconnect-tooltip (inherits from .osd-window)
+    StBoxLayout || [ Custom ClutterActor ]
+        StIcon
+        StLabel
+*/
+.gsconnect-tooltip {
+    border-radius: 3px;
+    min-width: 0;
+    min-height: 0;
+    padding: 6px;
+}
+
+.gsconnect-tooltip > StBoxLayout {
+    spacing: 6px;
+}
+
+.gsconnect-tooltip StIcon {
+    icon-size: 16px;
+}
+
+.gsconnect-tooltip StLabel {
+    font-weight: normal;
+    text-align: left;
+}
+
+.gsconnect-tooltip StLabel:rtl {
+    text-align: right;
+}

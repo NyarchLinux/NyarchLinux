@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.0" />
+  <template class="RoundedWindowCornersPrefsCustomPage" parent="GtkBox">
+    <property name="orientation">vertical</property>
+    <property name="spacing">12</property>
+    <child>
+      <object class="GtkLabel">
+        <property name="halign">fill</property>
+        <property name="wrap">true</property>
+        <property name="xalign">0</property>
+        <property name="wrap-mode">word-char</property>
+        <property name="max-width-chars">25</property>
+        <property name="label" translatable="yes">Setup different clip padding by add window into this list.
+
+The item of list is instance part of WM_CLASS property with window. You can pick a window to add it into this list.</property>
+        <style>
+          <class name="caption" />
+        </style>
+      </object>
+    </child>
+    <child>
+      <object class="GtkButton" id="add_row_btn">
+        <property name="halign">start</property>
+        <property name="valign">center</property>
+        <child>
+          <object class="GtkBox">
+            <property name="margin-start">12</property>
+            <property name="margin-end">12</property>
+            <child>
+              <object class="GtkImage">
+                <property name="margin-end">6</property>
+                <property name="icon-name">list-add-symbolic</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel">
+                <property translatable="yes" name="label">Add Window</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <style>
+          <class name="circular" />
+        </style>
+      </object>
+    </child>
+    <child>
+      <object class="GtkListBox" id="custom_group">
+          <property name="selection-mode">none</property>
+        <style>
+          <class name="rich-list" />
+        </style>
+      </object>
+    </child>
+  </template>
+</interface>

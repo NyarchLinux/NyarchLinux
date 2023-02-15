@@ -1,0 +1,24 @@
+.page { padding: 10px 30px; }
+.code { padding: 10px 16px;}
+.edit-win { background: #eeeeee; color: black; padding: 20px 80px; }
+.flat { background: none; border: none;}
+
+.expander_img {
+    transition: all 100ms;
+}
+
+.rotated {
+    transform: rotate(90deg);
+}
+
+.dialog-vbox {
+    padding: 48px;
+}
+
+.dialog-vbox .heading {
+    padding-bottom: 24px;
+}
+
+.dialog-vbox checkbutton {
+    padding-right: 12px;
+}

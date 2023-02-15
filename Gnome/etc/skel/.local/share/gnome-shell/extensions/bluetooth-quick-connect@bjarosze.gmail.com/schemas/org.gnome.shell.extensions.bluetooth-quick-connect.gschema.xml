@@ -1,0 +1,42 @@
+<!--
+Copyright 2018 Bartosz Jaroszewski
+SPDX-License-Identifier: GPL-2.0-or-later
+(see extension.js for details)
+-->
+<schemalist gettext-domain="bluetooth-quick-connect">
+  <schema id="org.gnome.shell.extensions.bluetooth-quick-connect"
+          path="/org/gnome/shell/extensions/bluetooth-quick-connect/">
+    <key name="bluetooth-auto-power-on" type="b">
+      <default>false</default>
+      <summary>Automatically powers on bluetooth when open menu</summary>
+    </key>
+    <key name="bluetooth-auto-power-off" type="b">
+      <default>false</default>
+      <summary>Automatically powers off bluetooth if idle</summary>
+    </key>
+    <key name="bluetooth-auto-power-off-interval" type="i">
+      <default>60</default>
+      <summary>Checking interval for power off idling bluetooth</summary>
+    </key>
+    <key name="keep-menu-on-toggle" type="b">
+      <default>false</default>
+      <summary>Keep the menu open after toggling the connection</summary>
+    </key>
+    <key name="refresh-button-on" type="b">
+      <default>false</default>
+      <summary>Show reconnect button</summary>
+    </key>
+    <key name="debug-mode-on" type="b">
+      <default>false</default>
+      <summary>Debug mode</summary>
+    </key>
+    <key name="show-battery-value-on" type="b">
+      <default>false</default>
+      <summary>Show battery level as value</summary>
+    </key>
+    <key name="show-battery-icon-on" type="b">
+      <default>true</default>
+      <summary>Show battery level as icon</summary>
+    </key>
+  </schema>
+</schemalist>

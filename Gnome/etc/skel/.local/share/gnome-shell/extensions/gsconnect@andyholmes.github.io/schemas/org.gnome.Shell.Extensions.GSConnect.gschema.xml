@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="org.gnome.Shell.Extensions.GSConnect">
+  <schema id="org.gnome.Shell.Extensions.GSConnect" path="/org/gnome/shell/extensions/gsconnect/">
+    <!-- Extension Settings -->
+    <key name="enabled" type="b">
+      <default>true</default>
+    </key>
+    <key name="show-indicators" type="b">
+      <default>false</default>
+    </key>
+
+    <!-- Service Settings -->
+    <key name="id" type="s">
+      <default>""</default>
+    </key>
+    <key name="name" type="s">
+      <default>""</default>
+    </key>
+    <key name="devices" type="as">
+      <default>[]</default>
+    </key>
+    <key name="debug" type="b">
+      <default>false</default>
+    </key>
+    <key name="discoverable" type="b">
+      <default>true</default>
+    </key>
+  </schema>
+
+  <!-- Window Geometry -->
+  <schema id="org.gnome.Shell.Extensions.GSConnect.WindowState">
+    <key name="window-size" type="(ii)">
+      <default>(0, 0)</default>
+    </key>
+    <key name="window-maximized" type="b">
+      <default>false</default>
+    </key>
+  </schema>
+
+  <!-- Device Settings -->
+  <schema id="org.gnome.Shell.Extensions.GSConnect.Device">
+    <key name="certificate-pem" type="s">
+      <default>""</default>
+    </key>
+    <key name="keybindings" type="a{ss}">
+      <default>{}</default>
+    </key>
+    <key name="menu-actions" type="as">
+      <default>["sms", "ring", "mount", "commands", "share", "photo", "keyboard"]</default>
+    </key>
+    <key name="name" type="s">
+      <default>""</default>
+    </key>
+    <key name="paired" type="b">
+      <default>false</default>
+    </key>
+    <key name="type" type="s">
+      <default>"smartphone"</default>
+    </key>
+    <key name="incoming-capabilities" type="as">
+      <default>[]</default>
+    </key>
+    <key name="outgoing-capabilities" type="as">
+      <default>[]</default>
+    </key>
+    <key name="disabled-plugins" type="as">
+      <default>[]</default>
+    </key>
+    <key name="supported-plugins" type="as">
+      <default>[]</default>
+    </key>
+    <key name="last-connection" type="s">
+      <default>""</default>
+    </key>
+  </schema>
+
+  <schema id="org.gnome.Shell.Extensions.GSConnect.Plugin.Battery">
+    <key name="send-statistics" type="b">
+      <default>false</default>
+    </key>
+    <key name="low-battery-notification" type="b">
+      <default>true</default>
+    </key>
+    <key name="custom-battery-notification" type="b">
+      <default>false</default>
+      <summary>Enables custom battery notification</summary>
+    </key>
+    <key name="custom-battery-notification-value" type="u">
+      <range min="1" max="99"></range>
+      <default>80</default>
+    </key>
+    <key name="full-battery-notification" type="b">
+      <default>false</default>
+    </key>
+  </schema>
+  <schema id="org.gnome.Shell.Extensions.GSConnect.Plugin.Clipboard">
+    <key name="receive-content" type="b">
+      <default>false</default>
+    </key>
+    <key name="send-content" type="b">
+      <default>false</default>
+    </key>
+  </schema>
+  <schema id="org.gnome.Shell.Extensions.GSConnect.Plugin.Contacts">
+    <key name="contacts-source" type="b">
+      <default>true</default>
+    </key>
+  </schema>
+  <schema id="org.gnome.Shell.Extensions.GSConnect.Plugin.FindMyPhone"/>
+  <schema id="org.gnome.Shell.Extensions.GSConnect.Plugin.Mousepad">
+    <key name="share-control" type="b">
+      <default>true</default>
+    </key>
+  </schema>
+  <schema id="org.gnome.Shell.Extensions.GSConnect.Plugin.MPRIS">
+    <key name="share-players" type="b">
+      <default>true</default>
+    </key>
+  </schema>
+  <schema id="org.gnome.Shell.Extensions.GSConnect.Plugin.Notification">
+    <key name="send-notifications" type="b">
+      <default>true</default>
+    </key>
+    <key name="send-active" type="b">
+      <default>true</default>
+    </key>
+    <key name="applications" type="s">
+      <default>'{}'</default>
+    </key>
+  </schema>
+  <schema id="org.gnome.Shell.Extensions.GSConnect.Plugin.Photo">
+    <key name="share-camera" type="b">
+      <default>true</default>
+    </key>
+    <key name="receive-directory" type="s">
+      <default>""</default>
+    </key>
+  </schema>
+  <schema id="org.gnome.Shell.Extensions.GSConnect.Plugin.Ping"/>
+  <schema id="org.gnome.Shell.Extensions.GSConnect.Plugin.Presenter"/>
+  <schema id="org.gnome.Shell.Extensions.GSConnect.Plugin.RunCommand">
+    <key name="command-list" type="a{sv}">
+      <default>{}</default>
+    </key>
+  </schema>
+  <schema id="org.gnome.Shell.Extensions.GSConnect.Plugin.SFTP">
+    <key name="automount" type="b">
+      <default>true</default>
+    </key>
+  </schema>
+  <schema id="org.gnome.Shell.Extensions.GSConnect.Plugin.Share">
+    <key name="receive-files" type="b">
+      <default>true</default>
+    </key>
+    <key name="receive-directory" type="s">
+      <default>""</default>
+    </key>
+  </schema>
+  <schema id="org.gnome.Shell.Extensions.GSConnect.Plugin.SMS">
+    <key name="legacy-sms" type="b">
+      <default>false</default>
+    </key>
+  </schema>
+  <schema id="org.gnome.Shell.Extensions.GSConnect.Plugin.SystemVolume">
+    <key name="share-sinks" type="b">
+      <default>true</default>
+    </key>
+  </schema>
+  <schema id="org.gnome.Shell.Extensions.GSConnect.Plugin.Telephony">
+    <key name="ringing-volume" type="s">
+      <default>"lower"</default>
+    </key>
+    <key name="ringing-pause" type="b">
+      <default>false</default>
+    </key>
+    <key name="talking-volume" type="s">
+      <default>"mute"</default>
+    </key>
+    <key name="talking-microphone" type="b">
+      <default>true</default>
+    </key>
+    <key name="talking-pause" type="b">
+      <default>true</default>
+    </key>
+  </schema>
+</schemalist>
+

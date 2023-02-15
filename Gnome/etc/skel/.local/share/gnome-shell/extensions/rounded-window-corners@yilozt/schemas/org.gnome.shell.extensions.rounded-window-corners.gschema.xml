@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema
+    id="org.gnome.shell.extensions.rounded-window-corners"
+    path="/org/gnome/shell/extensions/rounded-window-corners/"
+  >
+
+    <key name="settings-version" type="u">
+      <default>4</default>
+    </key>
+    
+    <key name="black-list" type="as">
+      <default>[]</default>
+      <summary>window here will not be rounded</summary>
+      <description>
+        The contents of the list represent the instance part of the window's
+        `WM_CLASS`, as same as the output of `xprop WM_CLASS|cut -d \" -f 2`
+      </description>
+    </key>
+
+    <key name="skip-libadwaita-app" type="b">
+      <summary>Skip Libadwaita applications</summary>
+      <default>true</default>
+    </key>
+
+    <key name="skip-libhandy-app" type="b">
+      <summary>Skip LibHandy applications</summary>
+      <default>false</default>
+    </key>
+
+    <key name="border-width" type="i">
+      <summary>Border width for rounded corners window</summary>
+      <range min="-40" max="40"/>
+      <default>0</default>
+    </key>
+
+    <key name="border-color" type="(dddd)">
+      <summary>Border color for rounded corners window</summary>
+      <default>(0.5, 0.5, 0.5, 1.0)</default>
+    </key>
+    
+    <key name="global-rounded-corner-settings" type="a{sv}">
+      <summary>Global rounded corners settings for all windows</summary>
+      <default>
+        <!--
+          GLib.Variant is express as <type_name, value> in GSettings, but '<' and '>'
+          is used to close tag in xml, so we have to use '&lt;' and '&rt;' when we
+          want to set default value to Variant type.
+        -->
+        {
+          'padding': &lt;{
+            'left': &lt;uint32 1&gt;,
+            'right': &lt;uint32 1&gt;,
+            'top': &lt;uint32 1&gt;,
+            'bottom': &lt;uint32 1&gt;
+          }&gt;,
+          'keep_rounded_corners': &lt;{
+            'maximized': &lt;false&gt;,
+            'fullscreen': &lt;false&gt;
+          }&gt;,
+          'border_radius': &lt;uint32 12&gt;,
+          'smoothing': &lt;0&gt;
+        }
+      </default>
+    </key>
+
+    <key name="custom-rounded-corner-settings" type="a{sv}">
+      <summary>A directory to setup custom paddings for special windows</summary>
+      <default>{}</default>
+    </key>
+
+
+    <key name="focused-shadow" type="a{si}">
+      <summary>Shadow for focused window</summary>
+      <default>
+        {
+          'horizontal_offset': 0,
+          'vertical_offset': 4,
+          'blur_offset': 28,
+          'spread_radius': 4,
+          'opacity': 60
+        }
+      </default>
+    </key>
+
+    <key name="unfocused-shadow" type="a{si}">
+      <summary>Shadow for unfocused window</summary>
+      <default>
+        {
+          'horizontal_offset': 0,
+          'vertical_offset': 2,
+          'blur_offset': 12,
+          'spread_radius': -1,
+          'opacity': 65
+        }
+      </default>
+    </key>
+
+    <key name="debug-mode" type="b">
+      <summary>If enabled, extension will show debug info into journalctl</summary>
+      <default>false</default>
+    </key>
+
+    <key name="tweak-kitty-terminal" type="b">
+      <default>false</default>
+    </key>
+
+    <key name="enable-preferences-entry" type="b">
+      <default>false</default>
+    </key>
+  </schema>
+</schemalist>

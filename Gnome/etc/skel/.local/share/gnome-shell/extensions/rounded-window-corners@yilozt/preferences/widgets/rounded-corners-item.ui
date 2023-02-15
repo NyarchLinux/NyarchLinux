@@ -1,0 +1,375 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk+" version="3.0" />
+  <template class="RoundedCornersItem" parent="GtkListBox">
+    <property name="selection-mode">none</property>
+    <child>
+      <object class="GtkListBoxRow">
+        <property name="name">Don't Configuration in Custom Page</property>
+        <child>
+          <object class="GtkBox">
+            <child>
+              <object class="GtkBox">
+                <property name="valign">center</property>
+                <property name="hexpand">true</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="halign">start</property>
+                    <property name="label" translatable="yes">Border Radius</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkScale" id="border_radius_scale">
+                <property name="visible">true</property>
+                <property name="valign">center</property>
+                <property name="width-request">280</property>
+                <property name="draw-value">true</property>
+                <property name="round-digits">0</property>
+                <property name="orientation">horizontal</property>
+                <property name="adjustment">border_radius_ajustment</property>
+                <property name="value-pos">right</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkListBoxRow">
+        <property name="name">Don't Configuration in Custom Page</property>
+        <child>
+          <object class="GtkBox">
+            <child>
+              <object class="GtkBox">
+                <property name="valign">center</property>
+                <property name="hexpand">true</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="halign">start</property>
+                    <property name="label" translatable="yes">Corner Smoothing</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkScale" id="smoothing_scale">
+                <property name="visible">true</property>
+                <property name="valign">center</property>
+                <property name="width-request">280</property>
+                <property name="draw-value">true</property>
+                <property name="round-digits">1</property>
+                <property name="orientation">horizontal</property>
+                <property name="adjustment">smoothing_ajustment</property>
+                <property name="value-pos">right</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkListBoxRow">
+        <child>
+          <object class="GtkBox">
+            <child>
+              <object class="GtkBox">
+                <property name="valign">center</property>
+                <property name="hexpand">true</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="halign">start</property>
+                    <property name="label" translatable="yes">Keep Rounded Corners when Maximized</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="halign">start</property>
+                    <property name="use-markup">true</property>
+                    <property name="label" translatable="yes">Always keep rounded corners when window is maximized or tiled.</property>
+                    <style>
+                      <class name="caption" />
+                    </style>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkSwitch" id="rounded_in_maximized_switch">
+                <property name="visible">true</property>
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkListBoxRow">
+        <child>
+          <object class="GtkBox">
+            <child>
+              <object class="GtkBox">
+                <property name="valign">center</property>
+                <property name="hexpand">true</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="halign">start</property>
+                    <property name="label" translatable="yes">Keep Rounded Corners when Fullscreen</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="halign">start</property>
+                    <property name="use-markup">true</property>
+                    <property name="label" translatable="yes">Always keep rounded corners when window is fullscreen.</property>
+                    <style>
+                      <class name="caption" />
+                    </style>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkSwitch" id="rounded_in_fullscreen_switch">
+                <property name="visible">true</property>
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkListBoxRow" id="paddings_row">
+        <child>
+          <object class="GtkBox">
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkBox">
+                <child>
+                  <object class="GtkBox">
+                    <property name="valign">center</property>
+                    <property name="hexpand">true</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel" id="title">
+                        <property name="halign">start</property>
+                        <property name="label" translatable="yes">Paddings</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="description">
+                        <property name="halign">start</property>
+                        <property name="use-markup">true</property>
+                        <property name="label" translatable="yes">Clip paddings of window</property>
+                        <style>
+                          <class name="caption" />
+                        </style>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkImage" id="expander_img">
+                    <property name="visible">true</property>
+                    <property name="valign">center</property>
+                    <property name="icon-name">go-next-symbolic</property>
+                    <style>
+                      <class name="expander_img"/>
+                    </style>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkRevealer" id="revealer">
+                <child>
+                  <object class="GtkListBox">
+                    <property name="selection-mode">none</property>
+                    <style>
+                      <class name="rich-list" />
+                    </style>
+                    <child>
+                      <object class="GtkListBoxRow">
+                        <child>
+                          <object class="GtkBox">
+                            <child>
+                              <object class="GtkBox">
+                                <property name="valign">center</property>
+                                <property name="hexpand">true</property>
+                                <property name="orientation">vertical</property>
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="halign">start</property>
+                                    <property name="label" translatable="yes">Left</property>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkScale" id="padding_left_scale">
+                                <property name="visible">true</property>
+                                <property name="valign">center</property>
+                                <property name="width-request">280</property>
+                                <property name="draw-value">true</property>
+                                <property name="round-digits">0</property>
+                                <property name="orientation">horizontal</property>
+                                <property name="adjustment">padding_left_ajustment</property>
+                                <property name="value-pos">right</property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkListBoxRow">
+                        <child>
+                          <object class="GtkBox">
+                            <child>
+                              <object class="GtkBox">
+                                <property name="valign">center</property>
+                                <property name="hexpand">true</property>
+                                <property name="orientation">vertical</property>
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="halign">start</property>
+                                    <property name="label" translatable="yes">Right</property>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkScale" id="padding_right_scale">
+                                <property name="visible">true</property>
+                                <property name="valign">center</property>
+                                <property name="width-request">280</property>
+                                <property name="draw-value">true</property>
+                                <property name="round-digits">0</property>
+                                <property name="orientation">horizontal</property>
+                                <property name="adjustment">padding_right_ajustment</property>
+                                <property name="value-pos">right</property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkListBoxRow">
+                        <child>
+                          <object class="GtkBox">
+                            <child>
+                              <object class="GtkBox">
+                                <property name="valign">center</property>
+                                <property name="hexpand">true</property>
+                                <property name="orientation">vertical</property>
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="halign">start</property>
+                                    <property name="label" translatable="yes">Top</property>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkScale" id="padding_top_scale">
+                                <property name="visible">true</property>
+                                <property name="valign">center</property>
+                                <property name="width-request">280</property>
+                                <property name="draw-value">true</property>
+                                <property name="round-digits">0</property>
+                                <property name="orientation">horizontal</property>
+                                <property name="adjustment">padding_top_ajustment</property>
+                                <property name="value-pos">right</property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkListBoxRow">
+                        <child>
+                          <object class="GtkBox">
+                            <child>
+                              <object class="GtkBox">
+                                <property name="valign">center</property>
+                                <property name="hexpand">true</property>
+                                <property name="orientation">vertical</property>
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="halign">start</property>
+                                    <property name="label" translatable="yes">Bottom</property>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkScale" id="padding_bottom_scale">
+                                <property name="visible">true</property>
+                                <property name="valign">center</property>
+                                <property name="width-request">280</property>
+                                <property name="draw-value">true</property>
+                                <property name="round-digits">0</property>
+                                <property name="orientation">horizontal</property>
+                                <property name="adjustment">padding_bottom_ajustment</property>
+                                <property name="value-pos">right</property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+  <object class="GtkAdjustment" id="border_radius_ajustment">
+    <property name="lower">0</property>
+    <property name="upper">40</property>
+    <property name="page-increment">1</property>
+    <property name="step-increment">1</property>
+  </object>
+    <object class="GtkAdjustment" id="smoothing_ajustment">
+    <property name="lower">0</property>
+    <property name="upper">1</property>
+    <property name="page-increment">0.1</property>
+    <property name="step-increment">0.1</property>
+  </object>
+  <object class="GtkAdjustment" id="padding_left_ajustment">
+    <property name="lower">0</property>
+    <property name="upper">80</property>
+    <property name="page-increment">1</property>
+    <property name="step-increment">1</property>
+  </object>
+  <object class="GtkAdjustment" id="padding_right_ajustment">
+    <property name="lower">0</property>
+    <property name="upper">80</property>
+    <property name="page-increment">1</property>
+    <property name="step-increment">1</property>
+  </object>
+  <object class="GtkAdjustment" id="padding_top_ajustment">
+    <property name="lower">0</property>
+    <property name="upper">80</property>
+    <property name="page-increment">1</property>
+    <property name="step-increment">1</property>
+  </object>
+  <object class="GtkAdjustment" id="padding_bottom_ajustment">
+    <property name="lower">0</property>
+    <property name="upper">80</property>
+    <property name="page-increment">1</property>
+    <property name="step-increment">1</property>
+  </object>
+</interface>
