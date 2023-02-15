@@ -9,3 +9,7 @@ flatpak install flathub de.haeckerfelix.Shortwave
 flatpak install flathub org.gnome.Lollypop
 flatpak install flathub de.haeckerfelix.Fragments
 flatpak install org.gtk.Gtk3theme.adw-gtk3 org.gtk.Gtk3theme.adw-gtk3-dark
+flatpak install flathub de.haeckerfelix.Fragments
+flatpak install flatpaks/catgirldownloader.flatpak
+flatpak install flatpaks/nyarchcustomize.flatpak
+flatpak install flatpaks/nyarchtour.flatpak
