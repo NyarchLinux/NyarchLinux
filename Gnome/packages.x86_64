@@ -411,7 +411,6 @@ trizen
 # Flatpak
 flatpak
 
-
 # Closed Source nvidia drivers
 #nvidia-dkms
 #nvidia-utils
@@ -425,6 +424,7 @@ neofetch
 nodejs
 npm
 geary
+chromium
 
 # Webapp Manager
 python-beautifulsoup4
@@ -436,6 +436,7 @@ python-tldextract
 dconf
 xapp
 webapp-manager
+
 # Appimagelauncher
 cairo
 hicolor-icon-theme
