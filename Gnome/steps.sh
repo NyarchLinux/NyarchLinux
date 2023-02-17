@@ -100,6 +100,16 @@ rm ./ezreleng/airootfs/etc/systemd/system/multi-user.target.wants/sshd.service
 rm ./ezreleng/airootfs/etc/systemd/system/multi-user.target.wants/iwd.service
 }
 
+# Remove unwanted desktop files
+rmbloatdesktop () {
+rm -rf ./ezreleng/airootfs/usr/share/applications/cmake-gui.desktop
+rm -rf ./ezreleng/airootfs/usr/share/applications/bvnc.desktop
+rm -rf ./ezreleng/airootfs/usr/share/applications/avahi-discover.desktop
+rm -rf ./ezreleng/airootfs/usr/share/applications/stoken-gui.desktop
+rm -rf ./ezreleng/airootfs/usr/share/applications/stoken-gui-small.desktop
+rm -rf ./ezreleng/airootfs/usr/share/applications/qv4l2.desktop
+}
+
 # Add cups, haveged, NetworkManager, & sddm systemd links
 addnmlinks () {
 mkdir -p ./ezreleng/airootfs/etc/systemd/system/network-online.target.wants
@@ -241,6 +251,7 @@ cpezreleng
 addnmlinks
 cpezrepo
 rmunitsd
+rmbloatdesktop
 cpmyfiles
 sethostname
 crtpasswd
