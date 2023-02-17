@@ -1,0 +1,30 @@
+# Changes
+Here are listed all the main changes done to EzArcher Gnome template, in order to replicate it on *almost* any distribution.
+
+- [x] Added Flatpak, Neofetch, Appimage Launcher and webapp-manager to packages
+- [ ] Added nvidia drivers
+- [x] Deleted some packages that were considered useless
+- [x] Added /etc/os-release file
+- [x] Changed grub spalshscreen to https://www.reddit.com/r/LinuxFurries/comments/pcf0yp/i_made_a_dark_mode_of_the_nyarch_wallpaper_i_am/
+- [x] Changed fonts to full hinting and LCD from Gnome Tweaks
+- [x] Installed [adw-gtk3](https://github.com/lassekongo83/adw-gtk3) theme to make the desktop more coherent
+- [x] Changed legacy applications theme to adw-gtk3 from Gnome Tweaks
+- [x] Changed icons to [Tela circle dark blue](https://github.com/vinceliuice/Tela-circle-icon-theme) from Gnome Tweaks
+- [x] Set wallpaper to upscaled version of [This wallpaper](https://wallhaven.cc/w/mpg7qk)
+- [x] Installed gnome extensions:
+    - [x] Blur my shell
+    - [x] Material You
+    - [x] Nyarcmenu (custom)
+    - [x] Compiz lamp effect
+    - [x] Compiz windows effect
+    - [x] Bluethooth quick connect
+    - [x] Rounded corners for windows
+    - [x] Dash to panel
+    - [x] Dash to Dock for Cosmic
+- [x] Enable tap to click on touchpad in settings
+- [x] Nyaofetch, Nekofetch commands (alias of neofetch), aliased neofetch to show [this ASCII art](https://gist.github.com/jso8910/06e939e95bb0071f7a0d8f12a63c10ac).
+- [ ] Customized Calamares
+- [ ] Installed [Nyarch Tour](https://github.com/NyarchLinux/NyarchTour)
+- [ ] Installed [Nyarch Customize](https://github.com/NyarchLinux/NyarchCustomize)
+- [ ] Installed [Catgirl Downloader](https://github.com/NyarchLinux/CatgirlDownloader)
+- [x] Installed as Flatpak: [Komikku](https://valos.gitlab.io/Komikku/), [Shortwave](https://gitlab.gnome.org/World/Shortwave), [Lollypop](https://wiki.gnome.org/Apps/Lollypop), [Fragments](https://gitlab.gnome.org/World/Fragments)
