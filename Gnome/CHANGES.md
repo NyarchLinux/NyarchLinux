@@ -23,8 +23,10 @@ Here are listed all the main changes done to EzArcher Gnome template, in order t
     - [x] Dash to Dock for Cosmic
 - [x] Enable tap to click on touchpad in settings
 - [x] Nyaofetch, Nekofetch commands (alias of neofetch), aliased neofetch to show [this ASCII art](https://gist.github.com/jso8910/06e939e95bb0071f7a0d8f12a63c10ac).
-- [ ] Customized Calamares
-- [ ] Installed [Nyarch Tour](https://github.com/NyarchLinux/NyarchTour)
-- [ ] Installed [Nyarch Customize](https://github.com/NyarchLinux/NyarchCustomize)
-- [ ] Installed [Catgirl Downloader](https://github.com/NyarchLinux/CatgirlDownloader)
+- [x] Customized Calamares
+- [x] Installed [Nyarch Tour](https://github.com/NyarchLinux/NyarchTour)
+- [x] Installed [Nyarch Customize](https://github.com/NyarchLinux/NyarchCustomize)
+- [x] Installed [Catgirl Downloader](https://github.com/NyarchLinux/CatgirlDownloader)
 - [x] Installed as Flatpak: [Komikku](https://valos.gitlab.io/Komikku/), [Shortwave](https://gitlab.gnome.org/World/Shortwave), [Lollypop](https://wiki.gnome.org/Apps/Lollypop), [Fragments](https://gitlab.gnome.org/World/Fragments)
+- [ ] Install Plymouth and add theme
+- [ ] Install gnome-terminal-trasparency instead 
