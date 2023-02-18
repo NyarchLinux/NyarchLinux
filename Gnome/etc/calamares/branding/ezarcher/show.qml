@@ -46,73 +46,22 @@ Presentation
     		verticalAlignment: Image.AlignTop
 
             anchors.fill: parent
-
-            Text {
-                anchors.centerIn: parent
-                anchors.verticalCenterOffset: 165
-                anchors.horizontalCenterOffset: 0
-                font.pixelSize: parent.width *.020
-                color: 'white'
-                text: qsTr("<b>Welcome to Nyarch Linux, an Arch based Linux for weebs<br/>")
-                wrapMode: Text.WordWrap
-                width: parent.width / 1.4
-                horizontalAlignment: Text.AlignHCenter
-            }
         }
     }
 
     Slide {
         anchors.fill: parent
         anchors.verticalCenterOffset: 0
+
 
         Image {
             id: background2
-            source: "slide1.png"
+            source: "slide2.png"
             width: parent.width; height: parent.height          
             horizontalAlignment: Image.AlignCenter
     		verticalAlignment: Image.AlignTop
 
             anchors.fill: parent
-
-            Text {
-                anchors.centerIn: parent
-                anchors.verticalCenterOffset: 163
-                anchors.horizontalCenterOffset: 0
-                font.pixelSize: parent.width *.020
-                color: 'white'
-                text: qsTr("<b>Ezarcher is 100% compatible with Arch Linux<br/>")
-                
-                wrapMode: Text.WordWrap
-                width: parent.width / 1.4
-                horizontalAlignment: Text.AlignHCenter
-            }
-        }
-    }
-
-	Slide {
-        anchors.fill: parent
-        anchors.verticalCenterOffset: 0
-
-        Image {
-            id: background3
-            source: "slide1.png"
-            width: parent.width; height: parent.height          
-            horizontalAlignment: Image.AlignCenter
-    		verticalAlignment: Image.AlignTop
-
-            anchors.fill: parent
-
-            Text {
-                anchors.centerIn: parent
-                anchors.verticalCenterOffset: 165
-                anchors.horizontalCenterOffset: 0
-                font.pixelSize: parent.width *.020
-                color: 'white'
-                text: qsTr("<b>Look inside the ~/ezarcher folder for documentation<br/>")
-                wrapMode: Text.WordWrap
-                width: parent.width / 1.4
-                horizontalAlignment: Text.AlignHCenter
-            }
         }
     }
 
@@ -120,29 +69,78 @@ Presentation
         anchors.fill: parent
         anchors.verticalCenterOffset: 0
 
+
         Image {
-            id: background4
-            source: "slide1.png"
-            width: parent.width; height: parent.height
+            id: background3
+            source: "slide3.png"
+            width: parent.width; height: parent.height          
             horizontalAlignment: Image.AlignCenter
     		verticalAlignment: Image.AlignTop
-    		
-            anchors.fill: parent
 
-            Text {
-                anchors.centerIn: parent
-                anchors.verticalCenterOffset: 165
-                anchors.horizontalCenterOffset: 0
-                font.pixelSize: parent.width *.020
-                color: 'white'
-                text: qsTr("<b>Thank you for trying Ezarcher<br/>")
-                wrapMode: Text.WordWrap
-                width: parent.width / 1.4
-                horizontalAlignment: Text.AlignHCenter
-            }
+            anchors.fill: parent
         }
     }
 
+    Slide {
+        anchors.fill: parent
+        anchors.verticalCenterOffset: 0
+
+
+        Image {
+            id: background4
+            source: "slide4.png"
+            width: parent.width; height: parent.height          
+            horizontalAlignment: Image.AlignCenter
+    		verticalAlignment: Image.AlignTop
+
+            anchors.fill: parent
+        }
+    }
+    Slide {
+        anchors.fill: parent
+        anchors.verticalCenterOffset: 0
+
+
+        Image {
+            id: background5
+            source: "slide5.png"
+            width: parent.width; height: parent.height          
+            horizontalAlignment: Image.AlignCenter
+    		verticalAlignment: Image.AlignTop
+
+            anchors.fill: parent
+        }
+    }
+    Slide {
+        anchors.fill: parent
+        anchors.verticalCenterOffset: 0
+
+
+        Image {
+            id: background6
+            source: "slide6.png"
+            width: parent.width; height: parent.height          
+            horizontalAlignment: Image.AlignCenter
+    		verticalAlignment: Image.AlignTop
+
+            anchors.fill: parent
+        }
+    }
+    Slide {
+        anchors.fill: parent
+        anchors.verticalCenterOffset: 0
+
+
+        Image {
+            id: background7
+            source: "slide7.png"
+            width: parent.width; height: parent.height          
+            horizontalAlignment: Image.AlignCenter
+    		verticalAlignment: Image.AlignTop
+
+            anchors.fill: parent
+        }
+    }
     Component.onCompleted: advanceTimer.running = true
 }
 

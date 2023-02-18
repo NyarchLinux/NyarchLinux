@@ -404,6 +404,7 @@ yaml-cpp
 calamares
 ckbcomp
 mkinitcpio-openswap
+glibc
 
 # AUR
 trizen

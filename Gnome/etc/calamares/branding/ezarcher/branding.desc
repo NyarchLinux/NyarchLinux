@@ -124,12 +124,12 @@ navigation: widget
 strings:
     productName:         "@{NAME}"
     shortProductName:    nyarch
-    version:             2022
-    shortVersion:        2022
+    version:             23.02
+    shortVersion:        23.02
     versionedName:       Nyarch Linux
     shortVersionedName:  Nyarch Linux
     bootloaderEntryName: nyarch
-    productUrl:          https://sourceforge.net/projects/ezarch/
+    productUrl:          https://nyarchlinux.moe
 #   supportUrl:          https://sourceforge.net/projects/ezarch/
 #   knownIssuesUrl:      https://sourceforge.net/projects/ezarch/
 #   releaseNotesUrl:     https://sourceforge.net/projects/ezarch/
