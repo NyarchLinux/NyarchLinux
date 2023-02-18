@@ -28,5 +28,6 @@ Here are listed all the main changes done to EzArcher Gnome template, in order t
 - [x] Installed [Nyarch Customize](https://github.com/NyarchLinux/NyarchCustomize)
 - [x] Installed [Catgirl Downloader](https://github.com/NyarchLinux/CatgirlDownloader)
 - [x] Installed as Flatpak: [Komikku](https://valos.gitlab.io/Komikku/), [Shortwave](https://gitlab.gnome.org/World/Shortwave), [Lollypop](https://wiki.gnome.org/Apps/Lollypop), [Fragments](https://gitlab.gnome.org/World/Fragments)
+- [x] Autostart calamares at live boot, autostart Nyarch Tour on first boot
 - [ ] Install Plymouth and add theme
 - [ ] Install gnome-terminal-trasparency instead 
