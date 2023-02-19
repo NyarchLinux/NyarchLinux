@@ -7,6 +7,3 @@
 
 alias ls='ls --color=auto'
 PS1='[\u@\h \W]\$ '
-alias neofetch="neofetch --ascii ~/.config/neofetch/ascii --gap '-250'"
-alias nyaofetch="neofetch"
-alias nekofetch="neofetch"

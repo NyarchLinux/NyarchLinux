@@ -1,0 +1,7 @@
+#!/bin/bash
+EMPTY=""
+if [ "$KITTY_WINDOW_ID" != "$EMPTY" ]; then
+        neofetch --backend kitty --source ~/.config/neofetch/logo.png
+else
+        neofetch --ascii ~/.config/neofetch/ascii --gap '-250'
+fi
