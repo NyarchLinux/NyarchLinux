@@ -1,0 +1,64 @@
+[org/gnome/shell/extensions/arcmenu]
+application-shortcuts-list=[['Software', 'org.gnome.Software', 'ArcMenu_Software'], ['Settings', 'org.gnome.Settings', 'org.gnome.Settings.desktop'], ['Tweaks', 'org.gnome.tweaks', 'org.gnome.tweaks.desktop'], ['Terminal', 'org.gnome.Terminal', 'org.gnome.Terminal.desktop'], ['Activities Overview', 'view-fullscreen-symbolic', 'ArcMenu_ActivitiesOverview'], ['Extension Manager', 'com.mattjakeman.ExtensionManager', 'com.mattjakeman.ExtensionManager.desktop']]
+button-item-icon-size='Small'
+custom-menu-button-icon-size=23.0
+disable-recently-installed-apps=true
+distro-icon=6
+extra-categories=[(0, true), (1, true), (2, true), (3, true), (4, false)]
+menu-background-color='rgba(48,48,49,0.98)'
+menu-border-color='rgb(60,60,60)'
+menu-button-active-fg-color=(true, 'rgb(26,95,180)')
+menu-button-appearance='Icon'
+menu-button-border-radius=(true, 25)
+menu-button-fg-color=(false, 'rgb(26,95,180)')
+menu-button-icon='Distro_Icon'
+menu-button-position-offset=0
+menu-foreground-color='rgb(223,223,223)'
+menu-item-active-bg-color='rgb(25,98,163)'
+menu-item-active-fg-color='rgb(255,255,255)'
+menu-item-grid-icon-size='Medium'
+menu-item-hover-bg-color='rgb(21,83,158)'
+menu-item-hover-fg-color='rgb(255,255,255)'
+menu-layout='Raven'
+menu-separator-color='rgba(255,255,255,0.1)'
+override-menu-theme=true
+pinned-app-list=['Firefox', '', 'firefox.desktop', 'Files', '', 'org.gnome.Nautilus.desktop', 'Terminal', '', 'org.gnome.Terminal.desktop', 'Extension Manager', '', 'com.mattjakeman.ExtensionManager.desktop', 'Nyarch Customize', '', 'moe.nyarchlinux.customize.desktop', 'Nyarch Tour', '', 'moe.nyarchlinux.tour.desktop']
+prefs-visible-page=0
+recently-installed-apps=['appimagekit_75fbd7d7fd2bfaf1c426bf2adb037d19-balenaEtcher.desktop']
+search-entry-border-radius=(true, 25)
+shortcut-icon-type='Full_Color'
+
+[org/gnome/shell/extensions/dash-to-panel]
+animate-appicon-hover=false
+animate-appicon-hover-animation-extent={'RIPPLE': 4, 'PLANK': 4, 'SIMPLE': 1}
+animate-appicon-hover-animation-type='PLANK'
+appicon-margin=8
+appicon-padding=4
+available-monitors=[0]
+dot-position='BOTTOM'
+hotkeys-overlay-combo='TEMPORARILY'
+isolate-workspaces=true
+leftbox-padding=-1
+panel-anchors='{"0":"MIDDLE"}'
+panel-element-positions='{"0":[{"element":"activitiesButton","visible":false,"position":"stackedTL"},{"element":"leftBox","visible":true,"position":"stackedTL"},{"element":"showAppsButton","visible":true,"position":"stackedTL"},{"element":"taskbar","visible":true,"position":"stackedTL"},{"element":"centerBox","visible":true,"position":"stackedBR"},{"element":"rightBox","visible":true,"position":"stackedBR"},{"element":"dateMenu","visible":true,"position":"stackedBR"},{"element":"systemMenu","visible":true,"position":"stackedBR"},{"element":"desktopButton","visible":true,"position":"stackedBR"}]}'
+panel-lengths='{"0":100}'
+panel-sizes='{"0":48}'
+primary-monitor=0
+status-icon-padding=-1
+stockgs-keep-dash=false
+stockgs-keep-top-panel=false
+stockgs-panelbtn-click-only=false
+trans-panel-opacity=0.20000000000000001
+trans-use-custom-gradient=false
+trans-use-custom-opacity=true
+trans-use-dynamic-opacity=true
+tray-padding=-1
+window-preview-title-position='TOP'
+
+[org/gnome/shell/extensions/user-theme]
+name='MaterialYou'
+
+[org/gnome/shell/extensions/material-you-theme]
+resize-height=200
+resize-width=200
+scheme='Default'
