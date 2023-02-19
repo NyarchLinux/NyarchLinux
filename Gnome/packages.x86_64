@@ -345,7 +345,7 @@ gnome-shell
 gnome-shell-extensions
 gnome-software-packagekit-plugin
 gnome-system-monitor
-gnome-terminal
+# gnome-terminal
 gnome-text-editor
 gnome-tour
 gnome-tweaks
@@ -426,6 +426,9 @@ nodejs
 npm
 geary
 chromium
+kitty
+vte3
+gnome-terminal-transparency
 
 # Webapp Manager
 python-beautifulsoup4
