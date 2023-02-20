@@ -5,3 +5,9 @@ picture-uri='file:///usr/share/backgrounds/default.png'
 picture-uri-dark='file:///usr/share/backgrounds/default.png'
 primary-color='#000000000000'
 secondary-color='#000000000000'
+
+[org/gnome/terminal/legacy/profiles:/:b1dcc9dd-5262-4d8d-a863-c897e6d979b9]
+background-transparency-percent=7
+default-size-columns=121
+use-theme-colors=true
+use-transparent-background=true
