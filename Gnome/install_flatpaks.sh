@@ -13,3 +13,4 @@ flatpak install flathub de.haeckerfelix.Fragments
 flatpak install flatpaks/catgirldownloader.flatpak
 flatpak install flatpaks/nyarchcustomize.flatpak
 flatpak install flatpaks/nyarchtour.flatpak
+flatpak install flatpaks/wizard.flatpak
