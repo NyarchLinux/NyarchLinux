@@ -1,0 +1,6 @@
+.reveal-button image {
+	transition: 250ms;
+}
+.reveal-button.expanded image {
+	-gtk-icon-transform: rotate(0.25turn);
+}

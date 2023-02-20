@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+	<template class="AppRow" parent="GtkListBoxRow">
+		<property name="selectable">false</property>
+		<property name="activatable">false</property>
+		<child>
+			<object class="GtkGrid">
+				<property name="margin-start">12</property>
+				<property name="margin-end">12</property>
+				<property name="margin-top">12</property>
+				<property name="margin-bottom">12</property>
+				<property name="column-spacing">12</property>
+				<child>
+					<object class="GtkImage" id="icon">
+						<property name="pixel-size">32</property>
+					</object>
+				</child>
+				<child>
+					<object class="GtkLabel" id="label">
+						<property name="halign">start</property>
+						<property name="hexpand">true</property>
+					</object>
+				</child>
+				<child>
+					<object class="GtkButton" id="remove-button">
+						<property name="tooltip-text" translatable="yes">Remove</property>
+						<property name="halign">center</property>
+						<property name="valign">center</property>
+						<signal name="clicked" handler="removeRow" swapped="no" />
+						<child>
+							<object class="GtkImage">
+								<property name="icon-name">user-trash-symbolic</property>
+							</object>
+						</child>
+					</object>
+				</child>
+				<child>
+					<object class="GtkSeparator"/>
+				</child>
+				<child>
+					<object class="GtkButton" id="revealButton">
+						<property name="valign">center</property>
+						<property name="has-frame">false</property>
+						<property name="icon-name">pan-end-symbolic</property>
+						<signal name="clicked" handler="toggleSettingsVisibility" swapped="no" />
+						<style>
+							<class name="reveal-button"/>
+						</style>
+					</object>
+				</child>
+				<child>
+					<object class="GtkRevealer" id="revealer">
+						<child>
+							<object class="GtkListBox">
+								<property name="margin-top">8</property>
+								<child>
+									<object class="GtkListBoxRow">
+										<property name="selectable">false</property>
+										<property name="activatable">false</property>
+										<property name="child">
+											<object class="GtkBox">
+												<property name="margin-top">8</property>
+												<property name="margin-bottom">8</property>
+												<child>
+													<object class="GtkLabel">
+														<property name="label" translatable="yes">Hidden</property>
+														<property name="halign">start</property>
+														<property name="hexpand">true</property>
+													</object>
+												</child>
+												<child>
+													<object class="GtkSwitch" id="hidden">
+														<property name="halign">end</property>
+													</object>
+												</child>
+											</object>
+										</property>
+									</object>
+								</child>
+							</object>
+						</child>
+						<layout>
+							<property name="column">0</property>
+							<property name="row">1</property>
+							<property name="column-span">5</property>
+						</layout>
+					</object>
+				</child>
+			</object>
+		</child>
+	</template>
+</interface>

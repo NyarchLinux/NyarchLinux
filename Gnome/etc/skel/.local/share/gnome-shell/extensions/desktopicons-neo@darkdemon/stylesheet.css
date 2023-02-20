@@ -1,0 +1,23 @@
+.file-label {
+    text-shadow: 0px 0px 2px #000;
+    color: white;
+}
+
+label.file-label:backdrop {
+    text-shadow: 0px 0px 2px #000;
+    color: white;
+}
+
+.file-item {
+    padding: 2px;
+    border-radius: 6px;
+}
+
+.file-item-straight {
+    padding: 2px;
+    border-radius: 0px;
+}
+
+.file-item-hover {
+   background-color: rgba(238, 238, 238, 0.2);
+}

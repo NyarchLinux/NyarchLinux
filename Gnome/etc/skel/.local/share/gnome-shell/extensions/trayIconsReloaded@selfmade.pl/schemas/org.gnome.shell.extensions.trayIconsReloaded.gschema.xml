@@ -1,0 +1,68 @@
+<schemalist>
+	<schema id="org.gnome.shell.extensions.trayIconsReloaded" path="/org/gnome/shell/extensions/trayIconsReloaded/">
+		<key name="tray-position" type="s">
+			<default>"right"</default>
+			<summary>Tray position</summary>
+		</key>
+		<key name="position-weight" type="i">
+			<default>0</default>
+			<summary>Position weight</summary>
+		</key>
+		<key name="tray-margin-left" type="i">
+			<default>4</default>
+			<summary>Tray icons left margin</summary>
+		</key>
+		<key name="tray-margin-right" type="i">
+			<default>0</default>
+			<summary>Tray icons left margin</summary>
+		</key>
+		<key name="icons-limit" type="i">
+			<default>4</default>
+			<summary>Icons limit</summary>
+		</key>
+		<key name="icon-size" type="i">
+			<default>20</default>
+			<summary>Icon size</summary>
+		</key>
+		<key name="icon-margin-vertical" type="i">
+			<default>0</default>
+			<summary>Icon margin vertical</summary>
+		</key>
+		<key name="icon-margin-horizontal" type="i">
+			<default>4</default>
+			<summary>Icon margin horizontal</summary>
+		</key>
+		<key name="icon-padding-vertical" type="i">
+			<default>0</default>
+			<summary>Icon padding vertical</summary>
+		</key>
+		<key name="icon-padding-horizontal" type="i">
+			<default>16</default>
+			<summary>Icon padding horizontal</summary>
+		</key>
+		<key name="icon-saturation" type="i">
+			<default>0</default>
+			<summary>Icon contrast</summary>
+		</key>
+		<key name="icon-contrast" type="i">
+			<default>0</default>
+			<summary>Icon contrast</summary>
+		</key>
+		<key name="icon-brightness" type="i">
+			<default>0</default>
+			<summary>Icon contrast</summary>
+		</key>
+		<key name="invoke-to-workspace" type="b">
+			<default>true</default>
+			<summary>Whether to invoke window to current workspace</summary>
+		</key>
+		<key name="wine-behavior" type="b">
+			<default>true</default>
+			<summary>Wine behavior</summary>
+		</key>
+		<key name="applications" type="s">
+			<default>"[]"</default>
+			<summary>Applications list</summary>
+		</key>
+	</schema>
+</schemalist>

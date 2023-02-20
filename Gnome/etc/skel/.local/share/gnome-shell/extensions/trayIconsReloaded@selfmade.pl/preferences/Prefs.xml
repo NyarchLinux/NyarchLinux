@@ -1,0 +1,559 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+	<object id="headerBar" class="GtkStackSwitcher">
+		<property name="stack">stack</property>
+	</object>
+	<template class="Prefs" parent="GtkBox">
+		<property name="orientation">vertical</property>
+		<child>
+			<object class="GtkStack" id="stack">
+				<property name="transition-type">slide-left-right</property>
+				<child>
+					<object class="GtkStackPage">
+						<property name="title">General</property>
+						<property name="child">
+							<object class="GtkScrolledWindow">
+								<property name="vscrollbar-policy">never</property>
+								<property name="hscrollbar-policy">never</property>
+								<child>
+									<object class="GtkBox">
+										<property name="orientation">vertical</property>
+										<property name="valign">start</property>
+										<property name="halign">center</property>
+										<property name="width-request">630</property>
+										<property name="margin-top">24</property>
+										<property name="margin-bottom">24</property>
+										<property name="margin-start">24</property>
+										<property name="margin-end">24</property>
+										<child>
+											<object class="GtkFrame">
+												<property name="child">
+													<object class="GtkListBox">
+														<child>
+															<object class="GtkListBoxRow">
+																<property name="selectable">0</property>
+																<property name="child">
+																	<object class="GtkBox">
+																		<property name="margin-top">8</property>
+																		<property name="margin-bottom">8</property>
+																		<property name="margin-start">12</property>
+																		<property name="margin-end">12</property>
+																		<property name="spacing">12</property>
+																		<child>
+																			<object class="GtkLabel">
+																				<property name="label" translatable="yes">Tray position</property>
+																				<property name="halign">start</property>
+																				<property name="hexpand">1</property>
+																			</object>
+																		</child>
+																		<child>
+																			<object class="GtkComboBoxText" id="tray_position">
+																				<property name="halign">end</property>
+																				<items>
+																					<item translatable="yes" id="left">Left</item>
+																					<item translatable="yes" id="center">Center</item>
+																					<item translatable="yes" id="right">Right</item>
+																				</items>
+																			</object>
+																		</child>
+																		<child>
+																			<object class="GtkAdjustment" id="adjustment-position-weight">
+																				<property name="step-increment">1</property>
+																				<property name="lower">-99</property>
+																				<property name="upper">99</property>
+																			</object>
+																			<object class="GtkSpinButton" id="position_weight">
+																				<property name="tooltip-text" translatable="yes">Position weight</property>
+																				<property name="halign">end</property>
+																				<property name="adjustment">adjustment-position-weight</property>
+																			</object>
+																		</child>
+																	</object>
+																</property>
+															</object>
+														</child>
+														<child>
+															<object class="GtkListBoxRow">
+																<property name="selectable">0</property>
+																<property name="child">
+																	<object class="GtkBox">
+																		<property name="margin-top">8</property>
+																		<property name="margin-bottom">8</property>
+																		<property name="margin-start">12</property>
+																		<property name="margin-end">12</property>
+																		<child>
+																			<object class="GtkLabel">
+																				<property name="label" translatable="yes">Tray icons limit</property>
+																				<property name="halign">start</property>
+																				<property name="hexpand">1</property>
+																			</object>
+																		</child>
+																		<child>
+																			<object class="GtkAdjustment" id="adjustment-icons-limit">
+																				<property name="step-increment">1</property>
+																				<property name="lower">1</property>
+																				<property name="upper">16</property>
+																			</object>
+																			<object class="GtkSpinButton" id="icons_limit">
+																				<property name="halign">end</property>
+																				<property name="adjustment">adjustment-icons-limit</property>
+																			</object>
+																		</child>
+																	</object>
+																</property>
+															</object>
+														</child>
+														<child>
+															<object class="GtkListBoxRow">
+																<property name="selectable">0</property>
+																<property name="child">
+																	<object class="GtkBox">
+																		<property name="margin-top">8</property>
+																		<property name="margin-bottom">8</property>
+																		<property name="margin-start">12</property>
+																		<property name="margin-end">12</property>
+																		<child>
+																			<object class="GtkLabel">
+																				<property name="label" translatable="yes">Icon size</property>
+																				<property name="halign">start</property>
+																				<property name="hexpand">1</property>
+																			</object>
+																		</child>
+																		<child>
+																			<object class="GtkAdjustment" id="adjustment-icon-size">
+																				<property name="step-increment">1</property>
+																				<property name="lower">16</property>
+																				<property name="upper">32</property>
+																			</object>
+																			<object class="GtkSpinButton" id="icon_size">
+																				<property name="halign">end</property>
+																				<property name="adjustment">adjustment-icon-size</property>
+																			</object>
+																		</child>
+																	</object>
+																</property>
+															</object>
+														</child>
+
+													</object>
+												</property>
+											</object>
+										</child>
+										<child>
+											<object class="GtkLabel">
+												<property name="label" translatable="yes">Colors</property>
+												<property name="halign">start</property>
+												<property name="margin-top">24</property>
+												<property name="margin-bottom">8</property>
+												<attributes>
+													<attribute name="weight" value="bold"></attribute>
+												</attributes>
+											</object>
+										</child>
+										<child>
+											<object class="GtkFrame">
+												<property name="child">
+													<object class="GtkListBox">
+														<child>
+															<object class="GtkListBoxRow">
+																<property name="selectable">0</property>
+																<property name="child">
+																	<object class="GtkBox">
+																		<property name="margin-top">8</property>
+																		<property name="margin-bottom">8</property>
+																		<property name="margin-start">12</property>
+																		<property name="margin-end">12</property>
+																		<child>
+																			<object class="GtkLabel">
+																				<property name="label" translatable="yes">Icon saturation</property>
+																				<property name="halign">start</property>
+																				<property name="hexpand">1</property>
+																			</object>
+																		</child>
+																		<child>
+																			<object class="GtkAdjustment" id="adjustment-icon-saturation">
+																				<property name="step-increment">10</property>
+																				<property name="upper">100</property>
+																			</object>
+																			<object class="GtkSpinButton" id="icon_saturation">
+																				<property name="halign">end</property>
+																				<property name="adjustment">adjustment-icon-saturation</property>
+																			</object>
+																		</child>
+																	</object>
+																</property>
+															</object>
+														</child>
+														<child>
+															<object class="GtkListBoxRow">
+																<property name="selectable">0</property>
+																<property name="child">
+																	<object class="GtkBox">
+																		<property name="margin-top">8</property>
+																		<property name="margin-bottom">8</property>
+																		<property name="margin-start">12</property>
+																		<property name="margin-end">12</property>
+																		<child>
+																			<object class="GtkLabel">
+																				<property name="label" translatable="yes">Icon contrast</property>
+																				<property name="halign">start</property>
+																				<property name="hexpand">1</property>
+																			</object>
+																		</child>
+																		<child>
+																			<object class="GtkAdjustment" id="adjustment-icon-contrast">
+																				<property name="step-increment">10</property>
+																				<property name="lower">-100</property>
+																				<property name="upper">100</property>
+																			</object>
+																			<object class="GtkSpinButton" id="icon_contrast">
+																				<property name="halign">end</property>
+																				<property name="adjustment">adjustment-icon-contrast</property>
+																			</object>
+																		</child>
+																	</object>
+																</property>
+															</object>
+														</child>
+														<child>
+															<object class="GtkListBoxRow">
+																<property name="selectable">0</property>
+																<property name="child">
+																	<object class="GtkBox">
+																		<property name="margin-top">8</property>
+																		<property name="margin-bottom">8</property>
+																		<property name="margin-start">12</property>
+																		<property name="margin-end">12</property>
+																		<child>
+																			<object class="GtkLabel">
+																				<property name="label" translatable="yes">Icon brightness</property>
+																				<property name="halign">start</property>
+																				<property name="hexpand">1</property>
+																			</object>
+																		</child>
+																		<child>
+																			<object class="GtkAdjustment" id="adjustment-icon-brightness">
+																				<property name="step-increment">10</property>
+																				<property name="lower">-100</property>
+																				<property name="upper">100</property>
+																			</object>
+																			<object class="GtkSpinButton" id="icon_brightness">
+																				<property name="halign">end</property>
+																				<property name="adjustment">adjustment-icon-brightness</property>
+																			</object>
+																		</child>
+																	</object>
+																</property>
+															</object>
+														</child>
+													</object>
+												</property>
+											</object>
+										</child>
+										<child>
+											<object class="GtkLabel">
+												<property name="label" translatable="yes">Spacing</property>
+												<property name="halign">start</property>
+												<property name="margin-top">24</property>
+												<property name="margin-bottom">8</property>
+												<attributes>
+													<attribute name="weight" value="bold"></attribute>
+												</attributes>
+											</object>
+										</child>
+										<child>
+											<object class="GtkFrame">
+												<property name="child">
+													<object class="GtkListBox">
+														<child>
+															<object class="GtkListBoxRow">
+																<property name="selectable">0</property>
+																<property name="child">
+																	<object class="GtkBox">
+																		<property name="margin-top">8</property>
+																		<property name="margin-bottom">8</property>
+																		<property name="margin-start">12</property>
+																		<property name="margin-end">12</property>
+																		<property name="spacing">12</property>
+																		<child>
+																			<object class="GtkLabel">
+																				<property name="label" translatable="yes">Tray margin</property>
+																				<property name="halign">start</property>
+																				<property name="hexpand">1</property>
+																			</object>
+																		</child>
+																		<child>
+																			<object class="GtkAdjustment" id="adjustment-tray-margin-left">
+																				<property name="step-increment">1</property>
+																				<property name="upper">24</property>
+																			</object>
+																			<object class="GtkSpinButton" id="tray_margin_left">
+																				<property name="halign">center</property>
+																				<property name="adjustment">adjustment-tray-margin-left</property>
+																				<property name="tooltip-text" translatable="yes">Left margin</property>
+																			</object>
+																		</child>
+																		<child>
+																			<object class="GtkAdjustment" id="adjustment-tray-margin-right">
+																				<property name="step-increment">1</property>
+																				<property name="upper">24</property>
+																			</object>
+																			<object class="GtkSpinButton" id="tray_margin_right">
+																				<property name="halign">end</property>
+																				<property name="adjustment">adjustment-tray-margin-right</property>
+																				<property name="tooltip-text" translatable="yes">Right margin</property>
+																			</object>
+																		</child>
+																	</object>
+																</property>
+															</object>
+														</child>
+														<child>
+															<object class="GtkListBoxRow">
+																<property name="selectable">0</property>
+																<property name="child">
+																	<object class="GtkBox">
+																		<property name="margin-top">8</property>
+																		<property name="margin-bottom">8</property>
+																		<property name="margin-start">12</property>
+																		<property name="margin-end">12</property>
+																		<property name="spacing">12</property>
+																		<child>
+																			<object class="GtkLabel">
+																				<property name="label" translatable="yes">Icon margin</property>
+																				<property name="halign">start</property>
+																				<property name="hexpand">1</property>
+																			</object>
+																		</child>
+																		<child>
+																			<object class="GtkAdjustment" id="adjustment-icon-margin-vertical">
+																				<property name="step-increment">1</property>
+																				<property name="upper">24</property>
+																			</object>
+																			<object class="GtkSpinButton" id="icon_margin_vertical">
+																				<property name="halign">center</property>
+																				<property name="adjustment">adjustment-icon-margin-vertical</property>
+																				<property name="tooltip-text" translatable="yes">Vertical icon margin. NOTE: May not update in real time</property>
+																			</object>
+																		</child>
+																		<child>
+																			<object class="GtkAdjustment" id="adjustment-icon-margin-horizontal">
+																				<property name="step-increment">1</property>
+																				<property name="upper">24</property>
+																			</object>
+																			<object class="GtkSpinButton" id="icon_margin_horizontal">
+																				<property name="halign">end</property>
+																				<property name="adjustment">adjustment-icon-margin-horizontal</property>
+																				<property name="tooltip-text" translatable="yes">Horizontal icon margin</property>
+																			</object>
+																		</child>
+																	</object>
+																</property>
+															</object>
+														</child>
+														<child>
+															<object class="GtkListBoxRow">
+																<property name="selectable">0</property>
+																<property name="child">
+																	<object class="GtkBox">
+																		<property name="margin-top">8</property>
+																		<property name="margin-bottom">8</property>
+																		<property name="margin-start">12</property>
+																		<property name="margin-end">12</property>
+																		<property name="spacing">12</property>
+																		<child>
+																			<object class="GtkLabel">
+																				<property name="label" translatable="yes">Icon padding</property>
+																				<property name="halign">start</property>
+																				<property name="hexpand">1</property>
+																			</object>
+																		</child>
+																		<child>
+																			<object class="GtkAdjustment" id="adjustment-icon-padding-vertical">
+																				<property name="step-increment">1</property>
+																				<property name="upper">24</property>
+																			</object>
+																			<object class="GtkSpinButton" id="icon_padding_vertical">
+																				<property name="valign">center</property>
+																				<property name="halign">center</property>
+																				<property name="adjustment">adjustment-icon-padding-vertical</property>
+																				<property name="tooltip-text" translatable="yes">Vertical icon padding</property>
+																			</object>
+																		</child>
+																		<child>
+																			<object class="GtkAdjustment" id="adjustment-icon-padding-horizontal">
+																				<property name="step-increment">1</property>
+																				<property name="upper">24</property>
+																			</object>
+																			<object class="GtkSpinButton" id="icon_padding_horizontal">
+																				<property name="tooltip-text" translatable="yes">Horizontal icon padding</property>
+																				<property name="valign">center</property>
+																				<property name="halign">end</property>
+																				<property name="adjustment">adjustment-icon-padding-horizontal</property>
+																			</object>
+																		</child>
+																	</object>
+																</property>
+															</object>
+														</child>
+													</object>
+												</property>
+											</object>
+										</child>
+										<child>
+											<object class="GtkLabel">
+												<property name="label" translatable="yes">Behavior</property>
+												<property name="halign">start</property>
+												<property name="margin-top">24</property>
+												<property name="margin-bottom">8</property>
+												<attributes>
+													<attribute name="weight" value="bold"></attribute>
+												</attributes>
+											</object>
+										</child>
+										<child>
+											<object class="GtkFrame">
+												<property name="child">
+													<object class="GtkListBox">
+														<child>
+															<object class="GtkListBoxRow">
+																<property name="selectable">0</property>
+																<property name="child">
+																	<object class="GtkBox">
+																		<property name="margin-top">8</property>
+																		<property name="margin-bottom">8</property>
+																		<property name="margin-start">12</property>
+																		<property name="margin-end">12</property>
+																		<child>
+																			<object class="GtkLabel">
+																				<property name="label" translatable="yes">Invoke windows to current workspace</property>
+																				<property name="halign">start</property>
+																				<property name="hexpand">1</property>
+																			</object>
+																		</child>
+																		<child>
+																			<object class="GtkSwitch" id="invoke_to_workspace">
+																				<property name="halign">end</property>
+																			</object>
+																		</child>
+																	</object>
+																</property>
+															</object>
+														</child>
+														<child>
+															<object class="GtkListBoxRow">
+																<property name="selectable">0</property>
+																<property name="child">
+																	<object class="GtkBox">
+																		<property name="margin-top">8</property>
+																		<property name="margin-bottom">8</property>
+																		<property name="margin-start">12</property>
+																		<property name="margin-end">12</property>
+																		<child>
+																			<object class="GtkLabel">
+																				<property name="label" translatable="yes">Modify Wine apps behavior</property>
+																				<property name="halign">start</property>
+																				<property name="hexpand">1</property>
+																			</object>
+																		</child>
+																		<child>
+																			<object class="GtkSwitch" id="wine_behavior">
+																				<property name="halign">end</property>
+																			</object>
+																		</child>
+																	</object>
+																</property>
+															</object>
+														</child>
+													</object>
+												</property>
+											</object>
+										</child>
+										<child>
+											<object class="GtkGrid">
+												<property name="margin-top">16</property>
+												<property name="valign">start</property>
+												<property name="halign">center</property>
+												<child>
+													<object class="GtkLinkButton">
+														<property name="label">GitHub</property>
+														<property name="uri">https://github.com/MartinPL/Tray-Icons-Reloaded</property>
+														<property name="halign">start</property>
+														<layout>
+															<property name="row">0</property>
+															<property name="column">1</property>
+														</layout>
+													</object>
+												</child>
+												<child>
+													<object class="GtkLinkButton">
+														<property name="label">Donate</property>
+														<property name="uri">https://revolut.me/martinpl</property>
+														<property name="halign">end</property>
+														<layout>
+															<property name="row">0</property>
+															<property name="column">2</property>
+														</layout>
+													</object>
+												</child>
+											</object>
+										</child>
+									</object>
+								</child>
+							</object>
+						</property>
+					</object>
+				</child>
+				<child>
+					<object class="GtkStackPage">
+						<property name="title">Applications</property>
+						<property name="child">
+							<object class="GtkScrolledWindow">
+								<property name="propagate-natural-height">1</property>
+								<property name="hscrollbar-policy">never</property>
+								<child>
+									<object class="GtkBox">
+										<property name="orientation">vertical</property>
+										<property name="valign">start</property>
+										<property name="halign">center</property>
+										<property name="width-request">630</property>
+										<property name="margin-top">24</property>
+										<property name="margin-bottom">24</property>
+										<property name="margin-start">24</property>
+										<property name="margin-end">24</property>
+										<child>
+											<object class="GtkFrame">
+												<property name="child">
+													<object class="GtkListBox" id="appList">
+														<child>
+															<object class="GtkListBoxRow">
+																<property name="height-request">50</property>
+																<property name="selectable">false</property>
+																<property name="activatable">false</property>
+																<child>
+																	<object class="GtkButton">
+																		<property name="receives_default">True</property>
+																		<signal name="clicked" handler="showAppChooser" swapped="no" />
+																		<child>
+																			<object class="GtkImage" id="add-button">
+																				<property name="icon-name">list-add-symbolic</property>
+																			</object>
+																		</child>
+																	</object>
+																</child>
+															</object>
+														</child>
+													</object>
+												</property>
+											</object>
+										</child>
+									</object>
+								</child>
+							</object>
+						</property>
+					</object>
+				</child>
+			</object>
+		</child>
+	</template>
+</interface>

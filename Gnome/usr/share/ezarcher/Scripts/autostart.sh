@@ -1,7 +1,7 @@
 #!/bin/bash
 
 LIVEUSER="live"
-chmod -R 777 ~/.local/share/gnome-shell/extensions/material-you-theme@asubbiah.com/
+chmod -R 777 ~/.local/share/gnome-shell/extensions
 if [ "$USER" = "$LIVEUSER" ]; then
     sh -c "pkexec calamares"
 else

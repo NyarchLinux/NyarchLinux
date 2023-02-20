@@ -62,3 +62,11 @@ name='MaterialYou'
 resize-height=200
 resize-width=200
 scheme='Default'
+
+[org/fedorahosted/background-logo-extension]
+logo-always-visible=true
+logo-border=uint32 46
+logo-file='/etc/skel/.config/neofetch/logo.png'
+logo-file-dark='/etc/skel/.config/neofetch/logo.png'
+logo-position='bottom-right'
+logo-size=10.485232067510548
