@@ -1,6 +1,6 @@
 - [ ] Test nvidia drivers
 - [ ] Add some more wallpapers
-- [ ] Set dconf default values instead of editing dconf user file
+- [x] Set dconf default values instead of editing dconf user file
 - [ ] Enable autologin for live
 - [ ] Make an install script to install on *any* distro
 - [ ] Install Plymouth and set a theme
