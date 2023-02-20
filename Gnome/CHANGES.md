@@ -21,6 +21,8 @@ Here are listed all the main changes done to EzArcher Gnome template, in order t
     - [x] Rounded corners for windows
     - [x] Dash to panel
     - [x] Dash to Dock for Cosmic
+    - [x] Desktop icons Neo
+    - [x] Tray icons reloaded
 - [x] Enable tap to click on touchpad in settings
 - [x] ~Nyaofetch, Nekofetch commands (alias of neofetch), aliased neofetch to show [this ASCII art](https://gist.github.com/jso8910/06e939e95bb0071f7a0d8f12a63c10ac).~
 - [x] Customized Calamares
@@ -33,3 +35,4 @@ Here are listed all the main changes done to EzArcher Gnome template, in order t
 - [x] Install gnome-terminal-trasparency instead 
 - [x] Added theming to Kitty
 - [x] Nyaofetch and Nekofetch changed into commands, that displays png if running from kitty, ascii else
+- [x] Created Nyarch Wizard to suggest some apps to install
