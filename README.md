@@ -1,6 +1,12 @@
 # NyarchLinux
+![](https://img.shields.io/github/v/release/NyarchLinux/NyarchLinux?include_prereleases&label=Nyarch%20Release&style=for-the-badge)
+![](https://img.shields.io/github/stars/nyarchlinux/nyarchlinux?style=for-the-badge)
+![](https://img.shields.io/github/license/nyarchlinux/nyarchlinux?color=green&style=for-the-badge)
+[![](https://img.shields.io/badge/Website-nyarchlinux.moe-%23e32b6b?style=for-the-badge&logoColor=C689C6)](https://nyarchlinux.moe)
+
+
 <div align="center">
-   <img src="https://user-images.githubusercontent.com/67018178/219306815-448eea25-d0f3-4512-8d4f-f8167e21841a.png" width="100px" style="margin:auto;"/>
+   <img src="https://user-images.githubusercontent.com/67018178/219306815-448eea25-d0f3-4512-8d4f-f8167e21841a.png" width="300px" style="margin:auto;"/>
 </div>
 <h5><b>Nyarch Linux</b> is a Linux distribution <b>made for weebs</b>, based on ArchLinux and EzArcher.</h5><br />
 
@@ -10,7 +16,7 @@ If you want a similar configuration to what our distro offers out of the box, yo
 If you want to use it anyways, <b>Nyarch is nothing more than a heavily bloated Arch Linux install script</b>, it relies on Arch Linux standard repositories, so for normal packages you will receive frequent updates that do not depend on us, however, you may encounter issues with Gnome Extensions on Gnome updates, specially with NyarcMenu.
 
 ## Contributing
-If you want to contribute to the development of this distribution, please take a look at CONTRIBUTING.md.
+If you want to contribute to the development of this distribution, please take a look at [CONTRIBUTING.md](https://github.com/NyarchLinux/NyarchLinux/blob/main/CONTRIBUTING.md).
 
 ## Will you make other DEs spins?
 
