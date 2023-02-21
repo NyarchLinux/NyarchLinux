@@ -430,6 +430,9 @@ chromium
 kitty
 vte3
 gnome-terminal-transparency
+plymouth
+libdrm
+pango
 
 # Webapp Manager
 python-beautifulsoup4
