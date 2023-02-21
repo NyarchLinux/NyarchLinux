@@ -230,8 +230,8 @@ sed -i "s/pc105/"${KEYMOD}"/g" ./ezreleng/airootfs/etc/default/keyboard
 sed -i "s/us/"${KEYMP}"/g" ./ezreleng/airootfs/etc/default/keyboard
 sed -i "s/en_US/"${LCLST}"/g" ./ezreleng/airootfs/etc/default/locale
 sed -i "s/en_US/"${LCLST}"/g" ./ezreleng/airootfs/etc/locale.conf
-echo ""${LCLST}".UTF-8 UTF-8" > ./ezreleng/airootfs/etc/locale.gen
-echo "C.UTF-8 UTF-8" >> ./ezreleng/airootfs/etc/locale.gen
+#echo ""${LCLST}".UTF-8 UTF-8" > ./ezreleng/airootfs/etc/locale.gen
+#echo "C.UTF-8 UTF-8" >> ./ezreleng/airootfs/etc/locale.gen
 }
 
 # Start mkarchiso
