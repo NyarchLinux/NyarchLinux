@@ -1,0 +1,3 @@
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin live --noclear %I 38400 linux
