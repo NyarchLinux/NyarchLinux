@@ -1,4 +1,4 @@
-- [ ] Test nvidia drivers
+- [x] Test nvidia drivers
 - [x] Add some more wallpapers
 - [x] Set dconf default values instead of editing dconf user file
 - [x] Enable autologin for live
