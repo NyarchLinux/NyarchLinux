@@ -435,6 +435,7 @@ gdm-plymouth
 libgdm-plymouth
 libdrm
 pango
+btop
 
 # Webapp Manager
 python-beautifulsoup4
