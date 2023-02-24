@@ -1,3 +1,7 @@
+[org/gnome/shell]
+disabled-extensions=['workspace-indicator@gnome-shell-extensions.gcampax.github.com', 'compiz-windows-effect@hermes83.github.com', 'desktop-cube@schneegans.github.com', 'color-picker@tuberry', 'dash-to-dock-cosmic-@halfmexicanhalfamazing@gmail.com']
+enabled-extensions=['compiz-alike-magic-lamp-effect@hermes83.github.com', 'user-theme@gnome-shell-extensions.gcampax.github.com', 'material-you-theme@asubbiah.com', 'rounded-window-corners@yilozt', 'Rounded_Corners@lennart-k', 'bluetooth-quick-connect@bjarosze.gmail.com', 'gsconnect@andyholmes.github.io', 'dash-to-panel@jderose9.github.com', 'nyarcmenu@nyarchlinux.moe', 'blur-my-shell@aunetx', 'background-logo@fedorahosted.org']
+
 [org/gnome/shell/extensions/arcmenu]
 application-shortcuts-list=[['Software', 'org.gnome.Software', 'ArcMenu_Software'], ['Settings', 'org.gnome.Settings', 'org.gnome.Settings.desktop'], ['Tweaks', 'org.gnome.tweaks', 'org.gnome.tweaks.desktop'], ['Terminal', 'org.gnome.Terminal', 'org.gnome.Terminal.desktop'], ['Activities Overview', 'view-fullscreen-symbolic', 'ArcMenu_ActivitiesOverview'], ['Extension Manager', 'com.mattjakeman.ExtensionManager', 'com.mattjakeman.ExtensionManager.desktop']]
 button-item-icon-size='Small'
