@@ -1,7 +1,21 @@
+  GNU nano 7.2                                           nyaofetch                                                       
 #!/bin/bash
 EMPTY=""
 if [ "$KITTY_WINDOW_ID" != "$EMPTY" ]; then
         neofetch --backend kitty --source ~/.config/neofetch/logo.png
 else
-        neofetch --ascii ~/.config/neofetch/ascii --gap '-250'
+        if [ $(tput cols) -gt "125" ]; then
+                neofetch --ascii ~/.config/neofetch/ascii90 --gap '-880'
+        elif [ $(tput cols) -gt "110" ]; then
+                neofetch --ascii ~/.config/neofetch/ascii70 --gap '-808'
+        elif [ $(tput cols) -gt "100" ]; then
+                neofetch --ascii ~/.config/neofetch/ascii60 --gap '-730'
+        elif [ $(tput cols) -gt "90" ]; then
+                neofetch --ascii ~/.config/neofetch/ascii70 --gap '-808'
+        else
+                neofetch --ascii ~/.config/neofetch/ascii50 --gap '-670'
+        fi
 fi
+
+
+
