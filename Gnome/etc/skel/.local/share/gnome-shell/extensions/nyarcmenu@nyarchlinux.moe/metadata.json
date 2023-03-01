@@ -6,6 +6,6 @@
 "name": "NyArcMenu",
 "description": "Fork of ArcMenu, Application Menu Extension for GNOME",
 "version": 43,
-"shell-version": [ "42", "43" ],
+"shell-version": [ "42", "43", "44" ],
 "url": "https://gitlab.com/arcmenu/ArcMenu"
 }
