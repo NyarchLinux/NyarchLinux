@@ -17,6 +17,7 @@ rm -rf catgirldownloader.flatpak
 rm -rf nyarchcustomize.flatpak
 rm -rf nyarchtour.flatpak
 rm -rf wizard.flatpak
+rm -rf nyarchscript.flatpak
 
 wget https://github.com/nyarchlinux/nyarchtour/releases/latest/download/nyarchtour.flatpak
 wget https://github.com/nyarchlinux/nyarchwizard/releases/latest/download/wizard.flatpak
