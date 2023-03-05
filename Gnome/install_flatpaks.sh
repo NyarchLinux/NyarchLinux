@@ -9,7 +9,7 @@ flatpak install flathub de.haeckerfelix.Shortwave
 flatpak install flathub org.gnome.Lollypop
 flatpak install flathub de.haeckerfelix.Fragments
 flatpak install org.gtk.Gtk3theme.adw-gtk3 org.gtk.Gtk3theme.adw-gtk3-dark
-flatpak install flathub de.haeckerfelix.Fragments
+flatpak install flathub com.mattjakeman.ExtensionManager
 
 cd flatpaks
 rm -rf nyarchtour.flatpak
@@ -17,6 +17,7 @@ rm -rf catgirldownloader.flatpak
 rm -rf nyarchcustomize.flatpak
 rm -rf nyarchtour.flatpak
 rm -rf wizard.flatpak
+rm -rf nyarchscript.flatpak
 
 wget https://github.com/nyarchlinux/nyarchtour/releases/latest/download/nyarchtour.flatpak
 wget https://github.com/nyarchlinux/nyarchwizard/releases/latest/download/wizard.flatpak
@@ -27,6 +28,5 @@ wget https://github.com/nyarchlinux/nyarchcustomize/releases/latest/download/nya
 flatpak install nyarchtour.flatpak
 flatpak install catgirldownloader.flatpak
 flatpak install nyarchcustomize.flatpak
-flatpak install nyarchtour.flatpak
 flatpak install wizard.flatpak
 flatpak install nyarchscript.flatpak
