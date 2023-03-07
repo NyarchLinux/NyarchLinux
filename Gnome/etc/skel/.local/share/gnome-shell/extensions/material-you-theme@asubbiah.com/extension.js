@@ -76,12 +76,20 @@ class Extension {
         } catch (e) {
             log(e);
         }
-
-        apply_theme(base_presets, color_mappings);
+        // Commented out to avoid reloading the theme at every start
+        // This should not be ported to normal material you extension
+        // after enabling, to apply the theme you must change trigger 
+        // this function using settings before
+        //apply_theme(base_presets, color_mappings);
     }
 
     disable() {
-        remove_theme();
+        // Don't remove theme on suspension
+        let lockingScreen = (Main.sessionMode.currentMode == "unlock-dialog"    // unlock-dialog == shield/curtain (before lock-screen w/ gdm)
+        || Main.sessionMode.currentMode == "lock-screen");
+        if (!lockingScreen) {
+            remove_theme();
+        }
         this._interfaceSettings = null;
         this._wallpaperSettings = null;
         this._prefsSettings = null;
@@ -341,8 +349,6 @@ function compile_sass(scss_path, output_path, shell_settings) {
                 }
             } catch (e) {
                 logError(e);
-            } finally {
-                loop.quit();
             }
         });
     } catch (e) {
@@ -354,30 +360,39 @@ function map_colors(color_mapping, base_preset, scheme) {
     for (const key in color_mapping) {
         if (!Array.isArray(color_mapping[key])) {
             if (color_mapping[key].opacity == 1) {
-                base_preset.variables[key] = string_utils.hexFromArgb(scheme[color_mapping[key].color]);
+                base_preset.variables[key] = string_utils.hexFromArgb(
+                    scheme[color_mapping[key].color]
+                );
             } else {
                 let argb = scheme[color_mapping[key].color];
                 let r = color_utils.redFromArgb(argb);
                 let g = color_utils.greenFromArgb(argb);
                 let b = color_utils.blueFromArgb(argb);
-                rgba_str = "rgba(" + r + ", " + g + ", " + b + ", " + color_mapping[key].opacity + ")"
+                rgba_str =
+                    "rgba(" +
+                    r +
+                    ", " +
+                    g +
+                    ", " +
+                    b +
+                    ", " +
+                    color_mapping[key].opacity +
+                    ")";
                 base_preset.variables[key] = rgba_str;
             }
-        } else {
-            if (color_mapping[key].length > 0) {
-                total_color = scheme[color_mapping[key][0].color]; // Setting base color
-                // Mixing in added colors
-                for (let i = 1; i < color_mapping[key].length; i++) {
-                    let argb = scheme[color_mapping[key][i].color];
-                    let r = color_utils.redFromArgb(argb);
-                    let g = color_utils.greenFromArgb(argb);
-                    let b = color_utils.blueFromArgb(argb);
-                    let a = color_mapping[key][i].opacity;
-                    let added_color = color_utils.argbFromRgba(r, g, b, a);
-                    total_color = color_utils.blendArgb(total_color, added_color);
-                }
-                base_preset.variables[key] = string_utils.hexFromArgb(total_color);
+        } else if (color_mapping[key].length > 0) {
+            total_color = scheme[color_mapping[key][0].color]; // Setting base color
+            // Mixing in added colors
+            for (let i = 1; i < color_mapping[key].length; i++) {
+                let argb = scheme[color_mapping[key][i].color];
+                let r = color_utils.redFromArgb(argb);
+                let g = color_utils.greenFromArgb(argb);
+                let b = color_utils.blueFromArgb(argb);
+                let a = color_mapping[key][i].opacity;
+                let added_color = color_utils.argbFromRgba(r, g, b, a);
+                total_color = color_utils.blendArgb(total_color, added_color);
             }
+            base_preset.variables[key] = string_utils.hexFromArgb(total_color);
         }
     }
     return base_preset;

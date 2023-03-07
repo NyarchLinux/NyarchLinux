@@ -746,8 +746,8 @@ class Extension {
     };
 
     this._settings.connect('changed::per-monitor-perspective', updateMonitorPerspective);
-    this._monitorsChangedID =
-      Meta.MonitorManager.get().connect('monitors-changed', updateMonitorPerspective);
+    this._monitorsChangedID = global.backend.get_monitor_manager().connect(
+      'monitors-changed', updateMonitorPerspective);
 
     updateMonitorPerspective();
   }
@@ -792,7 +792,7 @@ class Extension {
 
     // Clean up perspective correction.
     this._disablePerspectiveCorrection();
-    Meta.MonitorManager.get().disconnect(this._monitorsChangedID);
+    global.backend.get_monitor_manager().disconnect(this._monitorsChangedID);
 
     // Make sure that the settings object is freed.
     this._settings = null;

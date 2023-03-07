@@ -128,11 +128,8 @@ var ProximityManager = class {
                 }
             ],
             [
-                global.window_group,
-                [
-                    'actor-added',
-                    'actor-removed'
-                ],
+                global.display, 
+                'restacked', 
                 () => this._queueUpdate()
             ]
         );
@@ -161,7 +158,7 @@ var ProximityManager = class {
 
         if (window) {
             focusedWindowInfo = { window: window };
-            focusedWindowInfo.metaWindow = focusedWindowInfo.window.get_meta_window();
+            focusedWindowInfo.metaWindow = focusedWindow;
 
             if (focusedWindow.is_attached_dialog()) {
                 let mainMetaWindow = focusedWindow.get_transient_for();
@@ -193,8 +190,7 @@ var ProximityManager = class {
 
     _checkIfHandledWindow(metaWindow) {
         return metaWindow && 
-               !metaWindow.minimized && 
-               !metaWindow.skip_taskbar &&
+               !metaWindow.minimized &&
                this._checkIfHandledWindowType(metaWindow);
     }
 
@@ -250,6 +246,11 @@ var ProximityManager = class {
     }
 
     _checkProximity(metaWindow, watch) {
-        return metaWindow.get_frame_rect().overlap(watch.rect);
+        let windowRect = metaWindow.get_frame_rect();
+
+        return windowRect.overlap(watch.rect) && 
+               ((!watch.threshold[0] && !watch.threshold[1]) || 
+                metaWindow.get_monitor() == watch.monitorIndex || 
+                windowRect.overlap(global.display.get_monitor_geometry(watch.monitorIndex)));
     }
 };

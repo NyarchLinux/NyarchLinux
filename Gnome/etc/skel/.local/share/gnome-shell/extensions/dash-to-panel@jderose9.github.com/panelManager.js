@@ -75,6 +75,8 @@ var PanelManager = class {
             this.primaryPanel = this._createPanel(this.dtpPrimaryMonitor, Me.settings.get_boolean('stockgs-keep-top-panel'));
             this.allPanels.push(this.primaryPanel);
             this.overview.enable(this.primaryPanel);
+
+            this.setFocusedMonitor(this.dtpPrimaryMonitor);
         }
 
         if (Me.settings.get_boolean('multi-monitors')) {
@@ -115,7 +117,6 @@ var PanelManager = class {
         }
 
         this._updatePanelElementPositions();
-        this.setFocusedMonitor(this.dtpPrimaryMonitor);
         
         if (reset) return;
 
@@ -201,7 +202,13 @@ var PanelManager = class {
         );
 
         panelBoxes.forEach(c => this._signalsHandler.add(
-            [Main.panel[c], 'actor-added', (parent, child) => this._adjustPanelMenuButton(this._getPanelMenuButton(child), this.primaryPanel.monitor, this.primaryPanel.getPosition())]
+            [
+                Main.panel[c], 
+                'actor-added', 
+                (parent, child) => 
+                    this.primaryPanel && 
+                    this._adjustPanelMenuButton(this._getPanelMenuButton(child), this.primaryPanel.monitor, this.primaryPanel.getPosition())
+            ]
         ));
 
         this._setKeyBindings(true);
@@ -212,7 +219,7 @@ var PanelManager = class {
     }
 
     disable(reset) {
-        this.overview.disable();
+        this.primaryPanel && this.overview.disable();
         this.proximityManager.destroy();
 
         this.allPanels.forEach(p => {
@@ -500,7 +507,7 @@ var PanelManager = class {
     }
 
     _getPanelMenuButton(obj) {
-        return obj._delegate && obj._delegate instanceof PanelMenu.Button ? obj._delegate : 0;
+        return obj instanceof PanelMenu.Button && obj.menu?._boxPointer ? obj : 0;
     }
 
     _setKeyBindings(enable) {
@@ -699,8 +706,8 @@ function newUpdatePanelBarrier(panel) {
     let fixed2 = panel.monitor.y + barrierSize;
     
     if (panel.checkIfVertical()) {
-        barriers._rightPanelBarrier.push(panel.monitor.y + panel.monitor.height, Meta.BarrierDirection.POSITIVE_Y);
-        barriers._leftPanelBarrier.push(panel.monitor.y, Meta.BarrierDirection.NEGATIVE_Y);
+        barriers._rightPanelBarrier.push(panel.monitor.y + panel.monitor.height, Meta.BarrierDirection.NEGATIVE_Y);
+        barriers._leftPanelBarrier.push(panel.monitor.y, Meta.BarrierDirection.POSITIVE_Y);
     } else {
         barriers._rightPanelBarrier.push(panel.monitor.x + panel.monitor.width, Meta.BarrierDirection.NEGATIVE_X);
         barriers._leftPanelBarrier.push(panel.monitor.x, Meta.BarrierDirection.POSITIVE_X);
@@ -713,12 +720,12 @@ function newUpdatePanelBarrier(panel) {
             fixed2 = panel.monitor.y + panel.monitor.height;
             break;
         case St.Side.LEFT:
-            fixed1 = panel.monitor.x;
-            fixed2 = panel.monitor.x + barrierSize;
+            fixed1 = panel.monitor.x + barrierSize;
+            fixed2 = panel.monitor.x;
             break;
         case St.Side.RIGHT:
-            fixed1 = panel.monitor.x + panel.monitor.width;
-            fixed2 = panel.monitor.x + panel.monitor.width - barrierSize;
+            fixed1 = panel.monitor.x + panel.monitor.width - barrierSize;
+            fixed2 = panel.monitor.x + panel.monitor.width;
             break;
     }
 

@@ -252,41 +252,13 @@ var DragGesture =
   // passed to the given actor. This is used to ensure that we do not "loose" the touch
   // buttons will dragging them around.
   _grab(device, sequence) {
-
-    // On GNOME Shell 42, there's a new API.
-    if (utils.shellVersionIsAtLeast(42)) {
-      this._lastGrab = global.stage.grab(this._actor);
-      return this._lastGrab != null;
-    }
-
-    // Before, we needed to grab the device and enter modal mode.
-    if (global.begin_modal(0, 0)) {
-      if (sequence) {
-        device.sequence_grab(sequence, this._actor);
-        this._grabbedSequence = sequence;
-      } else {
-        device.grab(this._actor);
-      }
-      this._lastGrab = device;
-      return true;
-    }
-
-    return false;
+    this._lastGrab = global.stage.grab(this._actor);
+    return this._lastGrab != null;
   }
 
   // Releases a grab created with the method above.
   _ungrab() {
-    if (utils.shellVersionIsAtLeast(42)) {
-      this._lastGrab.dismiss();
-    } else {
-      if (this._grabbedSequence) {
-        this._lastGrab.sequence_ungrab(this._grabbedSequence);
-        this._grabbedSequence = null;
-      } else {
-        this._lastGrab.ungrab();
-      }
-      global.end_modal(0);
-    }
+    this._lastGrab.dismiss();
     this._lastGrab = null;
   }
 
