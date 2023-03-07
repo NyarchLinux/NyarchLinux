@@ -204,8 +204,18 @@ var DisplayWrapper = {
     },
 
     getMonitorManager() {
-        return global.screen || Meta.MonitorManager.get();
+        return global.screen || global.backend.get_monitor_manager();
     }
+};
+
+let unredirectEnabled = true
+var setDisplayUnredirect = (enable) => {
+    if (enable && !unredirectEnabled)
+        Meta.enable_unredirect_for_display(global.display);
+    else if (!enable && unredirectEnabled)
+        Meta.disable_unredirect_for_display(global.display);
+
+    unredirectEnabled = enable;
 };
 
 var getSystemMenuInfo = function() {
@@ -431,7 +441,7 @@ var animateWindowOpacity = function(window, tweenOpts) {
 var animate = function(actor, options) {
     //the original animations used Tweener instead of Clutter animations, so we
     //use "time" and "delay" properties defined in seconds, as opposed to Clutter 
-    //animations duration" and "delay" which are defined in milliseconds
+    //animations "duration" and "delay" which are defined in milliseconds
     if (options.delay) {
         options.delay = options.delay * 1000;
     }

@@ -5,12 +5,11 @@
   "name": "Desktop Cube",
   "settings-schema": "org.gnome.shell.extensions.desktop-cube",
   "shell-version": [
-    "40",
-    "41",
     "42",
-    "43"
+    "43",
+    "44"
   ],
   "url": "https://github.com/Schneegans/Desktop-Cube",
   "uuid": "desktop-cube@schneegans.github.com",
-  "version": 13
+  "version": 14
 }
