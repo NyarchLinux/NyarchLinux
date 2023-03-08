@@ -519,7 +519,6 @@ var TaskbarAppIcon = GObject.registerClass({
         this._unfocusedIsWide = this._isWideDotStyle(unfocusedDotStyle);
 
         [, this._containerSize] = this._container[`get_preferred_${sizeProp}`](-1);
-        this._containerSize /= Utils.getScaleFactor();
 
         [this._focusedDots, this._unfocusedDots].forEach(d => {
             d._tweeningToSize = null;
@@ -763,7 +762,7 @@ var TaskbarAppIcon = GObject.registerClass({
     }
 
     _animateDotDisplay(dots, newSize, otherDots, newOtherOpacity, sizeProp, duration) {
-        if(dots[sizeProp] != newSize && dots._tweeningToSize !== newSize) {
+        if(dots._tweeningToSize !== newSize) {
             let tweenOpts = { 
                 time: duration,
                 transition: 'easeInOutCubic',
@@ -1004,18 +1003,11 @@ var TaskbarAppIcon = GObject.registerClass({
 
     _launchNewInstance() {
         if (this.app.can_open_new_window() && this.app.state == Shell.AppState.RUNNING) {
-            let appActions = this.app.get_app_info().list_actions();
-            let newWindowIndex = appActions.indexOf('new-window');
-
             if(Me.settings.get_boolean('animate-window-launch')) {
                 this.animateLaunch();
             }
 
-            if (newWindowIndex < 0) {
-                this.app.open_new_window(-1);
-            } else {
-                this.app.launch_action(appActions[newWindowIndex], global.get_current_time(), -1);
-            }
+            this.app.open_new_window(-1);
         } else {
             let windows = this.window ? [this.window] : this.app.get_windows();
 
