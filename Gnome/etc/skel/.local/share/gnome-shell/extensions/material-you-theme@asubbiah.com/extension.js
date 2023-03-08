@@ -76,6 +76,17 @@ class Extension {
         } catch (e) {
             log(e);
         }
+
+        try {
+            let config_path = GLib.get_home_dir() + "/.config";
+            let content = read_file(config_path + "/gtk-4.0/materialyou");
+            if (content != "yes") {
+                apply_theme(base_presets, color_mappings);
+            }
+        } catch (e) {
+            apply_theme(base_presets, color_mappings);
+            log(e);
+        }
         // Commented out to avoid reloading the theme at every start
         // This should not be ported to normal material you extension
         // after enabling, to apply the theme you must change trigger 
@@ -171,6 +182,7 @@ function apply_theme(base_presets, color_mappings, notify=false) {
     create_dir(config_path + "/gtk-4.0");
     create_dir(config_path + "/gtk-3.0");
     write_str(css, config_path + "/gtk-4.0/gtk.css");
+    write_str("yes", config_path + "/gtk-4.0/materialyou");  //Recognize that material you theme is already applied
     write_str(css, config_path + "/gtk-3.0/gtk.css");
 
     if (ext_utils.check_npm()) {
@@ -210,6 +222,7 @@ function remove_theme() {
     // Undoing changes to theme when disabling extension
     delete_file(GLib.get_home_dir() + "/.config/gtk-4.0/gtk.css");
     delete_file(GLib.get_home_dir() + "/.config/gtk-3.0/gtk.css");
+    delete_file(GLib.get_home_dir() + "/.config/gtk-4.0/materialyou");
 
     // Get prefs
     // const settings = ExtensionUtils.getSettings(PREFS_SCHEMA);
