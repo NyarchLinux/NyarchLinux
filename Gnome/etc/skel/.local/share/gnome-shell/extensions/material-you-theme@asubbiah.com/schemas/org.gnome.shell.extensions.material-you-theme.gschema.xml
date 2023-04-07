@@ -17,5 +17,9 @@
             <default>64</default>
             <summary>Height to resize wallpaper to</summary>
         </key>
+        <key name="enable-pywal-theming" type="b">
+            <default>false</default>
+            <summary>Enabling Pywal Theming</summary>
+        </key>
     </schema>
 </schemalist>

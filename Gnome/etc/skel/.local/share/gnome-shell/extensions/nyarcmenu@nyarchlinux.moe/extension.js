@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable jsdoc/require-jsdoc */
 /*
  * ArcMenu - Application Menu Extension for GNOME
  * Andrew Zaech https://gitlab.com/AndrewZaech
@@ -21,8 +23,6 @@ const Me = ExtensionUtils.getCurrentExtension();
 const {GLib, Gio, St} = imports.gi;
 const Constants = Me.imports.constants;
 const Controller = Me.imports.controller;
-const Config = imports.misc.config;
-const ShellVersion = parseFloat(Config.PACKAGE_VERSION);
 
 const Main = imports.ui.main;
 const Theming = Me.imports.theming;
@@ -30,10 +30,12 @@ const Util = imports.misc.util;
 const Utils = Me.imports.utils;
 const MessageTray = imports.ui.messageTray;
 
-let settings;
-let settingsControllers;
-let extensionChangedId;
+let extensionChangedId, settingsControllers, _realHasOverview;
 
+function init() {
+    _realHasOverview = Main.sessionMode.hasOverview;
+    ExtensionUtils.initTranslations(Me.metadata['gettext-domain']);
+}
 
 async function reloadTheme() {
     await new Promise(r => setTimeout(r, 500));
@@ -49,17 +51,25 @@ let customUpdateState = function() {
     this._updateStateOriginal();
 }
 
-function init() {
-    ExtensionUtils.initTranslations(Me.metadata['gettext-domain']);
-}
-
 function enable() {
-    settings = ExtensionUtils.getSettings(Me.metadata['settings-schema']);
-    settings.connect('changed::multi-monitor', () => _reload());
-    settings.connect('changed::dash-to-panel-standalone', () => _reload());
+    Me.settings = ExtensionUtils.getSettings(Me.metadata['settings-schema']);
+
+    const hideOverviewOnStartup = Me.settings.get_boolean('hide-overview-on-startup');
+    if (hideOverviewOnStartup && Main.layoutManager._startingUp) {
+        Main.sessionMode.hasOverview = false;
+        Main.layoutManager.connect('startup-complete', () => {
+            Main.sessionMode.hasOverview = _realHasOverview;
+        });
+        // handle Ubuntu's method
+        if (Main.layoutManager.startInOverview)
+            Main.layoutManager.startInOverview = false;
+    }
+
+    Me.settings.connect('changed::multi-monitor', () => _reload());
+    Me.settings.connect('changed::dash-to-panel-standalone', () => _reload());
     settingsControllers = [];
 
-    Theming.createStylesheet(settings);
+    Theming.createStylesheet(Me.settings);
 
     _enableButtons();
 
@@ -83,7 +93,9 @@ function enable() {
 }
 
 function disable() {
-    if(extensionChangedId){
+    Main.sessionMode.hasOverview = _realHasOverview;
+
+    if (extensionChangedId) {
         Main.extensionManager.disconnect(extensionChangedId);
         extensionChangedId = null;
     }
@@ -98,8 +110,8 @@ function disable() {
     MessageTray.MessageTray.prototype._updateState =
     MessageTray.MessageTray.prototype._updateStateOriginal;
     delete MessageTray.MessageTray.prototype._updateStateOriginal;
-    settings.run_dispose();
-    settings = null;
+    //settings.run_dispose();
+    //settings = null;
     
 }
 
@@ -129,37 +141,51 @@ function _reload() {
 }
 
 function _enableButtons() {
-    let multiMonitor = settings.get_boolean('multi-monitor');
+    const multiMonitor = Me.settings.get_boolean('multi-monitor');
 
     let panelExtensionEnabled = false;
-    let panelArray = [Main.panel];
+    let panels;
 
-    if(global.dashToPanel && global.dashToPanel.panels){
-        panelArray = global.dashToPanel.panels.map(pw => pw);
+    if (global.dashToPanel && global.dashToPanel.panels) {
+        panels = global.dashToPanel.panels.map(pw => pw);
         panelExtensionEnabled = true;
-    }
-    if(global.azTaskbar && global.azTaskbar.panels){
-        panelArray = panelArray.concat(global.azTaskbar.panels.map(pw => pw));
+    } else if (global.azTaskbar && global.azTaskbar.panels) {
+        panels = global.azTaskbar.panels.map(pw => pw);
+        panels.unshift(Main.panel);
         panelExtensionEnabled = true;
+    } else {
+        panels = [Main.panel];
     }
 
-    let panelLength = multiMonitor ? panelArray.length : 1;
-    for(var index = 0; index < panelLength; index++){
-        let panel = panelArray[index].panel ?? panelArray[index];
-        let panelParent = panelArray[index];
+    const panelLength = multiMonitor ? panels.length : 1;
+    for (var i = 0; i < panelLength; i++) {
+        // Dash to Panel and AzTaskbar don't store the actual 'panel' in their global 'panels' object
+        let panel = panels[i].panel ?? panels[i];
+        const panelParent = panels[i].panel ? panels[i] : Main.panel;
 
-        //Place ArcMenu in top panel when Dash to Panel setting "Keep original gnome-shell top panel" is on
-        let isStandalone = settings.get_boolean('dash-to-panel-standalone') && global.dashToPanel && panelExtensionEnabled;
-        if(isStandalone && ('isPrimary' in panelParent && panelParent.isPrimary) && panelParent.isStandalone)
+        let panelBox;
+        if (panels[i].panelBox) // case Dash To Panel
+            panelBox = panels[i].panelBox;
+        else if (panels[i].panel) // case AzTaskbar
+            panelBox = panels[i];
+        else
+            panelBox = Main.layoutManager.panelBox;
+
+        // Place ArcMenu in main top panel when
+        // Dash to Panel setting "Keep original gnome-shell top panel" is on
+        const isStandalone = Me.settings.get_boolean('dash-to-panel-standalone') &&
+                             global.dashToPanel && panelExtensionEnabled;
+        if (isStandalone && ('isPrimary' in panelParent && panelParent.isPrimary) && panelParent.isStandalone)
             panel = Main.panel;
-    
-        let isPrimaryPanel = index === 0 ? true : false;
-        let settingsController = new Controller.MenuSettingsController(settings, settingsControllers, panel, isPrimaryPanel);
+
+        const isPrimaryPanel = i === 0;
+        const settingsController = new Controller.MenuSettingsController(settingsControllers,
+            panel, panelBox, panelParent, isPrimaryPanel);
 
         settingsController.monitorIndex = panelParent.monitor?.index ?? 0;
 
-        if(panelExtensionEnabled)
-            panel._amDestroyId = panel.connect('destroy', () => extensionChangedId ? _disableButton(settingsController) : null);
+        if (panelExtensionEnabled)
+            panel._amDestroyId = panel.connect('destroy', () => _disableButton(settingsController));
 
         settingsController.enableButton();
         settingsController.connectSettingsEvents();
@@ -167,15 +193,15 @@ function _enableButtons() {
     }
 }
 
-function _disableButtons(){
+function _disableButtons() {
     for (let i = settingsControllers.length - 1; i >= 0; --i) {
-        let sc = settingsControllers[i];
+        const sc = settingsControllers[i];
         _disableButton(sc);
     }
 }
 
 function _disableButton(controller) {
-    if(controller.panel?._amDestroyId){
+    if (controller.panel?._amDestroyId) {
         controller.panel.disconnect(controller.panel._amDestroyId);
         delete controller.panel._amDestroyId;
     }

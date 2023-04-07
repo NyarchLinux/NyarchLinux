@@ -18,7 +18,7 @@ ArcMenu is an application menu for GNOME Shell, designed to provide a more famil
 
 ArcMenu is provided free of charge. If you enjoy using ArcMenu and wish to help support the project, feel free to use the link below!
 
-[![Donate via Paypal](https://gitlab.com/arcmenu/arcmenu-assets/raw/master/images/paypal_donate.png)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=53CWA7NR743WC&item_name=Donate+to+support+my+work&currency_code=USD&source=url)
+[![Donate via Paypal](https://gitlab.com/arcmenu/arcmenu-assets/raw/master/images/paypal_donate.png)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=53CWA7NR743WC&item_name=Support+ArcMenu&currency_code=USD&source=url)
 
 
 -----
@@ -69,7 +69,7 @@ Additional credits:
  **@[Ivan](https://gitlab.com/vantu5z), @[Ser82-png](https://gitlab.com/Ser82-png) - Russian** | **@[gkkulik](https://gitlab.com/gkkulik) - Silesian** | **@[vikaig](https://gitlab.com/vikaig) - Ukrainian** | **@[jordim](https://gitlab.com/jordim) - Catalan** | **@[aylinux](https://gitlab.com/aylinux), @[libreajans](https://gitlab.com/libreajans), @[Sabri Ünal](https://gitlab.com/sabriunal) - Turkish**
  
 
-**@[MorganAntonsson](https://gitlab.com/MorganAntonsson) - Swedish** | **@[jiri.doubravsky](https://gitlab.com/jiri.doubravsky), @[panmourovaty ](https://gitlab.com/panmourovaty) - Czech** | **@[juanlucer](https://gitlab.com/juanlucer), @[pjunyent](https://gitlab.com/pjunyent), @[Sergio](https://gitlab.com/IngrownMink4) - Spanish** | **@[plesry](https://gitlab.com/plesry) - Chinese (Taiwan)** | **@[Vombato](https://gitlab.com/Vombato), @[matguidi](https://gitlab.com/matguidi) - Italian**
+**@[MorganAntonsson](https://gitlab.com/MorganAntonsson) - Swedish** | **@[jiri.doubravsky](https://gitlab.com/jiri.doubravsky), @[panmourovaty](https://gitlab.com/panmourovaty), @[Amerey ](https://gitlab.com/Amerey.eu) - Czech** | **@[juanlucer](https://gitlab.com/juanlucer), @[pjunyent](https://gitlab.com/pjunyent), @[Sergio](https://gitlab.com/IngrownMink4) - Spanish** | **@[plesry](https://gitlab.com/plesry) - Chinese (Taiwan)** | **@[Vombato](https://gitlab.com/Vombato), @[matguidi](https://gitlab.com/matguidi) - Italian**
 
 **@[skygmin](https://gitlab.com/skygmin), @[doufu3344](https://gitlab.com/doufu3344) - Simplified Chinese** | **@[Vistaus](https://gitlab.com/Vistaus), @[vinno97](https://gitlab.com/vinno97) - Dutch** | **@[artnay](https://gitlab.com/artnay) - Finnish** |  **@[rimasx](https://gitlab.com/rimasx) - Estonian** | **@[stevendobay](https://gitlab.com/stevendobay) - Hungarian** 
 

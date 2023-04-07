@@ -199,6 +199,58 @@ class MiscGroup extends Adw.PreferencesGroup {
         this.add(row);
     }
 }
+class PywalInstallRow extends Adw.ActionRow {
+    static {
+        GObject.registerClass(this);
+    }
+
+    constructor(name, title, subtitle) {
+        const button = new Gtk.Button({
+            label: "Install",
+            valign: Gtk.Align.CENTER,
+        });
+
+        button.connect('clicked', () => {
+            install_pywal();
+            button.set_label("Installed");
+            // npm_utils.install_npm_deps();
+        });
+
+        super({
+            title: title,
+            subtitle: subtitle,
+            activatable_widget: button,
+        });
+        this.add_suffix(button);
+    }
+}
+
+class PywalGroup extends Adw.PreferencesGroup {
+    static {
+        GObject.registerClass(this);
+    }
+
+    constructor() {
+        super({ title: "Enable Pywal Theming" });
+
+        this._settings = ExtensionUtils.getSettings(PREFS_SCHEMA);
+
+        this.connect("destroy", () => this._settings.run_dispose());
+
+        this._addPywalInstall("request-install", "Install Pywal with pip", "Requires pip3 to already be installed");
+        this._addToggle("enable-pywal-theming", this._settings, "Enable Pywal Theming");
+    }
+
+    _addPywalInstall(name, title, subtitle) {
+        const row = new PywalInstallRow(name, title, subtitle);
+        this.add(row);
+    }
+
+    _addToggle(name, settings, title) {
+        const row = new MiscToggleRow(name, settings, title);
+        this.add(row);
+    }
+}
 
 function fillPreferencesWindow(window) {
     // Create a preferences page and group
@@ -211,6 +263,8 @@ function fillPreferencesWindow(window) {
     page.add(color_scheme_group);
     const misc_settings_group = new MiscGroup();
     page.add(misc_settings_group);
+    const pywal_group = new PywalGroup();
+    page.add(pywal_group);
 
     window.add(page);
 }
@@ -228,6 +282,26 @@ function install_npm_deps() {
             Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE
         );
     
+        // Once the process has started, you can end it with `force_exit()`
+        // proc.force_exit();
+    } catch (e) {
+        logError(e);
+    }
+}
+
+function install_pywal() {
+    try {
+        // The process starts running immediately after this function is called. Any
+        // error thrown here will be a result of the process failing to start, not
+        // the success or failure of the process itself.
+        let proc = Gio.Subprocess.new(
+            // The program and command options are passed as a list of arguments
+            ['pip3', 'install', 'pywal'],  // NOTE: this may cause problems on some distributions
+
+            // The flags control what I/O pipes are opened and how they are directed
+            Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE
+        );
+
         // Once the process has started, you can end it with `force_exit()`
         // proc.force_exit();
     } catch (e) {

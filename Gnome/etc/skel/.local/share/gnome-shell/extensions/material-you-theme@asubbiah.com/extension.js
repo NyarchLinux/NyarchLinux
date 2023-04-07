@@ -79,6 +79,7 @@ class Extension {
 
         try {
             let config_path = GLib.get_home_dir() + "/.config";
+            // Check if gtk theme is applied by material you
             let content = read_file(config_path + "/gtk-4.0/materialyou");
             if (content != "yes") {
                 apply_theme(base_presets, color_mappings);
@@ -126,6 +127,7 @@ function apply_theme(base_presets, color_mappings, notify=false) {
     const show_notifications = settings.get_boolean("show-notifications");
     const height = settings.get_int("resize-height");
     const width = settings.get_int("resize-width");
+    const enable_pywal_theming = settings.get_boolean("enable-pywal-theming");
     let size = {height: height, width: width};
     let color_mappings_sel = color_mappings[color_scheme.toLowerCase()];
 
@@ -171,6 +173,9 @@ function apply_theme(base_presets, color_mappings, notify=false) {
     let css = "";
     for (const key in base_preset.variables) {
         css += "@define-color " + key + " " + base_preset.variables[key] + ";\n"
+    }
+    if (enable_pywal_theming) {
+        run_pywal(base_preset.variables["window_bg_color"], wall_path, is_dark)
     }
     for (const prefix_key in base_preset.palette) {
         for (const key_2 in base_preset.palette[prefix_key]) {
@@ -331,6 +336,24 @@ function modify_colors(scss_path, output_path, vars) {
     }
     write_str_sync(colors_template, output_path);
 }
+
+function run_pywal(background, image, is_dark) {
+    try {
+        if (is_dark) {
+            Gio.Subprocess.new(
+                ['/usr/bin/wal', '-b', background, '-i', image, '-nqe'],
+                Gio.SubprocessFlags.NONE
+            );
+        } else {
+            Gio.Subprocess.new(
+                ['/usr/bin/wal', '-b', background, '-i', image, '-nqel'],
+                Gio.SubprocessFlags.NONE
+            );
+        }
+    } catch (e) {
+        logError(e);
+    }
+} 
 
 function compile_sass(scss_path, output_path, shell_settings) {
 

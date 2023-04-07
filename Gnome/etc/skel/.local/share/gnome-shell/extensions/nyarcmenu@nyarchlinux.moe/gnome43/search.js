@@ -1,142 +1,106 @@
+/* exported SearchResults */
 /*
  * Credits: This file leverages the work from GNOME Shell search.js file
  * (https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/master/js/ui/search.js)
  */
 const Me = imports.misc.extensionUtils.getCurrentExtension();
-const {Clutter, Gio, GLib, GObject, Shell, St } = imports.gi;
+const {Clutter, Gio, GLib, GObject, Shell, St} = imports.gi;
 const AppDisplay = imports.ui.appDisplay;
 const appSys = Shell.AppSystem.get_default();
 const Constants = Me.imports.constants;
 const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const { Highlighter } = imports.misc.util;
+const {Highlighter} = imports.misc.util;
 const MW = Me.imports.menuWidgets;
-const { RecentFilesManager } = Me.imports.recentFilesManager;
+const {RecentFilesManager} = Me.imports.recentFilesManager;
 const RemoteSearch = imports.ui.remoteSearch;
-const Utils =  Me.imports.utils;
 const _ = Gettext.gettext;
 
-const { OpenWindowSearchProvider } = Me.imports.gnome43.searchProviders.openWindows;
-const { RecentFilesSearchProvider } = Me.imports.gnome43.searchProviders.recentFiles;
+const {OpenWindowSearchProvider} = Me.imports.gnome43.searchProviders.openWindows;
+const {RecentFilesSearchProvider} = Me.imports.gnome43.searchProviders.recentFiles;
 
 const SEARCH_PROVIDERS_SCHEMA = 'org.gnome.desktop.search-providers';
+const FILE_PROVIDERS = ['org.gnome.Nautilus.desktop', 'arcmenu.recent-files', 'nemo.desktop'];
 
-var ListSearchResult = GObject.registerClass(class ArcMenu_ListSearchResult extends MW.ApplicationMenuItem{
+var ListSearchResult = GObject.registerClass(
+class ArcMenuListSearchResult extends MW.ApplicationMenuItem {
     _init(provider, metaInfo, resultsView) {
-        let menulayout = resultsView._menuLayout;
-        let app = appSys.lookup_app(metaInfo['id']);
+        const menuLayout = resultsView._menuLayout;
+        const app = appSys.lookup_app(metaInfo['id']);
+        metaInfo['provider-id'] = provider.id;
 
-        super._init(menulayout, app, Constants.DisplayType.LIST, metaInfo)
+        super._init(menuLayout, app, Constants.DisplayType.LIST, metaInfo);
 
         this.app = app;
-        let layoutProperties = this._menuLayout.layoutProperties;
-        this.searchType = layoutProperties.SearchDisplayType;
+        this.searchType = this._menuLayout.search_display_type;
         this.metaInfo = metaInfo;
         this.provider = provider;
-        this._settings = this._menuLayout._settings;
         this.resultsView = resultsView;
-        this.layout = this._settings.get_enum('menu-layout');
+        this.layout = Me.settings.get_enum('menu-layout');
 
-        if(this.provider.id === 'org.gnome.Nautilus.desktop' || this.provider.id === 'arcmenu.recent-files')
+        if (FILE_PROVIDERS.includes(this.provider.id))
             this.folderPath = this.metaInfo['description'];
 
-        let highlightSearchResultTerms = this._settings.get_boolean('highlight-search-result-terms');
-        if(highlightSearchResultTerms){
-            this._termsChangedId = this.resultsView.connect('terms-changed', this._highlightTerms.bind(this));
+        const highlightSearchResultTerms = Me.settings.get_boolean('highlight-search-result-terms');
+        if (highlightSearchResultTerms) {
+            this.resultsView.connectObject('terms-changed', this._highlightTerms.bind(this), this);
             this._highlightTerms();
         }
 
-        //Force show calculator metaInfo description even if 'show-search-result-details' off.
-        //otherwise equation solution wouldn't appear.
-        let showSearchResultDescriptions = this._settings.get_boolean("show-search-result-details");
-        if(this.metaInfo['description'] && this.provider.appInfo.get_id() === 'org.gnome.Calculator.desktop' && !showSearchResultDescriptions){
-            this.remove_child(this.label);
-
-            let labelBox = new St.BoxLayout({
-                x_expand: true,
-                x_align: Clutter.ActorAlign.FILL,
-                style: 'spacing: 8px;'
-            });
-            let descriptionText = this.metaInfo['description'].split('\n')[0];
-            this.descriptionLabel = new St.Label({
-                text: descriptionText,
-                y_expand: true,
-                y_align: Clutter.ActorAlign.CENTER,
-                style: "font-weight: lighter;"
-            });
-            labelBox.add_child(this.label);
-            labelBox.add_child(this.descriptionLabel);
-            this.add_child(labelBox);
-        }
-
-        if(!this.app && this.metaInfo['description'])
+        if (!this.app && this.metaInfo['description'])
             this.description = this.metaInfo['description'].split('\n')[0];
-        this.connect('destroy', this._onDestroy.bind(this));
-    }
-
-    _onDestroy() {
-        if (this._termsChangedId) {
-            this.resultsView.disconnect(this._termsChangedId);
-            this._termsChangedId = null;
-        }
     }
 
     _highlightTerms() {
-        let showSearchResultDescriptions = this._settings.get_boolean("show-search-result-details");
-        if(this.descriptionLabel && showSearchResultDescriptions){
-            let descriptionMarkup = this.resultsView.highlightTerms(this.metaInfo['description'].split('\n')[0]);
+        const showSearchResultDescriptions = Me.settings.get_boolean('show-search-result-details');
+        if (this.descriptionLabel && showSearchResultDescriptions) {
+            const descriptionMarkup = this.resultsView.highlightTerms(this.metaInfo['description'].split('\n')[0]);
             this.descriptionLabel.clutter_text.set_markup(descriptionMarkup);
         }
-        let labelMarkup = this.resultsView.highlightTerms(this.label.text.split('\n')[0]);
+        const labelMarkup = this.resultsView.highlightTerms(this.label.text.split('\n')[0]);
         this.label.clutter_text.set_markup(labelMarkup);
     }
 });
 
-var AppSearchResult = GObject.registerClass(class ArcMenu_AppSearchResult extends MW.ApplicationMenuItem{
+var AppSearchResult = GObject.registerClass(
+class ArcMenuAppSearchResult extends MW.ApplicationMenuItem {
     _init(provider, metaInfo, resultsView) {
-        let menulayout = resultsView._menuLayout;
-        let app = appSys.lookup_app(metaInfo['id']) || appSys.lookup_app(provider.id);
-        let displayType = menulayout.layoutProperties.SearchDisplayType;
-        super._init(menulayout, app, displayType, metaInfo);
+        const menuLayout = resultsView._menuLayout;
+        const app = appSys.lookup_app(metaInfo['id']) || appSys.lookup_app(provider.id);
+        const displayType = menuLayout.search_display_type;
+        super._init(menuLayout, app, displayType, metaInfo);
         this.app = app;
         this.provider = provider;
         this.metaInfo = metaInfo;
         this.resultsView = resultsView;
 
-        if(!this.app && this.metaInfo['description'])
+        if (!this.app && this.metaInfo['description'])
             this.description = this.metaInfo['description'].split('\n')[0];
 
-        let highlightSearchResultTerms = this._settings.get_boolean('highlight-search-result-terms');
-        if(highlightSearchResultTerms){
-            this._termsChangedId = this.resultsView.connect('terms-changed', this._highlightTerms.bind(this));
+        const highlightSearchResultTerms = Me.settings.get_boolean('highlight-search-result-terms');
+        if (highlightSearchResultTerms) {
+            this.resultsView.connectObject('terms-changed', this._highlightTerms.bind(this), this);
             this._highlightTerms();
-        }
-
-        this.connect('destroy', this._onDestroy.bind(this));
-    }
-
-    _onDestroy() {
-        if (this._termsChangedId) {
-            this.resultsView.disconnect(this._termsChangedId);
-            this._termsChangedId = null;
         }
     }
 
     _highlightTerms() {
-        let showSearchResultDescriptions = this._settings.get_boolean("show-search-result-details");
-        if(this.descriptionLabel && showSearchResultDescriptions){
-            let descriptionMarkup = this.resultsView.highlightTerms(this.descriptionLabel.text.split('\n')[0]);
+        const showSearchResultDescriptions = Me.settings.get_boolean('show-search-result-details');
+        if (this.descriptionLabel && showSearchResultDescriptions) {
+            const descriptionMarkup = this.resultsView.highlightTerms(this.descriptionLabel.text.split('\n')[0]);
             this.descriptionLabel.clutter_text.set_markup(descriptionMarkup);
         }
 
-        let labelMarkup = this.resultsView.highlightTerms(this.label.text.split('\n')[0]);
+        const labelMarkup = this.resultsView.highlightTerms(this.label.text.split('\n')[0]);
         this.label.clutter_text.set_markup(labelMarkup);
     }
 });
 
 var SearchResultsBase = GObject.registerClass({
-    Signals: { 'terms-changed': {},
-                'no-results': {} },
-}, class ArcMenu_SearchResultsBase extends St.BoxLayout {
+    Signals: {
+        'terms-changed': {},
+        'no-results': {},
+    },
+}, class ArcMenuSearchResultsBase extends St.BoxLayout {
     _init(provider, resultsView) {
         super._init({
             vertical: true,
@@ -148,7 +112,7 @@ var SearchResultsBase = GObject.registerClass({
 
         this._resultDisplayBin = new St.Bin({
             x_expand: true,
-            y_expand: true
+            y_expand: true,
         });
 
         this.add_child(this._resultDisplayBin);
@@ -164,23 +128,23 @@ var SearchResultsBase = GObject.registerClass({
         this._terms = [];
     }
 
-    _createResultDisplay(meta) {
+    _createResultDisplay(_meta) {
     }
 
     clear() {
         this._cancellable.cancel();
-        for (let resultId in this._resultDisplays)
+        for (const resultId in this._resultDisplays)
             this._resultDisplays[resultId].destroy();
         this._resultDisplays = {};
         this._clearResultDisplay();
         this.hide();
     }
 
-    _setMoreCount(count) {
+    _setMoreCount(_count) {
     }
 
     async _ensureResultActors(results) {
-        let metasNeeded = results.filter(
+        const metasNeeded = results.filter(
             resultId => this._resultDisplays[resultId] === undefined
         );
 
@@ -197,34 +161,33 @@ var SearchResultsBase = GObject.registerClass({
                 throw new Error(`Search provider ${this.provider.id} returned results after the request was canceled`);
         }
 
-        if (metas.length !== metasNeeded.length) {
-            throw new Error(`Wrong number of result metas returned by search provider ${this.provider.id}: ` +
-                `expected ${metasNeeded.length} but got ${metas.length}`);
-        }
+        if (metas.length !== metasNeeded.length)
+            throw new Error(`Wrong number of result metas returned by search provider ${this.provider.id}: expected ${metasNeeded.length} but got ${metas.length}`);
+
 
         if (metas.some(meta => !meta.name || !meta.id))
             throw new Error(`Invalid result meta returned from search provider ${this.provider.id}`);
 
         metasNeeded.forEach((resultId, i) => {
-            let meta = metas[i];
-            let display = this._createResultDisplay(meta);
+            const meta = metas[i];
+            const display = this._createResultDisplay(meta);
             this._resultDisplays[resultId] = display;
         });
     }
 
     async updateSearch(providerResults, terms, callback) {
         this._terms = terms;
-        if (providerResults.length == 0) {
+        if (providerResults.length === 0) {
             this._clearResultDisplay();
             this.hide();
             callback();
         } else {
-            let maxResults = this._getMaxDisplayedResults();
-            let results = maxResults > -1
+            const maxResults = this._getMaxDisplayedResults();
+            const results = maxResults > -1
                 ? this.provider.filterResults(providerResults, maxResults)
                 : providerResults;
 
-            let moreCount = Math.max(providerResults.length - results.length, 0);
+            const moreCount = Math.max(providerResults.length - results.length, 0);
 
             try {
                 await this._ensureResultActors(results);
@@ -248,13 +211,12 @@ var SearchResultsBase = GObject.registerClass({
 });
 
 var ListSearchResults = GObject.registerClass(
-class ArcMenu_ListSearchResults extends SearchResultsBase {
+class ArcMenuListSearchResults extends SearchResultsBase {
     _init(provider, resultsView) {
         super._init(provider, resultsView);
         this._menuLayout = resultsView._menuLayout;
-        this.searchType = this._menuLayout.layoutProperties.SearchDisplayType;
-        this._settings = this._menuLayout._settings;
-        this.layout = this._settings.get_enum('menu-layout');
+        this.searchType = this._menuLayout.search_display_type;
+        this.layout = Me.settings.get_enum('menu-layout');
 
         this._container = new St.BoxLayout({
             vertical: true,
@@ -262,7 +224,7 @@ class ArcMenu_ListSearchResults extends SearchResultsBase {
             y_align: Clutter.ActorAlign.FILL,
             x_expand: true,
             y_expand: true,
-            style: 'margin-top: 8px;'
+            style: 'margin-top: 8px;',
         });
 
         this.providerInfo = new ArcSearchProviderInfo(provider, this._menuLayout);
@@ -291,7 +253,7 @@ class ArcMenu_ListSearchResults extends SearchResultsBase {
     }
 
     _getMaxDisplayedResults() {
-        return this._settings.get_int('max-search-results');
+        return Me.settings.get_int('max-search-results');
     }
 
     _clearResultDisplay() {
@@ -303,7 +265,7 @@ class ArcMenu_ListSearchResults extends SearchResultsBase {
     }
 
     _addItem(display) {
-        if(display.get_parent())
+        if (display.get_parent())
             display.get_parent().remove_child(display);
         this._content.add_child(display);
     }
@@ -317,38 +279,37 @@ class ArcMenu_ListSearchResults extends SearchResultsBase {
 });
 
 var AppSearchResults = GObject.registerClass(
-class ArcMenu_AppSearchResults extends SearchResultsBase {
+class ArcMenuAppSearchResults extends SearchResultsBase {
     _init(provider, resultsView) {
         super._init(provider, resultsView);
         this._parentContainer = resultsView;
         this._menuLayout = resultsView._menuLayout;
-        this._settings = this._menuLayout._settings;
-        this.layoutProperties = this._menuLayout.layoutProperties;
-        this.searchType = this.layoutProperties.SearchDisplayType;
-        this.layout = this._menuLayout._settings.get_enum('menu-layout');
+        this.searchType = this._menuLayout.search_display_type;
+        this.layout = Me.settings.get_enum('menu-layout');
 
         this.itemCount = 0;
         this.gridTop = -1;
         this.gridLeft = 0;
 
-        this.rtl = this._menuLayout.mainBox.get_text_direction() == Clutter.TextDirection.RTL;
+        this.rtl = this._menuLayout.get_text_direction() === Clutter.TextDirection.RTL;
 
-        let layout = new Clutter.GridLayout({
+        const layout = new Clutter.GridLayout({
             orientation: Clutter.Orientation.VERTICAL,
-            column_spacing: this.searchType === Constants.DisplayType.GRID ? this.layoutProperties.ColumnSpacing : 0,
-            row_spacing: this.searchType === Constants.DisplayType.GRID ? this.layoutProperties.RowSpacing : 0,
+            column_spacing: this.searchType === Constants.DisplayType.GRID ? this._menuLayout.column_spacing : 0,
+            row_spacing: this.searchType === Constants.DisplayType.GRID ? this._menuLayout.row_spacing : 0,
         });
         this._grid = new St.Widget({
             x_expand: true,
-            x_align: this.searchType === Constants.DisplayType.LIST ? Clutter.ActorAlign.FILL : Clutter.ActorAlign.CENTER,
-            layout_manager: layout
+            x_align: this.searchType === Constants.DisplayType.LIST ? Clutter.ActorAlign.FILL
+                : Clutter.ActorAlign.CENTER,
+            layout_manager: layout,
         });
         layout.hookup_style(this._grid);
 
-        if(this.searchType === Constants.DisplayType.GRID){
-            let spacing = this.layoutProperties.ColumnSpacing;
+        if (this.searchType === Constants.DisplayType.GRID) {
+            const spacing = this._menuLayout.column_spacing;
 
-            this._grid.style = "spacing: " + spacing + "px;";
+            this._grid.style = `spacing: ${spacing}px;`;
             this._resultDisplayBin.x_align = Clutter.ActorAlign.CENTER;
         }
 
@@ -357,12 +318,12 @@ class ArcMenu_AppSearchResults extends SearchResultsBase {
 
     _getMaxDisplayedResults() {
         let maxDisplayedResults;
-        if(this.searchType === Constants.DisplayType.GRID){
-            let iconWidth = this._menuLayout.getIconWidthFromSetting();
+        if (this.searchType === Constants.DisplayType.GRID) {
+            const iconWidth = this._menuLayout.getIconWidthFromSetting();
             maxDisplayedResults = this._menuLayout.getBestFitColumnsForGrid(iconWidth, this._grid);
+        } else {
+            maxDisplayedResults = Me.settings.get_int('max-search-results');
         }
-        else
-            maxDisplayedResults = this._settings.get_int('max-search-results');
         return maxDisplayedResults;
     }
 
@@ -379,28 +340,27 @@ class ArcMenu_AppSearchResults extends SearchResultsBase {
 
     _addItem(display) {
         let colums;
-        if(this.searchType === Constants.DisplayType.LIST)
+        if (this.searchType === Constants.DisplayType.LIST) {
             colums = 1;
-        else{
-            let iconWidth = this._menuLayout.getIconWidthFromSetting();
+        } else {
+            const iconWidth = this._menuLayout.getIconWidthFromSetting();
             colums = this._menuLayout.getBestFitColumnsForGrid(iconWidth, this._grid);
         }
 
         const GridColumns = colums;
-        if(!this.rtl && (this.itemCount % GridColumns === 0)){
+        if (!this.rtl && (this.itemCount % GridColumns === 0)) {
             this.gridTop++;
             this.gridLeft = 0;
-        }
-        else if(this.rtl && (this.gridLeft === 0)){
+        } else if (this.rtl && (this.gridLeft === 0)) {
             this.gridTop++;
             this.gridLeft = GridColumns;
         }
         this._grid.layout_manager.attach(display, this.gridLeft, this.gridTop, 1, 1);
         display.gridLocation = [this.gridLeft, this.gridTop];
 
-        if(!this.rtl)
+        if (!this.rtl)
             this.gridLeft++;
-        else if(this.rtl)
+        else if (this.rtl)
             this.gridLeft--;
         this.itemCount++;
     }
@@ -414,26 +374,26 @@ class ArcMenu_AppSearchResults extends SearchResultsBase {
 });
 
 var SearchResults = GObject.registerClass({
-    Signals: { 'terms-changed': {},
-                'have-results': {},
-                'no-results': {} },
-}, class ArcMenu_SearchResults extends St.BoxLayout {
+    Signals: {
+        'terms-changed': {},
+        'have-results': {},
+        'no-results': {},
+    },
+}, class ArcMenuSearchResults extends St.BoxLayout {
     _init(menuLayout) {
         super._init({
             vertical: true,
             y_expand: true,
             x_expand: true,
-            x_align: Clutter.ActorAlign.FILL
+            x_align: Clutter.ActorAlign.FILL,
         });
         this._menuLayout = menuLayout;
-        this.layoutProperties = this._menuLayout.layoutProperties;
-        this.searchType = this.layoutProperties.SearchDisplayType;
-        this._settings = this._menuLayout._settings;
-        this.layout = this._settings.get_enum('menu-layout');
+        this.searchType = this._menuLayout.search_display_type;
+        this.layout = Me.settings.get_enum('menu-layout');
 
         this._content = new St.BoxLayout({
             vertical: true,
-            x_align: Clutter.ActorAlign.FILL
+            x_align: Clutter.ActorAlign.FILL,
         });
 
         this.add_child(this._content);
@@ -443,7 +403,7 @@ var SearchResults = GObject.registerClass({
             x_align: Clutter.ActorAlign.CENTER,
             y_align: Clutter.ActorAlign.CENTER,
             x_expand: true,
-            y_expand: true
+            y_expand: true,
         });
 
         this.add_child(this._statusBin);
@@ -462,18 +422,18 @@ var SearchResults = GObject.registerClass({
 
         this.recentFilesManager = new RecentFilesManager();
 
-        this._searchSettings = new Gio.Settings({ schema_id: SEARCH_PROVIDERS_SCHEMA });
-        this.disabledID = this._searchSettings.connect('changed::disabled', this._reloadRemoteProviders.bind(this));
-        this.enabledID =  this._searchSettings.connect('changed::enabled', this._reloadRemoteProviders.bind(this));
-        this.disablExternalID = this._searchSettings.connect('changed::disable-external', this._reloadRemoteProviders.bind(this));
-        this.sortOrderID = this._searchSettings.connect('changed::sort-order', this._reloadRemoteProviders.bind(this));
+        this._searchSettings = new Gio.Settings({schema_id: SEARCH_PROVIDERS_SCHEMA});
+        this._searchSettings.connectObject('changed::disabled', this._reloadRemoteProviders.bind(this), this);
+        this._searchSettings.connectObject('changed::enabled', this._reloadRemoteProviders.bind(this), this);
+        this._searchSettings.connectObject('changed::disable-external', this._reloadRemoteProviders.bind(this), this);
+        this._searchSettings.connectObject('changed::sort-order', this._reloadRemoteProviders.bind(this), this);
 
         this._searchTimeoutId = null;
         this._cancellable = new Gio.Cancellable();
 
         this._registerProvider(new AppDisplay.AppSearchProvider());
 
-        this.installChangedID = appSys.connect('installed-changed', this._reloadRemoteProviders.bind(this));
+        appSys.connectObject('installed-changed', this._reloadRemoteProviders.bind(this), this);
 
         this._reloadRemoteProviders();
 
@@ -484,39 +444,19 @@ var SearchResults = GObject.registerClass({
         return this._terms;
     }
 
-    setStyle(style){
-        if(this._statusText){
+    setStyle(style) {
+        if (this._statusText)
             this._statusText.style_class = style;
-        }
     }
 
-    _onDestroy(){
+    _onDestroy() {
+        this._clearSearchTimeout();
+
         this._terms = [];
         this._results = {};
         this._clearDisplay();
-        this._clearSearchTimeout();
         this._defaultResult = null;
         this._startingSearch = false;
-        if(this.disabledID){
-            this._searchSettings.disconnect(this.disabledID);
-            this.disabledID = null;
-        }
-        if(this.enabledID){
-            this._searchSettings.disconnect(this.enabledID);
-            this.enabledID = null;
-        }
-        if(this.disablExternalID){
-            this._searchSettings.disconnect(this.disablExternalID);
-            this.disablExternalID = null;
-        }
-        if(this.sortOrderID){
-            this._searchSettings.disconnect(this.sortOrderID);
-            this.sortOrderID = null;
-        }
-        if(this.installChangedID){
-            appSys.disconnect(this.installChangedID);
-            this.installChangedID = null;
-        }
 
         this._providers.forEach(provider => {
             this._unregisterProvider(provider);
@@ -527,28 +467,28 @@ var SearchResults = GObject.registerClass({
     }
 
     _reloadRemoteProviders() {
-        let currentTerms = this._terms;
-        //cancel any active search
+        const currentTerms = this._terms;
+        // cancel any active search
         if (this._terms.length !== 0)
             this._reset();
 
         this._oldProviders = null;
-        let remoteProviders = this._providers.filter(p => p.isRemoteProvider);
+        const remoteProviders = this._providers.filter(p => p.isRemoteProvider);
 
         remoteProviders.forEach(provider => {
             this._unregisterProvider(provider);
         });
 
-        if(this._settings.get_boolean('search-provider-open-windows'))
+        if (Me.settings.get_boolean('search-provider-open-windows'))
             this._registerProvider(new OpenWindowSearchProvider());
-        if(this._settings.get_boolean('search-provider-recent-files'))
+        if (Me.settings.get_boolean('search-provider-recent-files'))
             this._registerProvider(new RecentFilesSearchProvider(this.recentFilesManager));
 
         const providers = RemoteSearch.loadRemoteSearchProviders(this._searchSettings);
         providers.forEach(this._registerProvider.bind(this));
 
-        //restart any active search
-        if(currentTerms.length > 0)
+        // restart any active search
+        if (currentTerms.length > 0)
             this.setTerms(currentTerms);
     }
 
@@ -559,12 +499,11 @@ var SearchResults = GObject.registerClass({
     }
 
     _unregisterProvider(provider) {
-        let index = this._providers.indexOf(provider);
+        const index = this._providers.indexOf(provider);
         this._providers.splice(index, 1);
 
-        if (provider.display){
+        if (provider.display)
             provider.display.destroy();
-        }
     }
 
     _clearSearchTimeout() {
@@ -607,11 +546,11 @@ var SearchResults = GObject.registerClass({
     _doSearch() {
         this._startingSearch = false;
 
-        let previousResults = this._results;
+        const previousResults = this._results;
         this._results = {};
 
         this._providers.forEach(provider => {
-            let previousProviderResults = previousResults[provider.id];
+            const previousProviderResults = previousResults[provider.id];
             this._doProviderSearch(provider, previousProviderResults);
         });
 
@@ -631,8 +570,8 @@ var SearchResults = GObject.registerClass({
         // setting state of the current search or cancelling the search.
         // This will prevent incorrect state being as a result of a duplicate
         // search while the previous search is still active.
-        let searchString = terms.join(' ');
-        let previousSearchString = this._terms.join(' ');
+        const searchString = terms.join(' ');
+        const previousSearchString = this._terms.join(' ');
         if (searchString === previousSearchString)
             return;
 
@@ -650,7 +589,7 @@ var SearchResults = GObject.registerClass({
 
         let isSubSearch = false;
         if (this._terms.length > 0)
-            isSubSearch = searchString.indexOf(previousSearchString) == 0;
+            isSubSearch = searchString.indexOf(previousSearchString) === 0;
 
         this._terms = terms;
         this._isSubSearch = isSubSearch;
@@ -687,15 +626,15 @@ var SearchResults = GObject.registerClass({
     _maybeSetInitialSelection() {
         let newDefaultResult = null;
 
-        let providers = this._providers;
+        const providers = this._providers;
         for (let i = 0; i < providers.length; i++) {
-            let provider = providers[i];
-            let display = provider.display;
+            const provider = providers[i];
+            const display = provider.display;
 
             if (!display.visible)
                 continue;
 
-            let firstResult = display.getFirstResult();
+            const firstResult = display.getFirstResult();
             if (firstResult) {
                 newDefaultResult = firstResult;
                 break; // select this one!
@@ -718,27 +657,27 @@ var SearchResults = GObject.registerClass({
     }
 
     _updateSearchProgress() {
-        let haveResults = this._providers.some(provider => {
-            let display = provider.display;
-            return (display.getFirstResult() != null);
+        const haveResults = this._providers.some(provider => {
+            const display = provider.display;
+            return display.getFirstResult() !== null;
         });
 
         this._statusBin.visible = !haveResults;
-        if (haveResults)
-            this.emit("have-results")
-        else if (!haveResults) {
+        if (haveResults) {
+            this.emit('have-results');
+        } else if (!haveResults) {
             if (this.searchInProgress)
-                this._statusText.set_text(_("Searching..."));
+                this._statusText.set_text(_('Searching...'));
             else
-                this._statusText.set_text(_("No results."));
+                this._statusText.set_text(_('No results.'));
 
-            this.emit("no-results")
+            this.emit('no-results');
         }
     }
 
     _updateResults(provider, results) {
-        let terms = this._terms;
-        let display = provider.display;
+        const terms = this._terms;
+        const display = provider.display;
         display.updateSearch(results, terms, () => {
             provider.searchInProgress = false;
 
@@ -752,22 +691,22 @@ var SearchResults = GObject.registerClass({
         this._setSelected(this._defaultResult, highlight);
     }
 
-    getTopResult(){
+    getTopResult() {
         return this._defaultResult;
     }
 
     _setSelected(result, selected) {
-        if(!result)
+        if (!result)
             return;
 
-        if(selected && !result.has_style_pseudo_class('active'))
+        if (selected && !result.has_style_pseudo_class('active'))
             result.add_style_pseudo_class('active');
-        else if(!selected)
+        else if (!selected)
             result.remove_style_pseudo_class('active');
     }
 
-    hasActiveResult(){
-        return (this._defaultResult ? true : false) && this._highlightDefault;
+    hasActiveResult() {
+        return !!this._defaultResult && this._highlightDefault;
     }
 
     highlightTerms(description) {
@@ -778,25 +717,25 @@ var SearchResults = GObject.registerClass({
     }
 });
 
-var ArcSearchProviderInfo = GObject.registerClass(class ArcMenu_ArcSearchProviderInfo extends MW.ArcMenuPopupBaseMenuItem{
+var ArcSearchProviderInfo = GObject.registerClass(
+class ArcMenuArcSearchProviderInfo extends MW.ArcMenuPopupBaseMenuItem {
     _init(provider, menuLayout) {
         super._init(menuLayout);
         this.provider = provider;
         this._menuLayout = menuLayout;
-        this._settings = this._menuLayout._settings;
-        this.style = "padding-top: 6px; padding-bottom: 6px; margin-bottom: 2px;";
+        this.style = 'padding-top: 6px; padding-bottom: 6px; margin-bottom: 2px;';
         this.x_expand = false;
         this.x_align = Clutter.ActorAlign.START;
 
         this.description = this.provider.appInfo.get_description();
-        if(this.description)
+        if (this.description)
             this.description = this.description.split('\n')[0];
 
         this.label = new St.Label({
             text: provider.appInfo.get_name(),
             x_align: Clutter.ActorAlign.START,
             y_align: Clutter.ActorAlign.CENTER,
-            style: 'font-weight: bold;'
+            style: 'font-weight: bold;',
         });
 
         this._moreLabel = new St.Label({
@@ -809,7 +748,7 @@ var ArcSearchProviderInfo = GObject.registerClass(class ArcMenu_ArcSearchProvide
     }
 
     setMoreCount(count) {
-        this._moreLabel.text = _("+ %d more", "+ %d more", count).format(count);
+        this._moreLabel.text = _('+ %d more', '+ %d more', count).format(count);
         this._moreLabel.visible = count > 0;
     }
 });

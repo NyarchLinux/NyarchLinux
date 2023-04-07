@@ -1,117 +1,99 @@
+/* eslint-disable jsdoc/require-jsdoc */
+/* exported getMenuLayoutEnum, Menu */
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const { Clutter, GLib, Gio, Gtk, St } = imports.gi;
-const { BaseMenuLayout } = Me.imports.menulayouts.baseMenuLayout;
+const {Clutter, GObject, St} = imports.gi;
+const {BaseMenuLayout} = Me.imports.menulayouts.baseMenuLayout;
 const Constants = Me.imports.constants;
 const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
 const Main = imports.ui.main;
 const MW = Me.imports.menuWidgets;
-const PlaceDisplay = Me.imports.placeDisplay;
 const PopupMenu = imports.ui.popupMenu;
-const Utils =  Me.imports.utils;
 const _ = Gettext.gettext;
 
-function getMenuLayoutEnum() { return Constants.MenuLayout.INSIDER; }
+function getMenuLayoutEnum() {
+    return Constants.MenuLayout.INSIDER;
+}
 
-var Menu = class extends BaseMenuLayout{
+var Menu = class ArcMenuInsiderLayout extends BaseMenuLayout {
+    static {
+        GObject.registerClass(this);
+    }
+
     constructor(menuButton) {
         super(menuButton, {
-            Search: true,
-            DisplayType: Constants.DisplayType.GRID,
-            SearchDisplayType: Constants.DisplayType.GRID,
-            ShortcutContextMenuLocation: Constants.ContextMenuLocation.RIGHT,
-            ColumnSpacing: 10,
-            RowSpacing: 10,
-            PinnedAppsColumns: 1,
-            DefaultMenuWidth: 525,
-            DefaultIconGridStyle: "SmallIconGrid",
-            VerticalMainBox: false,
-            DefaultCategoryIconSize: Constants.MEDIUM_ICON_SIZE,
-            DefaultApplicationIconSize: Constants.LARGE_ICON_SIZE,
-            DefaultQuickLinksIconSize: Constants.EXTRA_SMALL_ICON_SIZE,
-            DefaultButtonsIconSize: Constants.EXTRA_SMALL_ICON_SIZE,
-            DefaultPinnedIconSize: Constants.MEDIUM_ICON_SIZE,
+            has_search: true,
+            display_type: Constants.DisplayType.GRID,
+            search_display_type: Constants.DisplayType.GRID,
+            context_menu_location: Constants.ContextMenuLocation.RIGHT,
+            column_spacing: 10,
+            row_spacing: 10,
+            default_menu_width: 525,
+            icon_grid_style: 'SmallIconGrid',
+            vertical: false,
+            category_icon_size: Constants.MEDIUM_ICON_SIZE,
+            apps_icon_size: Constants.LARGE_ICON_SIZE,
+            quicklinks_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
+            buttons_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
+            pinned_apps_icon_size: Constants.MEDIUM_ICON_SIZE,
         });
-    }
-    createLayout(){
-        super.createLayout();
+
         this.actionsBox = new St.BoxLayout({
             x_expand: false,
             y_expand: true,
             x_align: Clutter.ActorAlign.START,
             y_align: Clutter.ActorAlign.FILL,
-            vertical: true
+            vertical: true,
+            style: 'spacing: 6px;',
         });
-        this.actionsBox.style = "margin: 0px; spacing: 6px;";
-        this.mainBox.add_child(this.actionsBox);
+        this.add_child(this.actionsBox);
 
-        this.pinnedAppsButton = new MW.PinnedAppsButton(this);
-        this.pinnedAppsButton.y_expand = true;
-        this.pinnedAppsButton.y_align= Clutter.ActorAlign.START;
-        this.actionsBox.add_child(this.pinnedAppsButton);
+        const verticalSeparator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM,
+            Constants.SeparatorAlignment.VERTICAL);
+        this.add_child(verticalSeparator);
 
-        let isContainedInCategory = false;
-        let filesButton = this.createMenuItem([_("Files"), "", "org.gnome.Nautilus.desktop"], Constants.DisplayType.BUTTON, isContainedInCategory);
-        this.actionsBox.add_child(filesButton);
-
-        let terminalButton = this.createMenuItem([_("Terminal"), "", "org.gnome.Terminal.desktop"], Constants.DisplayType.BUTTON, isContainedInCategory);
-        this.actionsBox.add_child(terminalButton);
-
-        let settingsButton = this.createMenuItem([_("Settings"),"", "org.gnome.Settings.desktop"], Constants.DisplayType.BUTTON, isContainedInCategory);
-        if(settingsButton.shouldShow)
-            this.actionsBox.add_child(settingsButton);
-
-        let powerDisplayStyle = this._settings.get_enum('power-display-style');
-        if(powerDisplayStyle === Constants.PowerDisplayStyle.IN_LINE)
-            this.leaveButton = new MW.PowerOptionsBox(this, 6, true);
-        else
-            this.leaveButton = new MW.LeaveButton(this);
-
-        this.actionsBox.add_child(this.leaveButton);
-
-        this.subMainBox = new St.BoxLayout({
+        this._mainBox = new St.BoxLayout({
             x_expand: true,
             y_expand: true,
             y_align: Clutter.ActorAlign.START,
-            vertical: true
+            vertical: true,
         });
-        this.mainBox.add_child(this.subMainBox);
+        this.add_child(this._mainBox);
 
-        let userMenuBox = new St.BoxLayout({
+        const userMenuBox = new St.BoxLayout({
             x_expand: true,
             y_expand: true,
             x_align: Clutter.ActorAlign.CENTER,
             y_align: Clutter.ActorAlign.START,
             vertical: true,
-            style: 'padding-top: 9px;'
-        })
-        this.user = new MW.UserMenuIcon(this, 75, true);
-        this.user.x_align = Clutter.ActorAlign.CENTER;
-        this.user.y_align = Clutter.ActorAlign.CENTER;
-        this.user.label.x_align = Clutter.ActorAlign.CENTER;
-        this.user.label.style = "font-size: large;"
-        userMenuBox.add_child(this.user);
-        userMenuBox.add_child(this.user.label);
-        this.subMainBox.add_child(userMenuBox);
-
-        this.searchBox.style = "margin: 10px;";
-        this.subMainBox.add_child(this.searchBox);
-
-        this.applicationsBox = new St.BoxLayout({
-            vertical: true
+            style: 'padding-top: 9px;',
         });
+        const userMenuIcon = new MW.UserMenuIcon(this, 75, true);
+        userMenuIcon.label.set({
+            x_align: Clutter.ActorAlign.CENTER,
+            y_align: Clutter.ActorAlign.CENTER,
+            style: 'font-size: large;',
+        });
+        userMenuBox.add_child(userMenuIcon);
+        userMenuBox.add_child(userMenuIcon.label);
+        this._mainBox.add_child(userMenuBox);
 
+        this.searchBox.style = 'margin: 10px;';
+        this._mainBox.add_child(this.searchBox);
+
+        this.applicationsBox = new St.BoxLayout({vertical: true});
         this.applicationsScrollBox = this._createScrollBox({
             x_expand: false,
             y_expand: false,
             x_align: Clutter.ActorAlign.START,
             y_align: Clutter.ActorAlign.START,
-            overlay_scrollbars: true,
-            style_class:  this.disableFadeEffect ? '' : 'vfade',
+            style_class: this._disableFadeEffect ? '' : 'vfade',
         });
+        this.applicationsScrollBox.add_actor(this.applicationsBox);
+        this._mainBox.add_child(this.applicationsScrollBox);
 
-        this.applicationsScrollBox.add_actor( this.applicationsBox);
-        this.subMainBox.add_child(this.applicationsScrollBox);
+        Me.settings.connectObject('changed::insider-extra-buttons', () => this._createExtraButtons(), this);
+        this._createExtraButtons();
 
         this.updateWidth();
         this.loadCategories();
@@ -122,121 +104,150 @@ var Menu = class extends BaseMenuLayout{
         this.activeCategoryType = Constants.CategoryType.HOME_SCREEN;
     }
 
-    loadPinnedApps(){
-        this.layoutProperties.DisplayType = Constants.DisplayType.LIST;
-        super.loadPinnedApps();
-        this.layoutProperties.DisplayType = Constants.DisplayType.GRID;
+    _createExtraButtons() {
+        this.actionsBox.destroy_all_children();
+
+        this.pinnedAppsButton = new MW.PinnedAppsButton(this);
+        this.pinnedAppsButton.y_expand = true;
+        this.pinnedAppsButton.y_align = Clutter.ActorAlign.START;
+        this.actionsBox.add_child(this.pinnedAppsButton);
+
+        const isContainedInCategory = false;
+        const extraButtons = Me.settings.get_value('insider-extra-buttons').deep_unpack();
+
+        for (let i = 0; i < extraButtons.length; i++) {
+            const command = extraButtons[i][2];
+            if (command === Constants.ShortcutCommands.SEPARATOR) {
+                const separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.LONG,
+                    Constants.SeparatorAlignment.HORIZONTAL);
+                this.actionsBox.add_child(separator);
+            } else {
+                const button = this.createMenuItem(extraButtons[i], Constants.DisplayType.BUTTON,
+                    isContainedInCategory);
+                if (button.shouldShow)
+                    this.actionsBox.add_child(button);
+            }
+        }
+
+        let leaveButton;
+        const powerDisplayStyle = Me.settings.get_enum('power-display-style');
+        if (powerDisplayStyle === Constants.PowerDisplayStyle.IN_LINE)
+            leaveButton = new MW.PowerOptionsBox(this, true);
+        else
+            leaveButton = new MW.LeaveButton(this);
+
+        this.actionsBox.add_child(leaveButton);
     }
 
-    _createPinnedAppsMenu(){
-        this.dummyCursor = new St.Widget({ width: 0, height: 0, opacity: 0 });
-        Main.uiGroup.add_child(this.dummyCursor);
+    loadPinnedApps() {
+        this.display_type = Constants.DisplayType.LIST;
+        super.loadPinnedApps();
+        this.display_type = Constants.DisplayType.GRID;
+    }
 
-        this.pinnedAppsMenu = new PopupMenu.PopupMenu(this.dummyCursor, 0, St.Side.TOP);
+    _createPinnedAppsMenu() {
+        this.pinnedAppsMenu = new PopupMenu.PopupMenu(Main.layoutManager.dummyCursor, 0, St.Side.TOP);
         this.pinnedAppsMenu.actor.add_style_class_name('popup-menu arcmenu-menu');
 
-        this.section = new PopupMenu.PopupMenuSection();
-        this.pinnedAppsMenu.addMenuItem(this.section);
+        const section = new PopupMenu.PopupMenuSection();
+        this.pinnedAppsMenu.addMenuItem(section);
 
-        this.leftPanelPopup = new St.BoxLayout({
-            vertical: true,
-        });
-        this.leftPanelPopup._delegate = this.leftPanelPopup;
-        this.section.actor.add_child(this.leftPanelPopup);
+        const pinnedAppsPopupBox = new St.BoxLayout({vertical: true});
+        pinnedAppsPopupBox._delegate = pinnedAppsPopupBox;
+        section.actor.add_child(pinnedAppsPopupBox);
 
-        let headerBox = new St.BoxLayout({
+        const headerBox = new St.BoxLayout({
             x_expand: false,
             y_expand: false,
             x_align: Clutter.ActorAlign.FILL,
             y_align: Clutter.ActorAlign.START,
-            vertical: true
+            vertical: true,
         });
-        this.leftPanelPopup.add_child(headerBox);
+        pinnedAppsPopupBox.add_child(headerBox);
 
-        this.backButton = new MW.BackMenuItem(this);
-        this.backButton.connect("activate", () => this.togglePinnedAppsMenu());
+        this.backButton = new MW.BackButton(this);
+        this.backButton.connectObject('activate', () => this.togglePinnedAppsMenu(), this);
         headerBox.add_child(this.backButton);
 
-        let separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM, Constants.SeparatorAlignment.HORIZONTAL);
+        const separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM,
+            Constants.SeparatorAlignment.HORIZONTAL);
         headerBox.add_child(separator);
-        headerBox.add_child(this.createLabelRow(_("Pinned")));
+        headerBox.add_child(this.createLabelRow(_('Pinned')));
 
         this.pinnedAppsScrollBox = this._createScrollBox({
             x_expand: true,
             y_expand: true,
             y_align: Clutter.ActorAlign.START,
-            style_class: this.disableFadeEffect ? '' : 'small-vfade',
-            overlay_scrollbars: true,
-            reactive: true
+            style_class: this._disableFadeEffect ? '' : 'small-vfade',
         });
+        pinnedAppsPopupBox.add_child(this.pinnedAppsScrollBox);
 
-        this.leftPanelPopup.add_child(this.pinnedAppsScrollBox);
-
-        this.pinnedAppsBox = new St.BoxLayout({
-            vertical: true
-        });
+        this.pinnedAppsBox = new St.BoxLayout({vertical: true});
         this.pinnedAppsScrollBox.add_actor(this.pinnedAppsBox);
 
-        let layout = new Clutter.GridLayout({
+        const layout = new Clutter.GridLayout({
             orientation: Clutter.Orientation.VERTICAL,
             column_spacing: 0,
-            row_spacing: 0
+            row_spacing: 0,
         });
         this.pinnedAppsGrid = new St.Widget({
             x_expand: true,
             x_align: Clutter.ActorAlign.FILL,
-            layout_manager: layout
+            layout_manager: layout,
         });
         layout.forceGridColumns = 1;
         layout.hookup_style(this.pinnedAppsGrid);
 
-        let height = this._settings.get_int('menu-height');
+        const height = Me.settings.get_int('menu-height');
         this.pinnedAppsMenu.actor.style = `height: ${height}px;`;
 
         this.displayPinnedApps();
         this.subMenuManager.addMenu(this.pinnedAppsMenu);
         this.pinnedAppsMenu.actor.hide();
         Main.uiGroup.add_child(this.pinnedAppsMenu.actor);
-        this.pinnedAppsMenu.connect('open-state-changed', (menu, open) => {
-            if(!open){
+        this.pinnedAppsMenu.connectObject('open-state-changed', (menu, open) => {
+            if (!open) {
                 this.pinnedAppsButton.active = false;
                 this.pinnedAppsButton.sync_hover();
                 this.pinnedAppsButton.hovered = this.pinnedAppsButton.hover;
             }
-        });
+        }, this);
     }
 
-    togglePinnedAppsMenu(){
-        let appsScrollBoxAdj = this.pinnedAppsScrollBox.get_vscroll_bar().get_adjustment();
+    togglePinnedAppsMenu() {
+        const appsScrollBoxAdj = this.pinnedAppsScrollBox.get_vscroll_bar().get_adjustment();
         appsScrollBoxAdj.set_value(0);
 
-        let themeNode = this.arcMenu.actor.get_theme_node();
+        const themeNode = this.arcMenu.actor.get_theme_node();
+        const rise = themeNode.get_length('-arrow-rise');
 
         this.arcMenu.actor.get_allocation_box();
         let [x, y] = this.arcMenu.actor.get_transformed_position();
-        let rise = themeNode.get_length('-arrow-rise');
 
-        if(this.arcMenu._arrowSide != St.Side.TOP)
+        if (this.arcMenu._arrowSide !== St.Side.TOP)
             y -= rise;
-        if(this.arcMenu._arrowSide === St.Side.LEFT)
+        if (this.arcMenu._arrowSide === St.Side.LEFT)
             x += rise;
 
-        this.dummyCursor.set_position(x, y);
+        Main.layoutManager.setDummyCursorGeometry(x, y, 0, 0);
         this.pinnedAppsMenu.toggle();
-        if(this.pinnedAppsMenu.isOpen){
+        if (this.pinnedAppsMenu.isOpen) {
             this.activeMenuItem = this.backButton;
             this.backButton.grab_key_focus();
         }
     }
 
-    setDefaultMenuView(){
+    setDefaultMenuView() {
         super.setDefaultMenuView();
         this.displayAllApps();
         this.activeMenuItem = this.applicationsGrid.layout_manager.get_child_at(0, 0);
-        if(!this.applicationsBox.contains(this.applicationsGrid))
+
+        if (!this.applicationsBox.contains(this.applicationsGrid))
             this.applicationsBox.add_child(this.applicationsGrid);
-        let appsScrollBoxAdj = this.pinnedAppsScrollBox.get_vscroll_bar().get_adjustment();
+
+        const appsScrollBoxAdj = this.pinnedAppsScrollBox.get_vscroll_bar().get_adjustment();
         appsScrollBoxAdj.set_value(0);
+
         this.activeCategoryType = Constants.CategoryType.HOME_SCREEN;
     }
 
@@ -247,7 +258,7 @@ var Menu = class extends BaseMenuLayout{
         super.loadCategories();
     }
 
-    _clearActorsFromBox(box){
+    _clearActorsFromBox(box) {
         super._clearActorsFromBox(box);
         this.activeCategoryType = Constants.CategoryType.HOME_SCREEN;
     }
@@ -255,7 +266,7 @@ var Menu = class extends BaseMenuLayout{
     displayPinnedApps() {
         this._clearActorsFromBox(this.pinnedAppsBox);
         this._displayAppList(this.pinnedAppsArray, Constants.CategoryType.PINNED_APPS, this.pinnedAppsGrid);
-        if(!this.pinnedAppsBox.contains(this.pinnedAppsGrid))
+        if (!this.pinnedAppsBox.contains(this.pinnedAppsGrid))
             this.pinnedAppsBox.add_child(this.pinnedAppsGrid);
     }
-}
+};

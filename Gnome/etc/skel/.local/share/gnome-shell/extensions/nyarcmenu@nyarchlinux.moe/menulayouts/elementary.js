@@ -1,69 +1,60 @@
+/* eslint-disable jsdoc/require-jsdoc */
+/* exported getMenuLayoutEnum, Menu */
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const { Clutter, Gtk, St } = imports.gi;
-const { BaseMenuLayout } = Me.imports.menulayouts.baseMenuLayout;
+const {Clutter, GObject, St} = imports.gi;
+const {BaseMenuLayout} = Me.imports.menulayouts.baseMenuLayout;
 const Constants = Me.imports.constants;
 const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const MW = Me.imports.menuWidgets;
-const Utils =  Me.imports.utils;
 const _ = Gettext.gettext;
 
-function getMenuLayoutEnum() { return Constants.MenuLayout.ELEMENTARY; }
+function getMenuLayoutEnum() {
+    return Constants.MenuLayout.ELEMENTARY;
+}
 
-var Menu = class extends BaseMenuLayout{
+var Menu = class ArcMenuElementaryLayout extends BaseMenuLayout {
+    static {
+        GObject.registerClass(this);
+    }
+
     constructor(menuButton) {
         super(menuButton, {
-            Search: true,
-            DisplayType: Constants.DisplayType.GRID,
-            SearchDisplayType: Constants.DisplayType.GRID,
-            ColumnSpacing: 15,
-            RowSpacing: 15,
-            DefaultMenuWidth: 750,
-            DefaultIconGridStyle: "LargeIconGrid",
-            VerticalMainBox: true,
-            DefaultCategoryIconSize: Constants.MEDIUM_ICON_SIZE,
-            DefaultApplicationIconSize: Constants.EXTRA_LARGE_ICON_SIZE,
-            DefaultQuickLinksIconSize: Constants.EXTRA_SMALL_ICON_SIZE,
-            DefaultButtonsIconSize: Constants.EXTRA_SMALL_ICON_SIZE,
-            DefaultPinnedIconSize: Constants.MEDIUM_ICON_SIZE,
+            has_search: true,
+            display_type: Constants.DisplayType.GRID,
+            search_display_type: Constants.DisplayType.GRID,
+            column_spacing: 15,
+            row_spacing: 15,
+            default_menu_width: 750,
+            icon_grid_style: 'LargeIconGrid',
+            vertical: true,
+            category_icon_size: Constants.MEDIUM_ICON_SIZE,
+            apps_icon_size: Constants.EXTRA_LARGE_ICON_SIZE,
+            quicklinks_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
+            buttons_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
+            pinned_apps_icon_size: Constants.MEDIUM_ICON_SIZE,
         });
-    }
-    createLayout(){
-        super.createLayout();
-
-        if(this._settings.get_enum('searchbar-default-top-location') === Constants.SearchbarLocation.TOP){
-            this.searchBox.add_style_class_name('arcmenu-search-top');
-            this.mainBox.add_child(this.searchBox);
-        }
-
-        this.subMainBox= new St.BoxLayout({
-            vertical: false,
-            x_expand: true,
-            y_expand: true,
-            y_align: Clutter.ActorAlign.START,
-            x_align: Clutter.ActorAlign.START
-        });
-        this.mainBox.add_child(this.subMainBox);
 
         this.applicationsBox = new St.BoxLayout({
-            vertical: true
+            vertical: true,
+            style: 'padding: 8px 0px;',
         });
-
         this.applicationsScrollBox = this._createScrollBox({
             x_expand: true,
             y_expand: true,
             y_align: Clutter.ActorAlign.START,
             x_align: Clutter.ActorAlign.START,
-            overlay_scrollbars: true,
-            style_class:  this.disableFadeEffect ? '' : 'vfade',
-            reactive:true
+            style_class: this._disableFadeEffect ? '' : 'vfade',
         });
         this.applicationsScrollBox.add_actor(this.applicationsBox);
+        this.add_child(this.applicationsScrollBox);
 
-        this.subMainBox.add_child(this.applicationsScrollBox);
-        if(this._settings.get_enum('searchbar-default-top-location') === Constants.SearchbarLocation.BOTTOM){
+        const searchBarLocation = Me.settings.get_enum('searchbar-default-top-location');
+        if (searchBarLocation === Constants.SearchbarLocation.TOP) {
+            this.searchBox.add_style_class_name('arcmenu-search-top');
+            this.insert_child_at_index(this.searchBox, 0);
+        } else if (searchBarLocation === Constants.SearchbarLocation.BOTTOM) {
             this.searchBox.add_style_class_name('arcmenu-search-bottom');
-            this.mainBox.add_child(this.searchBox);
+            this.add_child(this.searchBox);
         }
 
         this.updateWidth();
@@ -71,7 +62,7 @@ var Menu = class extends BaseMenuLayout{
         this.setDefaultMenuView();
     }
 
-    setDefaultMenuView(){
+    setDefaultMenuView() {
         super.setDefaultMenuView();
         this.displayAllApps();
     }
@@ -81,4 +72,4 @@ var Menu = class extends BaseMenuLayout{
         this.categoryDirectories = new Map();
         super.loadCategories();
     }
-}
+};

@@ -1,11 +1,11 @@
+/* exported getStylesheetFiles, createStylesheet, unloadStylesheet,
+   deleteStylesheet, updateStylesheet */
 const Me = imports.misc.extensionUtils.getCurrentExtension();
-const Constants = Me.imports.constants;
 const {Clutter, Gio, GLib, St} = imports.gi;
 const Main = imports.ui.main;
-const Gtk = imports.gi.Gtk;
 const ExtensionUtils = imports.misc.extensionUtils;
 const { ExtensionState } = ExtensionUtils;
-const Stylesheet = Gtk.CssProvider.get_default();
+const Constants = Me.imports.constants;
 
 Gio._promisify(Gio.File.prototype, 'replace_contents_bytes_async', 'replace_contents_finish');
 Gio._promisify(Gio.File.prototype, 'create_async');
@@ -13,9 +13,13 @@ Gio._promisify(Gio.File.prototype, 'make_directory_async');
 Gio._promisify(Gio.File.prototype, 'delete_async');
 let themeContext = St.ThemeContext.get_for_stage(global.stage);
 
-function getStylesheetFiles(){
-    const directoryPath = GLib.build_filenamev([GLib.get_home_dir(), ".local/share/arcmenu"]);
-    const stylesheetPath = GLib.build_filenamev([directoryPath, "stylesheet.css"]);
+
+/**
+ *  @returns The stylesheet file
+ */
+function getStylesheetFiles() {
+    const directoryPath = GLib.build_filenamev([GLib.get_home_dir(), '.local/share/arcmenu']);
+    const stylesheetPath = GLib.build_filenamev([directoryPath, 'stylesheet.css']);
 
     const directory = Gio.File.new_for_path(directoryPath);
     const stylesheet = Gio.File.new_for_path(stylesheetPath);
@@ -23,13 +27,16 @@ function getStylesheetFiles(){
     return [directory, stylesheet];
 }
 
-async function createStylesheet(settings){
+/**
+ * @param {Gio.Settings} settings ArcMenu Settings
+ */
+async function createStylesheet(settings) {
     try {
         const [directory, stylesheet] = getStylesheetFiles();
 
-        if(!directory.query_exists(null))
+        if (!directory.query_exists(null))
             await directory.make_directory_async(0, null);
-        if(!stylesheet.query_exists(null))
+        if (!stylesheet.query_exists(null))
             await stylesheet.create_async(Gio.FileCreateFlags.NONE, 0, null);
 
         Me.customStylesheet = stylesheet;
@@ -39,25 +46,30 @@ async function createStylesheet(settings){
     }
 }
 
-function unloadStylesheet(){
-    if(!Me.customStylesheet)
+/**
+ *  @description Unload the custom stylesheet from GNOME shell
+ */
+function unloadStylesheet() {
+    if (!Me.customStylesheet)
         return;
 
-    let theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
+    const theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
     theme.unload_stylesheet(Me.customStylesheet);
 }
 
-async function deleteStylesheet(){
+/**
+ *  @description Delete the custom stylesheet file
+ */
+async function deleteStylesheet() {
     unloadStylesheet();
 
     try {
         const [directory, stylesheet] = getStylesheetFiles();
 
-        if(stylesheet.query_exists(null))
+        if (stylesheet.query_exists(null))
             await stylesheet.delete_async(0, null);
-        if(directory.query_exists(null))
+        if (directory.query_exists(null))
             await directory.delete_async(0, null);
-
     } catch (e) {
         if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND))
             log(`ArcMenu - Error deleting custom stylesheet: ${e}`);
@@ -98,29 +110,18 @@ function get_gtk4_theme() {
     }
     return colors;
 }
+
 async function updateStylesheet(settings){
-    let stylesheet = Me.customStylesheet;
-    blurMyShell = Main.extensionManager.lookup(Constants.BLUR_MY_SHELL_UUID);
-    if(!stylesheet){
-        log("ArcMenu - Warning: Custom stylesheet not found! Unable to set contents of custom stylesheet.");
+    const stylesheet = Me.customStylesheet;
+
+    if (!stylesheet) {
+        log('ArcMenu - Warning: Custom stylesheet not found! Unable to set contents of custom stylesheet.');
         return;
     }
-    const ctx = St.ThemeContext.get_for_stage(global.stage);
-    const node = St.ThemeNode.new(
-        ctx,
-        null, /* parent node */
-        ctx.get_theme(),
-        St.Entry, /* gtype */
-        '', /* id */
-        'candidate-box', /* class */
-        'selected', /* pseudo class */
-        ''); /* inline style */
-    
-    const [, bpBg] = node.lookup_color('background-color', true); // property that is actually used for menu background
-    log(bpBg.to_string());
-    const bg = node.get_background_color();
-    log(bg.to_string()); 
-
+    log("AESDFS1");
+    blurMyShell = Main.extensionManager.lookup(Constants.BLUR_MY_SHELL_UUID);
+    log("AESDFS2");
+    //const ctx = St.ThemeContext.get_for_stage(global.stage);
     unloadStylesheet();
     
     let customMenuThemeCSS = ``;
@@ -159,6 +160,7 @@ async function updateStylesheet(settings){
         itemActiveBGColor = colors['window_bg_color'];
         itemActiveFGColor = colors['accent_fg_color'];
         ravenMenu = colors['headerbar_bg_color'];
+        log(ravenMenu);
     }
     let [menuRise, menuRiseValue] = settings.get_value('menu-arrow-rise').deep_unpack();
 
@@ -344,8 +346,8 @@ async function updateStylesheet(settings){
 
     unloadStylesheet();
 
-    let customMenuThemeCSS = ``;
-    let extraStylingCSS = ``;
+    let customMenuThemeCSS = '';
+    let extraStylingCSS = '';
 
     let menuBGColor = settings.get_string('menu-background-color');
     let menuFGColor = settings.get_string('menu-foreground-color');
@@ -443,6 +445,15 @@ async function updateStylesheet(settings){
             box-shadow: none;
             border-radius: 8px;
         }
+        .arcmenu-menu StScrollBar StButton#vhandle, .arcmenu-menu StScrollBar StButton#hhandle {
+            background-color: ${modifyColorLuminance(menuBGColor, 0.15)};
+        }
+        .arcmenu-menu StScrollBar StButton#vhandle:hover, .arcmenu-menu StScrollBar StButton#hhandle:hover {
+            background-color: ${modifyColorLuminance(menuBGColor, 0.20)};
+        }
+        .arcmenu-menu StScrollBar StButton#vhandle:active, .arcmenu-menu StScrollBar StButton#hhandle:active {
+            background-color: ${modifyColorLuminance(menuBGColor, 0.25)};
+        }
         .arcmenu-menu .popup-menu-item:focus, .arcmenu-menu .popup-menu-item:hover,
         .arcmenu-menu .popup-menu-item:checked, .arcmenu-menu .popup-menu-item.selected,
         .arcmenu-menu StButton:focus, .arcmenu-menu StButton:hover, .arcmenu-menu StButton:checked {
@@ -465,7 +476,7 @@ async function updateStylesheet(settings){
             color: ${menuFGColor};
         }
         .arcmenu-menu .weather-forecast-time{
-            color: ${modifyColorLuminance(menuFGColor, -0.1)};
+            color: ${modifyColorLuminance(menuFGColor, 0.1)};
         }
         .arcmenu-menu .popup-separator-menu-item .popup-separator-menu-item-separator{
             background-color: ${menuSeparatorColor};
@@ -480,15 +491,15 @@ async function updateStylesheet(settings){
             font-size: ${menuFontSize}pt;
             border-color: ${modifyColorLuminance(menuSeparatorColor, 0, .1)};
             color: ${menuFGColor};
-            background-color: ${modifyColorLuminance(menuBGColor, -0.1, .4)};
+            background-color: ${modifyColorLuminance(menuBGColor, 0.1, .4)};
         }
         .arcmenu-menu StEntry:hover{
             border-color: ${itemHoverBGColor};
-            background-color: ${modifyColorLuminance(menuBGColor, -0.15, .4)};
+            background-color: ${modifyColorLuminance(menuBGColor, 0.15, .4)};
         }
         .arcmenu-menu StEntry:focus{
             border-color: ${itemActiveBGColor};
-            background-color: ${modifyColorLuminance(menuBGColor, -0.2, .4)};
+            background-color: ${modifyColorLuminance(menuBGColor, 0.2, .4)};
         }
         .arcmenu-menu StLabel.hint-text{
             color: ${modifyColorLuminance(menuFGColor, 0, 0.6)};
@@ -498,9 +509,6 @@ async function updateStylesheet(settings){
             color: ${menuFGColor};
             background-color: ${modifyColorLuminance(menuBGColor, 0.05, 1)};
         }
-        .arcmenu-small-button:hover{
-            box-shadow: inset 0 0 0 100px ${modifyColorLuminance(itemHoverBGColor, -0.1)};
-        }
         .arcmenu-menu .user-icon{
             border-color: ${modifyColorLuminance(menuFGColor, 0, .7)};
         }
@@ -509,49 +517,50 @@ async function updateStylesheet(settings){
 
     const customStylesheetCSS = customMenuThemeCSS + extraStylingCSS;
 
-    if(customStylesheetCSS.length === 0)
+    if (customStylesheetCSS.length === 0)
         return;
 
-    try{
-        let bytes = new GLib.Bytes(customStylesheetCSS);
+    try {
+        const bytes = new GLib.Bytes(customStylesheetCSS);
 
-        const [success, _etag] = await stylesheet.replace_contents_bytes_async(bytes, null, false, Gio.FileCreateFlags.REPLACE_DESTINATION, null);
+        const [success, etag_] = await stylesheet.replace_contents_bytes_async(bytes, null, false,
+            Gio.FileCreateFlags.REPLACE_DESTINATION, null);
 
-        if(!success){
-            log("ArcMenu - Failed to replace contents of custom stylesheet.");
+        if (!success) {
+            log('ArcMenu - Failed to replace contents of custom stylesheet.');
             return;
         }
 
         Me.customStylesheet = stylesheet;
-        let theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
+        const theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
         theme.load_stylesheet(Me.customStylesheet);
-    }
-    catch(e){
+    } catch (e) {
         log(`ArcMenu - Error replacing contents of custom stylesheet: ${e}`);
     }
 }
-*/
-function modifyColorLuminance(colorString, luminanceFactor, overrideAlpha){
-    let color = Clutter.color_from_string(colorString)[1];
-    let [hue, lum, sat] = color.to_hls();
-    let modifiedLum;
 
-    if(luminanceFactor === 0)
-        modifiedLum = lum;
-    else if(lum >= .85) //if lum is too light, force darken
-        modifiedLum = Math.min((1 - Math.abs(luminanceFactor)) * lum, 1);
-    else if(lum <= .15) //if lum is too dark, force lighten
-        modifiedLum = Math.max((1 - Math.abs(luminanceFactor)) * lum, 0);
-    else if(luminanceFactor >= 0) //otherwise, darken or lighten based on luminanceFactor
-        modifiedLum = Math.min((1 + luminanceFactor) * lum, 1);
+/**
+ *
+ * @param {string} colorString the color to modify
+ * @param {number} luminanceAdjustment luminance adjustment
+ * @param {number} overrideAlpha change the color alpha to this value
+ * @returns a string in rbga() format representing the new modified color
+ */
+function modifyColorLuminance(colorString, luminanceAdjustment, overrideAlpha) {
+    const color = Clutter.color_from_string(colorString)[1];
+    const [hue, luminance, saturation] = color.to_hls();
+    let modifiedLuminance;
+
+    if ((luminance >= .85 && luminanceAdjustment > 0) || (luminance <= .15 && luminanceAdjustment < 0))
+        modifiedLuminance = Math.max(Math.min(luminance - luminanceAdjustment, 1), 0);
     else
-        modifiedLum = Math.max((1 + luminanceFactor) * lum, 0);
+        modifiedLuminance = Math.max(Math.min(luminance + luminanceAdjustment, 1), 0);
 
     let alpha = (color.alpha / 255).toPrecision(3);
-    if(overrideAlpha)
+    if (overrideAlpha)
         alpha = overrideAlpha;
 
-    let modifiedColor = Clutter.color_from_hls(hue, modifiedLum, sat);
+    const modifiedColor = Clutter.color_from_hls(hue, modifiedLuminance, saturation);
 
-    return `rgba(${modifiedColor.red}, ${modifiedColor.green}, ${modifiedColor.blue}, ${alpha})`
+    return `rgba(${modifiedColor.red}, ${modifiedColor.green}, ${modifiedColor.blue}, ${alpha})`;
 }
