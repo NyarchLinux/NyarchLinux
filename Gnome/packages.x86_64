@@ -422,6 +422,7 @@ flatpak
 #lib32-vulkan-icd-loader
 
 # Nyarch
+python-pywal
 neofetch
 nodejs
 npm
