@@ -1,0 +1,23 @@
+" Special
+let wallpaper  = "/usr/share/backgrounds/default.png"
+let background = "#1b1b1e"
+let foreground = "#dcd0d5"
+let cursor     = "#dcd0d5"
+
+" Colors
+let color0  = "#1b1b1e"
+let color1  = "#384457"
+let color2  = "#4E586E"
+let color3  = "#565464"
+let color4  = "#965D6A"
+let color5  = "#636F88"
+let color6  = "#AB9AA7"
+let color7  = "#dcd0d5"
+let color8  = "#9a9195"
+let color9  = "#384457"
+let color10 = "#4E586E"
+let color11 = "#565464"
+let color12 = "#965D6A"
+let color13 = "#636F88"
+let color14 = "#AB9AA7"
+let color15 = "#dcd0d5"

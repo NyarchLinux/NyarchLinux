@@ -1,0 +1,21 @@
+set $wallpaper /usr/share/backgrounds/default.png
+
+set $background #1b1b1e
+set $foreground #dcd0d5
+
+set $color0 #1b1b1e
+set $color1 #384457
+set $color2 #4E586E
+set $color3 #565464
+set $color4 #965D6A
+set $color5 #636F88
+set $color6 #AB9AA7
+set $color7 #dcd0d5
+set $color8 #9a9195
+set $color9 #384457
+set $color10 #4E586E
+set $color11 #565464
+set $color12 #965D6A
+set $color13 #636F88
+set $color14 #AB9AA7
+set $color15 #dcd0d5
