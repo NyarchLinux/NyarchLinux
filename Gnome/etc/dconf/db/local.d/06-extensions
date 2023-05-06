@@ -67,6 +67,9 @@ name='MaterialYou'
 resize-height=200
 resize-width=200
 scheme='Default'
+accent-color='4282549748'
+enable-accent-colors=false
+enable-pywal-theming=true
 
 [org/fedorahosted/background-logo-extension]
 logo-always-visible=true

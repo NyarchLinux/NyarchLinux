@@ -1,5 +1,4 @@
-/* exported RecentFilesSearchProvider */
-const {Gio, St} = imports.gi;
+const { Meta, Gtk, Gio, GLib, St, Shell } = imports.gi;
 
 const Main = imports.ui.main;
 
@@ -7,15 +6,11 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
 const _ = Gettext.gettext;
 
-/**
- * @param {char} mimeType The MIME type of the resource
- * @param {int} size Icon Size
- */
 function createIcon(mimeType, size) {
-    const symbolicIcon = mimeType ? Gio.content_type_get_symbolic_icon(mimeType)?.to_string() : null;
+    let symbolicIcon = mimeType ? Gio.content_type_get_symbolic_icon(mimeType)?.to_string() : null;
     return symbolicIcon
-        ? new St.Icon({gicon: Gio.icon_new_for_string(symbolicIcon), icon_size: size})
-        : new St.Icon({icon_name: 'icon-missing', icon_size: size});
+        ? new St.Icon({ gicon: Gio.icon_new_for_string(symbolicIcon), icon_size: size })
+        : new St.Icon({ icon_name: 'icon-missing', icon_size: size });
 }
 
 var RecentFilesSearchProvider = class {
@@ -32,7 +27,7 @@ var RecentFilesSearchProvider = class {
             get_name: () => _('Recent Files'),
             get_id: () => 'arcmenu.recent-files',
             get_icon: () => Gio.icon_new_for_string('document-open-recent-symbolic'),
-        };
+        }
     }
 
     getResultMetas(fileUris, callback) {
@@ -43,7 +38,7 @@ var RecentFilesSearchProvider = class {
                 id: fileUri,
                 name: rf.get_display_name(),
                 description: file.get_parent()?.get_path(), // can be null
-                createIcon: size => createIcon(rf.get_mime_type(), size),
+                createIcon: (size) => createIcon(rf.get_mime_type(), size),
             } : undefined;
         }).filter(m => m?.name !== undefined && m?.name !== null);
 
@@ -60,11 +55,11 @@ var RecentFilesSearchProvider = class {
 
         const recentFiles = this.recentFilesManager.getRecentFiles();
 
-        for (const file of recentFiles) {
+        for(const file of recentFiles) {
             this.recentFilesManager.queryInfoAsync(file).then(result => {
                 const recentFile = result.recentFile;
 
-                if (recentFile) {
+                if(recentFile) {
                     this._recentFiles.push(recentFile);
                     callback(this._getFilteredFileUris(terms, this._recentFiles));
                 }
@@ -79,8 +74,8 @@ var RecentFilesSearchProvider = class {
 
     activateResult(fileUri, _terms) {
         const recentFile = this._getRecentFile(fileUri);
-        if (recentFile) {
-            const context = global.create_app_launch_context(0, -1);
+        if (recentFile){
+            let context = global.create_app_launch_context(0, -1);
 
             new Promise((resolve, reject) => {
                 Gio.AppInfo.launch_default_for_uri_async(recentFile.get_uri(), context, null, (o, res) => {
@@ -112,4 +107,4 @@ var RecentFilesSearchProvider = class {
     _getRecentFile(fileUri) {
         return this._recentFiles.find(rf => rf.get_uri() === fileUri);
     }
-};
+}

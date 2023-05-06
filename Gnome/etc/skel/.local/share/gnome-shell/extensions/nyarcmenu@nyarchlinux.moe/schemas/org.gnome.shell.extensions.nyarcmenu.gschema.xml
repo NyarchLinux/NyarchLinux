@@ -614,11 +614,6 @@
       <summary>Force placement of ArcMenu on GNOME top panel.</summary>
       <description>Force placement of ArcMenu on GNOME top panel. Useful when using "Keep original gnome-shell top panel" setting in dash to panel</description>
     </key>
-    <key type="b" name="hide-overview-on-startup">
-      <default>false</default>
-      <summary>Hide overview on startup</summary>
-      <description>Hide overview on startup</description>
-    </key>
     <key type="s" name="custom-menu-button-text">
       <default>'Apps'</default>
       <summary>Text of the menu button.</summary>
@@ -707,58 +702,35 @@
       <summary>List of default directory paths used for links on the right side of ArcMenu</summary>
       <description>List of default directory paths used for links on the right side of ArcMenu.</description>
     </key>
-    <key name="context-menu-shortcuts" type="aas">
-      <default>[["", "", "org.gnome.Extensions.desktop"], ["ArcMenu Settings", "ArcMenu_ArcMenuIcon", "ArcMenu_Settings"],
-          ["Panel Extension Settings", "application-x-addon-symbolic", "ArcMenu_PanelExtensionSettings"], ["Separator", "list-remove-symbolic", "ArcMenu_Separator"],
-          ["Power Options", "system-shutdown-symbolic", "ArcMenu_PowerOptions"], ["Activities Overview", "view-fullscreen-symbolic", "ArcMenu_ActivitiesOverview"],
-          ["Show Desktop", "computer-symbolic", "ArcMenu_ShowDesktop"]]</default>
-      <summary>List of shortcuts on ArcMenu button context menu</summary>
-      <description>List of shortcuts on ArcMenu button context menu.</description>
+    <key name="unity-pinned-app-list" type="as">
+      <default>[]</default>
+      <summary>List of Unity Layout Pinned Apps</summary>
+      <description>List of Uniity Layout Pinned Apps</description>
     </key>
-    <key name="az-extra-buttons" type="aas">
-      <default>[["", "", "org.gnome.Nautilus.desktop"], ["", "", "org.gnome.Terminal.desktop"], ["", "", "org.gnome.Settings.desktop"]]</default>
-      <summary>List of AZ Layout extra buttons</summary>
-      <description>List of AZ Layout extra buttons</description>
+    <key name="unity-separator-index" type="i">
+      <default>5</default>
+      <summary>Index of Unity Layout Pinned App Separator</summary>
+      <description>Index of Unity Layout Pinned App Separator, 0 = none</description>
     </key>
-    <key name="brisk-extra-shortcuts" type="aas">
-      <default>[["Software", "", "ArcMenu_Software"], ["", "", "org.gnome.Settings.desktop"]]</default>
-      <summary>List of Brisk Layout extra shortcuts</summary>
-      <description>List of Brisk Layout extra shortcuts</description>
+    <key name="brisk-shortcuts-list" type="as">
+      <default>["Software", "", "ArcMenu_Software", "Settings", "", "org.gnome.Settings.desktop"]</default>
+      <summary>List of Brisk Layout Shortcuts</summary>
+      <description>List of Brisk Layout Shortcuts</description>
     </key>
-    <key name="eleven-extra-buttons" type="aas">
-      <default>[["", "", "org.gnome.Nautilus.desktop"], ["", "", "org.gnome.Terminal.desktop"], ["", "", "org.gnome.Settings.desktop"]]</default>
-      <summary>List of Eleven Layout extra buttons</summary>
-      <description>List of Eleven Layout extra buttons</description>
+    <key name="mint-pinned-app-list" type="as">
+      <default>[]</default>
+      <summary>List of Mint Layout Pinned Apps</summary>
+      <description>List of Mint Layout Pinned Apps</description>
     </key>
-    <key name="insider-extra-buttons" type="aas">
-      <default>[["", "", "org.gnome.Nautilus.desktop"], ["", "", "org.gnome.Terminal.desktop"], ["", "", "org.gnome.Settings.desktop"]]</default>
-      <summary>List of Insider Layout extra buttons</summary>
-      <description>List of Insider Layout extra buttons</description>
-    </key>
-    <key name="mint-extra-buttons" type="aas">
-      <default>[["", "", "firefox.desktop"], ["", "", "org.gnome.Terminal.desktop"], ["", "", "org.gnome.Settings.desktop"], ["Software", "", "ArcMenu_Software"],
-          ["", "", "org.gnome.Nautilus.desktop"], ["Separator", "list-remove-symbolic", "ArcMenu_Separator"], ["Log Out...", "system-log-out-symbolic", "ArcMenu_LogOut"],
-          ["Lock", "changes-prevent-symbolic", "ArcMenu_Lock"], ["Power Off...", "system-shutdown-symbolic", "ArcMenu_PowerOff"]]</default>
-      <summary>List of Mint Layout extra buttons</summary>
-      <description>List of Mint Layout extra buttonss</description>
-    </key>
-    <key name="unity-extra-buttons" type="aas">
-      <default>[["Home", "ArcMenu_Home", "ArcMenu_Home"], ["Documents", "ArcMenu_Documents", "ArcMenu_Documents"], ["Downloads", "ArcMenu_Downloads", "ArcMenu_Downloads"],
-          ["Software", "", "ArcMenu_Software"], ["", "", "org.gnome.Nautilus.desktop"], ["Separator", "list-remove-symbolic", "ArcMenu_Separator"],
-          ["Log Out...", "system-log-out-symbolic", "ArcMenu_LogOut"], ["Lock", "changes-prevent-symbolic", "ArcMenu_Lock"],
-          ["Power Off...", "system-shutdown-symbolic", "ArcMenu_PowerOff"]]</default>
-      <summary>List of Unity Layout extra buttons</summary>
-      <description>List of Uniity Layout extra buttons</description>
-    </key>
-    <key name="windows-extra-buttons" type="aas">
-      <default>[["", "", "org.gnome.Nautilus.desktop"], ["", "", "org.gnome.Terminal.desktop"], ["", "", "org.gnome.Settings.desktop"]]</default>
-      <summary>List of Windows Layout extra buttons</summary>
-      <description>List of Windows Layout extra buttons</description>
+      <key name="mint-separator-index" type="i">
+      <default>5</default>
+      <summary>Index of Mint Layout Pinned App Separator</summary>
+      <description>Index of Mint Layout Pinned App Separator, 0 = none</description>
     </key>
     <key name="prefs-visible-page" type="i">
       <default>0</default>
       <summary>Handles which page to open in ArcMenu Settings</summary>
-      <description>See Constants.js SettingsPage</description>
+      <description>See Constants.js PrefsVisiblePage</description>
     </key>
   </schema>
 </schemalist>

@@ -1,89 +1,61 @@
-/* eslint-disable jsdoc/require-jsdoc */
-/* exported getMenuLayoutEnum, Menu */
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const {Clutter, GObject, Shell, St} = imports.gi;
-const {BaseMenuLayout} = Me.imports.menulayouts.baseMenuLayout;
+const { Clutter, Gio, GLib, Gtk, Shell, St } = imports.gi;
+const { BaseMenuLayout } = Me.imports.menulayouts.baseMenuLayout;
 const Constants = Me.imports.constants;
 const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
 const Main = imports.ui.main;
 const MW = Me.imports.menuWidgets;
+const PlaceDisplay = Me.imports.placeDisplay;
+const PopupMenu = imports.ui.popupMenu;
+const Utils =  Me.imports.utils;
 const _ = Gettext.gettext;
 
-function getMenuLayoutEnum() {
-    return Constants.MenuLayout.ELEVEN;
-}
+function getMenuLayoutEnum() { return Constants.MenuLayout.ELEVEN; }
 
-var Menu = class ArcMenuElevenLayout extends BaseMenuLayout {
-    static {
-        GObject.registerClass(this);
-    }
-
+var Menu = class extends BaseMenuLayout{
     constructor(menuButton) {
         super(menuButton, {
-            has_search: true,
-            display_type: Constants.DisplayType.GRID,
-            search_display_type: Constants.DisplayType.GRID,
-            context_menu_location: Constants.ContextMenuLocation.BOTTOM_CENTERED,
-            column_spacing: 0,
-            row_spacing: 0,
-            vertical: true,
-            default_menu_width: 650,
-            icon_grid_style: 'MediumRectIconGrid',
-            category_icon_size: Constants.LARGE_ICON_SIZE,
-            apps_icon_size: Constants.LARGE_ICON_SIZE,
-            quicklinks_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
-            buttons_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
-            pinned_apps_icon_size: Constants.LARGE_ICON_SIZE,
+            Search: true,
+            DisplayType: Constants.DisplayType.GRID,
+            SearchDisplayType: Constants.DisplayType.GRID,
+            ShortcutContextMenuLocation: Constants.ContextMenuLocation.BOTTOM_CENTERED,
+            ColumnSpacing: 0,
+            RowSpacing: 0,
+            VerticalMainBox: true,
+            DefaultMenuWidth: 650,
+            DefaultIconGridStyle: "MediumRectIconGrid",
+            DefaultCategoryIconSize: Constants.LARGE_ICON_SIZE,
+            DefaultApplicationIconSize: Constants.LARGE_ICON_SIZE,
+            DefaultQuickLinksIconSize: Constants.EXTRA_SMALL_ICON_SIZE,
+            DefaultButtonsIconSize: Constants.EXTRA_SMALL_ICON_SIZE,
+            DefaultPinnedIconSize: Constants.LARGE_ICON_SIZE,
         });
+    }
 
-        this.connect('button-press-event', (actor, event) => {
-            if (this.backButton.visible && event.get_button() === 8)
-                this.backButton.activate(event);
-        });
+    createLayout(){
+        super.createLayout();
 
-        this.searchBox.style = 'margin: 5px 15px 10px 15px;';
-
-        this._mainBox = new St.BoxLayout({
-            x_expand: true,
-            y_expand: true,
-            x_align: Clutter.ActorAlign.FILL,
-            y_align: Clutter.ActorAlign.FILL,
-            vertical: true,
-        });
-        this.add_child(this._mainBox);
-
-        const navButtonsStyle = 'padding: 0px 20px 10px 25px;';
-        this.backButton = this._createNavigationRow(_('All Apps'), Constants.Direction.GO_PREVIOUS,
-            _('Back'), () => this.setDefaultMenuView());
-        this.backButton.set({
-            style: navButtonsStyle,
-            visible: false,
-        });
-        this._mainBox.add_child(this.backButton);
-
-        this.allAppsButton = this._createNavigationRow(_('Pinned'), Constants.Direction.GO_NEXT,
-            _('All Apps'), () => this.displayAllApps());
-        this.allAppsButton.set({
-            style: navButtonsStyle,
-            visible: false,
-        });
-        this._mainBox.add_child(this.allAppsButton);
-
-        this.frequentAppsHeader = this.createLabelRow(_('Frequent'));
-
-        this.frequentAppsHeader.label.y_align = Clutter.ActorAlign.CENTER;
-        this.frequentAppsHeader.style = 'padding: 10px 20px;';
-
-        const topBox = new St.BoxLayout({
+        this.topBox = new St.BoxLayout({
             x_expand: false,
             y_expand: false,
             x_align: Clutter.ActorAlign.FILL,
             y_align: Clutter.ActorAlign.START,
-            vertical: false,
+            vertical: false
         });
-        topBox.add_child(this.searchBox);
-        this.insert_child_at_index(topBox, 0);
+
+        this.subMainBox = new St.BoxLayout({
+            x_expand: true,
+            y_expand: true,
+            x_align: Clutter.ActorAlign.FILL,
+            y_align: Clutter.ActorAlign.FILL,
+            vertical: true
+        });
+        this.mainBox.add_child(this.subMainBox);
+
+        this.searchBox.style = "margin: 5px 15px 10px 15px;";
+        this.topBox.add_child(this.searchBox);
+        this.mainBox.insert_child_at_index(this.topBox, 0);
 
         this.applicationsBox = new St.BoxLayout({
             vertical: true,
@@ -91,36 +63,43 @@ var Menu = class ArcMenuElevenLayout extends BaseMenuLayout {
             y_expand: true,
             x_align: Clutter.ActorAlign.FILL,
             y_align: Clutter.ActorAlign.FILL,
-            style: 'padding-bottom: 10px; spacing: 8px;',
-            style_class: 'arcmenu-margin-box',
+            style: "padding-bottom: 10px; spacing: 8px;",
+            style_class: 'arcmenu-margin-box'
         });
         this.applicationsScrollBox = this._createScrollBox({
+            clip_to_allocation: true,
             x_expand: true,
             y_expand: true,
             x_align: Clutter.ActorAlign.FILL,
             y_align: Clutter.ActorAlign.START,
-            style_class: this._disableFadeEffect ? '' : 'vfade',
+            overlay_scrollbars: true,
+            style_class: this.disableFadeEffect ? '' : 'vfade',
         });
         this.applicationsScrollBox.add_actor(this.applicationsBox);
-        this._mainBox.add_child(this.applicationsScrollBox);
+        this.subMainBox.add_child(this.applicationsScrollBox);
 
+        this.actionsContainerBoxStyle = "margin: 0px; spacing: 0px; background-color:rgba(10, 10, 15, 0.1); padding: 12px 25px;"+
+                                            "border-color: rgba(186, 196,201, 0.2); border-top-width: 1px;";
+        this.themeNodeBorderRadius = "";
         this.actionsContainerBox = new St.BoxLayout({
             x_expand: true,
             y_expand: true,
             x_align: Clutter.ActorAlign.FILL,
             y_align: Clutter.ActorAlign.END,
             vertical: false,
+            style: this.actionsContainerBoxStyle + this.themeNodeBorderRadius
         });
-        this._mainBox.add_child(this.actionsContainerBox);
+
+        this.subMainBox.add_child(this.actionsContainerBox);
 
         this.actionsBox = new St.BoxLayout({
             x_expand: true,
             y_expand: true,
             x_align: Clutter.ActorAlign.FILL,
             y_align: Clutter.ActorAlign.CENTER,
-            vertical: false,
+            vertical: false
         });
-        this.actionsBox.style = 'spacing: 10px;';
+        this.actionsBox.style = "spacing: 10px;";
         this.actionsContainerBox.add_child(this.actionsBox);
 
         this.shortcutsBox = new St.BoxLayout({
@@ -129,117 +108,125 @@ var Menu = class ArcMenuElevenLayout extends BaseMenuLayout {
             x_align: Clutter.ActorAlign.FILL,
             y_align: Clutter.ActorAlign.CENTER,
             vertical: true,
-            style: 'padding: 0px 25px;',
+            style: 'padding: 0px 25px;'
         });
 
-        const layout = new Clutter.GridLayout({
+        let layout = new Clutter.GridLayout({
             orientation: Clutter.Orientation.VERTICAL,
             column_spacing: 10,
             row_spacing: 5,
-            column_homogeneous: true,
+            column_homogeneous: true
         });
         this.shortcutsGrid = new St.Widget({
             x_expand: true,
             x_align: Clutter.ActorAlign.FILL,
-            layout_manager: layout,
+            layout_manager: layout
         });
         layout.hookup_style(this.shortcutsGrid);
         layout.forceGridColumns = 2;
         this.shortcutsBox.add_child(this.shortcutsGrid);
 
-        Me.settings.connectObject('changed::eleven-extra-buttons', () => this._createExtraButtons(), this);
-        Me.settings.connectObject('changed::eleven-disable-frequent-apps', () => this.setDefaultMenuView(), this);
+        this.user = new MW.UserMenuItem(this, Constants.DisplayType.LIST);
+        this.actionsBox.add_child(this.user);
 
-        this._createExtraButtons();
+        this.quickLinksBox = new St.BoxLayout({
+            x_expand: true,
+            y_expand: true,
+            x_align: Clutter.ActorAlign.END,
+            y_align: Clutter.ActorAlign.CENTER,
+            vertical: false,
+            style: 'spacing: 10px;'
+        });
+        let isContainedInCategory = false;
+        let filesButton = this.createMenuItem([_("Files"), "", "org.gnome.Nautilus.desktop"], Constants.DisplayType.BUTTON, isContainedInCategory);
+        if(filesButton.shouldShow)
+            this.quickLinksBox.add_child(filesButton);
+
+        let terminalButton = this.createMenuItem([_("Terminal"), "", "org.gnome.Terminal.desktop"], Constants.DisplayType.BUTTON, isContainedInCategory);
+        this.quickLinksBox.add_child(terminalButton);
+
+        let settingsButton = this.createMenuItem([_("Settings"),"", "org.gnome.Settings.desktop"], Constants.DisplayType.BUTTON, isContainedInCategory);
+        if(settingsButton.shouldShow)
+            this.quickLinksBox.add_child(settingsButton);
+
+        let powerDisplayStyle = this._settings.get_enum('power-display-style');
+        if(powerDisplayStyle === Constants.PowerDisplayStyle.IN_LINE)
+            this.leaveButton = new MW.PowerOptionsBox(this, 10);
+        else
+            this.leaveButton = new MW.LeaveButton(this);
+
+        this.quickLinksBox.add_child(this.leaveButton);
+
+        this.actionsBox.add_child(this.quickLinksBox);
+
+        this.backButton = this._createNavigationRow(_("All Apps"), Constants.Direction.GO_PREVIOUS, _("Back"), () => this.setDefaultMenuView());
+        this.allAppsButton = this._createNavigationRow(_("Pinned"), Constants.Direction.GO_NEXT, _("All Apps"), () => this.displayAllApps());
+        this.frequentAppsHeader = this.createLabelRow(_("Frequent"));
+        this.frequentAppsHeader.label.y_align = Clutter.ActorAlign.CENTER;
+        this.frequentAppsHeader.style = 'padding: 9px 25px;'
+
         this.updateStyle();
         this.updateWidth();
         this.loadCategories();
         this.loadPinnedApps();
         this.setDefaultMenuView();
+
+        this.disableFrequentAppsID = this._settings.connect("changed::eleven-disable-frequent-apps", () => this.setDefaultMenuView());
     }
 
-    _createExtraButtons() {
-        this.actionsBox.destroy_all_children();
-
-        const userMenuItem = new MW.UserMenuItem(this, Constants.DisplayType.LIST);
-        this.actionsBox.add_child(userMenuItem);
-
-        const isContainedInCategory = false;
-        const extraButtons = Me.settings.get_value('eleven-extra-buttons').deep_unpack();
-
-        for (let i = 0; i < extraButtons.length; i++) {
-            const command = extraButtons[i][2];
-            if (command === Constants.ShortcutCommands.SEPARATOR) {
-                const separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.LONG,
-                    Constants.SeparatorAlignment.VERTICAL);
-                separator.x_expand = false;
-                this.actionsBox.add_child(separator);
-            } else {
-                const button = this.createMenuItem(extraButtons[i], Constants.DisplayType.BUTTON,
-                    isContainedInCategory);
-                if (button.shouldShow)
-                    this.actionsBox.add_child(button);
-            }
-        }
-
-        let leaveButton;
-        const powerDisplayStyle = Me.settings.get_enum('power-display-style');
-        if (powerDisplayStyle === Constants.PowerDisplayStyle.IN_LINE)
-            leaveButton = new MW.PowerOptionsBox(this);
-        else
-            leaveButton = new MW.LeaveButton(this);
-
-        this.actionsBox.add_child(leaveButton);
-    }
-
-    loadPinnedApps() {
-        this.display_type = Constants.DisplayType.GRID;
+    loadPinnedApps(){
+        this.layoutProperties.DisplayType = Constants.DisplayType.GRID;
         super.loadPinnedApps();
     }
 
-    loadFrequentApps() {
+    loadFrequentApps(){
         this.frequentAppsList = [];
 
-        if (Me.settings.get_boolean('eleven-disable-frequent-apps'))
+        if(this._settings.get_boolean("eleven-disable-frequent-apps"))
             return;
 
-        const mostUsed = Shell.AppUsage.get_default().get_most_used();
+        let mostUsed = Shell.AppUsage.get_default().get_most_used();
 
-        if (mostUsed.length < 1)
+        if(mostUsed.length < 1)
             return;
 
-        const pinnedApps = Me.settings.get_strv('pinned-app-list');
+        const pinnedApps = this._settings.get_strv('pinned-app-list');
 
         for (let i = 0; i < mostUsed.length; i++) {
-            if (!mostUsed[i])
+            if(!mostUsed[i])
                 continue;
-
+    
             const appInfo = mostUsed[i].get_app_info();
-            if (appInfo.should_show() && !pinnedApps.includes(appInfo.get_id())) {
-                const item = new MW.ApplicationMenuItem(this, mostUsed[i], Constants.DisplayType.LIST);
+            if(appInfo.should_show() && !pinnedApps.includes(appInfo.get_id())){
+                let item = new MW.ApplicationMenuItem(this, mostUsed[i], Constants.DisplayType.LIST);
                 this.frequentAppsList.push(item);
             }
         }
 
         const MaxItems = 8;
-        if (this.frequentAppsList.length > MaxItems)
+        if(this.frequentAppsList.length > MaxItems)
             this.frequentAppsList.splice(MaxItems);
     }
 
-    setDefaultMenuView() {
+    setDefaultMenuView(){
         this.setGridLayout(Constants.DisplayType.GRID, 0);
         super.setDefaultMenuView();
+        this.activeCategory = _("Pinned");
+        this.activeCategoryType = Constants.CategoryType.HOME_SCREEN;
         this.displayPinnedApps();
     }
 
-    _clearActorsFromBox(box) {
+    _clearActorsFromBox(box){
         super._clearActorsFromBox(box);
     }
 
-    displayAllApps() {
+    displayAllApps(){
+        this.activeCategory = _("All Apps");
+        this.activeCategoryType = Constants.CategoryType.ALL_PROGRAMS;
+
         this.setGridLayout(Constants.DisplayType.LIST, 5);
-        const appList = [];
-        this.applicationsMap.forEach((value, key, _map) => {
+        let appList = [];
+        this.applicationsMap.forEach((value,key,map) => {
             appList.push(key);
         });
         appList.sort((a, b) => {
@@ -250,34 +237,28 @@ var Menu = class ArcMenuElevenLayout extends BaseMenuLayout {
         this.setGridLayout(Constants.DisplayType.GRID, 0, false);
     }
 
-    updateStyle() {
-        const themeNode = this.arcMenu.box.get_theme_node();
+    updateStyle(){
+        let themeNode = this.arcMenu.box.get_theme_node();
         let borderRadius = themeNode.get_length('border-radius');
-        const monitorIndex = Main.layoutManager.findIndexForActor(this.menuButton);
-        const scaleFactor = Main.layoutManager.monitors[monitorIndex].geometry_scale;
-        borderRadius /= scaleFactor;
-
-        const borderRadiusStyle = `border-radius: 0px 0px ${borderRadius}px ${borderRadius}px;`;
-        const style = `margin: 0px; spacing: 0px; background-color:rgba(10, 10, 15, 0.1); padding: 12px 25px;
-                       border-color: rgba(186, 196,201, 0.2); border-top-width: 1px;`;
-
-        this.actionsContainerBox.style = style + borderRadiusStyle;
-        this.arcMenu.box.style = 'padding-bottom: 0px; padding-left: 0px; padding-right: 0px;';
+        let monitorIndex = Main.layoutManager.findIndexForActor(this.menuButton);
+        let scaleFactor = Main.layoutManager.monitors[monitorIndex].geometry_scale;
+        borderRadius = borderRadius / scaleFactor;
+        this.themeNodeBorderRadius = "border-radius: 0px 0px " + borderRadius + "px " + borderRadius + "px;";
+        this.actionsContainerBox.style = this.actionsContainerBoxStyle + this.themeNodeBorderRadius;
+        this.arcMenu.box.style = "padding-bottom: 0px; padding-left: 0px; padding-right: 0px;";
     }
 
-    setGridLayout(displayType, spacing, setStyle = true) {
-        if (setStyle) {
-            this.applicationsGrid.x_align = displayType === Constants.DisplayType.LIST ? Clutter.ActorAlign.FILL
-                : Clutter.ActorAlign.CENTER;
+    setGridLayout(displayType, spacing, setStyle = true){
+        if(setStyle){
+            this.applicationsGrid.x_align = displayType === Constants.DisplayType.LIST ? Clutter.ActorAlign.FILL : Clutter.ActorAlign.CENTER;
         }
-
         this.applicationsGrid.layout_manager.column_spacing = spacing;
         this.applicationsGrid.layout_manager.row_spacing = spacing;
-        this.display_type = displayType;
+        this.layoutProperties.DisplayType = displayType;
     }
 
     loadCategories() {
-        this.display_type = Constants.DisplayType.LIST;
+        this.layoutProperties.DisplayType = Constants.DisplayType.LIST;
         this.categoryDirectories = null;
         this.categoryDirectories = new Map();
         this.hasPinnedApps = true;
@@ -287,49 +268,58 @@ var Menu = class ArcMenuElevenLayout extends BaseMenuLayout {
     displayPinnedApps() {
         this.loadFrequentApps();
         this._clearActorsFromBox(this.applicationsBox);
+        this.activeCategory = _("Pinned");
         this._displayAppList(this.pinnedAppsArray, Constants.CategoryType.PINNED_APPS, this.applicationsGrid);
 
-        if (this.frequentAppsList.length > 0 && !Me.settings.get_boolean('eleven-disable-frequent-apps')) {
+        if(this.frequentAppsList.length > 0 && !this._settings.get_boolean("eleven-disable-frequent-apps")){
+            this.activeCategory = _("Frequent");
             this.setGridLayout(Constants.DisplayType.GRID, 0);
             this._displayAppList(this.frequentAppsList, Constants.CategoryType.HOME_SCREEN, this.shortcutsGrid);
             this.setGridLayout(Constants.DisplayType.GRID, 0);
-            if (!this.applicationsBox.contains(this.shortcutsBox))
+            if(!this.applicationsBox.contains(this.shortcutsBox))
                 this.applicationsBox.add_child(this.shortcutsBox);
-        } else if (this.applicationsBox.contains(this.shortcutsBox)) {
+        }
+        else if(this.applicationsBox.contains(this.shortcutsBox)){
             this.applicationsBox.remove_child(this.shortcutsBox);
         }
     }
 
-    _displayAppList(apps, category, grid) {
+    _displayAppList(apps, category, grid){
         super._displayAppList(apps, category, grid);
 
         this._hideNavigationButtons();
 
-        if (category === Constants.CategoryType.HOME_SCREEN || category === Constants.CategoryType.PINNED_APPS) {
-            this.allAppsButton.visible = true;
-            if (!this.applicationsBox.contains(this.frequentAppsHeader))
-                this.applicationsBox.insert_child_at_index(this.frequentAppsHeader, 2);
-        } else if (category === Constants.CategoryType.ALL_PROGRAMS) {
-            this.backButton.visible = true;
+        if(category === Constants.CategoryType.PINNED_APPS){
+            this.applicationsBox.insert_child_at_index(this.allAppsButton, 0);
+        }
+        else if(category === Constants.CategoryType.HOME_SCREEN){
+            this.applicationsBox.insert_child_at_index(this.frequentAppsHeader, 2);
+        }
+        else if(category === Constants.CategoryType.ALL_PROGRAMS){
+            this.mainBox.insert_child_at_index(this.backButton, 1);
         }
     }
 
-    _hideNavigationButtons() {
-        this.allAppsButton.visible = false;
-        this.backButton.visible = false;
+    _hideNavigationButtons(){
+        if(this.mainBox.contains(this.backButton))
+            this.mainBox.remove_child(this.backButton);
     }
 
-    _onSearchBoxChanged(searchBox, searchString) {
-        if (!searchBox.isEmpty())
+    _onSearchBoxChanged(searchBox, searchString){
+        if(!searchBox.isEmpty())
             this._hideNavigationButtons();
         super._onSearchBoxChanged(searchBox, searchString);
     }
 
-    destroy() {
+    destroy(){
         this.arcMenu.box.style = null;
         this.backButton.destroy();
         this.allAppsButton.destroy();
+        if(this.disableFrequentAppsID){
+            this._settings.disconnect(this.disableFrequentAppsID);
+            this.disableFrequentAppsID = null;
+        }
 
         super.destroy();
     }
-};
+}

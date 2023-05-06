@@ -21,5 +21,13 @@
             <default>false</default>
             <summary>Enabling Pywal Theming</summary>
         </key>
+        <key name="enable-accent-colors" type="b">
+            <default>false</default>
+            <summary>Enabling Accent colors</summary>
+        </key>
+        <key name="accent-color" type="s">
+            <default>"4282549748"</default>
+            <summary>Enabling Accent colors</summary>
+        </key>
     </schema>
 </schemalist>

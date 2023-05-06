@@ -64,6 +64,12 @@ class Extension {
         this._prefsSettings.connect('changed::scheme', () => {
             apply_theme(base_presets, color_mappings, true);
         });
+        this._prefsSettings.connect('changed::accent-color', () => {
+            apply_theme(base_presets, color_mappings, true);
+        });
+        this._prefsSettings.connect('changed::enable-accent-colors', () => {
+            apply_theme(base_presets, color_mappings, true);
+        });
         try {
             this._shellSettings = ExtensionUtils.getSettings(SHELL_SCHEMA);
             this._shellSettings.connect('changed::name', () => {
@@ -123,12 +129,19 @@ function apply_theme(base_presets, color_mappings, notify=false) {
         log(e);
         warn_shell_theme = true;
     }
-    const color_scheme = settings.get_string("scheme");
+    var color_scheme = settings.get_string("scheme");
+    const accent_color_enabled = settings.get_boolean("enable-accent-colors");
+    const accent_color = settings.get_string("accent-color");
     const show_notifications = settings.get_boolean("show-notifications");
     const height = settings.get_int("resize-height");
     const width = settings.get_int("resize-width");
     const enable_pywal_theming = settings.get_boolean("enable-pywal-theming");
     let size = {height: height, width: width};
+    if (accent_color_enabled) {
+        if (color_scheme == "Fruit Salad" || color_scheme == "Expressive") {
+            color_scheme = "Default";
+        }
+    }
     let color_mappings_sel = color_mappings[color_scheme.toLowerCase()];
 
     // Checking dark theme preference
@@ -150,8 +163,13 @@ function apply_theme(base_presets, color_mappings, notify=false) {
         wall_path = Gio.File.new_for_uri(wall_path).get_path();
     }
     let pix_buf = GdkPixbuf.Pixbuf.new_from_file_at_size(wall_path, size.width, size.height);
-    let theme = theme_utils.themeFromImage(pix_buf);
-
+    let theme;
+    if (accent_color_enabled) {
+        log("SIUM");
+        theme = theme_utils.themeFromSourceColor(parseInt(accent_color), []);
+    } else {
+        theme = theme_utils.themeFromImage(pix_buf);
+    }
     // Configuring for light or dark theme
     let scheme = theme.schemes.light.props;
     let base_preset = base_presets.light;
