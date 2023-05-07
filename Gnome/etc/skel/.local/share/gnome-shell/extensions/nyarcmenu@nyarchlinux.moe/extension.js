@@ -38,8 +38,12 @@ function init() {
 }
 
 async function reloadTheme() {
-    await new Promise(r => setTimeout(r, 500));
-    Theming.updateStylesheet(settings);
+    try {
+        await new Promise(r => setTimeout(r, 500));
+    } catch (e) {
+        log(e);
+    }
+    Theming.updateStylesheet(Me.settings);
 }
 let customUpdateState = function() {
     this._notificationQueue = this._notificationQueue.filter((notification) => {
