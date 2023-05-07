@@ -459,11 +459,10 @@ kitty
 vte3
 gnome-terminal-transparency
 plymouth
-gdm-plymouth
-libgdm-plymouth
 libdrm
 pango
 btop
+aura-bin
 
 # Webapp Manager
 python-beautifulsoup4
