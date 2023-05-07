@@ -1,16 +1,22 @@
-const { Meta, Gio, St, Shell } = imports.gi;
+
+/* exported OpenWindowSearchProvider */
+const {Gio, St, Shell} = imports.gi;
 
 const Main = imports.ui.main;
-const { getWindows } = imports.ui.altTab;
+const {getWindows} = imports.ui.altTab;
 
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
 const _ = Gettext.gettext;
 
+/**
+ * @param {Gio.App} app The app
+ * @param {int} size App icon size
+ */
 function createIcon(app, size) {
     return app
         ? app.create_icon_texture(size)
-        : new St.Icon({ icon_name: 'icon-missing', icon_size: size });
+        : new St.Icon({icon_name: 'icon-missing', icon_size: size});
 }
 
 var OpenWindowSearchProvider = class {
@@ -27,7 +33,7 @@ var OpenWindowSearchProvider = class {
             get_name: () => _('Open Windows'),
             get_id: () => 'arcmenu.open-windows',
             get_icon: () => Gio.icon_new_for_string('focus-windows-symbolic'),
-        }
+        };
     }
 
     getResultMetas(winIds) {
@@ -36,8 +42,10 @@ var OpenWindowSearchProvider = class {
             return aw ? {
                 id: winId,
                 name: aw.window.title ?? aw.app.get_name(),
-                description: aw.window.get_workspace() ? _("'%s' on Workspace %d").format(aw.app.get_name(), aw.window.get_workspace().index() + 1) : aw.app.get_name(),
-                createIcon: (size) => createIcon(aw.app, size),
+                description: aw.window.get_workspace()
+                    ? _("'%s' on Workspace %d").format(aw.app.get_name(), aw.window.get_workspace().index() + 1)
+                    : aw.app.get_name(),
+                createIcon: size => createIcon(aw.app, size),
             } : undefined;
         }).filter(m => m?.name !== undefined && m?.name !== null);
 
@@ -53,11 +61,11 @@ var OpenWindowSearchProvider = class {
             return {
                 window,
                 app: this._windowTracker.get_window_app(window),
-            }
+            };
         });
 
         return new Promise(resolve => {
-            let results = this._getFilteredWindowIds(terms, this._appWindows);
+            const results = this._getFilteredWindowIds(terms, this._appWindows);
             resolve(results);
         });
     }
@@ -82,14 +90,15 @@ var OpenWindowSearchProvider = class {
             const title = aw.window.title?.toLowerCase();
             const appName = aw.app.get_name()?.toLowerCase();
             const appDescription = aw.app.get_description()?.toLowerCase();
-            return terms.some(term => title?.includes(term) || appName?.includes(term) || appDescription?.includes(term));
+            return terms.some(term => title?.includes(term) || appName?.includes(term) ||
+                appDescription?.includes(term));
         });
 
         return appWindows.map(aw => aw.window.get_id().toString());
     }
 
     _getAppWindow(winId) {
-        winId = typeof winId === "string" ? parseInt(winId) : winId;
+        winId = typeof winId === 'string' ? parseInt(winId) : winId;
         return this._appWindows.find(aw => aw.window.get_id() === winId);
     }
-}
+};

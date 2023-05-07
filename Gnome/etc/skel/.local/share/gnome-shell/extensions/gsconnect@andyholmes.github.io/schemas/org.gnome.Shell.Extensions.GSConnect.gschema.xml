@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+SPDX-FileCopyrightText: GSConnect Developers https://github.com/GSConnect
+
+SPDX-License-Identifier: GPL-2.0-or-later
+-->
+
 <schemalist gettext-domain="org.gnome.Shell.Extensions.GSConnect">
   <schema id="org.gnome.Shell.Extensions.GSConnect" path="/org/gnome/shell/extensions/gsconnect/">
     <!-- Extension Settings -->
@@ -7,6 +14,9 @@
     </key>
     <key name="show-indicators" type="b">
       <default>false</default>
+    </key>
+    <key name="keep-alive-when-locked" type="b">
+      <default>true</default>
     </key>
 
     <!-- Service Settings -->
@@ -140,7 +150,7 @@
   <schema id="org.gnome.Shell.Extensions.GSConnect.Plugin.Presenter"/>
   <schema id="org.gnome.Shell.Extensions.GSConnect.Plugin.RunCommand">
     <key name="command-list" type="a{sv}">
-      <default>{}</default>
+      <default><![CDATA[{'lock': <{'name': 'Lock', 'command': 'xdg-screensaver lock'}>, 'restart': <{'name': 'Restart', 'command': 'systemctl reboot'}>, 'logout': <{'name': 'Log Out', 'command': 'gnome-session-quit --logout --no-prompt'}>, 'poweroff': <{'name': 'Power Off', 'command': 'systemctl poweroff'}>, 'suspend': <{'name': 'Suspend', 'command': 'systemctl suspend'}>}]]></default>
     </key>
   </schema>
   <schema id="org.gnome.Shell.Extensions.GSConnect.Plugin.SFTP">

@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: GSConnect Developers https://github.com/GSConnect
+//
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 'use strict';
 
 const Gdk = imports.gi.Gdk;
@@ -222,6 +226,9 @@ var Window = GObject.registerClass({
 
         // Application Menu
         this._initMenu();
+
+        // Setting: Keep Alive When Locked
+        this.add_action(this.settings.create_action('keep-alive-when-locked'));
 
         // Broadcast automatically every 5 seconds if there are no devices yet
         this._refreshSource = GLib.timeout_add_seconds(
@@ -654,4 +661,3 @@ var Window = GObject.registerClass({
             this.device_list_placeholder.label = _('Waiting for service…');
     }
 });
-

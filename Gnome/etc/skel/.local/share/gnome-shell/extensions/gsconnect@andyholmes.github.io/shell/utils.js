@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: GSConnect Developers https://github.com/GSConnect
+//
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 'use strict';
 
 const ByteArray = imports.byteArray;
@@ -20,9 +24,9 @@ function getIcon(name) {
         // Setup the desktop icons
         const settings = imports.gi.St.Settings.get();
         getIcon._desktop = new imports.gi.Gtk.IconTheme();
-        getIcon._desktop.set_custom_theme(settings.gtk_icon_theme);
+        getIcon._desktop.set_theme_name(settings.gtk_icon_theme);
         settings.connect('notify::gtk-icon-theme', (settings_, key_) => {
-            getIcon._desktop.set_custom_theme(settings_.gtk_icon_theme);
+            getIcon._desktop.set_theme_name(settings_.gtk_icon_theme);
         });
 
         // Preload our fallbacks

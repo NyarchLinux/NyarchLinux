@@ -1,18 +1,18 @@
+/* exported LayoutTweaksPage */
 const Me = imports.misc.extensionUtils.getCurrentExtension();
-const {Adw, Gdk, GdkPixbuf, Gio, GLib, GObject, Gtk} = imports.gi;
+const {Adw, GObject, Gtk} = imports.gi;
 const Constants = Me.imports.constants;
 const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const PW = Me.imports.prefsWidgets;
-const { SettingsUtils } = Me.imports.settings;
+const {SettingsUtils} = Me.imports.settings;
 const _ = Gettext.gettext;
 
 const Settings = Me.imports.settings;
-const { SubPage } = Settings.Menu.SubPage;
-const { ListPinnedPage } = Me.imports.settings.Menu.ListPinnedPage;
-const { ListOtherPage } = Me.imports.settings.Menu.ListOtherPage;
+const {SubPage} = Settings.Menu.SubPage;
+const {ListPinnedPage} = Me.imports.settings.Menu.ListPinnedPage;
+const {ListOtherPage} = Me.imports.settings.Menu.ListOtherPage;
 
 var LayoutTweaksPage = GObject.registerClass(
-class ArcMenu_LayoutTweaksPage extends SubPage {
+class ArcMenuLayoutTweaksPage extends SubPage {
     _init(settings, params) {
         super._init(settings, params);
 
@@ -20,98 +20,123 @@ class ArcMenu_LayoutTweaksPage extends SubPage {
         this._createLayout();
     }
 
-    setActiveLayout(menuLayout){
+    setActiveLayout(menuLayout) {
         this.headerLabel.title = _(SettingsUtils.getMenuLayoutTweaksName(menuLayout));
 
-        for(let child of this.page.children){
+        for (const child of this.page.children)
             this.page.remove(child);
-        }
+
         this.page.children = [];
         this._createLayout(menuLayout);
     }
 
     _createLayout(menuLayout) {
-        if(!menuLayout)
+        if (!menuLayout)
             menuLayout = this._settings.get_enum('menu-layout');
 
-        if(menuLayout == Constants.MenuLayout.ARCMENU)
+        switch (menuLayout) {
+        case Constants.MenuLayout.ARCMENU:
             this._loadArcMenuTweaks();
-        else if(menuLayout == Constants.MenuLayout.BRISK)
+            break;
+        case Constants.MenuLayout.BRISK:
             this._loadBriskMenuTweaks();
-        else if(menuLayout == Constants.MenuLayout.WHISKER)
+            break;
+        case Constants.MenuLayout.WHISKER:
             this._loadWhiskerMenuTweaks();
-        else if(menuLayout == Constants.MenuLayout.GNOME_MENU)
+            break;
+        case Constants.MenuLayout.GNOME_MENU:
             this._loadGnomeMenuTweaks();
-        else if(menuLayout == Constants.MenuLayout.MINT)
+            break;
+        case Constants.MenuLayout.MINT:
             this._loadMintMenuTweaks();
-        else if(menuLayout == Constants.MenuLayout.ELEMENTARY)
+            break;
+        case Constants.MenuLayout.ELEMENTARY:
             this._loadElementaryTweaks();
-        else if(menuLayout == Constants.MenuLayout.GNOME_OVERVIEW)
+            break;
+        case Constants.MenuLayout.GNOME_OVERVIEW:
             this._loadGnomeOverviewTweaks();
-        else if(menuLayout == Constants.MenuLayout.REDMOND)
-            this._loadRedmondMenuTweaks()
-        else if(menuLayout == Constants.MenuLayout.UNITY)
+            break;
+        case Constants.MenuLayout.REDMOND:
+            this._loadRedmondMenuTweaks();
+            break;
+        case Constants.MenuLayout.UNITY:
             this._loadUnityTweaks();
-        else if(menuLayout == Constants.MenuLayout.RAVEN)
+            break;
+        case Constants.MenuLayout.RAVEN:
             this._loadRavenTweaks();
-        else if(menuLayout == Constants.MenuLayout.BUDGIE)
+            break;
+        case Constants.MenuLayout.BUDGIE:
             this._loadBudgieMenuTweaks();
-        else if(menuLayout == Constants.MenuLayout.INSIDER)
+            break;
+        case Constants.MenuLayout.INSIDER:
             this._loadInsiderMenuTweaks();
-        else if(menuLayout == Constants.MenuLayout.RUNNER)
+            break;
+        case Constants.MenuLayout.RUNNER:
             this._loadRunnerMenuTweaks();
-        else if(menuLayout == Constants.MenuLayout.CHROMEBOOK)
+            break;
+        case Constants.MenuLayout.CHROMEBOOK:
             this._loadChromebookTweaks();
-        else if(menuLayout == Constants.MenuLayout.TOGNEE)
+            break;
+        case Constants.MenuLayout.TOGNEE:
             this._loadTogneeMenuTweaks();
-        else if(menuLayout == Constants.MenuLayout.PLASMA)
+            break;
+        case Constants.MenuLayout.PLASMA:
             this._loadPlasmaMenuTweaks();
-        else if(menuLayout == Constants.MenuLayout.WINDOWS)
+            break;
+        case Constants.MenuLayout.WINDOWS:
             this._loadWindowsTweaks();
-        else if(menuLayout == Constants.MenuLayout.ELEVEN)
+            break;
+        case Constants.MenuLayout.ELEVEN:
             this._loadElevenTweaks();
-        else if(menuLayout == Constants.MenuLayout.AZ)
+            break;
+        case Constants.MenuLayout.AZ:
             this._loadAZTweaks();
-        else
+            break;
+        case Constants.MenuLayout.ENTERPRISE:
+            this._loadEnterpriseTweaks();
+            break;
+        default:
             this._loadPlaceHolderTweaks();
+            break;
+        }
     }
 
-    _createVertSeparatorRow(){
-        let vertSeparatorSwitch = new Gtk.Switch({
+    _createVertSeparatorRow() {
+        const vertSeparatorSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER,
-            active: this._settings.get_boolean('vert-separator')
+            active: this._settings.get_boolean('vert-separator'),
         });
-        vertSeparatorSwitch.connect('notify::active', (widget) => {
+        vertSeparatorSwitch.connect('notify::active', widget => {
             this._settings.set_boolean('vert-separator', widget.get_active());
         });
-        let vertSeparatorRow = new Adw.ActionRow({
+        const vertSeparatorRow = new Adw.ActionRow({
             title: _('Vertical Separator'),
-            activatable_widget:  vertSeparatorSwitch
+            activatable_widget: vertSeparatorSwitch,
         });
         vertSeparatorRow.add_suffix(vertSeparatorSwitch);
         return vertSeparatorRow;
     }
 
-    _createActivateOnHoverRow(){
-        let hoverOptions = new Gtk.StringList();
-        hoverOptions.append(_("Mouse Click"));
-        hoverOptions.append(_("Mouse Hover"));
+    _createActivateOnHoverRow() {
+        const hoverOptions = new Gtk.StringList();
+        hoverOptions.append(_('Mouse Click'));
+        hoverOptions.append(_('Mouse Hover'));
 
-        let activateOnHoverRow = new Adw.ComboRow({
-            title: _("Category Activation"),
+        const activateOnHoverRow = new Adw.ComboRow({
+            title: _('Category Activation'),
             model: hoverOptions,
         });
 
-        if(this._settings.get_boolean('activate-on-hover'))
+        if (this._settings.get_boolean('activate-on-hover'))
             activateOnHoverRow.selected = 1;
         else
             activateOnHoverRow.selected = 0;
 
-        activateOnHoverRow.connect('notify::selected', (widget) => {
+        activateOnHoverRow.connect('notify::selected', widget => {
             let activateOnHover;
-            if(widget.selected === 0)
+            if (widget.selected === 0)
                 activateOnHover = false;
-            if(widget.selected === 1)
+            if (widget.selected === 1)
                 activateOnHover = true;
 
             this._settings.set_boolean('activate-on-hover', activateOnHover);
@@ -119,771 +144,759 @@ class ArcMenu_LayoutTweaksPage extends SubPage {
         return activateOnHoverRow;
     }
 
-    _createAvatarShapeRow(){
-        let avatarStyles = new Gtk.StringList();
-        avatarStyles.append(_("Round"));
-        avatarStyles.append(_("Square"));
-        let avatarStyleRow = new Adw.ComboRow({
+    _createAvatarShapeRow() {
+        const avatarStyles = new Gtk.StringList();
+        avatarStyles.append(_('Round'));
+        avatarStyles.append(_('Square'));
+        const avatarStyleRow = new Adw.ComboRow({
             title: _('Avatar Icon Shape'),
             model: avatarStyles,
-            selected: this._settings.get_enum('avatar-style')
+            selected: this._settings.get_enum('avatar-style'),
         });
 
-        avatarStyleRow.connect('notify::selected', (widget) => {
+        avatarStyleRow.connect('notify::selected', widget => {
             this._settings.set_enum('avatar-style', widget.selected);
         });
         return avatarStyleRow;
     }
 
-    _createSearchBarLocationRow(bottomDefault){
-        let searchBarLocationSetting = bottomDefault ? 'searchbar-default-bottom-location' : 'searchbar-default-top-location';
+    _createSearchBarLocationRow(bottomDefault) {
+        const searchBarLocationSetting = bottomDefault ? 'searchbar-default-bottom-location'
+            : 'searchbar-default-top-location';
 
-        let searchbarLocations = new Gtk.StringList();
-        searchbarLocations.append(_("Bottom"));
-        searchbarLocations.append(_("Top"));
+        const searchbarLocations = new Gtk.StringList();
+        searchbarLocations.append(_('Bottom'));
+        searchbarLocations.append(_('Top'));
 
-        let searchbarLocationRow = new Adw.ComboRow({
-            title: _("Searchbar Location"),
+        const searchbarLocationRow = new Adw.ComboRow({
+            title: _('Searchbar Location'),
             model: searchbarLocations,
-            selected: this._settings.get_enum(searchBarLocationSetting)
+            selected: this._settings.get_enum(searchBarLocationSetting),
         });
 
-        searchbarLocationRow.connect('notify::selected', (widget) => {
-            this._settings.set_enum(searchBarLocationSetting , widget.selected);
+        searchbarLocationRow.connect('notify::selected', widget => {
+            this._settings.set_enum(searchBarLocationSetting, widget.selected);
         });
 
         return searchbarLocationRow;
     }
 
-    _createFlipHorizontalRow(){
-        let horizontalFlipSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER
+    _createFlipHorizontalRow() {
+        const horizontalFlipSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER,
         });
         horizontalFlipSwitch.set_active(this._settings.get_boolean('enable-horizontal-flip'));
-        horizontalFlipSwitch.connect('notify::active', (widget) => {
+        horizontalFlipSwitch.connect('notify::active', widget => {
             this._settings.set_boolean('enable-horizontal-flip', widget.get_active());
         });
-        let horizontalFlipRow = new Adw.ActionRow({
-            title: _("Flip Layout Horizontally"),
-            activatable_widget: horizontalFlipSwitch
+        const horizontalFlipRow = new Adw.ActionRow({
+            title: _('Flip Layout Horizontally'),
+            activatable_widget: horizontalFlipSwitch,
         });
         horizontalFlipRow.add_suffix(horizontalFlipSwitch);
         return horizontalFlipRow;
     }
 
-    _disableAvatarRow(){
-        let disableAvatarSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER
+    _disableAvatarRow() {
+        const disableAvatarSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER,
         });
         disableAvatarSwitch.set_active(this._settings.get_boolean('disable-user-avatar'));
-        disableAvatarSwitch.connect('notify::active', (widget) => {
+        disableAvatarSwitch.connect('notify::active', widget => {
             this._settings.set_boolean('disable-user-avatar', widget.get_active());
         });
-        let disableAvatarRow = new Adw.ActionRow({
+        const disableAvatarRow = new Adw.ActionRow({
             title: _('Disable User Avatar'),
-            activatable_widget: disableAvatarSwitch
+            activatable_widget: disableAvatarSwitch,
         });
         disableAvatarRow.add_suffix(disableAvatarSwitch);
         return disableAvatarRow;
     }
 
-    _loadElevenTweaks(){
-        let elevenTweaksFrame = new Adw.PreferencesGroup();
-        let disableFrequentAppsSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER
+    _loadEnterpriseTweaks() {
+        const tweaksGroup = new Adw.PreferencesGroup();
+        tweaksGroup.add(this._createActivateOnHoverRow());
+        tweaksGroup.add(this._createAvatarShapeRow());
+        tweaksGroup.add(this._createSearchBarLocationRow());
+        tweaksGroup.add(this._createFlipHorizontalRow());
+        tweaksGroup.add(this._createVertSeparatorRow());
+        this.add(tweaksGroup);
+    }
+
+    _loadElevenTweaks() {
+        const tweaksGroup = new Adw.PreferencesGroup();
+        const disableFrequentAppsSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER,
         });
         disableFrequentAppsSwitch.set_active(this._settings.get_boolean('eleven-disable-frequent-apps'));
-        disableFrequentAppsSwitch.connect('notify::active', (widget) => {
+        disableFrequentAppsSwitch.connect('notify::active', widget => {
             this._settings.set_boolean('eleven-disable-frequent-apps', widget.get_active());
         });
-        let disableFrequentAppsRow = new Adw.ActionRow({
-            title: _("Disable Frequent Apps"),
-            activatable_widget: disableFrequentAppsSwitch
+        const disableFrequentAppsRow = new Adw.ActionRow({
+            title: _('Disable Frequent Apps'),
+            activatable_widget: disableFrequentAppsSwitch,
         });
         disableFrequentAppsRow.add_suffix(disableFrequentAppsSwitch);
-        elevenTweaksFrame.add(disableFrequentAppsRow);
-        this.add(elevenTweaksFrame);
+        tweaksGroup.add(disableFrequentAppsRow);
+        this.add(tweaksGroup);
+
+        const extraShortcutsGroup = new Adw.PreferencesGroup({
+            title: _('Button Shortcuts'),
+        });
+        const extraShortcutsPage = new ListPinnedPage(this._settings, {
+            title: _('Button Shortcuts'),
+            preferences_page: false,
+            setting_string: 'eleven-extra-buttons',
+            list_type: Constants.MenuSettingsListType.EXTRA_SHORTCUTS,
+        });
+        extraShortcutsGroup.set_header_suffix(extraShortcutsPage.restoreDefaultsButton);
+        extraShortcutsGroup.add(extraShortcutsPage);
+        this.add(extraShortcutsGroup);
     }
 
-    _loadAZTweaks(){
-        let azTweaksFrame = new Adw.PreferencesGroup();
-        azTweaksFrame.add(this._createSearchBarLocationRow());
-        this.add(azTweaksFrame);
+    _loadAZTweaks() {
+        const tweaksGroup = new Adw.PreferencesGroup();
+        tweaksGroup.add(this._createSearchBarLocationRow());
+        this.add(tweaksGroup);
+
+        const extraShortcutsGroup = new Adw.PreferencesGroup({
+            title: _('Button Shortcuts'),
+        });
+        const extraShortcutsPage = new ListPinnedPage(this._settings, {
+            title: _('Button Shortcuts'),
+            preferences_page: false,
+            setting_string: 'az-extra-buttons',
+            list_type: Constants.MenuSettingsListType.EXTRA_SHORTCUTS,
+        });
+        extraShortcutsGroup.set_header_suffix(extraShortcutsPage.restoreDefaultsButton);
+        extraShortcutsGroup.add(extraShortcutsPage);
+        this.add(extraShortcutsGroup);
     }
 
-    _loadGnomeOverviewTweaks(){
-        let gnomeOverviewTweaksFrame = new Adw.PreferencesGroup();
-        let appsGridSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER
+    _loadGnomeOverviewTweaks() {
+        const tweaksGroup = new Adw.PreferencesGroup();
+        const appsGridSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER,
         });
         appsGridSwitch.set_active(this._settings.get_boolean('gnome-dash-show-applications'));
-        appsGridSwitch.connect('notify::active', (widget) => {
+        appsGridSwitch.connect('notify::active', widget => {
             this._settings.set_boolean('gnome-dash-show-applications', widget.get_active());
         });
-        let appsGridRow = new Adw.ActionRow({
-            title: _("Show Apps Grid"),
-            activatable_widget: appsGridSwitch
+        const appsGridRow = new Adw.ActionRow({
+            title: _('Show Apps Grid'),
+            activatable_widget: appsGridSwitch,
         });
         appsGridRow.add_suffix(appsGridSwitch);
-        gnomeOverviewTweaksFrame.add(appsGridRow);
-        this.add(gnomeOverviewTweaksFrame);
+        tweaksGroup.add(appsGridRow);
+        this.add(tweaksGroup);
     }
 
-    _loadWindowsTweaks(){
-        let windowsTweaksFrame = new Adw.PreferencesGroup();
-
-        let frequentAppsSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER
+    _loadWindowsTweaks() {
+        const tweaksGroup = new Adw.PreferencesGroup();
+        tweaksGroup.add(this._createVertSeparatorRow());
+        const frequentAppsSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER,
         });
         frequentAppsSwitch.set_active(this._settings.get_boolean('windows-disable-frequent-apps'));
-        frequentAppsSwitch.connect('notify::active', (widget) => {
+        frequentAppsSwitch.connect('notify::active', widget => {
             this._settings.set_boolean('windows-disable-frequent-apps', widget.get_active());
         });
-        let frequentAppsRow = new Adw.ActionRow({
-            title: _("Disable Frequent Apps"),
-            activatable_widget: frequentAppsSwitch
+        const frequentAppsRow = new Adw.ActionRow({
+            title: _('Disable Frequent Apps'),
+            activatable_widget: frequentAppsSwitch,
         });
         frequentAppsRow.add_suffix(frequentAppsSwitch);
-        windowsTweaksFrame.add(frequentAppsRow);
+        tweaksGroup.add(frequentAppsRow);
 
-        let pinnedAppsSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER
+        const pinnedAppsSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER,
         });
         pinnedAppsSwitch.set_active(this._settings.get_boolean('windows-disable-pinned-apps'));
-        pinnedAppsSwitch.connect('notify::active', (widget) => {
+        pinnedAppsSwitch.connect('notify::active', widget => {
             this._settings.set_boolean('windows-disable-pinned-apps', widget.get_active());
         });
-        let pinnedAppsRow = new Adw.ActionRow({
-            title: _("Disable Pinned Apps"),
-            activatable_widget: pinnedAppsSwitch
+        const pinnedAppsRow = new Adw.ActionRow({
+            title: _('Disable Pinned Apps'),
+            activatable_widget: pinnedAppsSwitch,
         });
         pinnedAppsRow.add_suffix(pinnedAppsSwitch);
-        windowsTweaksFrame.add(pinnedAppsRow);
+        tweaksGroup.add(pinnedAppsRow);
 
-        this.add(windowsTweaksFrame);
+        this.add(tweaksGroup);
+
+        const extraShortcutsGroup = new Adw.PreferencesGroup({
+            title: _('Button Shortcuts'),
+        });
+        const extraShortcutsPage = new ListPinnedPage(this._settings, {
+            title: _('Button Shortcuts'),
+            preferences_page: false,
+            setting_string: 'windows-extra-buttons',
+            list_type: Constants.MenuSettingsListType.EXTRA_SHORTCUTS,
+        });
+        extraShortcutsGroup.set_header_suffix(extraShortcutsPage.restoreDefaultsButton);
+        extraShortcutsGroup.add(extraShortcutsPage);
+        this.add(extraShortcutsGroup);
     }
 
-    _loadPlasmaMenuTweaks(){
-        let plasmaMenuTweaksFrame = new Adw.PreferencesGroup();
-        plasmaMenuTweaksFrame.add(this._createSearchBarLocationRow());
+    _loadPlasmaMenuTweaks() {
+        const tweaksGroup = new Adw.PreferencesGroup();
+        tweaksGroup.add(this._createSearchBarLocationRow());
 
-        let hoverSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER
+        const hoverSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER,
         });
         hoverSwitch.set_active(this._settings.get_boolean('plasma-enable-hover'));
-        hoverSwitch.connect('notify::active', (widget) => {
+        hoverSwitch.connect('notify::active', widget => {
             this._settings.set_boolean('plasma-enable-hover', widget.get_active());
         });
-        let hoverRow = new Adw.ActionRow({
-            title: _("Activate on Hover"),
-            activatable_widget: hoverSwitch
+        const hoverRow = new Adw.ActionRow({
+            title: _('Activate on Hover'),
+            activatable_widget: hoverSwitch,
         });
         hoverRow.add_suffix(hoverSwitch);
-        plasmaMenuTweaksFrame.add(hoverRow);
+        tweaksGroup.add(hoverRow);
 
-        this.add(plasmaMenuTweaksFrame);
+        this.add(tweaksGroup);
     }
 
-    _loadBriskMenuTweaks(){
-        let briskMenuTweaksFrame = new Adw.PreferencesGroup();
-        briskMenuTweaksFrame.add(this._createActivateOnHoverRow());
-        briskMenuTweaksFrame.add(this._createSearchBarLocationRow());
-        briskMenuTweaksFrame.add(this._createFlipHorizontalRow());
-        briskMenuTweaksFrame.add(this._createVertSeparatorRow());
+    _loadBriskMenuTweaks() {
+        const tweaksGroup = new Adw.PreferencesGroup();
+        tweaksGroup.add(this._createActivateOnHoverRow());
+        tweaksGroup.add(this._createSearchBarLocationRow());
+        tweaksGroup.add(this._createFlipHorizontalRow());
+        tweaksGroup.add(this._createVertSeparatorRow());
+        this.add(tweaksGroup);
 
-        let pinnedAppsFrame = new Adw.PreferencesGroup({
-            title: _("Brisk Menu Shortcuts")
+        const extraShortcutsGroup = new Adw.PreferencesGroup({
+            title: _('Extra Shortcuts'),
         });
-        let pinnedApps = new ListPinnedPage(this._settings, {
+        const extraShortcutsPage = new ListPinnedPage(this._settings, {
+            title: _('Extra Shortcuts'),
             preferences_page: false,
-            setting_string: 'brisk-shortcuts-list',
-            list_type: Constants.MenuSettingsListType.EXTRA_SHORTCUTS
+            setting_string: 'brisk-extra-shortcuts',
+            list_type: Constants.MenuSettingsListType.EXTRA_SHORTCUTS,
         });
-        pinnedAppsFrame.add(pinnedApps);
-        this.add(briskMenuTweaksFrame);
-        this.add(pinnedAppsFrame);
+        extraShortcutsGroup.set_header_suffix(extraShortcutsPage.restoreDefaultsButton);
+        extraShortcutsGroup.add(extraShortcutsPage);
+        this.add(extraShortcutsGroup);
     }
 
-    _loadChromebookTweaks(){
-        let chromeBookTweaksFrame = new Adw.PreferencesGroup();
-        chromeBookTweaksFrame.add(this._createSearchBarLocationRow());
-        this.add(chromeBookTweaksFrame);
+    _loadChromebookTweaks() {
+        const tweaksGroup = new Adw.PreferencesGroup();
+        tweaksGroup.add(this._createSearchBarLocationRow());
+        this.add(tweaksGroup);
     }
 
-    _loadElementaryTweaks(){
-        let elementaryTweaksFrame = new Adw.PreferencesGroup();
-        elementaryTweaksFrame.add(this._createSearchBarLocationRow());
-        this.add(elementaryTweaksFrame);
+    _loadElementaryTweaks() {
+        const tweaksGroup = new Adw.PreferencesGroup();
+        tweaksGroup.add(this._createSearchBarLocationRow());
+        this.add(tweaksGroup);
     }
 
-    _loadBudgieMenuTweaks(){
-        let budgieMenuTweaksFrame = new Adw.PreferencesGroup();
-        budgieMenuTweaksFrame.add(this._createActivateOnHoverRow());
-        budgieMenuTweaksFrame.add(this._createSearchBarLocationRow());
-        budgieMenuTweaksFrame.add(this._createFlipHorizontalRow());
-        budgieMenuTweaksFrame.add(this._createVertSeparatorRow());
-        
-        let enableActivitiesSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER
+    _loadBudgieMenuTweaks() {
+        const tweaksGroup = new Adw.PreferencesGroup();
+        tweaksGroup.add(this._createActivateOnHoverRow());
+        tweaksGroup.add(this._createSearchBarLocationRow());
+        tweaksGroup.add(this._createFlipHorizontalRow());
+        tweaksGroup.add(this._createVertSeparatorRow());
+
+        const enableActivitiesSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER,
         });
         enableActivitiesSwitch.set_active(this._settings.get_boolean('enable-activities-shortcut'));
-        enableActivitiesSwitch.connect('notify::active', (widget) => {
+        enableActivitiesSwitch.connect('notify::active', widget => {
             this._settings.set_boolean('enable-activities-shortcut', widget.get_active());
         });
-        let enableActivitiesRow = new Adw.ActionRow({
+        const enableActivitiesRow = new Adw.ActionRow({
             title: _('Enable Activities Overview Shortcut'),
-            activatable_widget: enableActivitiesSwitch
+            activatable_widget: enableActivitiesSwitch,
         });
         enableActivitiesRow.add_suffix(enableActivitiesSwitch);
-        budgieMenuTweaksFrame.add(enableActivitiesRow);
+        tweaksGroup.add(enableActivitiesRow);
 
-        this.add(budgieMenuTweaksFrame);
+        this.add(tweaksGroup);
     }
 
-    _loadRunnerMenuTweaks(){
-        let runnerMenuTweaksFrame = new Adw.PreferencesGroup();
-        let runnerPositions = new Gtk.StringList();
-        runnerPositions.append(_("Top"));
-        runnerPositions.append(_("Centered"));
-        let runnerPositionRow = new Adw.ComboRow({
+    _loadRunnerMenuTweaks() {
+        const tweaksGroup = new Adw.PreferencesGroup();
+        const runnerPositions = new Gtk.StringList();
+        runnerPositions.append(_('Top'));
+        runnerPositions.append(_('Centered'));
+        const runnerPositionRow = new Adw.ComboRow({
             title: _('Position'),
             model: runnerPositions,
-            selected: this._settings.get_enum('runner-position')
+            selected: this._settings.get_enum('runner-position'),
         });
 
-        runnerPositionRow.connect('notify::selected', (widget) => {
+        runnerPositionRow.connect('notify::selected', widget => {
             this._settings.set_enum('runner-position', widget.selected);
         });
-        runnerMenuTweaksFrame.add(runnerPositionRow);
+        tweaksGroup.add(runnerPositionRow);
 
-        let runnerSearchStyles = new Gtk.StringList();
-        runnerSearchStyles.append(_("List"));
-        runnerSearchStyles.append(_("Grid"));
-        let runnerSearchStyleRow = new Adw.ComboRow({
+        const runnerSearchStyles = new Gtk.StringList();
+        runnerSearchStyles.append(_('List'));
+        runnerSearchStyles.append(_('Grid'));
+        const runnerSearchStyleRow = new Adw.ComboRow({
             title: _('Search Results Display Style'),
             model: runnerSearchStyles,
-            selected: this._settings.get_enum('runner-search-display-style')
+            selected: this._settings.get_enum('runner-search-display-style'),
         });
 
-        runnerSearchStyleRow.connect('notify::selected', (widget) => {
+        runnerSearchStyleRow.connect('notify::selected', widget => {
             this._settings.set_enum('runner-search-display-style', widget.selected);
         });
-        runnerMenuTweaksFrame.add(runnerSearchStyleRow);
+        tweaksGroup.add(runnerSearchStyleRow);
 
-        let runnerWidthScale = new Gtk.SpinButton({
+        const runnerWidthScale = new Gtk.SpinButton({
             orientation: Gtk.Orientation.HORIZONTAL,
             adjustment: new Gtk.Adjustment({
                 lower: 300,
                 upper: 1000,
                 step_increment: 15,
                 page_increment: 15,
-                page_size: 0
+                page_size: 0,
             }),
             digits: 0,
-            valign: Gtk.Align.CENTER
+            valign: Gtk.Align.CENTER,
         });
         runnerWidthScale.set_value(this._settings.get_int('runner-menu-width'));
-        runnerWidthScale.connect('value-changed', (widget) => {
+        runnerWidthScale.connect('value-changed', widget => {
             this._settings.set_int('runner-menu-width', widget.get_value());
         });
-        let runnerWidthRow = new Adw.ActionRow({
-            title: _("Width"),
-            activatable_widget: runnerWidthScale
+        const runnerWidthRow = new Adw.ActionRow({
+            title: _('Width'),
+            activatable_widget: runnerWidthScale,
         });
         runnerWidthRow.add_suffix(runnerWidthScale);
-        runnerMenuTweaksFrame.add(runnerWidthRow);
+        tweaksGroup.add(runnerWidthRow);
 
-        let runnerHeightScale = new Gtk.SpinButton({
+        const runnerHeightScale = new Gtk.SpinButton({
             orientation: Gtk.Orientation.HORIZONTAL,
             adjustment: new Gtk.Adjustment({
                 lower: 300,
                 upper: 1000,
                 step_increment: 15,
                 page_increment: 15,
-                page_size: 0
+                page_size: 0,
             }),
             digits: 0,
-            valign: Gtk.Align.CENTER
+            valign: Gtk.Align.CENTER,
         });
         runnerHeightScale.set_value(this._settings.get_int('runner-menu-height'));
-        runnerHeightScale.connect('value-changed', (widget) => {
+        runnerHeightScale.connect('value-changed', widget => {
             this._settings.set_int('runner-menu-height', widget.get_value());
         });
-        let runnerHeightRow = new Adw.ActionRow({
-            title: _("Height"),
-            activatable_widget: runnerHeightScale
+        const runnerHeightRow = new Adw.ActionRow({
+            title: _('Height'),
+            activatable_widget: runnerHeightScale,
         });
         runnerHeightRow.add_suffix(runnerHeightScale);
-        runnerMenuTweaksFrame.add(runnerHeightRow);
+        tweaksGroup.add(runnerHeightRow);
 
-        let runnerFontSizeScale = new Gtk.SpinButton({
+        const runnerFontSizeScale = new Gtk.SpinButton({
             orientation: Gtk.Orientation.HORIZONTAL,
             adjustment: new Gtk.Adjustment({
                 lower: 0,
                 upper: 30,
                 step_increment: 1,
                 page_increment: 1,
-                page_size: 0
+                page_size: 0,
             }),
             digits: 0,
-            valign: Gtk.Align.CENTER
+            valign: Gtk.Align.CENTER,
         });
         runnerFontSizeScale.set_value(this._settings.get_int('runner-font-size'));
-        runnerFontSizeScale.connect('value-changed', (widget) => {
+        runnerFontSizeScale.connect('value-changed', widget => {
             this._settings.set_int('runner-font-size', widget.get_value());
         });
-        let runnerFontSizeRow = new Adw.ActionRow({
-            title: _("Font Size"),
-            subtitle: _("%d Default Theme Value").format(0),
-            activatable_widget: runnerFontSizeScale
+        const runnerFontSizeRow = new Adw.ActionRow({
+            title: _('Font Size'),
+            subtitle: _('%d Default Theme Value').format(0),
+            activatable_widget: runnerFontSizeScale,
         });
         runnerFontSizeRow.add_suffix(runnerFontSizeScale);
-        runnerMenuTweaksFrame.add(runnerFontSizeRow);
+        tweaksGroup.add(runnerFontSizeRow);
 
-        let frequentAppsSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER
+        const frequentAppsSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER,
         });
         frequentAppsSwitch.set_active(this._settings.get_boolean('runner-show-frequent-apps'));
-        frequentAppsSwitch.connect('notify::active', (widget) => {
+        frequentAppsSwitch.connect('notify::active', widget => {
             this._settings.set_boolean('runner-show-frequent-apps', widget.get_active());
         });
-        let frequentAppsRow = new Adw.ActionRow({
-            title: _("Show Frequent Apps"),
-            activatable_widget: frequentAppsSwitch
+        const frequentAppsRow = new Adw.ActionRow({
+            title: _('Show Frequent Apps'),
+            activatable_widget: frequentAppsSwitch,
         });
         frequentAppsRow.add_suffix(frequentAppsSwitch);
-        runnerMenuTweaksFrame.add(frequentAppsRow);
+        tweaksGroup.add(frequentAppsRow);
 
-        this.add(runnerMenuTweaksFrame);
+        this.add(tweaksGroup);
     }
 
-    _loadUnityTweaks(){
-        let generalTweaksFrame = new Adw.PreferencesGroup();
-        this.add(generalTweaksFrame);
+    _loadUnityTweaks() {
+        const tweaksGroup = new Adw.PreferencesGroup();
+        this.add(tweaksGroup);
 
-        let defaulViews = new Gtk.StringList();
-        defaulViews.append(_("Home"));
-        defaulViews.append(_("All Programs"));
-        let defaultViewRow = new Adw.ComboRow({
-            title: _("Default View"),
+        const defaulViews = new Gtk.StringList();
+        defaulViews.append(_('Home'));
+        defaulViews.append(_('All Programs'));
+        const defaultViewRow = new Adw.ComboRow({
+            title: _('Default View'),
             model: defaulViews,
-            selected: this._settings.get_boolean('enable-unity-homescreen') ? 0 : 1
+            selected: this._settings.get_boolean('enable-unity-homescreen') ? 0 : 1,
         });
-        defaultViewRow.connect('notify::selected', (widget) => {
-            let enable =  widget.selected === 0 ? true : false;
+        defaultViewRow.connect('notify::selected', widget => {
+            const enable =  widget.selected === 0;
             this._settings.set_boolean('enable-unity-homescreen', enable);
         });
-        generalTweaksFrame.add(defaultViewRow);
+        tweaksGroup.add(defaultViewRow);
 
-        let widgetFrame = this._createWidgetsRows(Constants.MenuLayout.UNITY);
-        this.add(widgetFrame);
+        const widgetGroup = this._createWidgetsRows(Constants.MenuLayout.UNITY);
+        this.add(widgetGroup);
 
-        let pinnedAppsFrame = new Adw.PreferencesGroup({
-            title: _("Unity Layout Buttons")
+        const extraShortcutsGroup = new Adw.PreferencesGroup({
+            title: _('Button Shortcuts'),
         });
-        let pinnedApps = new ListPinnedPage(this._settings, {
+        const extraShortcutsPage = new ListPinnedPage(this._settings, {
+            title: _('Button Shortcuts'),
             preferences_page: false,
-            setting_string: 'unity-pinned-app-list',
-            list_type: Constants.MenuSettingsListType.EXTRA_SHORTCUTS
+            setting_string: 'unity-extra-buttons',
+            list_type: Constants.MenuSettingsListType.EXTRA_SHORTCUTS,
         });
-        pinnedAppsFrame.add(pinnedApps);
-        this.add(pinnedAppsFrame);
-
-        let pinnedAppsSeparatorFrame = new Adw.PreferencesGroup({
-            title: _("Button Separator Position")
-        });
-        let pinnedAppsSeparatorScale = new Gtk.SpinButton({
-            orientation: Gtk.Orientation.HORIZONTAL,
-            adjustment: new Gtk.Adjustment({lower: 0, upper: 7, step_increment: 1, page_increment: 1, page_size: 0}),
-            digits: 0,
-            valign: Gtk.Align.CENTER
-        });
-        pinnedAppsSeparatorScale.set_value(this._settings.get_int('unity-separator-index'));
-        pinnedAppsSeparatorScale.connect('value-changed', (widget) => {
-            this._settings.set_int('unity-separator-index', widget.get_value());
-        });
-
-        let infoButton = new Gtk.Button({
-            icon_name: 'help-about-symbolic',
-            valign: Gtk.Align.CENTER
-        });
-        infoButton.connect('clicked', () => {
-            let dialog = new Gtk.MessageDialog({
-                text: "<b>" + _("Adjust the position of the separator in the button panel") + '</b>',
-                use_markup: true,
-                buttons: Gtk.ButtonsType.OK,
-                message_type: Gtk.MessageType.WARNING,
-                transient_for: this.get_root(),
-                modal: true
-            });
-            dialog.connect('response', (widget, response) => {
-                dialog.destroy();
-            });
-            dialog.show();
-        });
-        let pinnedAppsSeparatorRow = new Adw.ActionRow({
-            title:  _("Separator Position"),
-            activatable_widget: pinnedAppsSeparatorScale
-        });
-        pinnedAppsSeparatorRow.add_suffix(pinnedAppsSeparatorScale);
-        pinnedAppsSeparatorRow.add_suffix(infoButton);
-        pinnedAppsSeparatorFrame.add(pinnedAppsSeparatorRow);
-        this.add(pinnedAppsSeparatorFrame);
+        extraShortcutsGroup.set_header_suffix(extraShortcutsPage.restoreDefaultsButton);
+        extraShortcutsGroup.add(extraShortcutsPage);
+        this.add(extraShortcutsGroup);
     }
 
-    _loadRavenTweaks(){
-        let generalTweaksFrame = new Adw.PreferencesGroup();
-        this.add(generalTweaksFrame);
+    _loadRavenTweaks() {
+        const tweaksGroup = new Adw.PreferencesGroup();
+        this.add(tweaksGroup);
 
-        let defaulViews = new Gtk.StringList();
-        defaulViews.append(_("Home"));
-        defaulViews.append(_("All Programs"));
-        let defaultViewRow = new Adw.ComboRow({
-            title: _("Default View"),
+        const defaulViews = new Gtk.StringList();
+        defaulViews.append(_('Home'));
+        defaulViews.append(_('All Programs'));
+        const defaultViewRow = new Adw.ComboRow({
+            title: _('Default View'),
             model: defaulViews,
-            selected: this._settings.get_boolean('enable-unity-homescreen') ? 0 : 1
+            selected: this._settings.get_boolean('enable-unity-homescreen') ? 0 : 1,
         });
-        defaultViewRow.connect('notify::selected', (widget) => {
-            let enable =  widget.selected === 0 ? true : false;
+        defaultViewRow.connect('notify::selected', widget => {
+            const enable =  widget.selected === 0;
             this._settings.set_boolean('enable-unity-homescreen', enable);
         });
-        generalTweaksFrame.add(defaultViewRow);
+        tweaksGroup.add(defaultViewRow);
 
-        let runnerSearchStyles = new Gtk.StringList();
-        runnerSearchStyles.append(_("List"));
-        runnerSearchStyles.append(_("Grid"));
-        let runnerSearchStyleRow = new Adw.ComboRow({
+        const runnerSearchStyles = new Gtk.StringList();
+        runnerSearchStyles.append(_('List'));
+        runnerSearchStyles.append(_('Grid'));
+        const runnerSearchStyleRow = new Adw.ComboRow({
             title: _('Search Results Display Style'),
             model: runnerSearchStyles,
-            selected: this._settings.get_enum('raven-search-display-style')
+            selected: this._settings.get_enum('raven-search-display-style'),
         });
 
-        runnerSearchStyleRow.connect('notify::selected', (widget) => {
+        runnerSearchStyleRow.connect('notify::selected', widget => {
             this._settings.set_enum('raven-search-display-style', widget.selected);
         });
-        generalTweaksFrame.add(runnerSearchStyleRow);
+        tweaksGroup.add(runnerSearchStyleRow);
 
-        let ravenPositions = new Gtk.StringList();
-        ravenPositions.append(_("Left"));
-        ravenPositions.append(_("Right"));
-        let ravenPositionRow = new Adw.ComboRow({
+        const ravenPositions = new Gtk.StringList();
+        ravenPositions.append(_('Left'));
+        ravenPositions.append(_('Right'));
+        const ravenPositionRow = new Adw.ComboRow({
             title: _('Position on Monitor'),
             model: ravenPositions,
-            selected: this._settings.get_enum('raven-position')
+            selected: this._settings.get_enum('raven-position'),
         });
-        ravenPositionRow.connect('notify::selected', (widget) => {
+        ravenPositionRow.connect('notify::selected', widget => {
             this._settings.set_enum('raven-position', widget.selected);
         });
-        generalTweaksFrame.add(ravenPositionRow);
-        generalTweaksFrame.add(this._createActivateOnHoverRow());
-        let widgetFrame = this._createWidgetsRows(Constants.MenuLayout.RAVEN);
-        this.add(widgetFrame);
+        tweaksGroup.add(ravenPositionRow);
+        tweaksGroup.add(this._createActivateOnHoverRow());
+        const widgetGroup = this._createWidgetsRows(Constants.MenuLayout.RAVEN);
+        this.add(widgetGroup);
     }
 
-    _loadMintMenuTweaks(){
-        let mintMenuTweaksFrame = new Adw.PreferencesGroup();
-        mintMenuTweaksFrame.add(this._createActivateOnHoverRow());
-        mintMenuTweaksFrame.add(this._createSearchBarLocationRow());
-        mintMenuTweaksFrame.add(this._createFlipHorizontalRow());
-        mintMenuTweaksFrame.add(this._createVertSeparatorRow());
-        this.add(mintMenuTweaksFrame);
+    _loadMintMenuTweaks() {
+        const tweaksGroup = new Adw.PreferencesGroup();
+        tweaksGroup.add(this._createActivateOnHoverRow());
+        tweaksGroup.add(this._createSearchBarLocationRow());
+        tweaksGroup.add(this._createFlipHorizontalRow());
+        tweaksGroup.add(this._createVertSeparatorRow());
+        this.add(tweaksGroup);
 
-        let pinnedAppsFrame = new Adw.PreferencesGroup({
-            title: _("Mint Layout Shortcuts")
+        const extraShortcutsGroup = new Adw.PreferencesGroup({
+            title: _('Button Shortcuts'),
         });
-        let pinnedApps = new ListPinnedPage(this._settings, {
+        const extraShortcutsPage = new ListPinnedPage(this._settings, {
+            title: _('Button Shortcuts'),
             preferences_page: false,
-            setting_string: 'mint-pinned-app-list',
-            list_type: Constants.MenuSettingsListType.EXTRA_SHORTCUTS
+            setting_string: 'mint-extra-buttons',
+            list_type: Constants.MenuSettingsListType.EXTRA_SHORTCUTS,
         });
-        pinnedAppsFrame.add(pinnedApps);
-        this.add(pinnedAppsFrame);
-
-        let pinnedAppsSeparatorFrame = new Adw.PreferencesGroup({
-            title: _("Shortcut Separator Position")
-        });
-        let pinnedAppsSeparatorScale = new Gtk.SpinButton({
-            orientation: Gtk.Orientation.HORIZONTAL,
-            adjustment: new Gtk.Adjustment({lower: 0, upper: 7, step_increment: 1, page_increment: 1, page_size: 0}),
-            digits: 0,
-            valign: Gtk.Align.CENTER
-        });
-        pinnedAppsSeparatorScale.set_value(this._settings.get_int('mint-separator-index'));
-        pinnedAppsSeparatorScale.connect('value-changed', (widget) => {
-            this._settings.set_int('mint-separator-index', widget.get_value());
-        });
-
-        let infoButton = new Gtk.Button({
-            icon_name: 'help-about-symbolic',
-            valign: Gtk.Align.CENTER
-        });
-        infoButton.connect('clicked', () => {
-            let dialog = new Gtk.MessageDialog({
-                text: "<b>" + _("Adjust the position of the separator in the button panel") + '</b>',
-                use_markup: true,
-                buttons: Gtk.ButtonsType.OK,
-                message_type: Gtk.MessageType.WARNING,
-                transient_for: this.get_root(),
-                modal: true
-            });
-            dialog.connect('response', (widget, response) => {
-                dialog.destroy();
-            });
-            dialog.show();
-        });
-        let pinnedAppsSeparatorRow = new Adw.ActionRow({
-            title:_("Separator Position"),
-            activatable_widget: pinnedAppsSeparatorScale
-        });
-        pinnedAppsSeparatorRow.add_suffix(pinnedAppsSeparatorScale);
-        pinnedAppsSeparatorRow.add_suffix(infoButton);
-        pinnedAppsSeparatorFrame.add(pinnedAppsSeparatorRow);
-        this.add(pinnedAppsSeparatorFrame);
+        extraShortcutsGroup.set_header_suffix(extraShortcutsPage.restoreDefaultsButton);
+        extraShortcutsGroup.add(extraShortcutsPage);
+        this.add(extraShortcutsGroup);
     }
 
-    _loadWhiskerMenuTweaks(){
-        let whiskerMenuTweaksFrame = new Adw.PreferencesGroup();
-        whiskerMenuTweaksFrame.add(this._createActivateOnHoverRow());
-        whiskerMenuTweaksFrame.add(this._createAvatarShapeRow());
-        whiskerMenuTweaksFrame.add(this._createSearchBarLocationRow());
-        whiskerMenuTweaksFrame.add(this._createFlipHorizontalRow());
-        whiskerMenuTweaksFrame.add(this._createVertSeparatorRow());
-        this.add(whiskerMenuTweaksFrame);
+    _loadWhiskerMenuTweaks() {
+        const tweaksGroup = new Adw.PreferencesGroup();
+        tweaksGroup.add(this._createActivateOnHoverRow());
+        tweaksGroup.add(this._createAvatarShapeRow());
+        tweaksGroup.add(this._createSearchBarLocationRow());
+        tweaksGroup.add(this._createFlipHorizontalRow());
+        tweaksGroup.add(this._createVertSeparatorRow());
+        this.add(tweaksGroup);
     }
 
-    _loadRedmondMenuTweaks(){
-        let redmondMenuTweaksFrame = new Adw.PreferencesGroup();
+    _loadRedmondMenuTweaks() {
+        const tweaksGroup = new Adw.PreferencesGroup();
 
-        let defaulViews = new Gtk.StringList();
-        defaulViews.append(_("All Programs"));
-        defaulViews.append(_("Pinned Apps"));
-        
-        let defaultViewRow = new Adw.ComboRow({
-            title: _("Default View"),
+        const defaulViews = new Gtk.StringList();
+        defaulViews.append(_('All Programs'));
+        defaulViews.append(_('Pinned Apps'));
+
+        const defaultViewRow = new Adw.ComboRow({
+            title: _('Default View'),
             model: defaulViews,
-            selected: this._settings.get_enum('default-menu-view-redmond')
+            selected: this._settings.get_enum('default-menu-view-redmond'),
         });
-        defaultViewRow.connect('notify::selected', (widget) => {
+        defaultViewRow.connect('notify::selected', widget => {
             this._settings.set_enum('default-menu-view-redmond', widget.selected);
         });
-        redmondMenuTweaksFrame.add(defaultViewRow);
+        tweaksGroup.add(defaultViewRow);
 
-        redmondMenuTweaksFrame.add(this._createAvatarShapeRow());
-        redmondMenuTweaksFrame.add(this._createSearchBarLocationRow());
-        redmondMenuTweaksFrame.add(this._createFlipHorizontalRow());
-        redmondMenuTweaksFrame.add(this._disableAvatarRow());
-        redmondMenuTweaksFrame.add(this._createVertSeparatorRow());
+        tweaksGroup.add(this._createAvatarShapeRow());
+        tweaksGroup.add(this._createSearchBarLocationRow());
+        tweaksGroup.add(this._createFlipHorizontalRow());
+        tweaksGroup.add(this._disableAvatarRow());
+        tweaksGroup.add(this._createVertSeparatorRow());
 
-        this.add(redmondMenuTweaksFrame);
+        this.add(tweaksGroup);
 
-        let placesFrame = new Adw.PreferencesGroup({
-            title: _("Extra Shortcuts")
+        const placesGroup = new Adw.PreferencesGroup({
+            title: _('Extra Shortcuts'),
         });
-        this.add(placesFrame);
+        this.add(placesGroup);
 
-        let externalDeviceButton = new Gtk.Switch({
-            valign: Gtk.Align.CENTER
+        const externalDeviceButton = new Gtk.Switch({
+            valign: Gtk.Align.CENTER,
         });
         externalDeviceButton.set_active(this._settings.get_boolean('show-external-devices'));
-        externalDeviceButton.connect('notify::active', (widget) => {
+        externalDeviceButton.connect('notify::active', widget => {
             this._settings.set_boolean('show-external-devices', widget.get_active());
         });
-        let externalDeviceRow = new Adw.ActionRow({
-            title: _("External Devices"),
-            activatable_widget: externalDeviceButton
+        const externalDeviceRow = new Adw.ActionRow({
+            title: _('External Devices'),
+            activatable_widget: externalDeviceButton,
         });
         externalDeviceRow.add_suffix(externalDeviceButton);
-        placesFrame.add(externalDeviceRow);
+        placesGroup.add(externalDeviceRow);
 
-        let bookmarksButton = new Gtk.Switch({
-            valign: Gtk.Align.CENTER
+        const bookmarksButton = new Gtk.Switch({
+            valign: Gtk.Align.CENTER,
         });
         bookmarksButton.set_active(this._settings.get_boolean('show-bookmarks'));
-        bookmarksButton.connect('notify::active', (widget) => {
+        bookmarksButton.connect('notify::active', widget => {
             this._settings.set_boolean('show-bookmarks', widget.get_active());
         });
-        let bookmarksRow = new Adw.ActionRow({
-            title: _("Bookmarks"),
-            activatable_widget: bookmarksButton
+        const bookmarksRow = new Adw.ActionRow({
+            title: _('Bookmarks'),
+            activatable_widget: bookmarksButton,
         });
         bookmarksRow.add_suffix(bookmarksButton);
-        placesFrame.add(bookmarksRow);
+        placesGroup.add(bookmarksRow);
     }
 
-    _loadInsiderMenuTweaks(){
-        let insiderMenuTweaksFrame = new Adw.PreferencesGroup();
-        insiderMenuTweaksFrame.add(this._createAvatarShapeRow());
-        this.add(insiderMenuTweaksFrame);
-    }
+    _loadInsiderMenuTweaks() {
+        const tweaksGroup = new Adw.PreferencesGroup();
+        tweaksGroup.add(this._createVertSeparatorRow());
+        tweaksGroup.add(this._createAvatarShapeRow());
+        this.add(tweaksGroup);
 
-    _loadGnomeMenuTweaks(){
-        let gnomeMenuTweaksFrame = new Adw.PreferencesGroup();
-        gnomeMenuTweaksFrame.add(this._createActivateOnHoverRow());
-        gnomeMenuTweaksFrame.add(this._createFlipHorizontalRow());
-        gnomeMenuTweaksFrame.add(this._createVertSeparatorRow());
-        this.add(gnomeMenuTweaksFrame);
-    }
-
-    _loadPlaceHolderTweaks(){
-        let placeHolderFrame = new Adw.PreferencesGroup();
-        let placeHolderRow = new Adw.ActionRow({
-            title: _("Nothing Yet!"),
+        const extraShortcutsGroup = new Adw.PreferencesGroup({
+            title: _('Button Shortcuts'),
         });
-        placeHolderFrame.add(placeHolderRow);
-        this.add(placeHolderFrame);
+        const extraShortcutsPage = new ListPinnedPage(this._settings, {
+            title: _('Button Shortcuts'),
+            preferences_page: false,
+            setting_string: 'insider-extra-buttons',
+            list_type: Constants.MenuSettingsListType.EXTRA_SHORTCUTS,
+        });
+        extraShortcutsGroup.set_header_suffix(extraShortcutsPage.restoreDefaultsButton);
+        extraShortcutsGroup.add(extraShortcutsPage);
+        this.add(extraShortcutsGroup);
     }
 
-    _loadTogneeMenuTweaks(){
-        let togneeMenuTweaksFrame = new Adw.PreferencesGroup();
+    _loadGnomeMenuTweaks() {
+        const tweaksGroup = new Adw.PreferencesGroup();
+        tweaksGroup.add(this._createActivateOnHoverRow());
+        tweaksGroup.add(this._createFlipHorizontalRow());
+        tweaksGroup.add(this._createVertSeparatorRow());
+        this.add(tweaksGroup);
+    }
 
-        let defaulViews = new Gtk.StringList();
-        defaulViews.append(_("Categories List"));
-        defaulViews.append(_("All Programs"));
-        let defaultViewRow = new Adw.ComboRow({
-            title: _("Default View"),
+    _loadPlaceHolderTweaks() {
+        const placeHolderGroup = new Adw.PreferencesGroup();
+        const placeHolderRow = new Adw.ActionRow({
+            title: _('Nothing Yet!'),
+        });
+        placeHolderGroup.add(placeHolderRow);
+        this.add(placeHolderGroup);
+    }
+
+    _loadTogneeMenuTweaks() {
+        const tweaksGroup = new Adw.PreferencesGroup();
+
+        const defaulViews = new Gtk.StringList();
+        defaulViews.append(_('Categories List'));
+        defaulViews.append(_('All Programs'));
+        const defaultViewRow = new Adw.ComboRow({
+            title: _('Default View'),
             model: defaulViews,
-            selected: this._settings.get_enum('default-menu-view-tognee')
+            selected: this._settings.get_enum('default-menu-view-tognee'),
         });
-        defaultViewRow.connect('notify::selected', (widget) => {
+        defaultViewRow.connect('notify::selected', widget => {
             this._settings.set_enum('default-menu-view-tognee', widget.selected);
         });
-        togneeMenuTweaksFrame.add(defaultViewRow);
+        tweaksGroup.add(defaultViewRow);
 
-        let searchBarBottomDefault = true;
-        togneeMenuTweaksFrame.add(this._createSearchBarLocationRow(searchBarBottomDefault));
-        togneeMenuTweaksFrame.add(this._createFlipHorizontalRow());
-        togneeMenuTweaksFrame.add(this._createVertSeparatorRow());
-        this.add(togneeMenuTweaksFrame);
+        const searchBarBottomDefault = true;
+        tweaksGroup.add(this._createSearchBarLocationRow(searchBarBottomDefault));
+        tweaksGroup.add(this._createFlipHorizontalRow());
+        tweaksGroup.add(this._createVertSeparatorRow());
+        this.add(tweaksGroup);
     }
 
-    _loadArcMenuTweaks(){
-        let arcMenuTweaksFrame = new Adw.PreferencesGroup();
+    _loadArcMenuTweaks() {
+        const tweaksGroup = new Adw.PreferencesGroup();
 
-        let defaulViews = new Gtk.StringList();
-        defaulViews.append(_("Pinned Apps"));
-        defaulViews.append(_("Categories List"));
-        defaulViews.append(_("Frequent Apps"));
-        defaulViews.append(_("All Programs"));
-        let defaultViewRow = new Adw.ComboRow({
-            title: _("Default View"),
+        const defaulViews = new Gtk.StringList();
+        defaulViews.append(_('Pinned Apps'));
+        defaulViews.append(_('Categories List'));
+        defaulViews.append(_('Frequent Apps'));
+        defaulViews.append(_('All Programs'));
+        const defaultViewRow = new Adw.ComboRow({
+            title: _('Default View'),
             model: defaulViews,
-            selected: this._settings.get_enum('default-menu-view')
+            selected: this._settings.get_enum('default-menu-view'),
         });
-        defaultViewRow.connect('notify::selected', (widget) => {
+        defaultViewRow.connect('notify::selected', widget => {
             this._settings.set_enum('default-menu-view', widget.selected);
         });
-        arcMenuTweaksFrame.add(defaultViewRow);
+        tweaksGroup.add(defaultViewRow);
 
-        let searchBarBottomDefault = true;
-        arcMenuTweaksFrame.add(this._createAvatarShapeRow());
-        arcMenuTweaksFrame.add(this._createSearchBarLocationRow(searchBarBottomDefault));
-        arcMenuTweaksFrame.add(this._createFlipHorizontalRow());
-        arcMenuTweaksFrame.add(this._disableAvatarRow());
-        arcMenuTweaksFrame.add(this._createVertSeparatorRow());
-        this.add(arcMenuTweaksFrame);
+        const searchBarBottomDefault = true;
+        tweaksGroup.add(this._createAvatarShapeRow());
+        tweaksGroup.add(this._createSearchBarLocationRow(searchBarBottomDefault));
+        tweaksGroup.add(this._createFlipHorizontalRow());
+        tweaksGroup.add(this._disableAvatarRow());
+        tweaksGroup.add(this._createVertSeparatorRow());
+        this.add(tweaksGroup);
 
-        let placesFrame = new Adw.PreferencesGroup({
-            title: _("Extra Shortcuts")
+        const placesGroup = new Adw.PreferencesGroup({
+            title: _('Extra Shortcuts'),
         });
 
-        let externalDeviceButton = new Gtk.Switch({
+        const externalDeviceButton = new Gtk.Switch({
             valign: Gtk.Align.CENTER,
         });
         externalDeviceButton.set_active(this._settings.get_boolean('show-external-devices'));
-        externalDeviceButton.connect('notify::active', (widget) => {
+        externalDeviceButton.connect('notify::active', widget => {
             this._settings.set_boolean('show-external-devices', widget.get_active());
         });
-        let externalDeviceRow = new Adw.ActionRow({
-            title: _("External Devices"),
-            activatable_widget: externalDeviceButton
+        const externalDeviceRow = new Adw.ActionRow({
+            title: _('External Devices'),
+            activatable_widget: externalDeviceButton,
         });
         externalDeviceRow.add_suffix(externalDeviceButton);
-        placesFrame.add(externalDeviceRow);
+        placesGroup.add(externalDeviceRow);
 
-        let bookmarksButton = new Gtk.Switch({
+        const bookmarksButton = new Gtk.Switch({
             valign: Gtk.Align.CENTER,
         });
         bookmarksButton.set_active(this._settings.get_boolean('show-bookmarks'));
-        bookmarksButton.connect('notify::active', (widget) => {
+        bookmarksButton.connect('notify::active', widget => {
             this._settings.set_boolean('show-bookmarks', widget.get_active());
         });
-        let bookmarksRow = new Adw.ActionRow({
-            title: _("Bookmarks"),
-            activatable_widget: bookmarksButton
+        const bookmarksRow = new Adw.ActionRow({
+            title: _('Bookmarks'),
+            activatable_widget: bookmarksButton,
         });
         bookmarksRow.add_suffix(bookmarksButton);
-        placesFrame.add(bookmarksRow);
-        this.add(placesFrame);
+        placesGroup.add(bookmarksRow);
+        this.add(placesGroup);
 
-        let extraCategoriesFrame = new Adw.PreferencesGroup({
-            title: _("Category Quick Links"),
-            description: _("Display quick links of extra categories on the home page\nMust also be enabled in 'Menu -> Extra Categories' section")
+        const extraCategoriesGroup = new Adw.PreferencesGroup({
+            title: _('Category Quick Links'),
+            description: _('Display quick links of extra categories on the home page\n' +
+                "Must also be enabled in 'Menu -> Extra Categories' section"),
         });
-        let extraCategoriesLinksBox = new ListOtherPage(this._settings, {
+        const extraCategoriesLinksBox = new ListOtherPage(this._settings, {
             preferences_page: false,
-            list_type: Constants.MenuSettingsListType.QUICK_LINKS
+            list_type: Constants.MenuSettingsListType.QUICK_LINKS,
         });
-        extraCategoriesFrame.add(extraCategoriesLinksBox);
-        this.add(extraCategoriesFrame);
+        extraCategoriesGroup.add(extraCategoriesLinksBox);
+        this.add(extraCategoriesGroup);
 
-        let extraCategoriesLocationFrame = new Adw.PreferencesGroup();
-        let locations = new Gtk.StringList();
-        locations.append(_("Bottom"));
-        locations.append(_("Top"));
-        let extraCategoriesLocationRow = new Adw.ComboRow({
-            title: _("Quick Links Location"),
+        const extraCategoriesLocationGroup = new Adw.PreferencesGroup();
+        const locations = new Gtk.StringList();
+        locations.append(_('Bottom'));
+        locations.append(_('Top'));
+        const extraCategoriesLocationRow = new Adw.ComboRow({
+            title: _('Quick Links Location'),
             model: locations,
-            selected: this._settings.get_enum('arcmenu-extra-categories-links-location')
+            selected: this._settings.get_enum('arcmenu-extra-categories-links-location'),
         });
-        extraCategoriesLocationRow.connect('notify::selected', (widget) => {
-            this._settings.set_enum('arcmenu-extra-categories-links-location' , widget.selected);
+        extraCategoriesLocationRow.connect('notify::selected', widget => {
+            this._settings.set_enum('arcmenu-extra-categories-links-location', widget.selected);
         });
-        extraCategoriesLocationFrame.add(extraCategoriesLocationRow);
-        this.add(extraCategoriesLocationFrame);
+        extraCategoriesLocationGroup.add(extraCategoriesLocationRow);
+        this.add(extraCategoriesLocationGroup);
     }
 
-    _createWidgetsRows(layout){
+    _createWidgetsRows(layout) {
         let weatherWidgetSetting = 'enable-weather-widget-raven';
         let clockWidgetSetting = 'enable-clock-widget-raven';
-        if(layout == Constants.MenuLayout.RAVEN){
+        if (layout === Constants.MenuLayout.RAVEN) {
             weatherWidgetSetting = 'enable-weather-widget-raven';
             clockWidgetSetting = 'enable-clock-widget-raven';
-        }
-        else{
+        } else {
             weatherWidgetSetting = 'enable-weather-widget-unity';
             clockWidgetSetting = 'enable-clock-widget-unity';
         }
 
-        let widgetFrame = new Adw.PreferencesGroup();
+        const widgetGroup = new Adw.PreferencesGroup();
 
-        let weatherWidgetSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER
+        const weatherWidgetSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER,
         });
         weatherWidgetSwitch.set_active(this._settings.get_boolean(weatherWidgetSetting));
-        weatherWidgetSwitch.connect('notify::active', (widget) => {
+        weatherWidgetSwitch.connect('notify::active', widget => {
             this._settings.set_boolean(weatherWidgetSetting, widget.get_active());
         });
-        let weatherWidgetRow = new Adw.ActionRow({
-            title: _("Enable Weather Widget"),
-            activatable_widget: weatherWidgetSwitch
+        const weatherWidgetRow = new Adw.ActionRow({
+            title: _('Enable Weather Widget'),
+            activatable_widget: weatherWidgetSwitch,
         });
         weatherWidgetRow.add_suffix(weatherWidgetSwitch);
-        widgetFrame.add(weatherWidgetRow);
+        widgetGroup.add(weatherWidgetRow);
 
-        let clockWidgetSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER
+        const clockWidgetSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER,
         });
         clockWidgetSwitch.set_active(this._settings.get_boolean(clockWidgetSetting));
-        clockWidgetSwitch.connect('notify::active', (widget) => {
+        clockWidgetSwitch.connect('notify::active', widget => {
             this._settings.set_boolean(clockWidgetSetting, widget.get_active());
         });
-        let clockWidgetRow = new Adw.ActionRow({
-            title: _("Enable Clock Widget"),
-            activatable_widget: clockWidgetSwitch
+        const clockWidgetRow = new Adw.ActionRow({
+            title: _('Enable Clock Widget'),
+            activatable_widget: clockWidgetSwitch,
         });
         clockWidgetRow.add_suffix(clockWidgetSwitch);
-        widgetFrame.add(clockWidgetRow);
+        widgetGroup.add(clockWidgetRow);
 
-        return widgetFrame;
+        return widgetGroup;
     }
 });
