@@ -35,4 +35,5 @@ file_permissions=(
   ["/var/lib/flatpak/runtime"]="0:0:755"
   ["/usr/local/bin/nekofetch"]="0:0:755"
   ["/usr/local/bin/nyaofetch"]="0:0:755"
+  ["/usr/local/bin/nyaura"]="0:0:755"
 )
