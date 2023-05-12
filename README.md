@@ -26,6 +26,7 @@ We opted for Gnome as first spin because of these reasons:
 - GTK applications and Gnome itself are very touch friendly and laptop friendly, these devices are often used to consume multimedia content, so anime, mangas, VNs, and LNs.
 - Gnome is very elegant and modern, but very customizable at the same time, giving a good image of linux desktop.
 - GTK applications look very coherent between them
+
 However, there are also some cons:
 - It is very different from what Windows has used users to, making it look complex for some (partially solved by Nyarch Customize)
 - Gnome extensions often get broken after Gnome updates (it is a pretty big issue considering the rolling release nature of the distribution)
