@@ -55,8 +55,10 @@ class BackgroundLogo extends St.Widget {
             this._updateLogo.bind(this));
         this._settings.connect('changed::logo-file-dark',
             this._updateLogo.bind(this));
-        this._settings.connect('changed::logo-size',
-            this._updateScale.bind(this));
+        this._settings.connect('changed::logo-size', () => {
+            this._updateScale();
+            this.queue_relayout();
+        });
         this._settings.connect('changed::logo-position',
             this._updatePosition.bind(this));
         this._settings.connect('changed::logo-border',
@@ -121,12 +123,12 @@ class BackgroundLogo extends St.Widget {
             this._settings.get_uint('logo-opacity') * brightness;
     }
 
-    _getWorkArea() {
-        return Main.layoutManager.getWorkAreaForMonitor(this._monitorIndex);
+    _getMonitorArea() {
+        return Main.layoutManager.monitors[this._monitorIndex];
     }
 
     _getWidthForRelativeSize(size) {
-        let { width } = this._getWorkArea();
+        let { width } = this._getMonitorArea();
         return width * size / 100;
     }
 
@@ -134,7 +136,7 @@ class BackgroundLogo extends St.Widget {
         if (!this.has_allocation())
             return 1;
 
-        let { width } = this._getWorkArea();
+        let { width } = this._getMonitorArea();
         return this.allocation.get_width() / width;
     }
 
@@ -227,7 +229,8 @@ class BackgroundLogo extends St.Widget {
         if (this._laterId)
             return;
 
-        this._laterId = Meta.later_add(Meta.LaterType.BEFORE_REDRAW, () => {
+        const laters = global.compositor.get_laters();
+        this._laterId = laters.add(Meta.LaterType.BEFORE_REDRAW, () => {
             this._updateScale();
             this._updateBorder();
 
@@ -238,7 +241,7 @@ class BackgroundLogo extends St.Widget {
 
     _onDestroy() {
         if (this._laterId)
-            Meta.later_remove(this._laterId);
+            global.compositor.get_laters().remove(this._laterId);
         this._laterId = 0;
 
         this._backgroundActor.layout_manager = null;

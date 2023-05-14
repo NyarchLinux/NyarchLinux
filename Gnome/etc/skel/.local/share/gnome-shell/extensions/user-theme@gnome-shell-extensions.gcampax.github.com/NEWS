@@ -1,3 +1,32 @@
+44.0
+====
+* Bump version
+
+44.rc
+=====
+* Bump version
+
+44.beta
+=======
+* Tweak menu alignment [robxnano; !246]
+
+Contributors:
+  Florian Müllner, robxnano
+
+Translators:
+  Vasil Pupkin [be]
+
+43.1
+====
+* Fixed crash [Florian; !243]
+* Misc. bug fixes and cleanups [mowemcfc; !244]
+
+Contributors:
+  Florian Müllner, mowemcfc
+
+Translators:
+  Sabri Ünal [tr]
+
 43.0
 ====
 

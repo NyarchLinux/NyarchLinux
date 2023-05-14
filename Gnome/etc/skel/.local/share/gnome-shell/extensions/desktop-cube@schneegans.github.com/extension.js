@@ -1061,12 +1061,12 @@ class Extension {
       } else {
 
         // On X11, there's only one StageView. We move the virtual camera so that it is in
-        // front of the primary monitor.
-        const primaryMonitorRect =
-          global.display.get_monitor_geometry(global.display.get_primary_monitor());
+        // front of the current monitor.
+        const currentMonitorRect =
+          global.display.get_monitor_geometry(global.display.get_current_monitor());
 
-        cameraX = primaryMonitorRect.x + primaryMonitorRect.width / 2;
-        cameraY = primaryMonitorRect.y + primaryMonitorRect.height / 2;
+        cameraX = currentMonitorRect.x + currentMonitorRect.width / 2;
+        cameraY = currentMonitorRect.y + currentMonitorRect.height / 2;
       }
 
       // This is the offset to the original, centered camera position. Y is flipped due to

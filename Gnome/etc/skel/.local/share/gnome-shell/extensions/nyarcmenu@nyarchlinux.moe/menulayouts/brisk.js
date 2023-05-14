@@ -1,54 +1,47 @@
+/* eslint-disable jsdoc/require-jsdoc */
+/* exported getMenuLayoutEnum, Menu */
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const { Clutter, Gio, GLib, Gtk, Shell, St } = imports.gi;
-const { BaseMenuLayout } = Me.imports.menulayouts.baseMenuLayout;
+const {Clutter, GObject, St} = imports.gi;
+const {BaseMenuLayout} = Me.imports.menulayouts.baseMenuLayout;
 const Constants = Me.imports.constants;
 const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
 const MW = Me.imports.menuWidgets;
-const PlaceDisplay = Me.imports.placeDisplay;
-const Utils =  Me.imports.utils;
 const _ = Gettext.gettext;
 
-function getMenuLayoutEnum() { return Constants.MenuLayout.BRISK; }
+function getMenuLayoutEnum() {
+    return Constants.MenuLayout.BRISK;
+}
 
-var Menu = class extends BaseMenuLayout{
+var Menu = class ArcMenuBriskLayout extends BaseMenuLayout {
+    static {
+        GObject.registerClass(this);
+    }
+
     constructor(menuButton) {
         super(menuButton, {
-            Search: true,
-            DualPanelMenu: true,
-            DisplayType: Constants.DisplayType.LIST,
-            SearchDisplayType: Constants.DisplayType.LIST,
-            ColumnSpacing: 0,
-            RowSpacing: 0,
-            SupportsCategoryOnHover: true,
-            VerticalMainBox: true,
-            DefaultCategoryIconSize: Constants.MEDIUM_ICON_SIZE,
-            DefaultApplicationIconSize: Constants.EXTRA_SMALL_ICON_SIZE,
-            DefaultQuickLinksIconSize: Constants.MEDIUM_ICON_SIZE,
-            DefaultButtonsIconSize: Constants.EXTRA_SMALL_ICON_SIZE,
-            DefaultPinnedIconSize: Constants.MEDIUM_ICON_SIZE,
+            has_search: true,
+            is_dual_panel: true,
+            display_type: Constants.DisplayType.LIST,
+            search_display_type: Constants.DisplayType.LIST,
+            column_spacing: 0,
+            row_spacing: 0,
+            supports_category_hover_activation: true,
+            vertical: true,
+            category_icon_size: Constants.MEDIUM_ICON_SIZE,
+            apps_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
+            quicklinks_icon_size: Constants.MEDIUM_ICON_SIZE,
+            buttons_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
+            pinned_apps_icon_size: Constants.MEDIUM_ICON_SIZE,
         });
-    }
-    createLayout(){
-        super.createLayout();
 
-        if(this._settings.get_enum('searchbar-default-top-location') === Constants.SearchbarLocation.TOP){
-            this.searchBox.add_style_class_name('arcmenu-search-top');
-            this.searchBox.style = "margin-bottom: 0px;";
-            this.mainBox.add_child(this.searchBox);
-
-            let separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM, Constants.SeparatorAlignment.HORIZONTAL);
-            this.mainBox.add_child(separator);
-        }
-
-        //subMainBox stores left and right box
-        this.subMainBox = new St.BoxLayout({
+        this._mainBox = new St.BoxLayout({
             vertical: false,
             x_expand: true,
             y_expand: true,
             y_align: Clutter.ActorAlign.FILL,
         });
-        this.mainBox.add_child(this.subMainBox);
+        this.add_child(this._mainBox);
 
         this.rightBox = new St.BoxLayout({
             x_expand: true,
@@ -57,14 +50,10 @@ var Menu = class extends BaseMenuLayout{
             vertical: true,
         });
 
-        this.applicationsBox = new St.BoxLayout({
-            vertical: true
-        });
-
+        this.applicationsBox = new St.BoxLayout({vertical: true});
         this.applicationsScrollBox = this._createScrollBox({
             y_align: Clutter.ActorAlign.START,
-            overlay_scrollbars: true,
-            style_class: this.disableFadeEffect ? '' : 'small-vfade',
+            style_class: this._disableFadeEffect ? '' : 'small-vfade',
         });
         this.applicationsScrollBox.add_actor(this.applicationsBox);
         this.rightBox.add_child(this.applicationsScrollBox);
@@ -76,100 +65,123 @@ var Menu = class extends BaseMenuLayout{
             vertical: true,
         });
 
-        let horizonalFlip = this._settings.get_boolean("enable-horizontal-flip");
-        this.subMainBox.add_child(horizonalFlip ? this.rightBox : this.leftBox);
-        let verticalSeparator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM, Constants.SeparatorAlignment.VERTICAL);
-        this.subMainBox.add_child(verticalSeparator);
-        this.subMainBox.add_child(horizonalFlip ? this.leftBox : this.rightBox);
+        const verticalSeparator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM,
+            Constants.SeparatorAlignment.VERTICAL);
+        const horizontalFlip = Me.settings.get_boolean('enable-horizontal-flip');
+        this._mainBox.add_child(horizontalFlip ? this.rightBox : this.leftBox);
+        this._mainBox.add_child(verticalSeparator);
+        this._mainBox.add_child(horizontalFlip ? this.leftBox : this.rightBox);
 
         this.categoriesScrollBox = this._createScrollBox({
             x_expand: true,
             y_expand: false,
             y_align: Clutter.ActorAlign.START,
-            overlay_scrollbars: true,
-            style_class: this.disableFadeEffect ? '' : 'small-vfade',
+            style_class: this._disableFadeEffect ? '' : 'small-vfade',
         });
-
         this.leftBox.add_child(this.categoriesScrollBox);
 
-        this.categoriesBox = new St.BoxLayout({ vertical: true });
+        this.categoriesBox = new St.BoxLayout({vertical: true});
         this.categoriesScrollBox.add_actor(this.categoriesBox);
 
         this.actionsBox = new St.BoxLayout({
             vertical: true,
             x_expand: true,
             y_expand: true,
-            y_align: Clutter.ActorAlign.END
+            y_align: Clutter.ActorAlign.END,
         });
         this.leftBox.add_child(this.actionsBox);
 
-        let powerDisplayStyle = this._settings.get_enum('power-display-style');
-        if(powerDisplayStyle === Constants.PowerDisplayStyle.MENU)
-            this.powerOptionsBox = new MW.LeaveButton(this, true);
-        else{
-            this.powerOptionsBox = new MW.PowerOptionsBox(this, 6);
-            this.powerOptionsBox.x_align = Clutter.ActorAlign.CENTER;
+        let powerOptionsItem;
+        const powerDisplayStyle = Me.settings.get_enum('power-display-style');
+        if (powerDisplayStyle === Constants.PowerDisplayStyle.MENU) {
+            powerOptionsItem = new MW.LeaveButton(this, true);
+        } else {
+            powerOptionsItem = new MW.PowerOptionsBox(this);
+            powerOptionsItem.x_align = Clutter.ActorAlign.CENTER;
         }
 
-        this.powerOptionsBox.y_align = Clutter.ActorAlign.END;
-        this.leftBox.add_child(this.powerOptionsBox);
+        powerOptionsItem.y_align = Clutter.ActorAlign.END;
+        this.leftBox.add_child(powerOptionsItem);
 
-        if(this._settings.get_enum('searchbar-default-top-location') === Constants.SearchbarLocation.BOTTOM){
+        const searchBarLocation = Me.settings.get_enum('searchbar-default-top-location');
+        if (searchBarLocation === Constants.SearchbarLocation.TOP) {
+            this.searchBox.add_style_class_name('arcmenu-search-top');
+            this.searchBox.style = 'margin-bottom: 0px;';
+            this.insert_child_at_index(this.searchBox, 0);
+
+            const separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM,
+                Constants.SeparatorAlignment.HORIZONTAL);
+            this.insert_child_at_index(separator, 1);
+        } else if (searchBarLocation === Constants.SearchbarLocation.BOTTOM) {
             this.searchBox.add_style_class_name('arcmenu-search-bottom');
-            this.mainBox.add_child(this.searchBox);
+            this.add_child(this.searchBox);
         }
+
+        Me.settings.connectObject('changed::brisk-extra-shortcuts', () => this._createExtraShortcuts(), this);
+        this._createExtraShortcuts();
 
         this.updateWidth();
         this.loadCategories();
         this.loadPinnedApps();
-        this.loadExtraPinnedApps();
 
         this.setDefaultMenuView();
     }
 
-    updateWidth(setDefaultMenuView){
-        let leftPanelWidthOffset = -70;
-        let rightPanelWidthOffset = 70;
-        super.updateWidth(setDefaultMenuView, leftPanelWidthOffset, rightPanelWidthOffset);
-    }
-
-    loadExtraPinnedApps(){
+    _createExtraShortcuts() {
         this.actionsBox.destroy_all_children();
-        let separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM, Constants.SeparatorAlignment.HORIZONTAL);
-        this.actionsBox.add_child(separator);
-        let pinnedApps = this._settings.get_strv('brisk-shortcuts-list');
+        const extraShortcuts = Me.settings.get_value('brisk-extra-shortcuts').deep_unpack();
 
-        for(let i = 0;i < pinnedApps.length; i += 3){
-            let isContainedInCategory = false;
-            let placeMenuItem = this.createMenuItem([pinnedApps[i], pinnedApps[i+1], pinnedApps[i+2]], Constants.DisplayType.LIST, isContainedInCategory);
-            if(placeMenuItem){
-                this.actionsBox.add_child(placeMenuItem);
+        if (extraShortcuts.length === 0)
+            return;
+
+        const isContainedInCategory = false;
+
+        for (let i = 0; i < extraShortcuts.length; i++) {
+            const command = extraShortcuts[i][2];
+            if (command === Constants.ShortcutCommands.SEPARATOR) {
+                const separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM,
+                    Constants.SeparatorAlignment.HORIZONTAL);
+                this.actionsBox.add_child(separator);
+            } else {
+                const item = this.createMenuItem(extraShortcuts[i], Constants.DisplayType.LIST, isContainedInCategory);
+                if (item.shouldShow)
+                    this.actionsBox.add_child(item);
             }
         }
+
+        let separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM,
+            Constants.SeparatorAlignment.HORIZONTAL);
+        this.actionsBox.insert_child_at_index(separator, 0);
         separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM, Constants.SeparatorAlignment.HORIZONTAL);
         this.actionsBox.add_child(separator);
     }
 
-    setDefaultMenuView(){
+    updateWidth(setDefaultMenuView) {
+        const leftPanelWidthOffset = -70;
+        const rightPanelWidthOffset = 70;
+        super.updateWidth(setDefaultMenuView, leftPanelWidthOffset, rightPanelWidthOffset);
+    }
+
+    setDefaultMenuView() {
         super.setDefaultMenuView();
         this.displayCategories();
 
-        let topCategory = this.categoryDirectories.values().next().value;
+        const topCategory = this.categoryDirectories.values().next().value;
         topCategory.displayAppList();
         this.setActiveCategory(topCategory);
     }
 
-    loadCategories(){
+    loadCategories() {
         this.categoryDirectories = null;
         this.categoryDirectories = new Map();
 
-        let extraCategories = this._settings.get_value("extra-categories").deep_unpack();
+        const extraCategories = Me.settings.get_value('extra-categories').deep_unpack();
 
-        for(let i = 0; i < extraCategories.length; i++){
-            let categoryEnum = extraCategories[i][0];
-            let shouldShow = extraCategories[i][1];
-            if(shouldShow){
-                let categoryMenuItem = new MW.CategoryMenuItem(this, categoryEnum, Constants.DisplayType.LIST);
+        for (let i = 0; i < extraCategories.length; i++) {
+            const categoryEnum = extraCategories[i][0];
+            const shouldShow = extraCategories[i][1];
+            if (shouldShow) {
+                const categoryMenuItem = new MW.CategoryMenuItem(this, categoryEnum, Constants.DisplayType.LIST);
                 this.categoryDirectories.set(categoryEnum, categoryMenuItem);
             }
         }
@@ -177,7 +189,7 @@ var Menu = class extends BaseMenuLayout{
         super.loadCategories();
     }
 
-    displayCategories(){
+    displayCategories() {
         super.displayCategories(this.categoriesBox);
     }
-}
+};

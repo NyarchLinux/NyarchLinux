@@ -12,6 +12,7 @@ const ext_utils = Me.imports.utils.ext_utils;
 // const npm_utils = Me.imports.npm_utils;
 
 const PREFS_SCHEMA = "org.gnome.shell.extensions.material-you-theme";
+const COLORS = {"#643f00": 0xffbc9769, "#005142": 0xffdafaef, "#722b65": 0xffdcabcc, "#00497e": 0xffd1e1f8, "#225104": 0xff7d916e, "#004397": 0xff4285f4, "#7c2c1b": 0xffb18c84, "#00504e": 0xff7ca7a5, "#403c8e": 0xffb7b4cf, "#3d4c00": 0xffb0b78e, "#64307c ": 0xff8e7596, "#005137 ": 0xff9bb8a8, "#4e4800": 0xfff0eab7};
 
 // Todo: Add custom css
 class ColorSchemeRow extends Adw.ActionRow {
@@ -199,7 +200,117 @@ class MiscGroup extends Adw.PreferencesGroup {
         this.add(row);
     }
 }
+class PywalInstallRow extends Adw.ActionRow {
+    static {
+        GObject.registerClass(this);
+    }
 
+    constructor(name, title, subtitle) {
+        const button = new Gtk.Button({
+            label: "Install",
+            valign: Gtk.Align.CENTER,
+        });
+
+        button.connect('clicked', () => {
+            install_pywal();
+            button.set_label("Installed");
+            // npm_utils.install_npm_deps();
+        });
+
+        super({
+            title: title,
+            subtitle: subtitle,
+            activatable_widget: button,
+        });
+        this.add_suffix(button);
+    }
+}
+
+class PywalGroup extends Adw.PreferencesGroup {
+    static {
+        GObject.registerClass(this);
+    }
+
+    constructor() {
+        super({ title: "Enable Pywal Theming" });
+
+        this._settings = ExtensionUtils.getSettings(PREFS_SCHEMA);
+
+        this.connect("destroy", () => this._settings.run_dispose());
+
+        this._addPywalInstall("request-install", "Install Pywal with pip", "Requires pip3 to already be installed");
+        this._addToggle("enable-pywal-theming", this._settings, "Enable Pywal Theming");
+    }
+
+    _addPywalInstall(name, title, subtitle) {
+        const row = new PywalInstallRow(name, title, subtitle);
+        this.add(row);
+    }
+
+    _addToggle(name, settings, title) {
+        const row = new MiscToggleRow(name, settings, title);
+        this.add(row);
+    }
+}
+
+class ColorAccentGroup extends Adw.PreferencesGroup {
+    static {
+        GObject.registerClass(this);
+    }
+
+    constructor() {
+        super({ title: "Force color scheme" });
+
+        this._settings = ExtensionUtils.getSettings(PREFS_SCHEMA);
+
+        this.connect("destroy", () => this._settings.run_dispose());
+
+        this._addToggle("enable-accent-colors", this._settings, "Force Accent Color");
+        this._addAccentColorChooser();
+    }
+
+    _addAccentColorChooser() {
+        // Create a row of buttons
+        this.buttons = [];
+        const row = new Adw.ExpanderRow();
+        var colors = new Gtk.Box();
+        colors.set_spacing(4);
+        row.set_title("Accent Color");
+        // Create a button for each color
+        for (var color in COLORS) {
+            // Create button
+            var button = new Gtk.Button();
+            button.set_css_classes([".circular"]);
+            var csss = new Gtk.CssProvider();
+            // Make it circular and right color 
+            csss.load_from_data("button { background-color: "+color.toString(16)+"; border-radius: 999px;}", -1);
+            if (this._settings.get_string("accent-color") == COLORS[color].toString(10)) {
+                button.set_icon_name("object-select-symbolic");
+            }
+            button.get_style_context().add_provider(csss, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
+            button.connect("clicked", this._createClickHandler(color, button, colors, this._settings, this));
+            colors.append(button);
+            this.buttons.push(button);
+        }
+        row.add_row(colors);
+        this.add(row);
+    }
+
+    _addToggle(name, settings, title) {
+        const row = new MiscToggleRow(name, settings, title);
+        this.add(row);
+    }
+    _createClickHandler(color, button, colors, settings, obj) {
+        return function () {
+            settings.set_string("accent-color", COLORS[color].toString(10));
+            obj.buttons.forEach(function (object) {
+                object.set_icon_name("");
+            });
+            button.set_icon_name("object-select-symbolic");
+
+        }
+    }
+}
 function fillPreferencesWindow(window) {
     // Create a preferences page and group
     const page = new Adw.PreferencesPage();
@@ -207,11 +318,14 @@ function fillPreferencesWindow(window) {
         const sass_group = new SassGroup();
         page.add(sass_group);
     }
+    const color_accent_group = new ColorAccentGroup();
+    page.add(color_accent_group);
     const color_scheme_group = new ColorSchemeGroup();
     page.add(color_scheme_group);
     const misc_settings_group = new MiscGroup();
     page.add(misc_settings_group);
-
+    const pywal_group = new PywalGroup();
+    page.add(pywal_group);
     window.add(page);
 }
 
@@ -228,6 +342,26 @@ function install_npm_deps() {
             Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE
         );
     
+        // Once the process has started, you can end it with `force_exit()`
+        // proc.force_exit();
+    } catch (e) {
+        logError(e);
+    }
+}
+
+function install_pywal() {
+    try {
+        // The process starts running immediately after this function is called. Any
+        // error thrown here will be a result of the process failing to start, not
+        // the success or failure of the process itself.
+        let proc = Gio.Subprocess.new(
+            // The program and command options are passed as a list of arguments
+            ['pip3', 'install', 'pywal'],  // NOTE: this may cause problems on some distributions
+
+            // The flags control what I/O pipes are opened and how they are directed
+            Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE
+        );
+
         // Once the process has started, you can end it with `force_exit()`
         // proc.force_exit();
     } catch (e) {

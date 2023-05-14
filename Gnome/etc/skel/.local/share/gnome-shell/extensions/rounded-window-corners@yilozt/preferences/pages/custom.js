@@ -158,10 +158,9 @@ var Custom = GObject.registerClass (
       return expanded_row
     }
 
-    show_exists_error_toast (title) {
-      const tip =
-        `'${title}': ` + 'can\'t add into list, because this item has exists'
-      show_err_msg (tip)
+    show_exists_error_toast (item) {
+      const title = `${item}: ` + _ ('Can\'t add to list, because it has exists')
+      show_err_msg (title)
     }
 
     _on_cfg_changed (k, v) {

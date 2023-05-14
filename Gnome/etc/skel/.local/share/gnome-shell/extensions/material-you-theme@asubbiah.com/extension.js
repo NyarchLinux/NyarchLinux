@@ -64,6 +64,12 @@ class Extension {
         this._prefsSettings.connect('changed::scheme', () => {
             apply_theme(base_presets, color_mappings, true);
         });
+        this._prefsSettings.connect('changed::accent-color', () => {
+            apply_theme(base_presets, color_mappings, true);
+        });
+        this._prefsSettings.connect('changed::enable-accent-colors', () => {
+            apply_theme(base_presets, color_mappings, true);
+        });
         try {
             this._shellSettings = ExtensionUtils.getSettings(SHELL_SCHEMA);
             this._shellSettings.connect('changed::name', () => {
@@ -79,6 +85,7 @@ class Extension {
 
         try {
             let config_path = GLib.get_home_dir() + "/.config";
+            // Check if gtk theme is applied by material you
             let content = read_file(config_path + "/gtk-4.0/materialyou");
             if (content != "yes") {
                 apply_theme(base_presets, color_mappings);
@@ -122,11 +129,19 @@ function apply_theme(base_presets, color_mappings, notify=false) {
         log(e);
         warn_shell_theme = true;
     }
-    const color_scheme = settings.get_string("scheme");
+    var color_scheme = settings.get_string("scheme");
+    const accent_color_enabled = settings.get_boolean("enable-accent-colors");
+    const accent_color = settings.get_string("accent-color");
     const show_notifications = settings.get_boolean("show-notifications");
     const height = settings.get_int("resize-height");
     const width = settings.get_int("resize-width");
+    const enable_pywal_theming = settings.get_boolean("enable-pywal-theming");
     let size = {height: height, width: width};
+    if (accent_color_enabled) {
+        if (color_scheme == "Fruit Salad" || color_scheme == "Expressive") {
+            color_scheme = "Default";
+        }
+    }
     let color_mappings_sel = color_mappings[color_scheme.toLowerCase()];
 
     // Checking dark theme preference
@@ -148,8 +163,13 @@ function apply_theme(base_presets, color_mappings, notify=false) {
         wall_path = Gio.File.new_for_uri(wall_path).get_path();
     }
     let pix_buf = GdkPixbuf.Pixbuf.new_from_file_at_size(wall_path, size.width, size.height);
-    let theme = theme_utils.themeFromImage(pix_buf);
-
+    let theme;
+    if (accent_color_enabled) {
+        log("SIUM");
+        theme = theme_utils.themeFromSourceColor(parseInt(accent_color), []);
+    } else {
+        theme = theme_utils.themeFromImage(pix_buf);
+    }
     // Configuring for light or dark theme
     let scheme = theme.schemes.light.props;
     let base_preset = base_presets.light;
@@ -171,6 +191,9 @@ function apply_theme(base_presets, color_mappings, notify=false) {
     let css = "";
     for (const key in base_preset.variables) {
         css += "@define-color " + key + " " + base_preset.variables[key] + ";\n"
+    }
+    if (enable_pywal_theming) {
+        run_pywal(base_preset.variables["window_bg_color"], wall_path, is_dark)
     }
     for (const prefix_key in base_preset.palette) {
         for (const key_2 in base_preset.palette[prefix_key]) {
@@ -331,6 +354,24 @@ function modify_colors(scss_path, output_path, vars) {
     }
     write_str_sync(colors_template, output_path);
 }
+
+function run_pywal(background, image, is_dark) {
+    try {
+        if (is_dark) {
+            Gio.Subprocess.new(
+                ['/usr/bin/wal', '-b', background, '-i', image, '-nqe'],
+                Gio.SubprocessFlags.NONE
+            );
+        } else {
+            Gio.Subprocess.new(
+                ['/usr/bin/wal', '-b', background, '-i', image, '-nqel'],
+                Gio.SubprocessFlags.NONE
+            );
+        }
+    } catch (e) {
+        logError(e);
+    }
+} 
 
 function compile_sass(scss_path, output_path, shell_settings) {
 

@@ -1,0 +1,30 @@
+.file-label, label.file-label:backdrop {
+    text-shadow: 0px 0px 3px black;
+    color: white;
+}
+
+.file-label-dark, label.file-label-dark:backdrop {
+    text-shadow: 0px 0px 3px white;
+    color: black;
+}
+
+.file-item {
+    padding: 2px;
+    border-radius: 5px;
+}
+
+.file-item-hover {
+   background-color: rgba(238, 238, 238, 0.2);
+}
+
+.not-found {
+    color: rgb(255, 0, 0);
+}
+
+window.desktopwindow {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+window.testwindow {
+    background-color: rgba(0, 0, 0, 100);
+}

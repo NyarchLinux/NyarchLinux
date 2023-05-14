@@ -95,6 +95,7 @@ class CompizWindowsEffectExtension {
             }
 
             this.resizedActor = actor;
+            this.resizedActor.sourceRect = actor.meta_window.get_frame_rect();
 
             if (!op || Meta.SizeChange.UNMAXIMIZE != op) {
                 return;
@@ -103,24 +104,20 @@ class CompizWindowsEffectExtension {
             let effect = actor.get_effect(this.EFFECT_NAME);
             if (!effect || effect.operationType != 'move') {
                 this.destroyActorEffect(actor);
-    
                 actor.add_effect_with_name(this.EFFECT_NAME, new WobblyEffect({op: 'unmaximized'}));
             }
         });
 
         this.endResizeOpId = global.window_manager.connect('size-changed', (wm, actor) => {
-            if (!actor || !this.resizedActor) {
+            if (!actor || !this.resizedActor || actor != this.resizedActor || !this.resizedActor.sourceRect) {
                 this.resizedActor = null;
                 return;
             }
 
-            this.resizedActor = null;
-
-            if (!actor.__animationInfo) {
-                return;
-            }
-
+            let sourceRect = this.resizedActor.sourceRect;
             let targetRect = actor.meta_window.get_frame_rect();
+
+            this.resizedActor = null;
             
             if (actor.metaWindow.get_maximized()) {
                 this.destroyActorEffect(actor);
@@ -128,20 +125,19 @@ class CompizWindowsEffectExtension {
                 if (!this.prefs.MAXIMIZE_EFFECT.get()) {
                     return;
                 }
-    
+
                 let monitor = Main.layoutManager.monitors[actor.meta_window.get_monitor()];
-                let sourceRect = actor.__animationInfo.oldRect;
                 
-                if (actor.metaWindow.get_maximized() == Meta.MaximizeFlags.BOTH || 
+                if (actor.metaWindow.get_maximized() === Meta.MaximizeFlags.BOTH || 
                         (
-                            actor.metaWindow.get_maximized() == Meta.MaximizeFlags.VERTICAL && 
+                            actor.metaWindow.get_maximized() === Meta.MaximizeFlags.VERTICAL && 
                             (
                                 (sourceRect.y != targetRect.y) || 
                                 (sourceRect.y + sourceRect.height != targetRect.y + targetRect.height) || 
-                                (sourceRect.x == monitor.x && targetRect.x != monitor.x) || 
-                                (sourceRect.x != monitor.x && targetRect.x == monitor.x) ||
-                                (sourceRect.x + sourceRect.width == monitor.x + monitor.width && targetRect.x + targetRect.width != monitor.x + monitor.width) || 
-                                (sourceRect.x + sourceRect.width != monitor.x + monitor.width && targetRect.x + targetRect.width == monitor.x + monitor.width)
+                                (sourceRect.x === monitor.x && targetRect.x != monitor.x) || 
+                                (sourceRect.x != monitor.x && targetRect.x === monitor.x) ||
+                                (sourceRect.x + sourceRect.width === monitor.x + monitor.width && targetRect.x + targetRect.width != monitor.x + monitor.width) || 
+                                (sourceRect.x + sourceRect.width != monitor.x + monitor.width && targetRect.x + targetRect.width === monitor.x + monitor.width)
                             )
                         )
                     ) 
@@ -150,15 +146,16 @@ class CompizWindowsEffectExtension {
                 }
             } else {
                 let effect = actor.get_effect(this.EFFECT_NAME);
-                if (effect && 'move' == effect.operationType) {
-                    effect.on_resize_event(targetRect.width, targetRect.height);
+                if (effect && 'move' === effect.operationType) {
+                    this.destroyActorEffect(actor);
+                    actor.add_effect_with_name(this.EFFECT_NAME, new WobblyEffect({op: 'move'}));
                 } 
             }
         });
 
         this.destroyId = global.window_manager.connect("destroy", (wm, actor) => {
             this.destroyActorEffect(actor);
-        });    
+        });
     }
 
     disable() {
@@ -198,7 +195,9 @@ class CompizWindowsEffectExtension {
     }
 
     grabStart(window, op) {
-        if (Meta.GrabOp.MOVING != op && (!this.prefs.RESIZE_EFFECT.get() || this.allowedResizeOp.indexOf(op) == -1)) {
+        op &= ~1024; // META_GRAB_OP_WINDOW_FLAG_UNCONSTRAINED
+        
+        if (Meta.GrabOp.MOVING != op && (!this.prefs.RESIZE_EFFECT.get() || this.allowedResizeOp.indexOf(op) === -1)) {
             return;
         }
         
@@ -209,7 +208,7 @@ class CompizWindowsEffectExtension {
 
         this.destroyActorEffect(actor);
 
-        if (Meta.GrabOp.MOVING == op) {
+        if (Meta.GrabOp.MOVING === op) {
             actor.add_effect_with_name(this.EFFECT_NAME, new WobblyEffect({op: 'move'}));
         } else {
             actor.add_effect_with_name(this.EFFECT_NAME, new ResizeEffect({op: op}));
@@ -278,45 +277,13 @@ const WobblyEffectBase = GObject.registerClass({},
             this.SPRING_K = prefs.SPRING_K.get();            
             this.SPEEDUP_FACTOR = prefs.SPEEDUP_FACTOR.get();
             this.MASS = prefs.MASS.get();
-            this.X_TILES = 'maximized' == this.operationType ? 10 : prefs.X_TILES.get();
-            this.Y_TILES = 'maximized' == this.operationType ? 10 : prefs.Y_TILES.get();
+            this.X_TILES = 'maximized' === this.operationType ? 10 : prefs.X_TILES.get();
+            this.Y_TILES = 'maximized' === this.operationType ? 10 : prefs.Y_TILES.get();
 
             this.set_n_tiles(this.X_TILES, this.Y_TILES);
             
             this.initialized = false;
             this.ended = false;
-        }
-
-        init_coeff() {
-            this.coeff = new Array(this.Y_TILES + 1);
-            let x, y, tx, ty, tx1, tx2, tx3, tx4, ty1, ty2, ty3, ty4;
-
-            for (y = this.Y_TILES; y >= 0; y--) {
-                ty = y / this.Y_TILES;
-
-                ty1 = (1 - ty) * (1 - ty) * (1 - ty);
-                ty2 = ty * (1 - ty) * (1 - ty);
-                ty3 = ty * ty * (1 - ty);
-                ty4 = ty * ty * ty;
-
-                this.coeff[y] = new Array(this.X_TILES + 1);
-        
-                for (x = this.X_TILES; x >= 0; x--) {
-                    tx = x / this.X_TILES;
-
-                    tx1 = (1 - tx) * (1 - tx) * (1 - tx);
-                    tx2 = tx * (1 - tx) * (1 - tx);
-                    tx3 = tx * tx * (1 - tx);
-                    tx4 = tx * tx * tx;
-                    
-                    this.coeff[y][x] = [
-                        tx1 * ty1, 3 * tx2 * ty1, 3 * tx3 * ty1, tx4 * ty1,
-                        3 * tx1 * ty2, 9 * tx2 * ty2, 9 * tx3 * ty2, 3 * tx4 * ty2,
-                        3 * tx1 * ty3, 9 * tx2 * ty3, 9 * tx3 * ty3, 3 * tx4 * ty3,
-                        tx1 * ty4, 3 * tx2 * ty4, 3 * tx3 * ty4, tx4 * ty4
-                    ];
-                }
-            }
         }
 
         vfunc_set_actor(actor) {
@@ -368,10 +335,10 @@ const WobblyEffectBase = GObject.registerClass({},
 
                 this.wobblyModel = new WobblyModel({friction: this.FRICTION, springK: this.SPRING_K, mass: this.MASS, sizeX: this.width, sizeY: this.height});
                 
-                if ('unmaximized' == this.operationType) {
+                if ('unmaximized' === this.operationType) {
                     this.wobblyModel.unmaximize();
                     this.ended = true;
-                } else if ('maximized' == this.operationType) {                    
+                } else if ('maximized' === this.operationType) {                    
                     this.wobblyModel.maximize();
                     this.ended = true;
                 } else {
@@ -448,15 +415,6 @@ const WobblyEffectBase = GObject.registerClass({},
             this.wobblyModel.move(deltaX, deltaY);
         }
 
-        on_resize_event(width, height) {
-            this.width = width;
-            this.height = height;
-            this.deltaX = 0;
-            this.deltaY = 0;
-
-            this.wobblyModel.resize(width, height);
-        }
-
         on_new_frame_event(timer, msec) {
             if (this.ended && (!this.timerId || !this.wobblyModel || !this.wobblyModel.movement)) {
                 this.destroy();
@@ -467,42 +425,41 @@ const WobblyEffectBase = GObject.registerClass({},
             this.msecOld = msec;
 
             let x, y;
-            for (let i = (this.Y_TILES + 1) * (this.X_TILES + 1) - 1; i >= 0 ; i--) {
-                x = (i % (this.X_TILES + 1));
-                y = (i / (this.X_TILES + 1)) >> 0;
-
-                this.deformedObjects[y][x][0] = this.coeff[y][x][0] * this.wobblyModel.objects[0].x
-                    + this.coeff[y][x][1] * this.wobblyModel.objects[1].x
-                    + this.coeff[y][x][2] * this.wobblyModel.objects[2].x
-                    + this.coeff[y][x][3] * this.wobblyModel.objects[3].x
-                    + this.coeff[y][x][4] * this.wobblyModel.objects[4].x
-                    + this.coeff[y][x][5] * this.wobblyModel.objects[5].x
-                    + this.coeff[y][x][6] * this.wobblyModel.objects[6].x
-                    + this.coeff[y][x][7] * this.wobblyModel.objects[7].x
-                    + this.coeff[y][x][8] * this.wobblyModel.objects[8].x
-                    + this.coeff[y][x][9] * this.wobblyModel.objects[9].x
-                    + this.coeff[y][x][10] * this.wobblyModel.objects[10].x
-                    + this.coeff[y][x][11] * this.wobblyModel.objects[11].x
-                    + this.coeff[y][x][12] * this.wobblyModel.objects[12].x
-                    + this.coeff[y][x][13] * this.wobblyModel.objects[13].x
-                    + this.coeff[y][x][14] * this.wobblyModel.objects[14].x
-                    + this.coeff[y][x][15] * this.wobblyModel.objects[15].x;
-                this.deformedObjects[y][x][1] = this.coeff[y][x][0] * this.wobblyModel.objects[0].y
-                    + this.coeff[y][x][1] * this.wobblyModel.objects[1].y
-                    + this.coeff[y][x][2] * this.wobblyModel.objects[2].y
-                    + this.coeff[y][x][3] * this.wobblyModel.objects[3].y
-                    + this.coeff[y][x][4] * this.wobblyModel.objects[4].y
-                    + this.coeff[y][x][5] * this.wobblyModel.objects[5].y
-                    + this.coeff[y][x][6] * this.wobblyModel.objects[6].y
-                    + this.coeff[y][x][7] * this.wobblyModel.objects[7].y
-                    + this.coeff[y][x][8] * this.wobblyModel.objects[8].y
-                    + this.coeff[y][x][9] * this.wobblyModel.objects[9].y
-                    + this.coeff[y][x][10] * this.wobblyModel.objects[10].y
-                    + this.coeff[y][x][11] * this.wobblyModel.objects[11].y
-                    + this.coeff[y][x][12] * this.wobblyModel.objects[12].y
-                    + this.coeff[y][x][13] * this.wobblyModel.objects[13].y
-                    + this.coeff[y][x][14] * this.wobblyModel.objects[14].y
-                    + this.coeff[y][x][15] * this.wobblyModel.objects[15].y;
+            for (y = this.Y_TILES; y >= 0 ; y--) {
+                for (x = this.X_TILES; x >= 0 ; x--) {
+                    this.deformedObjects[y][x][0] = this.coeff[y][x][0] * this.wobblyModel.objects[0].x
+                        + this.coeff[y][x][1] * this.wobblyModel.objects[1].x
+                        + this.coeff[y][x][2] * this.wobblyModel.objects[2].x
+                        + this.coeff[y][x][3] * this.wobblyModel.objects[3].x
+                        + this.coeff[y][x][4] * this.wobblyModel.objects[4].x
+                        + this.coeff[y][x][5] * this.wobblyModel.objects[5].x
+                        + this.coeff[y][x][6] * this.wobblyModel.objects[6].x
+                        + this.coeff[y][x][7] * this.wobblyModel.objects[7].x
+                        + this.coeff[y][x][8] * this.wobblyModel.objects[8].x
+                        + this.coeff[y][x][9] * this.wobblyModel.objects[9].x
+                        + this.coeff[y][x][10] * this.wobblyModel.objects[10].x
+                        + this.coeff[y][x][11] * this.wobblyModel.objects[11].x
+                        + this.coeff[y][x][12] * this.wobblyModel.objects[12].x
+                        + this.coeff[y][x][13] * this.wobblyModel.objects[13].x
+                        + this.coeff[y][x][14] * this.wobblyModel.objects[14].x
+                        + this.coeff[y][x][15] * this.wobblyModel.objects[15].x;
+                    this.deformedObjects[y][x][1] = this.coeff[y][x][0] * this.wobblyModel.objects[0].y
+                        + this.coeff[y][x][1] * this.wobblyModel.objects[1].y
+                        + this.coeff[y][x][2] * this.wobblyModel.objects[2].y
+                        + this.coeff[y][x][3] * this.wobblyModel.objects[3].y
+                        + this.coeff[y][x][4] * this.wobblyModel.objects[4].y
+                        + this.coeff[y][x][5] * this.wobblyModel.objects[5].y
+                        + this.coeff[y][x][6] * this.wobblyModel.objects[6].y
+                        + this.coeff[y][x][7] * this.wobblyModel.objects[7].y
+                        + this.coeff[y][x][8] * this.wobblyModel.objects[8].y
+                        + this.coeff[y][x][9] * this.wobblyModel.objects[9].y
+                        + this.coeff[y][x][10] * this.wobblyModel.objects[10].y
+                        + this.coeff[y][x][11] * this.wobblyModel.objects[11].y
+                        + this.coeff[y][x][12] * this.wobblyModel.objects[12].y
+                        + this.coeff[y][x][13] * this.wobblyModel.objects[13].y
+                        + this.coeff[y][x][14] * this.wobblyModel.objects[14].y
+                        + this.coeff[y][x][15] * this.wobblyModel.objects[15].y;
+                }
             }
 
             [this.actorX, this.actorY] = this.actor.get_position();
@@ -794,30 +751,17 @@ class WobblyModel {
         }
     }
 
-    updateObjects() {
-        let i = 0, gridY, gridX, gw = this.GRID_WIDTH - 1, gh = this.GRID_HEIGHT - 1;
-
-        for (gridY = 0; gridY < this.GRID_HEIGHT; gridY++) {
-            for (gridX = 0; gridX < this.GRID_WIDTH; gridX++) {
-                [this.objects[i].x, this.objects[i].y, this.objects[i].velocityX, this.objects[i].velocityY, this.objects[i].forceX, this.objects[i].forceY] = [gridX * this.width / gw, gridY * this.height / gh, 0, 0, 0, 0];
-                i++;
-            }
-        }
-    }
-
     nearestObject(x, y) {
-        let dx = 0, dy = 0, distance = 0, minDistance = 0, result = null;
+        let distance, minDistance = -1, result = null;
 
-        this.objects.forEach(object => {
-            dx = object.x - x;
-            dy = object.y - y;
-            distance = Math.sqrt(dx * dx + dy * dy);
+        for (let i = this.objects.length - 1, object; i >= 0, object = this.objects[i]; --i) {
+            distance = (object.x - x < 0 ? x - object.x : object.x - x) + (object.y - y < 0 ? y - object.y : object.y - y);
     
-            if (!result || distance < minDistance) {
+            if (minDistance === -1 || distance < minDistance) {
                 minDistance = distance;
                 result = object;
             }
-        });
+        }
 
         return result;
     }
@@ -841,33 +785,33 @@ class WobblyModel {
             this.friction = 10;
         }
 
-        this.springs.forEach(spring => {
-            if (spring.a == topLeft) {
+        for (let i = this.springs.length - 1, spring; i >= 0, spring = this.springs[i]; --i) {
+            if (spring.a === topLeft) {
                 spring.b.velocityX -= spring.offsetX * this.INTENSITY;
                 spring.b.velocityY -= spring.offsetY * this.INTENSITY;
-            } else if (spring.b == topLeft) {
+            } else if (spring.b === topLeft) {
                 spring.a.velocityX -= spring.offsetX * this.INTENSITY;
                 spring.a.velocityY -= spring.offsetY * this.INTENSITY;
-            } else if (spring.a == topRight) {
+            } else if (spring.a === topRight) {
                 spring.b.velocityX -= spring.offsetX * this.INTENSITY;
                 spring.b.velocityY -= spring.offsetY * this.INTENSITY;
-            } else if (spring.b == topRight) {
+            } else if (spring.b === topRight) {
                 spring.a.velocityX -= spring.offsetX * this.INTENSITY;
                 spring.a.velocityY -= spring.offsetY * this.INTENSITY;
-            } else if (spring.a == bottomLeft) {
+            } else if (spring.a === bottomLeft) {
                 spring.b.velocityX -= spring.offsetX * this.INTENSITY;
                 spring.b.velocityY -= spring.offsetY * this.INTENSITY;
-            } else if (spring.b == bottomLeft) {
+            } else if (spring.b === bottomLeft) {
                 spring.a.velocityX -= spring.offsetX * this.INTENSITY;
                 spring.a.velocityY -= spring.offsetY * this.INTENSITY;
-            } else if (spring.a == bottomRight) {
+            } else if (spring.a === bottomRight) {
                 spring.b.velocityX -= spring.offsetX * this.INTENSITY;
                 spring.b.velocityY -= spring.offsetY * this.INTENSITY;
-            } else if (spring.b == bottomRight) {
+            } else if (spring.b === bottomRight) {
                 spring.a.velocityX -= spring.offsetX * this.INTENSITY;
                 spring.a.velocityY -= spring.offsetY * this.INTENSITY;
             }
-        });
+        }
 
         this.step(0);
     }
@@ -881,24 +825,24 @@ class WobblyModel {
             this.friction = 10;
         }
 
-        this.springs.forEach(spring => {
-            if (spring.a == this.immobileObject) {
+        for (let i = this.springs.length - 1, spring; i >= 0, spring = this.springs[i]; --i) {
+            if (spring.a === this.immobileObject) {
                 spring.b.velocityX -= spring.offsetX * this.INTENSITY;
                 spring.b.velocityY -= spring.offsetY * this.INTENSITY;
-            } else if (spring.b == this.immobileObject) {
+            } else if (spring.b === this.immobileObject) {
                 spring.a.velocityX -= spring.offsetX * this.INTENSITY;
                 spring.a.velocityY -= spring.offsetY * this.INTENSITY;
             }
-        });
+        }
         
         this.step(0);
     }
 
     step(steps) {
-        let movementStep = false, springForce, j, spring, object;
+        let i, j, spring, object, springForce, movementStep = false;
 
         for (j = steps; j >= 0; --j) {
-            this.springs.forEach(spring => {
+            for (i = this.springs.length - 1; i >= 0, spring = this.springs[i]; --i) {
                 springForce = this.springK * (spring.b.x - spring.a.x - spring.offsetX);
                 spring.a.forceX += springForce;
                 spring.b.forceX -= springForce;
@@ -906,9 +850,9 @@ class WobblyModel {
                 springForce = this.springK * (spring.b.y - spring.a.y - spring.offsetY);
                 spring.a.forceY += springForce;
                 spring.b.forceY -= springForce;
-            });
+            }
 
-            this.objects.forEach(object => {
+            for (i = this.objects.length - 1; i >= 0, object = this.objects[i]; --i) {
                 if (!object.immobile) {
                     object.forceX -= this.friction * object.velocityX;
                     object.forceY -= this.friction * object.velocityY;
@@ -922,7 +866,7 @@ class WobblyModel {
                     object.forceX = 0;
                     object.forceY = 0;
                 }
-            });
+            }
         }
 
         this.movement = movementStep;
@@ -931,13 +875,5 @@ class WobblyModel {
     move(deltaX, deltaY) {
         this.immobileObject.x += deltaX;
         this.immobileObject.y += deltaY;
-    }
-
-    resize(sizeX, sizeY) {
-        this.width = sizeX;
-        this.height = sizeY;
-
-        this.updateObjects();
-        this.initSprings();
     }
 }

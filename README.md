@@ -1,14 +1,14 @@
 # NyarchLinux
+<div align="center">
+   <img src="https://user-images.githubusercontent.com/67018178/219306815-448eea25-d0f3-4512-8d4f-f8167e21841a.png" width="300px" style="margin:auto;"/>
+
 ![](https://img.shields.io/github/v/release/NyarchLinux/NyarchLinux?include_prereleases&label=Nyarch%20Release&style=for-the-badge)
 ![](https://img.shields.io/github/stars/nyarchlinux/nyarchlinux?style=for-the-badge)
 ![](https://img.shields.io/github/license/nyarchlinux/nyarchlinux?color=green&style=for-the-badge)
 [![](https://img.shields.io/badge/Website-nyarchlinux.moe-%23e32b6b?style=for-the-badge&logoColor=C689C6)](https://nyarchlinux.moe)
+   <h3><b>Nyarch Linux</b> is a Linux distribution <b>made for weebs</b>, based on ArchLinux and EzArcher.</h3><br />
 
-
-<div align="center">
-   <img src="https://user-images.githubusercontent.com/67018178/219306815-448eea25-d0f3-4512-8d4f-f8167e21841a.png" width="300px" style="margin:auto;"/>
 </div>
-<h5><b>Nyarch Linux</b> is a Linux distribution <b>made for weebs</b>, based on ArchLinux and EzArcher.</h5><br />
 
 ## Is it safe to use?
 It is strongly suggested to <b>do not use this Linux distribution as daily drive</b>, since it is not made by a team of experts and there are way better distros out there. <br />
@@ -26,6 +26,7 @@ We opted for Gnome as first spin because of these reasons:
 - GTK applications and Gnome itself are very touch friendly and laptop friendly, these devices are often used to consume multimedia content, so anime, mangas, VNs, and LNs.
 - Gnome is very elegant and modern, but very customizable at the same time, giving a good image of linux desktop.
 - GTK applications look very coherent between them
+
 However, there are also some cons:
 - It is very different from what Windows has used users to, making it look complex for some (partially solved by Nyarch Customize)
 - Gnome extensions often get broken after Gnome updates (it is a pretty big issue considering the rolling release nature of the distribution)

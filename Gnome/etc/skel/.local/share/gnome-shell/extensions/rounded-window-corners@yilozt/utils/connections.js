@@ -16,16 +16,34 @@ var Connections = class Connections {
      */
     this.connections = new Map ()
   }
-  connect (source, ...[signal, cb]) {
+
+  /**
+   * Handler signal for a GObject
+   *
+   * ### Example:
+   *
+   * ```typescript
+   * const manager = new Connections ()
+   * manager.connect (global.window_manager, 'destroy', (wm, actor) =>
+   *     console.log (`${actor} has been removed`)
+   * )
+   * ```
+   * @param source - Signal source
+   * @param args - Arguments pass into GObject.Object.connect()
+   */
+  connect (source, ...args) {
+    const signal = args[0]
+    const id = source.connect (args[0], args[1])
+
     // Source has been added into manager
     {
       const handlers = this.connections.get (source)
       if (handlers !== undefined) {
         if (handlers[signal] !== undefined) {
-          handlers[signal].push (source.connect (signal, cb))
+          handlers[signal].push (id)
           return
         } else {
-          handlers[signal] = [source.connect (signal, cb)]
+          handlers[signal] = [id]
           return
         }
       }
@@ -33,7 +51,7 @@ var Connections = class Connections {
 
     // Source is first time register signal
     const handlers = {}
-    handlers[signal] = [source.connect (signal, cb)]
+    handlers[signal] = [id]
     this.connections.set (source, handlers)
   }
   /** Disconnect signal for source */

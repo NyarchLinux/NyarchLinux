@@ -343,7 +343,7 @@ gnome-session
 gnome-settings-daemon
 gnome-shell
 gnome-shell-extensions
-gnome-software-packagekit-plugin
+gnome-software
 gnome-system-monitor
 # gnome-terminal
 gnome-text-editor
@@ -406,6 +406,33 @@ calamares
 ckbcomp
 mkinitcpio-openswap
 glibc
+boost
+boost-libs
+extra-cmake-modules
+gtk-update-icon-cache
+icu
+kconfig
+kcoreaddons
+kdbusaddons
+kiconthemes
+ki18n
+kio
+kparts
+kpmcore
+kservice
+kwidgetsaddons
+libpwquality
+plasma-framework
+polkit-qt5
+qt5-location
+qt5-svg
+qt5-tools
+qt5-translations
+qt5-webengine
+qt5-xmlpatterns
+qt5ct
+solid
+yaml-cpp
 
 # AUR
 trizen
@@ -422,6 +449,7 @@ opencl-nvidia
 vulkan-icd-loader
 
 # Nyarch
+python-pywal
 neofetch
 nodejs
 npm
@@ -431,11 +459,10 @@ kitty
 vte3
 gnome-terminal-transparency
 plymouth
-gdm-plymouth
-libgdm-plymouth
 libdrm
 pango
 btop
+aura-bin
 
 # Webapp Manager
 python-beautifulsoup4

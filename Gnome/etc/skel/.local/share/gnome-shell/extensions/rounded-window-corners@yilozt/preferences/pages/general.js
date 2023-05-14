@@ -101,8 +101,8 @@ var General = GObject.registerClass (
       })
 
       const c = connections.get ()
-      c.connect (this._border_color_button, 'color-set', (source) => {
-        const color = source.get_rgba ()
+      c.connect (this._border_color_button, 'color-set', (btn) => {
+        const color = btn.get_rgba ()
         settings ().border_color = [
           color.red,
           color.green,

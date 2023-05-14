@@ -124,8 +124,8 @@ navigation: widget
 strings:
     productName:         "@{NAME}"
     shortProductName:    nyarch
-    version:             23.02
-    shortVersion:        23.02
+    version:             23.05
+    shortVersion:        23.05
     versionedName:       Nyarch Linux
     shortVersionedName:  Nyarch Linux
     bootloaderEntryName: nyarch
@@ -166,8 +166,8 @@ images:
     # productBanner:       "banner.png"
     productIcon:         "squid.png"
     productLogo:         "logo.png"
-    productWallpaper:    "wallpaper.png"
-    productWelcome:      "languages.png"
+    #productWallpaper:    "wallpaper.png"
+    productWelcome:      "welcome.png"
 
 # Colors for text and background components.
 #
