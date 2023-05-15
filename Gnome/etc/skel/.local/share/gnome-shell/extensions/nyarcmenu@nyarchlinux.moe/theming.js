@@ -118,9 +118,7 @@ async function updateStylesheet(settings){
         log('ArcMenu - Warning: Custom stylesheet not found! Unable to set contents of custom stylesheet.');
         return;
     }
-    log("AESDFS1");
     blurMyShell = Main.extensionManager.lookup(Constants.BLUR_MY_SHELL_UUID);
-    log("AESDFS2");
     //const ctx = St.ThemeContext.get_for_stage(global.stage);
     unloadStylesheet();
     
