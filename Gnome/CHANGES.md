@@ -2,7 +2,7 @@
 Here are listed all the main changes done to EzArcher Gnome template, in order to replicate it on *almost* any distribution.
 
 - [x] Added Flatpak, Neofetch, Appimage Launcher and webapp-manager to packages
-- [ ] Added nvidia drivers
+- [ ] Added nvidia drivers (Nvidia Test branch)
 - [x] Deleted some packages that were considered useless
 - [x] Added /etc/os-release file
 - [x] Changed grub spalshscreen to https://www.reddit.com/r/LinuxFurries/comments/pcf0yp/i_made_a_dark_mode_of_the_nyarch_wallpaper_i_am/
@@ -13,16 +13,22 @@ Here are listed all the main changes done to EzArcher Gnome template, in order t
 - [x] Set wallpaper to upscaled version of [This wallpaper](https://wallhaven.cc/w/mpg7qk)
 - [x] Installed gnome extensions:
     - [x] Blur my shell
-    - [x] Material You
+    - [x] Material You (Modified version) that integrates
+        - [x] Customi color theming
+        - [x] Some patches for better behavoir on Nyarch 
+        - [x] Added pywal theming
     - [x] Nyarcmenu (custom)
+        - [x] SHips a modified version of Raven layout
+        - [x] Changes colors with material you extension 
     - [x] Compiz lamp effect
     - [x] Compiz windows effect
-    - [x] Bluethooth quick connect
     - [x] Rounded corners for windows
     - [x] Dash to panel
-    - [x] Dash to Dock for Cosmic
-    - [x] Desktop icons Neo
+    - [x] Dash to Dock
+    - [x] Desktop icons NG (Ding)
     - [x] Tray icons reloaded
+    - [x] Arch Linux Updates Indicator
+    - [x] Logo Background (From Fedora)
 - [x] Enable tap to click on touchpad in settings
 - [x] ~Nyaofetch, Nekofetch commands (alias of neofetch), aliased neofetch to show [this ASCII art](https://gist.github.com/jso8910/06e939e95bb0071f7a0d8f12a63c10ac).~
 - [x] Customized Calamares
@@ -31,8 +37,11 @@ Here are listed all the main changes done to EzArcher Gnome template, in order t
 - [x] Installed [Catgirl Downloader](https://github.com/NyarchLinux/CatgirlDownloader)
 - [x] Installed as Flatpak: [Komikku](https://valos.gitlab.io/Komikku/), [Shortwave](https://gitlab.gnome.org/World/Shortwave), [Lollypop](https://wiki.gnome.org/Apps/Lollypop), [Fragments](https://gitlab.gnome.org/World/Fragments)
 - [x] Autostart calamares at live boot, autostart Nyarch Tour on first boot
-- [ ] Install Plymouth and add theme
-- [x] Install gnome-terminal-trasparency instead 
+- [x] Install Plymouth and add theme
+- [x] Install gnome-terminal-trasparency 
 - [x] Added theming to Kitty
 - [x] Nyaofetch and Nekofetch changed into commands, that displays png if running from kitty, ascii else
 - [x] Created Nyarch Wizard to suggest some apps to install
+- [x] Installed AURA (package manager and AUR helper)
+- [x] Created an alias of Aura called Nyaura
+- [x] Installed pywal
