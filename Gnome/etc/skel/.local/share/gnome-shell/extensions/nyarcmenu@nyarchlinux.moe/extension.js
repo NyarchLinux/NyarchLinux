@@ -38,7 +38,11 @@ function init() {
 }
 
 async function reloadTheme() {
-    await new Promise(r => setTimeout(r, 1000));
+    try {
+        await new Promise(r => setTimeout(r, 400));
+    } catch (e) {
+        log(e);
+    }
     Theming.updateStylesheet(Me.settings);
 }
 let customUpdateState = function() {

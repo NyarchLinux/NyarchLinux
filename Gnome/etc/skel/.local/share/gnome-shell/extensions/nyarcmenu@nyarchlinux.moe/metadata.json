@@ -6,7 +6,7 @@
 "name": "NyArcMenu",
 "description": "Fork of ArcMenu, Application Menu Extension for GNOME",
 "version": 44,
-"commit": "5101de4ccbbe5626c3ee9d3908fdd0c2a4b58bd0",
+"commit": "d0f968807fc377503bedc1d4a2f6a8f5411374f3",
 "shell-version": [ "42", "43", "44" ],
 "url": "https://gitlab.com/arcmenu/ArcMenu"
 }
