@@ -1,0 +1,129 @@
+<schemalist gettext-domain="gnome-shell-extensions">
+  <schema id="org.gnome.shell.extensions.arch-update"
+      path="/org/gnome/shell/extensions/arch-update/">
+
+    <key type="i" name="boot-wait">
+        <default>15</default>
+        <summary>Time to wait before first check (seconds)</summary>
+        <description>A first check is made this number of seconds after startup</description>
+        <range min="5" max="5000"/>
+    </key>
+
+    <key type="i" name="check-interval">
+        <default>60</default>
+        <summary>Interval between updates check (minutes)</summary>
+        <description>Time to wait between two automatic checks</description>
+        <range min="30" max="2000"/>
+    </key>
+
+    <key name="always-visible" type="b">
+      <default>true</default>
+        <summary>Indicator is always visble</summary>
+        <description>
+            If true, the indicator is always visible, even when non updates are pending
+        </description>
+    </key>
+
+    <key name="use-buildin-icons" type="b">
+      <default>false</default>
+        <summary>Use build-in icons</summary>
+        <description>
+            If true, the build-in status icons are used instead of theme icons
+        </description>
+    </key>
+
+    <key name="show-count" type="b">
+      <default>true</default>
+        <summary>Show updates count on indicator</summary>
+        <description>
+            If true, the indicator will display the number of updates pending
+        </description>
+    </key>
+
+    <key name="notify" type="b">
+      <default>false</default>
+        <summary>Send a notification when new updates are available</summary>
+        <description>Send a notification when new updates are available</description>
+    </key>
+
+    <key name="howmuch" type="i">
+      <default>0</default>
+        <summary>How much information to show on notifications</summary>
+        <description>0:count, 1:list</description>
+    </key>
+
+    <key name="transient" type="b">
+      <default>true</default>
+        <summary>Use transient notifications (auto dismiss)</summary>
+        <description></description>
+    </key>
+
+    <key name="check-cmd" type="s">
+      <default>"/usr/bin/checkupdates"</default>
+      <summary>Command to run to check for updated packages.</summary>
+      <description>Command to run to check for updated packages.</description>
+    </key>
+
+    <key name="update-cmd" type="s">
+      <default>"gnome-terminal -- /bin/sh -c \"sudo pacman -Syu ; echo Done - Press enter to exit; read _\" "</default>
+      <summary>Command to run to update packages.</summary>
+      <description>Command to run to update packages.</description>
+    </key>
+
+    <key name="pacman-dir" type="s">
+      <default>"/var/lib/pacman/local"</default>
+        <summary>Pacman directory to monitor</summary>
+        <description></description>
+    </key>
+
+    <key name="strip-versions" type="b">
+      <default>false</default>
+        <summary>Remove version numbers from checkupdates output</summary>
+        <description></description>
+    </key>
+
+    <key name="strip-versions-in-notification" type="b">
+      <default>true</default>
+        <summary>Remove version numbers in notifications</summary>
+        <description></description>
+    </key>
+
+    <key name="disable-parsing" type="b">
+      <default>false</default>
+        <summary>Disable output parsing to tell updates from titles and pretty display</summary>
+        <description></description>
+    </key>
+
+    <key name="auto-expand-list" type="i">
+      <default>0</default>
+        <summary>Auto-open list submenu when updates count is lower than this number</summary>
+        <description></description>
+        <range min="0" max="100"/>
+    </key>
+
+    <key name="package-manager" type="s">
+      <default>""</default>
+      <summary>Command to run to open package manager.</summary>
+      <description></description>
+    </key>
+
+    <key name="enable-positioning" type="b">
+      <default>false</default>
+      <summary>Enable setting position in the panel</summary>
+      <description>True to enable</description>
+    </key>
+
+    <key name="position" type="i">
+      <default>2</default>
+      <summary>Position in the panel</summary>
+      <description>Position where the arch update will be displayed (left/center/right)</description>
+    </key>
+
+    <key name="position-number" type="i">
+      <default>-0</default>
+      <summary>Position of the arch update inside the box</summary>
+      <description></description>
+    </key>
+
+  </schema>
+</schemalist>

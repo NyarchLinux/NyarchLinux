@@ -1,6 +1,6 @@
 [org/gnome/shell]
 disabled-extensions=['workspace-indicator@gnome-shell-extensions.gcampax.github.com', 'compiz-windows-effect@hermes83.github.com', 'desktop-cube@schneegans.github.com', 'color-picker@tuberry', 'dash-to-dock-cosmic-@halfmexicanhalfamazing@gmail.com']
-enabled-extensions=['compiz-alike-magic-lamp-effect@hermes83.github.com', 'user-theme@gnome-shell-extensions.gcampax.github.com', 'material-you-theme@asubbiah.com', 'rounded-window-corners@yilozt', 'Rounded_Corners@lennart-k', 'bluetooth-quick-connect@bjarosze.gmail.com', 'gsconnect@andyholmes.github.io', 'dash-to-panel@jderose9.github.com', 'nyarcmenu@nyarchlinux.moe', 'blur-my-shell@aunetx', 'background-logo@fedorahosted.org']
+enabled-extensions=['arch-update@RaphaelRochet', 'compiz-alike-magic-lamp-effect@hermes83.github.com', 'user-theme@gnome-shell-extensions.gcampax.github.com', 'material-you-theme@asubbiah.com', 'rounded-window-corners@yilozt', 'Rounded_Corners@lennart-k', 'bluetooth-quick-connect@bjarosze.gmail.com', 'gsconnect@andyholmes.github.io', 'dash-to-panel@jderose9.github.com', 'nyarcmenu@nyarchlinux.moe', 'blur-my-shell@aunetx', 'background-logo@fedorahosted.org']
 disable-extension-version-validation=true
 
 [org/gnome/shell/extensions/arcmenu]
@@ -79,3 +79,6 @@ logo-file-dark='/etc/skel/.config/neofetch/logo.png'
 logo-position='bottom-right'
 logo-opacity=uint32 137
 logo-size=10.485232067510548
+
+[org/gnome/shell/extensions/arch-update]
+always-visible=false

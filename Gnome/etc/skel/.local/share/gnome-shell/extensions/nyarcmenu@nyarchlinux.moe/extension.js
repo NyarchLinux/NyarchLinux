@@ -39,7 +39,7 @@ function init() {
 
 async function reloadTheme() {
     try {
-        await new Promise(r => setTimeout(r, 1000));
+        await new Promise(r => setTimeout(r, 400));
     } catch (e) {
         log(e);
     }

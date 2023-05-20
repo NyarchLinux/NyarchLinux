@@ -1,0 +1,369 @@
+<?xml version="1.0"?>
+<!--
+    This file is part of Arch Linux Updates Indicator
+
+    Arch Linux Updates Indicator is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Arch Linux Updates Indicator is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Arch Linux Updates Indicator.  If not, see <http://www.gnu.org/licenses/>.
+
+    Copyright 2016-2022 Raphaël Rochet
+-->
+<interface domain="arch-update">
+
+<object class="GtkAdjustment" id="Adjust_1">
+	<property name="lower">5</property>
+	<property name="upper">5000</property>
+	<property name="step_increment">1</property>
+</object>
+<object class="GtkAdjustment" id="Adjust_2">
+	<property name="lower">30</property>
+	<property name="upper">2000</property>
+	<property name="step_increment">30</property>
+</object>
+<object class="GtkAdjustment" id="Adjust_3">
+	<property name="lower">0</property>
+	<property name="upper">99</property>
+	<property name="step_increment">1</property>
+</object>
+<object class="GtkAdjustment" id="Adjust_4">
+	<property name="lower">0</property>
+	<property name="upper">99</property>
+	<property name="step_increment">1</property>
+</object>
+
+<object class="AdwPreferencesPage" id="page_basic">
+	<property name="title" translatable="yes">Basic settings</property>
+	<property name="icon-name">preferences-system-symbolic</property>
+
+	<child>
+		<object class="AdwPreferencesGroup">
+			<property name="title" translatable="yes">Checking for updates</property>
+			<child>
+				<object class="AdwActionRow">
+					<property name="title" translatable="yes">Time to wait before first check (seconds)</property>
+					<property name="activatable-widget">field_wait</property>
+					<child>
+						<object class="GtkSpinButton" id="field_wait">
+							<property name="valign">3</property>
+							<property name="adjustment">Adjust_1</property>
+						</object>
+					</child>
+				</object>
+			</child>
+			<child>
+				<object class="AdwActionRow">
+					<property name="title" translatable="yes">Interval between updates check (minutes)</property>
+					<property name="activatable-widget">field_interval</property>
+					<child>
+						<object class="GtkSpinButton" id="field_interval">
+							<property name="valign">3</property>
+							<property name="adjustment">Adjust_2</property>
+						</object>
+					</child>
+				</object>
+			</child>
+		</object>
+	</child>
+
+	<child>
+		<object class="AdwPreferencesGroup">
+			<property name="title" translatable="yes">Indicator</property>
+			<child>
+				<object class="AdwActionRow">
+					<property name="title" translatable="yes">Always visible</property>
+					<property name="activatable-widget">field_visible</property>
+					<child>
+						<object class="GtkSwitch" id="field_visible">
+							<property name="valign">3</property>
+							<property name="active">true</property>
+						</object>
+					</child>
+				</object>
+			</child>
+			<child>
+				<object class="AdwActionRow">
+					<property name="title" translatable="yes">Use built-in icons</property>
+					<property name="activatable-widget">field_buildinicons</property>
+					<child>
+						<object class="GtkSwitch" id="field_buildinicons">
+							<property name="valign">3</property>
+							<property name="active">true</property>
+						</object>
+					</child>
+				</object>
+			</child>
+			<child>
+				<object class="AdwActionRow">
+					<property name="title" translatable="yes">Show updates count on indicator</property>
+					<property name="activatable-widget">field_count</property>
+					<child>
+						<object class="GtkSwitch" id="field_count">
+							<property name="valign">3</property>
+							<property name="active">true</property>
+						</object>
+					</child>
+				</object>
+			</child>
+			<child>
+				<object class="AdwActionRow">
+					<property name="title" translatable="yes">Position in Panel</property>
+					<property name="activatable-widget">field_enablepositioning</property>
+					<child type="prefix">
+						<object class="GtkSwitch" id="field_enablepositioning">
+							<property name="valign">3</property>
+							<property name="active">false</property>
+						</object>
+					</child>
+					<child>
+						<object class="GtkBox" id="box_position">
+							<property name="spacing">12</property>
+							<property name="margin-start">12</property>
+							<property name="hexpand">false</property>
+							<property name="sensitive">false</property>
+							<child>
+								<object class="GtkComboBoxText" id="field_position">
+									<property name="valign">3</property>
+									<items>
+										<item translatable="yes" id="0">Left</item>
+										<item translatable="yes" id="1">Center</item>
+										<item translatable="yes" id="2">Right</item>
+									</items>
+								</object>
+							</child>
+							<child>
+								<object class="GtkSpinButton" id="field_positionnumber">
+									<property name="valign">3</property>
+									<property name="adjustment">Adjust_4</property>
+								</object>
+							</child>
+						</object>
+					</child>
+				</object>
+			</child>
+		</object>
+	</child>
+
+	<child>
+		<object class="AdwPreferencesGroup">
+			<property name="title" translatable="yes">Menu</property>
+			<child>
+				<object class="AdwActionRow">
+					<property name="title" translatable="yes">Auto-expand updates list if updates count is less than this number (0 to disable)</property>
+					<property name="activatable-widget">field_autoexpandlist</property>
+					<child>
+						<object class="GtkSpinButton" id="field_autoexpandlist">
+							<property name="valign">3</property>
+							<property name="adjustment">Adjust_3</property>
+						</object>
+					</child>
+				</object>
+			</child>
+			<child>
+				<object class="AdwActionRow">
+					<property translatable="yes" name="title">Strip out versions numbers</property>
+					<property name="activatable-widget">field_stripversions</property>
+					<child>
+						<object class="GtkSwitch" id="field_stripversions">
+							<property name="valign">3</property>
+							<property name="active">false</property>
+						</object>
+					</child>
+				</object>
+			</child>
+		</object>
+	</child>
+
+	<child>
+		<object class="AdwPreferencesGroup">
+			<property name="title" translatable="yes">Notification</property>
+				<child>
+					<object class="AdwActionRow">
+						<property name="title" translatable="yes">Send a notification when new updates are available</property>
+						<property name="activatable-widget">field_notify</property>
+						<child>
+							<object class="GtkSwitch" id="field_notify">
+								<property name="valign">3</property>
+								<property name="active">true</property>
+							</object>
+						</child>
+					</object>
+				</child>
+				<child>
+					<object class="AdwActionRow">
+						<property translatable="yes" name="title">Use transient notifications (auto dismiss)</property>
+						<property name="activatable-widget">field_transient</property>
+						<child>
+							<object class="GtkSwitch" id="field_transient">
+								<property name="valign">3</property>
+								<property name="active">true</property>
+							</object>
+						</child>
+					</object>
+				</child>
+				<child>
+					<object class="AdwActionRow">
+						<property translatable="yes" name="title">How much information to show on notifications</property>
+						<property name="activatable-widget">field_howmuch</property>
+						<child>
+							<object class="GtkComboBoxText" id="field_howmuch">
+								<property name="valign">3</property>
+								<items>
+									<item translatable="yes" id="0">Count only</item>
+									<item translatable="yes" id="1">New updates names</item>
+									<item translatable="yes" id="2">All updates names</item>
+								</items>
+							</object>
+						</child>
+					</object>
+				</child>
+				<child>
+					<object class="AdwActionRow">
+						<property translatable="yes" name="title">Strip out versions numbers</property>
+						<property name="activatable-widget">field_stripversionsnotifications</property>
+						<child>
+							<object class="GtkSwitch" id="field_stripversionsnotifications">
+								<property name="valign">3</property>
+								<property name="active">false</property>
+							</object>
+						</child>
+					</object>
+				</child>
+		</object>
+	</child>
+
+</object>
+<object class="AdwPreferencesPage" id="page_advanced">
+	<property name="title" translatable="yes">Advanced settings</property>
+	<property name="icon-name">preferences-other-symbolic</property>
+
+	<child>
+		<object class="AdwPreferencesGroup">
+			<property name="title" translatable="yes">Command to check for package updates</property>
+			<child>
+				<object class="AdwActionRow">
+					<property name="activatable-widget">field_checkcmd</property>
+					<property name="child">
+						<object class="GtkEntry" id="field_checkcmd">
+						</object>
+					</property>
+				</object>
+			</child>
+			<child>
+				<object class="AdwActionRow">
+					<property name="title" translatable="yes">Disable output parsing, count every line as an update. This is the old behavior.</property>
+					<property name="activatable-widget">field_disableparsing</property>
+					<child type="prefix">
+						<object class="GtkSwitch" id="field_disableparsing">
+							<property name="valign">3</property>
+						</object>
+					</child>
+				</object>
+			</child>
+		</object>
+	</child>
+
+	<child>
+		<object class="AdwPreferencesGroup">
+			<property name="title" translatable="yes">Command to update packages</property>
+			<child>
+				<object class="AdwActionRow">
+					<property name="activatable-widget">field_updatecmd</property>
+					<property name="child">
+						<object class="GtkEntry" id="field_updatecmd">
+						</object>
+					</property>
+				</object>
+			</child>
+		</object>
+	</child>
+
+	<child>
+		<object class="AdwPreferencesGroup">
+			<property name="title" translatable="yes">Pacman local directory path - To detect when new packages are installed</property>
+			<child>
+				<object class="AdwActionRow">
+					<property name="activatable-widget">field_pacmandir</property>
+					<property name="child">
+						<object class="GtkEntry" id="field_pacmandir">
+						</object>
+					</property>
+				</object>
+			</child>
+		</object>
+	</child>
+
+	<child>
+		<object class="AdwPreferencesGroup">
+			<property name="title" translatable="yes">Command to open package manager (optional)</property>
+			<child>
+				<object class="AdwActionRow">
+					<property name="activatable-widget">field_packagemanager</property>
+					<property name="child">
+						<object class="GtkEntry" id="field_packagemanager">
+						</object>
+					</property>
+				</object>
+			</child>
+		</object>
+	</child>
+
+</object>
+<object class="AdwPreferencesPage" id="page_about">
+	<property name="title" translatable="yes">About</property>
+	<property name="icon-name">help-about-symbolic</property>
+
+	<child>
+		<object class="AdwPreferencesGroup">
+			<child>
+				<object class="GtkBox">
+					<property name="orientation">vertical</property>
+					<property name="margin-top">12</property>
+					<property name="margin-bottom">12</property>
+					<property name="spacing">32</property>
+					<child>
+						<object class="GtkImage" id="about_logo">
+							<property name="height-request">128</property>
+						</object>
+					</child>
+					<child>
+						<object class="GtkBox">
+							<property name="orientation">horizontal</property>
+							<property name="halign">3</property>
+							<property name="spacing">12</property>
+							<child>
+								<object class="GtkLabel" id="about_name">
+								</object>
+							</child>
+							<child>
+								<object class="GtkLabel" id="about_version">
+								</object>
+							</child>
+						</object>
+					</child>
+					<child>
+						<object class="GtkLabel" id="about_description">
+							<property name="wrap">true</property>
+							<property name="justify">GTK_JUSTIFY_CENTER</property>
+						</object>
+					</child>
+					<child>
+						<object class="GtkLabel" id="about_url">
+						</object>
+					</child>
+				</object>
+			</child>
+		</object>
+	</child>
+
+</object>
+
+</interface>
