@@ -11,7 +11,7 @@
 
 'use strict';
 
-const {Clutter, GObject, GdkPixbuf, Cogl, Shell} = imports.gi;
+const {Clutter, Gio, GObject, GdkPixbuf, Cogl, Shell} = imports.gi;
 
 const Main = imports.ui.main;
 
@@ -42,19 +42,17 @@ var SkyboxEffect = GObject.registerClass({
   _init(file) {
     super._init();
 
-    const FORMATS = [
-      Cogl.PixelFormat.G_8,
-      Cogl.PixelFormat.RG_88,
-      Cogl.PixelFormat.RGB_888,
-      Cogl.PixelFormat.RGBA_8888,
-    ];
+    this._texture = null;
 
     // Attempt to load the texture.
-    const textureData = GdkPixbuf.Pixbuf.new_from_file(file);
-    this._texture     = new Clutter.Image();
-    this._texture.set_data(textureData.get_pixels(),
-                           FORMATS[textureData.get_n_channels() - 1], textureData.width,
-                           textureData.height, textureData.rowstride);
+    this._loadTexture(file)
+      .then(texture => {
+        this._texture = texture;
+        this.queue_repaint();
+      })
+      .catch(error => {
+        utils.debug(error);
+      });
 
     // Redraw if either the pitch or the yaw changes.
     this.connect('notify::yaw', () => {this.queue_repaint()});
@@ -107,13 +105,40 @@ var SkyboxEffect = GObject.registerClass({
 
   // For each draw call, we have to set some uniform values.
   vfunc_paint_target(node, paintContext) {
-    this.get_pipeline().set_layer_texture(0, this._texture.get_texture());
+    if (this._texture) {
+      this.get_pipeline().set_layer_texture(0, this._texture.get_texture());
+      this.set_uniform_float(this.get_uniform_location('uTexture'), 1, [0]);
+      this.set_uniform_float(this.get_uniform_location('uPitch'), 1, [this.pitch]);
+      this.set_uniform_float(this.get_uniform_location('uYaw'), 1, [this.yaw]);
 
-    this.set_uniform_float(this.get_uniform_location('uTexture'), 1, [0]);
-    this.set_uniform_float(this.get_uniform_location('uPitch'), 1, [this.pitch]);
-    this.set_uniform_float(this.get_uniform_location('uYaw'), 1, [this.yaw]);
+      super.vfunc_paint_target(node, paintContext);
+    }
+  }
 
-    super.vfunc_paint_target(node, paintContext);
+  // Load a texture asynchronously.
+  async _loadTexture(file) {
+    return new Promise((resolve, reject) => {
+      const stream = Gio.File.new_for_path(file).read(null);
+      GdkPixbuf.Pixbuf.new_from_stream_async(stream, null, (obj, result) => {
+        const FORMATS = [
+          Cogl.PixelFormat.G_8,
+          Cogl.PixelFormat.RG_88,
+          Cogl.PixelFormat.RGB_888,
+          Cogl.PixelFormat.RGBA_8888,
+        ];
+
+        try {
+          const pixbuf  = GdkPixbuf.Pixbuf.new_from_stream_finish(result);
+          const texture = new Clutter.Image();
+          texture.set_data(pixbuf.get_pixels(), FORMATS[pixbuf.get_n_channels() - 1],
+                           pixbuf.get_width(), pixbuf.get_height(),
+                           pixbuf.get_rowstride());
+          resolve(texture);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
   }
 });
 
