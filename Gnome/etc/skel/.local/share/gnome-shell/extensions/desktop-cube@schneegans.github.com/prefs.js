@@ -105,7 +105,7 @@ var PreferencesDialog = class PreferencesDialog {
       addAction('bugs',          'https://github.com/Schneegans/Desktop-Cube/issues');
       addAction('donate-kofi',   'https://ko-fi.com/schneegans');
       addAction('donate-github', 'https://github.com/sponsors/Schneegans');
-      addAction('donate-paypal', 'https://www.paypal.com/donate/?hosted_button_id=3F7UFL8KLVPXE');
+      addAction('donate-paypal', 'https://www.paypal.me/simonschneegans');
       // clang-format on
 
       // Add the about dialog.
