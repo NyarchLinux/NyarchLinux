@@ -14,5 +14,5 @@ extra-cmake-modules git boost qt5-tools qt5-translations
 
 
 getting-started-archiso.txt
-# Revision: 2022.12.06 -- by eznix (https://sourceforge.net/projects/ezarch/)
+# Revision: 2023.07.07 -- by eznix (https://sourceforge.net/projects/ezarch/)
 # (GNU/General Public License version 3.0)

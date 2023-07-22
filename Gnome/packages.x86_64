@@ -394,6 +394,7 @@ plasma-framework
 polkit-qt5
 qt5-location
 qt5-svg
+qt5-tools
 qt5-translations
 qt5-webengine
 qt5-xmlpatterns

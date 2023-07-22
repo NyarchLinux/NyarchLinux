@@ -12,6 +12,7 @@ The ezmaint script attempts to collect various common maintenance tasks that hel
   6) Clean user cache on next boot
   7) Enable Bluetooth service
   8) Enable Firewalld service
+  9) Enable Opensnitch service
 
   X) Exit
 
@@ -78,18 +79,24 @@ This option will create a systemd unit to delete all contents of the user's .cac
 
   systemctl enable --now bluetooth.service
 
-This command enables and starts the Bluetooth service.
+This command will enable and start the Bluetooth service.
 -----
 8. Enable Firewalld Service:
 
-systemctl enable firewalld.service
-systemctl start firewalld.service
+systemctl enable --now firewalld.service
 
-These commands enable and start the Firewalld service.
+This command will enable and start the Firewalld service.
+-----
+9. Enable Opensnitch Serivce:
+
+systemctl enable --now opensnitchd.service
+
+This command will enable and start the Opensnitch service.
+-----
 
 I hope these various functions come in handy. I must give credit to EF Tech Made Simple for his inspiration in the choice and implementation of these functions. Please view his video describing these maintenance tips here: https://youtu.be/wwSkFi3h2nI
 -----
 
 ezmaint-howto.txt
-# Revision: 2022.12.06 -- by eznix (https://sourceforge.net/projects/ezarch/)
+# Revision: 2023.07.07 -- by eznix (https://sourceforge.net/projects/ezarch/)
 # (GNU/General Public License version 3.0)
