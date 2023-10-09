@@ -312,8 +312,6 @@ system-config-printer
 # Gnome
 accountsservice
 adwaita-icon-theme
-adwaita-qt5
-adwaita-qt6
 baobab
 dconf-editor
 eog
