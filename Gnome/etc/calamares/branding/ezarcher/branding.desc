@@ -124,8 +124,8 @@ navigation: widget
 strings:
     productName:         "@{NAME}"
     shortProductName:    nyarch
-    version:             23.05
-    shortVersion:        23.05
+    version:             23.11
+    shortVersion:        23.11
     versionedName:       Nyarch Linux
     shortVersionedName:  Nyarch Linux
     bootloaderEntryName: nyarch
