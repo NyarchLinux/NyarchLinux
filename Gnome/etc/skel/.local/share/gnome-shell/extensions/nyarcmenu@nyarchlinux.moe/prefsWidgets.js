@@ -1,11 +1,14 @@
-/* exported DialogWindow, DragRow, EditEntriesBox,
-   IconGrid, MenuLayoutTile */
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-const {Adw, Gdk, GdkPixbuf, Gio, GLib, GObject, Gtk} = imports.gi;
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const _ = Gettext.gettext;
+import Adw from 'gi://Adw';
+import Gdk from 'gi://Gdk';
+import GdkPixbuf from 'gi://GdkPixbuf';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import Gtk from 'gi://Gtk';
 
-var DialogWindow = GObject.registerClass({
+import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
+
+export const DialogWindow = GObject.registerClass({
     Signals: {
         'response': {param_types: [GObject.TYPE_INT]},
     },
@@ -25,7 +28,7 @@ var DialogWindow = GObject.registerClass({
     }
 });
 
-var DragRow = GObject.registerClass({
+export const DragRow = GObject.registerClass({
     Properties: {
         'shortcut-name': GObject.ParamSpec.string(
             'shortcut-name', 'shortcut-name', 'shortcut-name',
@@ -205,7 +208,7 @@ const ModifyEntryType = {
     REMOVE: 2,
 };
 
-var EditEntriesBox = GObject.registerClass({
+export const EditEntriesBox = GObject.registerClass({
     Properties: {
         'allow-modify': GObject.ParamSpec.boolean(
             'allow-modify', 'allow-modify', 'allow-modify',
@@ -324,33 +327,104 @@ var EditEntriesBox = GObject.registerClass({
     }
 });
 
-var IconGrid = GObject.registerClass(class ArcMenuIconGrid extends Gtk.FlowBox {
-    _init() {
+export const IconGrid = GObject.registerClass(class ArcMenuIconGrid extends Gtk.FlowBox {
+    _init(spacing = 4) {
         super._init({
             max_children_per_line: 15,
-            row_spacing: 4,
-            column_spacing: 4,
+            row_spacing: spacing,
+            column_spacing: spacing,
             valign: Gtk.Align.START,
             halign: Gtk.Align.CENTER,
             homogeneous: true,
             selection_mode: Gtk.SelectionMode.SINGLE,
         });
+        this._spacing = spacing;
         this.childrenCount = 0;
+        this.connect('child-activated', (_self, child) => {
+            this.setActiveChild(child);
+        });
+    }
+
+    setActiveChild(child) {
+        if (this._previousSelectedChild)
+            this._previousSelectedChild.setActive(false);
+
+        child.setActive(true);
+        this._previousSelectedChild = child;
+    }
+
+    unselect_all() {
+        if (this._previousSelectedChild)
+            this._previousSelectedChild.setActive(false);
+        super.unselect_all();
+    }
+
+    select_child(child) {
+        this.setActiveChild(child);
+        super.select_child(child);
     }
 
     add(widget) {
         widget.margin_top = widget.margin_bottom =
-                widget.margin_start = widget.margin_end = 4;
+                widget.margin_start = widget.margin_end = this._spacing;
 
         this.append(widget);
         this.childrenCount++;
     }
 });
 
-var MenuLayoutTile = GObject.registerClass(class ArcMenuMenuLayoutTile extends Gtk.FlowBoxChild {
-    _init(name, file, layout) {
+export const MenuButtonIconTile = GObject.registerClass(class ArcMenuMenuButtonIconTile extends Gtk.FlowBoxChild {
+    _init(icon, name) {
         super._init({
-            css_classes: ['card'],
+            css_classes: ['card', 'activatable'],
+        });
+
+        const box = new Gtk.Box({
+            orientation: Gtk.Orientation.VERTICAL,
+            spacing: 4,
+            margin_top: 4,
+            margin_bottom: 4,
+            margin_start: 4,
+            margin_end: 4,
+        });
+        this.set_child(box);
+
+        const ICON_SIZE = 32;
+        this._image = new Gtk.Image({
+            gicon: Gio.icon_new_for_string(icon),
+            pixel_size: ICON_SIZE,
+        });
+
+        this._label = new Gtk.Label({
+            label: name ? _(name) : '',
+            hexpand: true,
+            css_classes: ['caption'],
+            visible: !!name,
+        });
+
+        box.append(this._image);
+        box.append(this._label);
+    }
+
+    setIcon(icon) {
+        this._image.gicon = Gio.icon_new_for_string(icon);
+    }
+
+    setActive(active) {
+        if (active) {
+            this._image.css_classes = ['accent'];
+            this._label.css_classes = ['caption', 'accent'];
+        } else {
+            this._image.css_classes = [];
+            this._label.css_classes = ['caption'];
+        }
+    }
+});
+
+export const MenuLayoutTile = GObject.registerClass(class ArcMenuMenuLayoutTile extends Gtk.FlowBoxChild {
+    _init(styleInfo) {
+        super._init({
+            css_classes: ['card', 'activatable'],
             margin_top: 4,
             margin_bottom: 4,
             margin_start: 4,
@@ -368,16 +442,17 @@ var MenuLayoutTile = GObject.registerClass(class ArcMenuMenuLayoutTile extends G
         });
         this.set_child(box);
 
-        this.name = name;
-        this.layout = layout;
+        this.name = styleInfo.TITLE;
+        this.layout = styleInfo.LAYOUT;
 
         this._image = new Gtk.Image({
-            gicon: Gio.icon_new_for_string(file),
-            pixel_size: 115,
+            gicon: Gio.icon_new_for_string(styleInfo.IMAGE),
+            pixel_size: 145,
         });
 
         this._label = new Gtk.Label({
             label: _(this.name),
+            hexpand: true,
             css_classes: ['caption'],
         });
 

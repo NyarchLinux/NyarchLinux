@@ -1,19 +1,18 @@
-const GObject = imports.gi.GObject;
-const AppSystem = imports.gi.Shell.AppSystem;
-const WindowTracker = imports.gi.Shell.WindowTracker;
-const GLib = imports.gi.GLib;
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import GObject from 'gi://GObject';
+import Shell from 'gi://Shell';
+import GLib from 'gi://GLib';
 
-var AppManager = GObject.registerClass(
+export const AppManager = GObject.registerClass(
 	class AppManager extends GObject.Object {
-		_init(settings) {
-			this._settings = settings;
+		constructor(extension) {
+			super();
+			this._extension = extension;
 		}
 
 		leftClick(icon, event) {
 			let trayApp = this._getTrayApp(icon);
 			if (trayApp) {
-				let focusedApp = WindowTracker.get_default().focusApp;
+				let focusedApp = Shell.WindowTracker.get_default().focusApp;
 				let windows = trayApp.get_windows();
 
 				if (windows == "") {
@@ -60,7 +59,7 @@ var AppManager = GObject.registerClass(
 			const iconApp = this._getTrayApp(icon);
 			if (iconApp) {
 				const appsSettings = JSON.parse(
-					this._settings.get_string("applications")
+					this._extension._settings.get_string("applications")
 				);
 				const appSettings = appsSettings.find(
 					(app) => app.id == iconApp.get_id()
@@ -73,7 +72,7 @@ var AppManager = GObject.registerClass(
 		isWine(icon) {
 			if (
 				(icon.wm_class == "Wine" || icon.wm_class == "explorer.exe") &&
-				this._settings.get_boolean("wine-behavior")
+				this._extension._settings.get_boolean("wine-behavior")
 			) {
 				return true;
 			}
@@ -81,7 +80,7 @@ var AppManager = GObject.registerClass(
 
 		_getTrayApp(icon) {
 			if (this.isWine(icon)) {
-				const wineApps = AppSystem.get_default()
+				const wineApps = Shell.AppSystem.get_default()
 					.get_running()
 					.filter((app) => {
 						return app.get_windows()[0].wm_class.includes(".exe");
@@ -89,11 +88,11 @@ var AppManager = GObject.registerClass(
 				return wineApps[0];
 			}
 
-			const searchedApps = AppSystem.search(this._getWmClass(icon.wm_class));
+			const searchedApps = Shell.AppSystem.search(this._getWmClass(icon.wm_class));
 			if (searchedApps[0] && searchedApps[0][0]) {
 				var i = 1;
 				for (let lookup of searchedApps[0]) {
-					let app = AppSystem.get_default().lookup_app(lookup);
+					let app = Shell.AppSystem.get_default().lookup_app(lookup);
 					if (app && (app.get_windows() != "" || i == searchedApps[0].length)) {
 						return app;
 					}
@@ -106,7 +105,7 @@ var AppManager = GObject.registerClass(
 
 		_openApplication(trayApp, icon, event) {
 			const isFlatpak = trayApp.app_info.has_key("X-Flatpak");
-			const onBlacklist = Me.metadata["open-blacklist"].includes(icon.wm_class); // Caprine
+			const onBlacklist = this._extension.metadata["open-blacklist"].includes(icon.wm_class); // Caprine
 			if (this._isUsingQt(this._getPid(icon)) || isFlatpak || onBlacklist) {
 				return icon.click(event);
 			}
@@ -126,7 +125,7 @@ var AppManager = GObject.registerClass(
 
 		_activateWindows(windows, trayApp, event) {
 			windows.forEach((window) => {
-				if (this._settings.get_boolean("invoke-to-workspace")) {
+				if (this._extension._settings.get_boolean("invoke-to-workspace")) {
 					window.change_workspace(
 						global.workspace_manager.get_active_workspace()
 					);

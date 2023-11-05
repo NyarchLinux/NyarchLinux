@@ -11,9 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const { LabPointProvider } = Me.imports.quantize.lab_point_provider;
+import {LabPointProvider} from "../quantize/lab_point_provider.js";
 
 const MAX_ITERATIONS = 10;
 const MIN_MOVEMENT_DISTANCE = 3.0;
@@ -34,7 +32,7 @@ const MIN_MOVEMENT_DISTANCE = 3.0;
 // namespace facilitates this.
 //
 // tslint:disable-next-line:class-as-namespace
-var QuantizerWsmeans = class QuantizerWsmeans {
+export var QuantizerWsmeans = class QuantizerWsmeans {
     /**
      * @param inputPixels Colors in ARGB format.
      * @param startingClusters Defines the initial state of the quantizer. Passing

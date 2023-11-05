@@ -1,17 +1,15 @@
-/* exported MenuButtonPage */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+import Adw from 'gi://Adw';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import Gtk from 'gi://Gtk';
 
-const {Adw, Gio, GLib, GObject, Gtk} = imports.gi;
-const Constants = Me.imports.constants;
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const PW = Me.imports.prefsWidgets;
-const {SettingsUtils} = Me.imports.settings;
-const _ = Gettext.gettext;
+import * as Constants from '../constants.js';
+import * as PW from '../prefsWidgets.js';
+import * as SettingsUtils from './SettingsUtils.js';
 
-const ICON_SIZE = 32;
+import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-var MenuButtonPage = GObject.registerClass(
+export const MenuButtonPage = GObject.registerClass(
 class ArcMenuMenuButtonPage extends Adw.PreferencesPage {
     _init(settings) {
         super._init({
@@ -208,6 +206,9 @@ class ArcMenuMenuButtonPage extends Adw.PreferencesPage {
         const buttonFGColorRow = this._createButtonColorRow(_('Foreground Color'), 'menu-button-fg-color');
         menuButtonGroup.add(buttonFGColorRow);
 
+        const buttonBGColorRow = this._createButtonColorRow(_('Background Color'), 'menu-button-bg-color');
+        menuButtonGroup.add(buttonBGColorRow);
+
         const buttonHoverBGColorRow = this._createButtonColorRow(`${_('Hover')} ${_('Background Color')}`, 'menu-button-hover-bg-color');
         menuButtonGroup.add(buttonHoverBGColorRow);
 
@@ -253,6 +254,7 @@ class ArcMenuMenuButtonPage extends Adw.PreferencesPage {
             this._settings.reset('custom-menu-button-icon');
             this._settings.reset('menu-button-position-offset');
             this._settings.reset('menu-button-fg-color');
+            this._settings.reset('menu-button-bg-color');
             this._settings.reset('menu-button-hover-bg-color');
             this._settings.reset('menu-button-hover-fg-color');
             this._settings.reset('menu-button-active-bg-color');
@@ -376,108 +378,84 @@ class ArcMenuArcMenuIconsDialogWindow extends PW.DialogWindow {
         this.set_default_size(475, 475);
         this.search_enabled = false;
 
-        const arcMenuIconsFlowBox = new PW.IconGrid();
         this.page.title = _('ArcMenu Icons');
         this.page.icon_name = 'icon-arcmenu-logo-symbolic';
-        arcMenuIconsFlowBox.connect('child-activated', () => {
-            distroIconsBox.unselect_all();
+
+        const arcMenuIconsFlowBox = new PW.IconGrid(2);
+        arcMenuIconsFlowBox.connect('child-activated', (_self, child) => {
+            distroIconsFlowBox.unselect_all();
             customIconFlowBox.unselect_all();
-            const selectedChild = arcMenuIconsFlowBox.get_selected_children();
-            const selectedChildIndex = selectedChild[0].get_index();
+
+            const selectedChildIndex = child.get_index();
             this._settings.set_enum('menu-button-icon', Constants.MenuIconType.MENU_ICON);
             this._settings.set_int('arc-menu-icon', selectedChildIndex);
         });
         this.pageGroup.add(arcMenuIconsFlowBox);
 
         Constants.MenuIcons.forEach(icon => {
-            let iconName = icon.PATH;
-
-            if (icon.PATH !== 'view-app-grid-symbolic')
-                iconName = iconName.replace(Constants.MenuIconsPath, '').replace('.svg', '');
-
-            const iconImage = new Gtk.Image({
-                icon_name: iconName,
-                pixel_size: ICON_SIZE,
-            });
-            arcMenuIconsFlowBox.add(iconImage);
+            const iconTile = new PW.MenuButtonIconTile(icon.PATH);
+            arcMenuIconsFlowBox.add(iconTile);
         });
 
         this.distroIconsPage = new Adw.PreferencesPage({
             title: _('Distro Icons'),
             icon_name: 'distro-gnome-symbolic',
         });
+        this.add(this.distroIconsPage);
+
         const distroIconsGroup = new Adw.PreferencesGroup();
         this.distroIconsPage.add(distroIconsGroup);
-        this.add(this.distroIconsPage);
-        const distroIconsBox = new PW.IconGrid();
-        distroIconsBox.connect('child-activated', () => {
+
+        const distroIconsFlowBox = new PW.IconGrid(2);
+        distroIconsFlowBox.connect('child-activated', (_self, child) => {
             arcMenuIconsFlowBox.unselect_all();
             customIconFlowBox.unselect_all();
-            const selectedChild = distroIconsBox.get_selected_children();
-            const selectedChildIndex = selectedChild[0].get_index();
+
+            const selectedChildIndex = child.get_index();
             this._settings.set_enum('menu-button-icon', Constants.MenuIconType.DISTRO_ICON);
             this._settings.set_int('distro-icon', selectedChildIndex);
         });
+
         Constants.DistroIcons.forEach(icon => {
-            let iconName = icon.PATH;
-
-            iconName = iconName.replace(Constants.DistroIconsPath, '').replace('.svg', '');
-
-            const box = new Gtk.Box({
-                orientation: Gtk.Orientation.VERTICAL,
-                spacing: 4,
-            });
-            box.append(new Gtk.Image({
-                icon_name: iconName,
-                pixel_size: ICON_SIZE,
-            }));
-            box.append(new Gtk.Label({
-                label: icon.NAME,
-                css_classes: ['caption'],
-            }));
-            distroIconsBox.add(box);
+            const iconTile = new PW.MenuButtonIconTile(icon.PATH, icon.NAME);
+            distroIconsFlowBox.add(iconTile);
         });
-        distroIconsGroup.add(distroIconsBox);
+        distroIconsGroup.add(distroIconsFlowBox);
 
         this.customIconPage = new Adw.PreferencesPage({
             title: _('Custom Icon'),
             icon_name: 'settings-customicon-symbolic',
         });
-        const customIconGroup = new Adw.PreferencesGroup();
-        this.customIconPage.add(customIconGroup);
         this.add(this.customIconPage);
 
-        const customIconBox = new Gtk.Box({
-            orientation: Gtk.Orientation.VERTICAL,
+        const customIconGroup = new Adw.PreferencesGroup();
+        this.customIconPage.add(customIconGroup);
+
+        const customIconFlowBox = new PW.IconGrid(2);
+        customIconFlowBox.set({
+            vexpand: false,
+            homogeneous: false,
         });
-        const customIconFlowBox = new PW.IconGrid();
-        customIconFlowBox.vexpand = false;
-        customIconFlowBox.homogeneous = false;
+        customIconGroup.add(customIconFlowBox);
+
         customIconFlowBox.connect('child-activated', () => {
             arcMenuIconsFlowBox.unselect_all();
-            distroIconsBox.unselect_all();
+            distroIconsFlowBox.unselect_all();
+
             const customIconPath = this._settings.get_string('custom-menu-button-icon');
             this._settings.set_string('custom-menu-button-icon', customIconPath);
             this._settings.set_enum('menu-button-icon', Constants.MenuIconType.CUSTOM);
         });
-        customIconBox.append(customIconFlowBox);
-        const customIconImage = new Gtk.Image({
-            gicon: Gio.icon_new_for_string(this._settings.get_string('custom-menu-button-icon')),
-            pixel_size: ICON_SIZE,
-        });
-        customIconFlowBox.add(customIconImage);
+
+        const customIconTile = new PW.MenuButtonIconTile(this._settings.get_string('custom-menu-button-icon'));
+        customIconFlowBox.add(customIconTile);
 
         const fileChooserFrame = new Adw.PreferencesGroup();
-        fileChooserFrame.margin_top = 20;
-        fileChooserFrame.margin_bottom = 20;
-        fileChooserFrame.margin_start = 20;
-        fileChooserFrame.margin_end = 20;
-        const fileChooserRow = new Adw.ActionRow({
-            title: _('Custom Icon'),
-        });
+        this.customIconPage.add(fileChooserFrame);
 
         const fileFilter = new Gtk.FileFilter();
         fileFilter.add_pixbuf_formats();
+
         const fileChooserButton = new Gtk.Button({
             label: _('Browse...'),
             valign: Gtk.Align.CENTER,
@@ -488,52 +466,49 @@ class ArcMenuArcMenuIconsDialogWindow extends PW.DialogWindow {
                 transient_for: this.get_root(),
                 modal: true,
                 action: Gtk.FileChooserAction.OPEN,
+                filter: fileFilter,
             });
-            if (dialog.get_parent())
-                dialog.unparent();
-            dialog.set_filter(fileFilter);
 
             dialog.add_button('_Cancel', Gtk.ResponseType.CANCEL);
             dialog.add_button('_Open', Gtk.ResponseType.ACCEPT);
 
-            dialog.connect('response', (self, response) => {
+            dialog.connect('response', (_self, response) => {
                 if (response === Gtk.ResponseType.ACCEPT) {
                     arcMenuIconsFlowBox.unselect_all();
-                    distroIconsBox.unselect_all();
-                    customIconImage.gicon = Gio.icon_new_for_string(dialog.get_file().get_path());
+                    distroIconsFlowBox.unselect_all();
+
+                    customIconTile.setIcon(dialog.get_file().get_path());
                     this._settings.set_string('custom-menu-button-icon', dialog.get_file().get_path());
                     this._settings.set_enum('menu-button-icon', Constants.MenuIconType.CUSTOM);
                     customIconFlowBox.select_child(customIconFlowBox.get_child_at_index(0));
-                    dialog.destroy();
-                } else {
-                    dialog.destroy();
                 }
+
+                dialog.destroy();
             });
             dialog.show();
         });
-
+        const fileChooserRow = new Adw.ActionRow({
+            title: _('Custom Icon'),
+        });
         fileChooserRow.add_suffix(fileChooserButton);
         fileChooserFrame.add(fileChooserRow);
-        customIconBox.append(fileChooserFrame);
-        customIconGroup.add(customIconBox);
 
-        if (this._settings.get_enum('menu-button-icon') === Constants.MenuIconType.MENU_ICON) {
-            const children = arcMenuIconsFlowBox.childrenCount;
-            for (let i = 0; i < children; i++) {
-                if (i === this._settings.get_int('arc-menu-icon')) {
-                    arcMenuIconsFlowBox.select_child(arcMenuIconsFlowBox.get_child_at_index(i));
-                    break;
-                }
-            }
-        } else if (this._settings.get_enum('menu-button-icon') === Constants.MenuIconType.DISTRO_ICON) {
-            const children = distroIconsBox.childrenCount;
-            for (let i = 0; i < children; i++) {
-                if (i === this._settings.get_int('distro-icon')) {
-                    distroIconsBox.select_child(distroIconsBox.get_child_at_index(i));
-                    break;
-                }
-            }
-        } else if (this._settings.get_enum('menu-button-icon') === Constants.MenuIconType.CUSTOM) {
+        arcMenuIconsFlowBox.unselect_all();
+        distroIconsFlowBox.unselect_all();
+        customIconFlowBox.unselect_all();
+
+        const menuButtonIconType = this._settings.get_enum('menu-button-icon');
+        if (menuButtonIconType === Constants.MenuIconType.MENU_ICON) {
+            const index = this._settings.get_int('arc-menu-icon');
+            const selectedChild = arcMenuIconsFlowBox.get_child_at_index(index);
+            arcMenuIconsFlowBox.select_child(selectedChild);
+            arcMenuIconsFlowBox._lastSelectedChild = selectedChild;
+        } else if (menuButtonIconType === Constants.MenuIconType.DISTRO_ICON) {
+            const index = this._settings.get_int('distro-icon');
+            const selectedChild = distroIconsFlowBox.get_child_at_index(index);
+            distroIconsFlowBox.select_child(selectedChild);
+            distroIconsFlowBox._lastSelectedChild = selectedChild;
+        } else if (menuButtonIconType === Constants.MenuIconType.CUSTOM) {
             customIconFlowBox.select_child(customIconFlowBox.get_child_at_index(0));
         }
 

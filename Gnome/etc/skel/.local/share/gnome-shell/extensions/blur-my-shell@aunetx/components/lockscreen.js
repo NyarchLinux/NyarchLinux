@@ -1,13 +1,8 @@
-'use strict';
-
-const { St, Shell } = imports.gi;
-const Main = imports.ui.main;
-const Background = imports.ui.background;
-const UnlockDialog = imports.ui.unlockDialog.UnlockDialog;
-
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-const ColorEffect = Me.imports.effects.color_effect.ColorEffect;
-const NoiseEffect = Me.imports.effects.noise_effect.NoiseEffect;
+import St from 'gi://St';
+import Shell from 'gi://Shell';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as Background from 'resource:///org/gnome/shell/ui/background.js';
+import { UnlockDialog } from 'resource:///org/gnome/shell/ui/unlockDialog.js';
 
 let sigma;
 let brightness;
@@ -21,30 +16,31 @@ const original_updateBackgroundEffects =
     UnlockDialog.prototype._updateBackgroundEffects;
 
 
-var LockscreenBlur = class LockscreenBlur {
-    constructor(connections, prefs) {
+export const LockscreenBlur = class LockscreenBlur {
+    constructor(connections, settings, effects_manager) {
         this.connections = connections;
-        this.prefs = prefs;
+        this.settings = settings;
+        this.effects_manager = effects_manager;
     }
 
     enable() {
         this._log("blurring lockscreen");
 
-        brightness = this.prefs.lockscreen.CUSTOMIZE
-            ? this.prefs.lockscreen.BRIGHTNESS
-            : this.prefs.BRIGHTNESS;
-        sigma = this.prefs.lockscreen.CUSTOMIZE
-            ? this.prefs.lockscreen.SIGMA
-            : this.prefs.SIGMA;
-        color = this.prefs.lockscreen.CUSTOMIZE
-            ? this.prefs.lockscreen.COLOR
-            : this.prefs.COLOR;
-        noise = this.prefs.lockscreen.CUSTOMIZE
-            ? this.prefs.lockscreen.NOISE_AMOUNT
-            : this.prefs.NOISE_AMOUNT;
-        lightness = this.prefs.lockscreen.CUSTOMIZE
-            ? this.prefs.lockscreen.NOISE_LIGHTNESS
-            : this.prefs.NOISE_LIGHTNESS;
+        brightness = this.settings.lockscreen.CUSTOMIZE
+            ? this.settings.lockscreen.BRIGHTNESS
+            : this.settings.BRIGHTNESS;
+        sigma = this.settings.lockscreen.CUSTOMIZE
+            ? this.settings.lockscreen.SIGMA
+            : this.settings.SIGMA;
+        color = this.settings.lockscreen.CUSTOMIZE
+            ? this.settings.lockscreen.COLOR
+            : this.settings.COLOR;
+        noise = this.settings.lockscreen.CUSTOMIZE
+            ? this.settings.lockscreen.NOISE_AMOUNT
+            : this.settings.NOISE_AMOUNT;
+        lightness = this.settings.lockscreen.CUSTOMIZE
+            ? this.settings.lockscreen.NOISE_LIGHTNESS
+            : this.settings.NOISE_LIGHTNESS;
 
         this.update_lockscreen();
     }
@@ -75,16 +71,16 @@ var LockscreenBlur = class LockscreenBlur {
         // store the scale in the effect in order to retrieve later
         blur_effect.scale = monitor.geometry_scale;
 
-        let color_effect = new ColorEffect({
+        let color_effect = global.blur_my_shell._lockscreen_blur.effects_manager.new_color_effect({
             name: 'color',
             color: color
-        });
+        }, this.settings);
 
-        let noise_effect = new NoiseEffect({
+        let noise_effect = global.blur_my_shell._lockscreen_blur.effects_manager.new_noise_effect({
             name: 'noise',
             noise: noise,
             lightness: lightness
-        });
+        }, this.settings);
 
         widget.add_effect(color_effect);
         widget.add_effect(noise_effect);
@@ -103,8 +99,8 @@ var LockscreenBlur = class LockscreenBlur {
 
     _updateBackgroundEffects() {
         for (const widget of this._backgroundGroup) {
-            const color_effect = widget.get_effect('blur');
-            const noise_effect = widget.get_effect('blur');
+            const color_effect = widget.get_effect('color');
+            const noise_effect = widget.get_effect('noise');
             const blur_effect = widget.get_effect('blur');
 
             if (color_effect)
@@ -165,7 +161,7 @@ var LockscreenBlur = class LockscreenBlur {
     }
 
     _log(str) {
-        if (this.prefs.DEBUG)
-            log(`[Blur my Shell > lockscreen]   ${str}`);
+        if (this.settings.DEBUG)
+            console.log(`[Blur my Shell > lockscreen]   ${str}`);
     }
 };

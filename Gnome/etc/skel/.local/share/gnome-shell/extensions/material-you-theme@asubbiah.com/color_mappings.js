@@ -1,4 +1,4 @@
-var color_mappings = {
+export var color_mappings = {
     default: {
         light: {
             accent_color: { color: "primary", opacity: 1 },
@@ -22,6 +22,22 @@ var color_mappings = {
             dialog_fg_color: { color: "onSecondaryContainer", opacity: 1 },
             popover_bg_color: { color: "secondaryContainer", opacity: 1 },
             popover_fg_color: { color: "onSecondaryContainer", opacity: 1 },
+            sidebar_bg_color: [
+              { color: "surface", opacity: 1},
+              { color: "primary", opacity: 0.08},
+            ],
+            sidebar_fg_color: [
+              { color: "onSurface", opacity: 1},
+              {color: "primary", opacity: 0.08},
+            ],
+            secondary_sidebar_bg_color: [
+              { color: "surface", opacity: 1},
+              { color: "primary", opacity: 0.08},
+            ],
+            secondary_sidebar_fg_color: [
+              { color: "onSurface", opacity: 1},
+              {color: "primary", opacity: 0.08},
+            ],
         },
         dark: {
             accent_color: { color: "primary", opacity: 1 },
@@ -45,6 +61,22 @@ var color_mappings = {
             dialog_fg_color: { color: "onSecondaryContainer", opacity: 1 },
             popover_bg_color: { color: "secondaryContainer", opacity: 1 },
             popover_fg_color: { color: "onSecondaryContainer", opacity: 1 },
+            sidebar_bg_color: [
+              { color: "surface", opacity: 1},
+              { color: "primary", opacity: 0.08},
+            ],
+            sidebar_fg_color: [
+              { color: "onSurface", opacity: 1},
+              {color: "primary", opacity: 0.08},
+            ],
+            secondary_sidebar_bg_color: [
+              { color: "surface", opacity: 1},
+              { color: "primary", opacity: 0.08},
+            ],
+            secondary_sidebar_fg_color: [
+              { color: "onSurface", opacity: 1},
+              {color: "primary", opacity: 0.08},
+            ],
         },
     },
     vibrant: {
@@ -70,6 +102,22 @@ var color_mappings = {
             dialog_fg_color: { color: "onTertiaryContainer", opacity: 1 },
             popover_bg_color: { color: "tertiaryContainer", opacity: 1 },
             popover_fg_color: { color: "onTertiaryContainer", opacity: 1 },
+            sidebar_bg_color: [
+              { color: "surface", opacity: 1},
+              { color: "primary", opacity: 0.14},
+            ],
+            sidebar_fg_color: [
+              { color: "onSurface", opacity: 1},
+              {color: "primary", opacity: 0.14},
+            ],
+            secondary_sidebar_bg_color: [
+              { color: "surface", opacity: 1},
+              { color: "primary", opacity: 0.14},
+            ],
+            secondary_sidebar_fg_color: [
+              { color: "onSurface", opacity: 1},
+              {color: "primary", opacity: 0.14},
+            ],
         },
         dark: {
             accent_color: { color: "primary", opacity: 1 },
@@ -93,6 +141,23 @@ var color_mappings = {
             dialog_fg_color: { color: "onTertiaryContainer", opacity: 1 },
             popover_bg_color: { color: "tertiaryContainer", opacity: 1 },
             popover_fg_color: { color: "onTertiaryContainer", opacity: 1 },
+            sidebar_bg_color: [
+              { color: "surface", opacity: 1},
+              { color: "primary", opacity: 0.14},
+            ],
+            sidebar_fg_color: [
+              { color: "onSurface", opacity: 1},
+              {color: "primary", opacity: 0.14},
+            ],
+            secondary_sidebar_bg_color: [
+              { color: "surface", opacity: 1},
+              { color: "primary", opacity: 0.14},
+            ],
+            secondary_sidebar_fg_color: [
+              { color: "onSurface", opacity: 1},
+              {color: "primary", opacity: 0.14},
+            ],
+
         },
     },
     expressive: {
@@ -118,6 +183,7 @@ var color_mappings = {
             dialog_fg_color: { color: "onTertiaryContainer", opacity: 1 },
             popover_bg_color: { color: "tertiaryContainer", opacity: 1 },
             popover_fg_color: { color: "onTertiaryContainer", opacity: 1 },
+
         },
         dark: {
             accent_color: { color: "primary", opacity: 1 },
@@ -172,6 +238,22 @@ var color_mappings = {
             dialog_fg_color: { color: "onSecondaryContainer", opacity: 1 },
             popover_bg_color: { color: "secondaryContainer", opacity: 1 },
             popover_fg_color: { color: "onSecondaryContainer", opacity: 1 },
+            sidebar_bg_color: [
+              { color: "surface", opacity: 1},
+              { color: "primary", opacity: 0.08},
+            ],
+            sidebar_fg_color: [
+              { color: "onSurface", opacity: 1},
+              {color: "primary", opacity: 0.08},
+            ],
+            secondary_sidebar_bg_color: [
+              { color: "surface", opacity: 1},
+              { color: "primary", opacity: 0.08},
+            ],
+            secondary_sidebar_fg_color: [
+              { color: "onSurface", opacity: 1},
+              {color: "primary", opacity: 0.08},
+            ],
         },
         dark: {
             accent_color: { color: "primary", opacity: 1 },
@@ -201,6 +283,22 @@ var color_mappings = {
             dialog_fg_color: { color: "onSecondaryContainer", opacity: 1 },
             popover_bg_color: { color: "secondaryContainer", opacity: 1 },
             popover_fg_color: { color: "onSecondaryContainer", opacity: 1 },
+            sidebar_bg_color: [
+              { color: "surface", opacity: 1},
+              { color: "primary", opacity: 0.08},
+            ],
+            sidebar_fg_color: [
+              { color: "onSurface", opacity: 1},
+              {color: "primary", opacity: 0.08},
+            ],
+            secondary_sidebar_bg_color: [
+              { color: "surface", opacity: 1},
+              { color: "primary", opacity: 0.08},
+            ],
+            secondary_sidebar_fg_color: [
+              { color: "onSurface", opacity: 1},
+              {color: "primary", opacity: 0.08},
+            ],
         },
     },
     muted: {
@@ -226,6 +324,22 @@ var color_mappings = {
             dialog_fg_color: { color: "onSecondaryContainer", opacity: 1 },
             popover_bg_color: { color: "secondaryContainer", opacity: 1 },
             popover_fg_color: { color: "onSecondaryContainer", opacity: 1 },
+            sidebar_bg_color: [
+              { color: "surface", opacity: 1},
+              { color: "primary", opacity: 0.05},
+            ],
+            sidebar_fg_color: [
+              { color: "onSurface", opacity: 1},
+              {color: "primary", opacity: 0.05},
+            ],
+            secondary_sidebar_bg_color: [
+              { color: "surface", opacity: 1},
+              { color: "primary", opacity: 0.05},
+            ],
+            secondary_sidebar_fg_color: [
+              { color: "onSurface", opacity: 1},
+              {color: "primary", opacity: 0.05},
+            ],
         },
         dark: {
             accent_color: { color: "secondary", opacity: 1 },
@@ -249,6 +363,22 @@ var color_mappings = {
             dialog_fg_color: { color: "onSecondaryContainer", opacity: 1 },
             popover_bg_color: { color: "secondaryContainer", opacity: 1 },
             popover_fg_color: { color: "onSecondaryContainer", opacity: 1 },
+            sidebar_bg_color: [
+              { color: "surface", opacity: 1},
+              { color: "primary", opacity: 0.05},
+            ],
+            sidebar_fg_color: [
+              { color: "onSurface", opacity: 1},
+              {color: "primary", opacity: 0.05},
+            ],
+            secondary_sidebar_bg_color: [
+              { color: "surface", opacity: 1},
+              { color: "primary", opacity: 0.05},
+            ],
+            secondary_sidebar_fg_color: [
+              { color: "onSurface", opacity: 1},
+              {color: "primary", opacity: 0.05},
+            ],
         },
     }
 };

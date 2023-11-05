@@ -11,9 +11,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const colorUtils = Me.imports.utils.color_utils;
+
+import * as colorUtils from '../utils/color_utils.js';
 
 /**
  * Utility methods for hexadecimal representations of colors.
@@ -22,7 +21,7 @@ const colorUtils = Me.imports.utils.color_utils;
  * @param argb ARGB representation of a color.
  * @return Hex string representing color, ex. #ff0000 for red.
  */
-var hexFromArgb = (argb) => {
+export var hexFromArgb = (argb) => {
     const r = colorUtils.redFromArgb(argb);
     const g = colorUtils.greenFromArgb(argb);
     const b = colorUtils.blueFromArgb(argb);
@@ -41,7 +40,7 @@ var hexFromArgb = (argb) => {
  *     hex characters.
  * @return ARGB representation of color.
  */
-var argbFromHex = (hex) => {
+export var argbFromHex = (hex) => {
     hex = hex.replace('#', '');
     const isThree = hex.length === 3;
     const isSix = hex.length === 6;
@@ -70,7 +69,7 @@ var argbFromHex = (hex) => {
     return (((255 << 24) | ((r & 0x0ff) << 16) | ((g & 0x0ff) << 8) | (b & 0x0ff)) >>>
         0);
 };
-function parseIntHex(value) {
+export function parseIntHex(value) {
     // tslint:disable-next-line:ban
     return parseInt(value, 16);
 }

@@ -1,7 +1,7 @@
-const { GObject, Gtk } = imports.gi;
-const ExtensionUtils = imports.misc.extensionUtils;
+import GObject from 'gi://GObject';
+import Gtk from 'gi://Gtk';
 
-var AppChooser = GObject.registerClass(
+export const AppChooser = GObject.registerClass(
 	class AppChooser extends Gtk.AppChooserDialog {
 		_init(parent, settings) {
 			super._init({

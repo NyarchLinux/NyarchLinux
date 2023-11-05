@@ -15,12 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 'use strict';
-const Main = imports.ui.main;
 const Signals = imports.signals;
-const GLib = imports.gi.GLib;
-const ExtensionUtils = imports.misc.extensionUtils;
+import * as Main from 'resource:///org/gnome/shell/ui/main.js'
+import GLib from 'gi://GLib'
 
-var VisibleArea = class {
+export class VisibleArea {
     constructor() {
         this._usableAreas = {};
         this._marginsList = {};

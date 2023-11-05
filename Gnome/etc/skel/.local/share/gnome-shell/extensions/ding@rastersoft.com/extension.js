@@ -16,465 +16,454 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 'use strict';
-const GLib = imports.gi.GLib;
-const Gio = imports.gi.Gio;
-const Meta = imports.gi.Meta;
-const Shell = imports.gi.Shell;
-const St = imports.gi.St;
+import Clutter from 'gi://Clutter'
+import GLib from 'gi://GLib'
+import Gio from 'gi://Gio'
+import Meta from 'gi://Meta'
+import St from 'gi://St'
 
-const Main = imports.ui.main;
+import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const Config = imports.misc.config;
-const ByteArray = imports.byteArray;
+import * as Main from 'resource:///org/gnome/shell/ui/main.js'
 
-const Me = ExtensionUtils.getCurrentExtension();
-const EmulateX11 = Me.imports.emulateX11WindowType;
-const VisibleArea = Me.imports.visibleArea;
-const GnomeShellOverride = Me.imports.gnomeShellOverride;
+import * as EmulateX11 from './emulateX11WindowType.js';
+import * as VisibleArea from './visibleArea.js';
+import * as GnomeShellOverride from './gnomeShellOverride.js';
 
 const Clipboard = St.Clipboard.get_default();
 const CLIPBOARD_TYPE = St.ClipboardType.CLIPBOARD;
 
-// This object will contain all the global variables
-let data = {};
+export default class DING extends Extension {
+    constructor(metadata) {
+        super(metadata);
+        this.DesktopIconsUsableArea = null;
+        this.data = {};
+        this.data.isEnabled = false;
+        this.data.launchDesktopId = 0;
+        this.data.currentProcess = null;
+        this.data.dbusTimeoutId = 0;
+        this.data.switchWorkspaceId = 0;
 
-var DesktopIconsUsableArea = null;
+        this.data.GnomeShellOverride = null;
 
-/**
- *
- */
-function init() {
-    data.isEnabled = false;
-    data.launchDesktopId = 0;
-    data.currentProcess = null;
-    data.dbusTimeoutId = 0;
+        /* The constructor of the EmulateX11 class only initializes some
+        * internal properties, but nothing else. In fact, it has its own
+        * enable() and disable() methods. That's why it could have been
+        * created here, in init(). But since the rule seems to be NO CLASS
+        * CREATION IN INIT UNDER NO CIRCUMSTANCES...
+        */
+        this.data.x11Manager = null;
+        this.data.visibleArea = null;
 
-    data.GnomeShellOverride = null;
-    data.GnomeShellVersion = parseInt(Config.PACKAGE_VERSION.split('.')[0]);
-
-    /* The constructor of the EmulateX11 class only initializes some
-     * internal properties, but nothing else. In fact, it has its own
-     * enable() and disable() methods. That's why it could have been
-     * created here, in init(). But since the rule seems to be NO CLASS
-     * CREATION IN INIT UNDER NO CIRCUMSTANCES...
-     */
-    data.x11Manager = null;
-    data.visibleArea = null;
-
-    /* Ensures that there aren't "rogue" processes.
-     * This is a safeguard measure for the case of Gnome Shell being
-     * relaunched (for example, under X11, with Alt+F2 and R), to kill
-     * any old DING instance. That's why it must be here, in init(),
-     * and not in enable() or disable() (disable already guarantees that
-     * the current instance is killed).
-     */
-    doKillAllOldDesktopProcesses();
-}
-
-
-/**
- * Enables the extension
- */
-function enable() {
-    if (!data.GnomeShellOverride) {
-        data.GnomeShellOverride = new GnomeShellOverride.GnomeShellOverride();
+        /* Ensures that there aren't "rogue" processes.
+        * This is a safeguard measure for the case of Gnome Shell being
+        * relaunched (for example, under X11, with Alt+F2 and R), to kill
+        * any old DING instance. That's why it must be here, in init(),
+        * and not in enable() or disable() (disable already guarantees that
+        * the current instance is killed).
+        */
+        this.doKillAllOldDesktopProcesses();
     }
 
-    if (!data.x11Manager) {
-        data.x11Manager = new EmulateX11.EmulateX11WindowType();
-    }
-    if (!DesktopIconsUsableArea) {
-        DesktopIconsUsableArea = new VisibleArea.VisibleArea();
-        data.visibleArea = DesktopIconsUsableArea;
-    }
-    // If the desktop is still starting up, we wait until it is ready
-    if (Main.layoutManager._startingUp) {
-        data.startupPreparedId = Main.layoutManager.connect('startup-complete', innerEnable);
-    } else {
-        data.startupPreparedId = null;
-        innerEnable();
-    }
-}
-
-/**
- * The true code that configures everything and launches the desktop program
- */
-function innerEnable() {
-    if (data.startupPreparedId !== null) {
-        Main.layoutManager.disconnect(data.startupPreparedId);
-        data.startupPreparedId = null;
-    }
-
-    data.GnomeShellOverride.enable();
-
-    // under X11 we don't need to cheat, so only do all this under wayland
-    if (Meta.is_wayland_compositor()) {
-        data.x11Manager.enable();
-    }
-
-    /*
-     * If the desktop geometry changes (because a new monitor has been added, for example),
-     * we kill the desktop program. It will be relaunched automatically with the new geometry,
-     * thus adapting to it on-the-fly.
-     */
-    data.monitorsChangedId = Main.layoutManager.connect('monitors-changed', updateDesktopGeometry);
-    /*
-     * Any change in the workareas must be detected too, for example if the used size
-     * changes.
-     */
-    data.workareasChangedId = global.display.connect('workareas-changed', updateDesktopGeometry);
-
-    /*
-     * This callback allows to detect a change in the working area (like when changing the Scale value)
-     */
-    data.visibleAreaId = data.visibleArea.connect('updated-usable-area', updateDesktopGeometry);
-
-    data.isEnabled = true;
-    if (data.launchDesktopId) {
-        GLib.source_remove(data.launchDesktopId);
-    }
-
-    /*
-     * Due to a problem in the Clipboard API in Gtk3, it is not possible to do the CUT/COPY operation from
-     * dynamic languages like Javascript, because one of the methods needed is marked as NOT INTROSPECTABLE
-     *
-     * https://discourse.gnome.org/t/missing-gtk-clipboard-set-with-data-in-gtk-3/6920
-     *
-     * The right solution is to migrate DING to Gtk4, where the whole API is available, but that is a very
-     * big task, so in the meantime, we take advantage of the fact that the St API, in Gnome Shell, can put
-     * binary contents in the clipboard, so we use DBus to notify that we want to do a CUT or a COPY operation,
-     * passing the URIs as parameters, and delegate that to the DING Gnome Shell extension. This is easily done
-     * with a GLib.SimpleAction.
-     */
-    data.dbusConnectionId = Gio.bus_own_name(Gio.BusType.SESSION, 'com.rastersoft.dingextension', Gio.BusNameOwnerFlags.NONE, null, (connection, name) => {
-        data.dbusConnection = connection;
-
-        data.doCopy = new Gio.SimpleAction({
-            name: 'doCopy',
-            parameter_type: new GLib.VariantType('as'),
-        });
-        data.doCut = new Gio.SimpleAction({
-            name: 'doCut',
-            parameter_type: new GLib.VariantType('as'),
-        });
-        data.disableTimer = new Gio.SimpleAction({
-            name: 'disableTimer',
-        });
-        data.desktopGeometry = Gio.SimpleAction.new_stateful('desktopGeometry', new GLib.VariantType('av'), getDesktopGeometry());
-        data.desktopGeometry.set_enabled(true);
-        data.doCopyId = data.doCopy.connect('activate', manageCutCopy);
-        data.doCutId = data.doCut.connect('activate', manageCutCopy);
-        data.disableTimerId = data.disableTimer.connect('activate', () => {
-            if (data.currentProcess && data.currentProcess.subprocess) {
-                data.currentProcess.cancel_timer();
-            }
-        });
-        data.actionGroup = new Gio.SimpleActionGroup();
-        data.actionGroup.add_action(data.doCopy);
-        data.actionGroup.add_action(data.doCut);
-        data.actionGroup.add_action(data.disableTimer);
-        data.actionGroup.add_action(data.desktopGeometry);
-
-        data.dbusConnectionGroupId = data.dbusConnection.export_action_group(
-            '/com/rastersoft/dingextension/control',
-            data.actionGroup
-        );
-        launchDesktop();
-    }, null);
-}
-
-/*
- * Before Gnome Shell 40, St API couldn't access binary data in the clipboard, only text data. Also, the
- * original Desktop Icons was a pure extension, so it was limited to what Clutter and St offered. That was
- * the reason why Nautilus accepted a text format for CUT and COPY operations in the form
- *
- *     x-special/nautilus-clipboard
- *     OPERATION
- *     FILE_URI
- *     [FILE_URI]
- *     [...]
- *
- * In Gnome Shell 40, St was enhanced and now it supports binary data; that's why Nautilus migrated to a
- * binary format identified by the atom 'x-special/gnome-copied-files', where the CUT or COPY operation is
- * shared.
- *
- * To maintain compatibility, we check the current Gnome Shell version and, based on that, we use the
- * binary or the text clipboards.
- */
-/**
- *
- * @param action
- * @param parameters
- */
-function manageCutCopy(action, parameters) {
-    let content = '';
-    if (data.GnomeShellVersion < 40) {
-        content = 'x-special/nautilus-clipboard\n';
-    }
-    if (action.name == 'doCut') {
-        content += 'cut\n';
-    } else {
-        content += 'copy\n';
-    }
-
-    let first = true;
-    for (let file of parameters.recursiveUnpack()) {
-        if (!first) {
-            content += '\n';
+    enable() {
+        if (!this.data.GnomeShellOverride) {
+            this.data.GnomeShellOverride = new GnomeShellOverride.GnomeShellOverride();
         }
-        first = false;
-        content += file;
-    }
-
-    if (data.GnomeShellVersion < 40) {
-        Clipboard.set_text(CLIPBOARD_TYPE, `${content}\n`);
-    } else {
-        Clipboard.set_content(CLIPBOARD_TYPE, 'x-special/gnome-copied-files', ByteArray.toGBytes(ByteArray.fromString(content)));
-    }
-}
-
-/**
- * Kills the current desktop program
- */
-function killCurrentProcess() {
-    if (data.launchDesktopId) {
-        GLib.source_remove(data.launchDesktopId);
-        data.launchDesktopId = 0;
-    }
-
-    // kill the desktop program. It will be reloaded automatically.
-    if (data.currentProcess && data.currentProcess.subprocess) {
-        data.currentProcess.cancel_timer();
-        data.currentProcess.cancellable.cancel();
-        data.currentProcess.subprocess.send_signal(15);
-    }
-    data.currentProcess = null;
-    data.x11Manager.setWaylandClient(null);
-}
-
-/**
- * Disables the extension
- */
-function disable() {
-    DesktopIconsUsableArea = null;
-    data.isEnabled = false;
-    killCurrentProcess();
-    data.GnomeShellOverride.disable();
-    data.x11Manager.disable();
-    data.visibleArea.disable();
-
-    if (data.doCopyId) {
-        data.doCopy.disconnect(data.doCopyId);
-        data.doCopyId = 0;
-        data.doCopy = undefined;
-    }
-
-    if (data.doCutId) {
-        data.doCut.disconnect(data.doCutId);
-        data.doCutId = 0;
-        data.doCut = undefined;
-    }
-
-    if (data.disableTimerId) {
-        data.disableTimer.disconnect(data.disableTimerId);
-        data.disableTimerId = 0;
-        data.disableTimer = undefined;
-    }
-
-    data.desktopGeometry = undefined;
-
-    // disconnect signals only if connected
-    if (data.dbusConnectionGroupId) {
-        data.dbusConnection.unexport_action_group(data.dbusConnectionGroupId);
-        data.dbusConnectionGroupId = 0;
-    }
-
-    if (data.dbusConnectionId) {
-        Gio.bus_unown_name(data.dbusConnectionId);
-        data.dbusConnectionId = 0;
-    }
-    data.actionGroup = undefined;
-
-    if (data.visibleAreaId) {
-        data.visibleArea.disconnect(data.visibleAreaId);
-        data.visibleAreaId = 0;
-    }
-    if (data.startupPreparedId) {
-        Main.layoutManager.disconnect(data.startupPreparedId);
-        data.startupPreparedId = 0;
-    }
-    if (data.monitorsChangedId) {
-        Main.layoutManager.disconnect(data.monitorsChangedId);
-        data.monitorsChangedId = 0;
-    }
-    if (data.workareasChangedId) {
-        global.display.disconnect(data.workareasChangedId);
-        data.workareasChangedId = 0;
-    }
-    if (data.sizeChangedId) {
-        global.window_manager.disconnect(data.sizeChangedId);
-        data.sizeChangedId = 0;
-    }
-    if (data.dbusTimeoutId) {
-        GLib.source_remove(data.dbusTimeoutId);
-        data.dbusTimeoutId = 0;
-    }
-}
-
-/**
- *
- */
-function updateDesktopGeometry() {
-    if (data.actionGroup && (Main.layoutManager.monitors.length != 0)) {
-        data.actionGroup.change_action_state('desktopGeometry', getDesktopGeometry());
-    }
-}
-
-/**
- *
- */
-function getDesktopGeometry() {
-    let desktopList = [];
-    let ws = global.workspace_manager.get_workspace_by_index(0);
-    for (let monitorIndex = 0; monitorIndex < Main.layoutManager.monitors.length; monitorIndex++) {
-        let area = data.visibleArea.getMonitorGeometry(ws, monitorIndex);
-        let desktopListElement = new GLib.Variant('a{sd}', {
-            'x': area.x,
-            'y': area.y,
-            'width': area.width,
-            'height': area.height,
-            'zoom': area.scale,
-            'marginTop': area.marginTop,
-            'marginBottom': area.marginBottom,
-            'marginLeft': area.marginLeft,
-            'marginRight': area.marginRight,
-            monitorIndex,
-            'primaryMonitor': Main.layoutManager.primaryIndex,
-        });
-        desktopList.push(desktopListElement);
-    }
-    return new GLib.Variant('av', desktopList);
-}
-
-
-/**
- * This function checks all the processes in the system and kills those
- * that are a desktop manager from the current user (but not others).
- * This allows to avoid having several ones in case gnome shell resets,
- * or other odd cases. It requires the /proc virtual filesystem, but
- * doesn't fail if it doesn't exist.
- */
-
-/**
- *
- */
-function doKillAllOldDesktopProcesses() {
-    let procFolder = Gio.File.new_for_path('/proc');
-    if (!procFolder.query_exists(null)) {
-        return;
-    }
-
-    let fileEnum = procFolder.enumerate_children('standard::*', Gio.FileQueryInfoFlags.NONE, null);
-    let info;
-    while ((info = fileEnum.next_file(null))) {
-        let filename = info.get_name();
-        if (!filename) {
-            break;
+        if (!this.data.x11Manager) {
+            this.data.x11Manager = new EmulateX11.EmulateX11WindowType();
         }
-        let processPath = GLib.build_filenamev(['/proc', filename, 'cmdline']);
-        let processUser = Gio.File.new_for_path(processPath);
-        if (!processUser.query_exists(null)) {
-            continue;
+        if (!this.DesktopIconsUsableArea) {
+            this.DesktopIconsUsableArea = new VisibleArea.VisibleArea();
+            this.data.visibleArea = this.DesktopIconsUsableArea;
         }
-        let [binaryData, etag] = processUser.load_bytes(null);
-        let contents = '';
-        let readData = binaryData.get_data();
-        for (let i = 0; i < readData.length; i++) {
-            if (readData[i] < 32) {
-                contents += ' ';
-            } else {
-                contents += String.fromCharCode(readData[i]);
-            }
-        }
-        let path = `gjs ${GLib.build_filenamev([ExtensionUtils.getCurrentExtension().path, 'ding.js'])}`;
-        if (contents.startsWith(path)) {
-            let proc = new Gio.Subprocess({argv: ['/bin/kill', filename]});
-            proc.init(null);
-            proc.wait(null);
-        }
-    }
-}
-
-/**
- *
- * @param reloadTime
- */
-function doRelaunch(reloadTime) {
-    data.currentProcess = null;
-    data.x11Manager.setWaylandClient(null);
-    if (data.isEnabled) {
-        if (data.launchDesktopId) {
-            GLib.source_remove(data.launchDesktopId);
-        }
-        data.launchDesktopId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, reloadTime, () => {
-            data.launchDesktopId = 0;
-            launchDesktop();
-            return false;
-        });
-    }
-}
-
-/**
- * Launches the desktop program, passing to it the current desktop geometry for each monitor
- * and the path where it is stored. It also monitors it, to relaunch it in case it dies or is
- * killed. Finally, it reads STDOUT and STDERR and redirects them to the journal, to help to
- * debug it.
- */
-function launchDesktop() {
-    global.log('Launching DING process');
-    let argv = [];
-    argv.push(GLib.build_filenamev([ExtensionUtils.getCurrentExtension().path, 'ding.js']));
-    // Specify that it must work as true desktop
-    argv.push('-E');
-    // The path. Allows the program to find translations, settings and modules.
-    argv.push('-P');
-    argv.push(ExtensionUtils.getCurrentExtension().path);
-
-    data.currentProcess = new LaunchSubprocess(0, 'DING');
-    data.currentProcess.set_cwd(GLib.get_home_dir());
-    if (data.currentProcess.spawnv(argv) === null) {
-        doRelaunch(1000);
-        return;
-    }
-    data.x11Manager.setWaylandClient(data.currentProcess);
-    data.launchTime = GLib.get_monotonic_time();
-
-    /*
-     * If the desktop process dies, wait 100ms and relaunch it, unless the exit status is different than
-     * zero, in which case it will wait one second. This is done this way to avoid relaunching the desktop
-     * too fast if it has a bug that makes it fail continuously, avoiding filling the journal too fast.
-     */
-    data.currentProcess.subprocess.wait_async(null, (obj, res) => {
-        let delta = GLib.get_monotonic_time() - data.launchTime;
-        if (delta < 1000000) {
-            // If the process is dying over and over again, ensure that it isn't respawn faster than once per second
-            var reloadTime = 1000;
+        // If the desktop is still starting up, we wait until it is ready
+        if (Main.layoutManager._startingUp) {
+            this.data.startupPreparedId = Main.layoutManager.connect('startup-complete', () => this.innerEnable());
         } else {
-            // but if the process just died after having run for at least one second, reload it ASAP
-            var reloadTime = 1;
+            this.data.startupPreparedId = null;
+            this.innerEnable();
         }
-        obj.wait_finish(res);
-        if (!data.currentProcess || obj !== data.currentProcess.subprocess) {
+    }
+
+    disable() {
+        this.DesktopIconsUsableArea = null;
+        this.data.isEnabled = false;
+        this.killCurrentProcess();
+        this.data.GnomeShellOverride.disable();
+        this.data.x11Manager.disable();
+        this.data.visibleArea.disable();
+
+        if (this.data.doCopyId) {
+            this.data.doCopy.disconnect(this.data.doCopyId);
+            this.data.doCopyId = 0;
+            this.data.doCopy = undefined;
+        }
+
+        if (this.data.switchWorkspaceId) {
+            global.window_manager.disconnect(this.data.switchWorkspaceId);
+            this.data.switchWorkspaceId = 0;
+        }
+        if (this.data.doCutId) {
+            this.data.doCut.disconnect(this.data.doCutId);
+            this.data.doCutId = 0;
+            this.data.doCut = undefined;
+        }
+
+        if (this.data.disableTimerId) {
+            this.data.disableTimer.disconnect(this.data.disableTimerId);
+            this.data.disableTimerId = 0;
+            this.data.disableTimer = undefined;
+        }
+
+        this.data.desktopGeometry = undefined;
+
+        // disconnect signals only if connected
+        if (this.data.dbusConnectionGroupId) {
+            this.data.dbusConnection.unexport_action_group(this.data.dbusConnectionGroupId);
+            this.data.dbusConnectionGroupId = 0;
+            this.data.dbusConnection = undefined;
+        }
+
+        if (this.data.dbusConnectionId) {
+            Gio.bus_unown_name(this.data.dbusConnectionId);
+            this.data.dbusConnectionId = 0;
+        }
+        this.data.actionGroup = undefined;
+
+        if (this.data.visibleAreaId) {
+            this.data.visibleArea.disconnect(this.data.visibleAreaId);
+            this.data.visibleAreaId = 0;
+        }
+        if (this.data.startupPreparedId) {
+            Main.layoutManager.disconnect(this.data.startupPreparedId);
+            this.data.startupPreparedId = 0;
+        }
+        if (this.data.monitorsChangedId) {
+            Main.layoutManager.disconnect(this.data.monitorsChangedId);
+            this.data.monitorsChangedId = 0;
+        }
+        if (this.data.workareasChangedId) {
+            global.display.disconnect(this.data.workareasChangedId);
+            this.data.workareasChangedId = 0;
+        }
+        if (this.data.sizeChangedId) {
+            global.window_manager.disconnect(this.data.sizeChangedId);
+            this.data.sizeChangedId = 0;
+        }
+        if (this.data.dbusTimeoutId) {
+            GLib.source_remove(this.data.dbusTimeoutId);
+            this.data.dbusTimeoutId = 0;
+        }
+    }
+
+    /**
+     * The true code that configures everything and launches the desktop program
+     */
+    innerEnable() {
+        if (this.data.startupPreparedId !== null) {
+            Main.layoutManager.disconnect(this.data.startupPreparedId);
+            this.data.startupPreparedId = null;
+        }
+
+        this.data.GnomeShellOverride.enable();
+
+        // under X11 we don't need to cheat, so only do all this under wayland
+        if (Meta.is_wayland_compositor()) {
+            this.data.x11Manager.enable();
+        } else {
+            this.data.switchWorkspaceId = global.window_manager.connect('switch-workspace', () => {
+                let windows = global.display.get_tab_list(Meta.TabList.NORMAL_ALL, global.workspace_manager.get_active_workspace());
+                windows = global.display.sort_windows_by_stacking(windows);
+                if (windows.length) {
+                    let topWindow = windows[windows.length - 1];
+                    topWindow.focus(Clutter.CURRENT_TIME);
+                }
+            });
+        }
+
+        /*
+        * If the desktop geometry changes (because a new monitor has been added, for example),
+        * we kill the desktop program. It will be relaunched automatically with the new geometry,
+        * thus adapting to it on-the-fly.
+        */
+        this.data.monitorsChangedId = Main.layoutManager.connect('monitors-changed', () => this.updateDesktopGeometry());
+        /*
+        * Any change in the workareas must be detected too, for example if the used size
+        * changes.
+        */
+        this.data.workareasChangedId = global.display.connect('workareas-changed', () => this.updateDesktopGeometry());
+
+        /*
+        * This callback allows to detect a change in the working area (like when changing the Scale value)
+        */
+        this.data.visibleAreaId = this.data.visibleArea.connect('updated-usable-area', () => this.updateDesktopGeometry());
+
+        this.data.isEnabled = true;
+        if (this.data.launchDesktopId) {
+            GLib.source_remove(this.data.launchDesktopId);
+        }
+
+        /*
+        * Due to a problem in the Clipboard API in Gtk3, it is not possible to do the CUT/COPY operation from
+        * dynamic languages like Javascript, because one of the methods needed is marked as NOT INTROSPECTABLE
+        *
+        * https://discourse.gnome.org/t/missing-gtk-clipboard-set-with-data-in-gtk-3/6920
+        *
+        * The right solution is to migrate DING to Gtk4, where the whole API is available, but that is a very
+        * big task, so in the meantime, we take advantage of the fact that the St API, in Gnome Shell, can put
+        * binary contents in the clipboard, so we use DBus to notify that we want to do a CUT or a COPY operation,
+        * passing the URIs as parameters, and delegate that to the DING Gnome Shell extension. This is easily done
+        * with a GLib.SimpleAction.
+        */
+        this.data.dbusConnectionId = Gio.bus_own_name(Gio.BusType.SESSION, 'com.rastersoft.dingextension', Gio.BusNameOwnerFlags.NONE, null, (connection, name) => {
+            this.data.dbusConnection = connection;
+
+            this.data.doCopy = new Gio.SimpleAction({
+                name: 'doCopy',
+                parameter_type: new GLib.VariantType('as'),
+            });
+            this.data.doCut = new Gio.SimpleAction({
+                name: 'doCut',
+                parameter_type: new GLib.VariantType('as'),
+            });
+            this.data.disableTimer = new Gio.SimpleAction({
+                name: 'disableTimer',
+            });
+            this.data.desktopGeometry = Gio.SimpleAction.new_stateful('desktopGeometry', new GLib.VariantType('av'), this.getDesktopGeometry());
+            this.data.desktopGeometry.set_enabled(true);
+            this.data.doCopyId = this.data.doCopy.connect('activate', (action, parameters) => this.manageCutCopy(action, parameters));
+            this.data.doCutId = this.data.doCut.connect('activate', (action, parameters) => this.manageCutCopy(action, parameters));
+            this.data.disableTimerId = this.data.disableTimer.connect('activate', () => {
+                if (this.data.currentProcess && this.data.currentProcess.subprocess) {
+                    this.data.currentProcess.cancel_timer();
+                }
+            });
+            this.data.actionGroup = new Gio.SimpleActionGroup();
+            this.data.actionGroup.add_action(this.data.doCopy);
+            this.data.actionGroup.add_action(this.data.doCut);
+            this.data.actionGroup.add_action(this.data.disableTimer);
+            this.data.actionGroup.add_action(this.data.desktopGeometry);
+
+            this.data.dbusConnectionGroupId = this.data.dbusConnection.export_action_group(
+                '/com/rastersoft/dingextension/control',
+                this.data.actionGroup
+            );
+            this.launchDesktop();
+        }, null);
+    }
+
+    /*
+    * Before Gnome Shell 40, St API couldn't access binary data in the clipboard, only text data. Also, the
+    * original Desktop Icons was a pure extension, so it was limited to what Clutter and St offered. That was
+    * the reason why Nautilus accepted a text format for CUT and COPY operations in the form
+    *
+    *     x-special/nautilus-clipboard
+    *     OPERATION
+    *     FILE_URI
+    *     [FILE_URI]
+    *     [...]
+    *
+    * In Gnome Shell 40, St was enhanced and now it supports binary data; that's why Nautilus migrated to a
+    * binary format identified by the atom 'x-special/gnome-copied-files', where the CUT or COPY operation is
+    * shared.
+    *
+    */
+    /**
+     *
+     * @param action
+     * @param parameters
+     */
+    manageCutCopy(action, parameters) {
+        let content = '';
+        if (action.name == 'doCut') {
+            content += 'cut\n';
+        } else {
+            content += 'copy\n';
+        }
+
+        let first = true;
+        for (let file of parameters.recursiveUnpack()) {
+            if (!first) {
+                content += '\n';
+            }
+            first = false;
+            content += file;
+        }
+        let obj = new TextEncoder();
+        Clipboard.set_content(CLIPBOARD_TYPE, 'x-special/gnome-copied-files', new GLib.Bytes(obj.encode(content)));
+    }
+
+    /**
+     * Kills the current desktop program
+     */
+    killCurrentProcess() {
+        if (this.data.launchDesktopId) {
+            GLib.source_remove(this.data.launchDesktopId);
+            this.data.launchDesktopId = 0;
+        }
+
+        // kill the desktop program. It will be reloaded automatically.
+        if (this.data.currentProcess && this.data.currentProcess.subprocess) {
+            this.data.currentProcess.cancel_timer();
+            this.data.currentProcess.cancellable.cancel();
+            this.data.currentProcess.subprocess.send_signal(15);
+        }
+        this.data.currentProcess = null;
+        this.data.x11Manager.setWaylandClient(null);
+    }
+
+    /**
+     *
+     */
+    updateDesktopGeometry() {
+        if (this.data.actionGroup && (Main.layoutManager.monitors.length != 0)) {
+            this.data.actionGroup.change_action_state('desktopGeometry', this.getDesktopGeometry());
+        }
+    }
+
+    /**
+     *
+     */
+    getDesktopGeometry() {
+        let desktopList = [];
+        let ws = global.workspace_manager.get_workspace_by_index(0);
+        for (let monitorIndex = 0; monitorIndex < Main.layoutManager.monitors.length; monitorIndex++) {
+            let area = this.data.visibleArea.getMonitorGeometry(ws, monitorIndex);
+            let desktopListElement = new GLib.Variant('a{sd}', {
+                'x': area.x,
+                'y': area.y,
+                'width': area.width,
+                'height': area.height,
+                'zoom': area.scale,
+                'marginTop': area.marginTop,
+                'marginBottom': area.marginBottom,
+                'marginLeft': area.marginLeft,
+                'marginRight': area.marginRight,
+                monitorIndex,
+                'primaryMonitor': Main.layoutManager.primaryIndex,
+            });
+            desktopList.push(desktopListElement);
+        }
+        return new GLib.Variant('av', desktopList);
+    }
+
+    /**
+     * This function checks all the processes in the system and kills those
+     * that are a desktop manager from the current user (but not others).
+     * This allows to avoid having several ones in case gnome shell resets,
+     * or other odd cases. It requires the /proc virtual filesystem, but
+     * doesn't fail if it doesn't exist.
+     */
+
+    /**
+     *
+     */
+    doKillAllOldDesktopProcesses() {
+        let procFolder = Gio.File.new_for_path('/proc');
+        if (!procFolder.query_exists(null)) {
             return;
         }
-        if (obj.get_if_exited()) {
-            obj.get_exit_status();
-        }
-        doRelaunch(reloadTime);
-    });
-}
 
+        let fileEnum = procFolder.enumerate_children('standard::*', Gio.FileQueryInfoFlags.NONE, null);
+        let info;
+        while ((info = fileEnum.next_file(null))) {
+            let filename = info.get_name();
+            if (!filename) {
+                break;
+            }
+            let processPath = GLib.build_filenamev(['/proc', filename, 'cmdline']);
+            let processUser = Gio.File.new_for_path(processPath);
+            if (!processUser.query_exists(null)) {
+                continue;
+            }
+            let [binaryData, etag] = processUser.load_bytes(null);
+            let contents = '';
+            let readData = binaryData.get_data();
+            for (let i = 0; i < readData.length; i++) {
+                if (readData[i] < 32) {
+                    contents += ' ';
+                } else {
+                    contents += String.fromCharCode(readData[i]);
+                }
+            }
+            let path = `gjs ${GLib.build_filenamev([this.path, 'app', 'ding.js'])}`;
+            if (contents.startsWith(path)) {
+                let proc = new Gio.Subprocess({argv: ['/bin/kill', filename]});
+                proc.init(null);
+                proc.wait(null);
+            }
+        }
+    }
+
+    /**
+     *
+     * @param reloadTime
+     */
+    doRelaunch(reloadTime) {
+        this.data.currentProcess = null;
+        this.data.x11Manager.setWaylandClient(null);
+        if (this.data.isEnabled) {
+            if (this.data.launchDesktopId) {
+                GLib.source_remove(this.data.launchDesktopId);
+            }
+            this.data.launchDesktopId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, reloadTime, () => {
+                this.data.launchDesktopId = 0;
+                this.launchDesktop();
+                return false;
+            });
+        }
+    }
+
+    /**
+     * Launches the desktop program, passing to it the current desktop geometry for each monitor
+     * and the path where it is stored. It also monitors it, to relaunch it in case it dies or is
+     * killed. Finally, it reads STDOUT and STDERR and redirects them to the journal, to help to
+     * debug it.
+     */
+    launchDesktop() {
+        console.log('Launching DING process');
+        let argv = [];
+        argv.push(GLib.build_filenamev([this.path, 'app', 'ding.js']));
+        // Specify that it must work as true desktop
+        argv.push('-E');
+        // The path. Allows the program to find translations, settings and modules.
+        argv.push('-P');
+        argv.push(GLib.build_filenamev([this.path, 'app']));
+
+        this.data.currentProcess = new LaunchSubprocess(0, 'DING');
+        this.data.currentProcess.set_cwd(GLib.get_home_dir());
+        if (this.data.currentProcess.spawnv(argv) === null) {
+            this.doRelaunch(1000);
+            return;
+        }
+        this.data.x11Manager.setWaylandClient(this.data.currentProcess);
+        this.data.launchTime = GLib.get_monotonic_time();
+
+        /*
+        * If the desktop process dies, wait 100ms and relaunch it, unless the exit status is different than
+        * zero, in which case it will wait one second. This is done this way to avoid relaunching the desktop
+        * too fast if it has a bug that makes it fail continuously, avoiding filling the journal too fast.
+        */
+        this.data.currentProcess.subprocess.wait_async(null, (obj, res) => {
+            let delta = GLib.get_monotonic_time() - this.data.launchTime;
+            if (delta < 1000000) {
+                // If the process is dying over and over again, ensure that it isn't respawn faster than once per second
+                var reloadTime = 1000;
+            } else {
+                // but if the process just died after having run for at least one second, reload it ASAP
+                var reloadTime = 1;
+            }
+            obj.wait_finish(res);
+            if (!this.data.currentProcess || obj !== this.data.currentProcess.subprocess) {
+                return;
+            }
+            if (obj.get_if_exited()) {
+                obj.get_exit_status();
+            }
+            this.doRelaunch(reloadTime);
+        });
+    }
+}
 /**
  * This class encapsulates the code to launch a subprocess that can detect whether a window belongs to it
  * It only accepts to do it under Wayland, because under X11 there is no need to do these tricks
@@ -484,7 +473,7 @@ function launchDesktop() {
  * @param {int} flags Flags for the SubprocessLauncher class
  * @param {string} process_id An string id for the debug output
  */
-var LaunchSubprocess = class {
+class LaunchSubprocess {
     constructor(flags, process_id) {
         this._process_id = process_id;
         this.cancellable = new Gio.Cancellable();
@@ -495,11 +484,6 @@ var LaunchSubprocess = class {
             } catch (e) {
                 this._waylandClient = Meta.WaylandClient.new(global.context,
                                                              this._launcher);
-            }
-
-            if (Config.PACKAGE_VERSION == '3.38.0') {
-                // workaround for bug in 3.38.0
-                this._launcher.ref();
             }
         }
         this.subprocess = null;
@@ -517,7 +501,7 @@ var LaunchSubprocess = class {
             }
         } catch (e) {
             this.subprocess = null;
-            global.log(`Error while trying to launch DING process: ${e.message}\n${e.stack}`);
+            console.log(`Error while trying to launch DING process: ${e.message}\n${e.stack}`);
         }
         // This is for GLib 2.68 or greater
         if (this._launcher.close) {
@@ -526,7 +510,7 @@ var LaunchSubprocess = class {
         this._launcher = null;
         if (this.subprocess) {
             /*
-                 * It reads STDOUT and STDERR and sends it to the journal using global.log(). This allows to
+                 * It reads STDOUT and STDERR and sends it to the journal using console.log(). This allows to
                  * have any error from the desktop app in the same journal than other extensions. Every line from
                  * the desktop program is prepended with the "process_id" parameter sent in the constructor.
                  */
@@ -605,7 +589,7 @@ var LaunchSubprocess = class {
         try {
             let ownsWindow = this._waylandClient.owns_window(window);
             if (ownsWindow && (this._launch_timer != 0) && (this._waiting_for_windows != 0)) {
-                global.log(`Received notification for window. ${this._waiting_for_windows - 1} notifications remaining.`);
+                console.log(`Received notification for window. ${this._waiting_for_windows - 1} notifications remaining.`);
                 this._waiting_for_windows--;
                 if (this._waiting_for_windows == 0) {
                     GLib.source_remove(this._launch_timer);
@@ -614,7 +598,7 @@ var LaunchSubprocess = class {
             }
             return ownsWindow;
         } catch (error) {
-            global.log(`Exception error: ${error.message}\n${error.stack}`);
+            console.log(`Exception error: ${error.message}\n${error.stack}`);
             return false;
         }
     }

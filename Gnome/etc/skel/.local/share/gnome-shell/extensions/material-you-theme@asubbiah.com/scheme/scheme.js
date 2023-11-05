@@ -11,13 +11,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const { CorePalette } = Me.imports.palettes.core_palette;
+import {CorePalette} from "../palettes/core_palette.js";
 /**
  * Represents a Material color scheme, a mapping of color roles to colors.
  */
-var Scheme = class Scheme {
+export var Scheme = class Scheme {
     constructor(props) {
         this.props = props;
     }

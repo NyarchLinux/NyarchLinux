@@ -11,11 +11,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const { Cam16 } = Me.imports.hct.cam16;
-const utils = Me.imports.utils.color_utils;
-const math = Me.imports.utils.math_utils;
+import {Cam16} from "../hct/cam16.js";
+
+import * as utils from "../utils/color_utils.js";
+import * as math from "../utils/math_utils.js";
 
 /**
  *  Given a large set of colors, remove colors that are unsuitable for a UI
@@ -25,7 +24,7 @@ const math = Me.imports.utils.math_utils;
  *  colors aren't muddied, while curating the high cluster count to a much
  *  smaller number of appropriate choices.
  */
-var Score = class Score {
+export var Score = class Score {
     constructor() { }
     /**
      * Given a map with keys of colors and values of how often the color appears,

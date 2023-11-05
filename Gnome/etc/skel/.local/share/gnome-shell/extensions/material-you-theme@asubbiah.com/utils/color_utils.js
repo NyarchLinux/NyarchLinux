@@ -11,9 +11,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const mathUtils = Me.imports.utils.math_utils;
+import * as mathUtils from '../utils/math_utils.js';
+
 
 /**
  * Color science utilities.
@@ -47,49 +46,49 @@ const WHITE_POINT_D65 = [95.047, 100.0, 108.883];
 /**
  * Converts a color from RGB components to ARGB format.
  */
-function argbFromRgb(red, green, blue) {
+export function argbFromRgb(red, green, blue) {
     return (255 << 24 | (red & 255) << 16 | (green & 255) << 8 | blue & 255) >>>
         0;
 }
 
-function argbFromRgba(red, green, blue, alpha) {
+export function argbFromRgba(red, green, blue, alpha) {
     return ((Math.round(255 * alpha)) << 24 | (red & 255) << 16 | (green & 255) << 8 | blue & 255) >>>
     0;
 }
 /**
  * Returns the alpha component of a color in ARGB format.
  */
-function alphaFromArgb(argb) {
+export function alphaFromArgb(argb) {
     return argb >> 24 & 255;
 }
 /**
  * Returns the red component of a color in ARGB format.
  */
-function redFromArgb(argb) {
+export function redFromArgb(argb) {
     return argb >> 16 & 255;
 }
 /**
  * Returns the green component of a color in ARGB format.
  */
-function greenFromArgb(argb) {
+export function greenFromArgb(argb) {
     return argb >> 8 & 255;
 }
 /**
  * Returns the blue component of a color in ARGB format.
  */
-function blueFromArgb(argb) {
+export function blueFromArgb(argb) {
     return argb & 255;
 }
 /**
  * Returns whether a color in ARGB format is opaque.
  */
-function isOpaque(argb) {
+export function isOpaque(argb) {
     return alphaFromArgb(argb) >= 255;
 }
 /**
  * Converts a color from ARGB to XYZ.
  */
-function argbFromXyz(x, y, z) {
+export function argbFromXyz(x, y, z) {
     const matrix = XYZ_TO_SRGB;
     const linearR = matrix[0][0] * x + matrix[0][1] * y + matrix[0][2] * z;
     const linearG = matrix[1][0] * x + matrix[1][1] * y + matrix[1][2] * z;
@@ -102,7 +101,7 @@ function argbFromXyz(x, y, z) {
 /**
  * Converts a color from XYZ to ARGB.
  */
-function xyzFromArgb(argb) {
+export function xyzFromArgb(argb) {
     const r = linearized(redFromArgb(argb));
     const g = linearized(greenFromArgb(argb));
     const b = linearized(blueFromArgb(argb));
@@ -112,7 +111,7 @@ function xyzFromArgb(argb) {
  * Converts a color represented in Lab color space into an ARGB
  * integer.
  */
-function argbFromLab(l, a, b) {
+export function argbFromLab(l, a, b) {
     const whitePoint = WHITE_POINT_D65;
     const fy = (l + 16.0) / 116.0;
     const fx = a / 500.0 + fy;
@@ -132,7 +131,7 @@ function argbFromLab(l, a, b) {
  * @param argb the ARGB representation of a color
  * @return a Lab object representing the color
  */
-function labFromArgb(argb) {
+export function labFromArgb(argb) {
     const linearR = linearized(redFromArgb(argb));
     const linearG = linearized(greenFromArgb(argb));
     const linearB = linearized(blueFromArgb(argb));
@@ -159,7 +158,7 @@ function labFromArgb(argb) {
  * @return ARGB representation of grayscale color with lightness
  * matching L*
  */
-function argbFromLstar(lstar) {
+export function argbFromLstar(lstar) {
     const fy = (lstar + 16.0) / 116.0;
     const fz = fy;
     const fx = fy;
@@ -179,7 +178,7 @@ function argbFromLstar(lstar) {
  * @param argb ARGB representation of a color
  * @return L*, from L*a*b*, coordinate of the color
  */
-function lstarFromArgb(argb) {
+export function lstarFromArgb(argb) {
     const y = xyzFromArgb(argb)[1] / 100.0;
     const e = 216.0 / 24389.0;
     if (y <= e) {
@@ -201,7 +200,7 @@ function lstarFromArgb(argb) {
  * @param lstar L* in L*a*b*
  * @return Y in XYZ
  */
-function yFromLstar(lstar) {
+export function yFromLstar(lstar) {
     const ke = 8.0;
     if (lstar > ke) {
         return Math.pow((lstar + 16.0) / 116.0, 3.0) * 100.0;
@@ -218,7 +217,7 @@ function yFromLstar(lstar) {
  * @return 0.0 <= output <= 100.0, color channel converted to
  * linear RGB space
  */
-function linearized(rgbComponent) {
+export function linearized(rgbComponent) {
     const normalized = rgbComponent / 255.0;
     if (normalized <= 0.040449936) {
         return normalized / 12.92 * 100.0;
@@ -235,7 +234,7 @@ function linearized(rgbComponent) {
  * @return 0 <= output <= 255, color channel converted to regular
  * RGB space
  */
-function delinearized(rgbComponent) {
+export function delinearized(rgbComponent) {
     const normalized = rgbComponent / 100.0;
     let delinearized = 0.0;
     if (normalized <= 0.0031308) {
@@ -251,10 +250,10 @@ function delinearized(rgbComponent) {
  *
  * @return The white point
  */
-function whitePointD65() {
+export function whitePointD65() {
     return WHITE_POINT_D65;
 }
-function labF(t) {
+export function labF(t) {
     const e = 216.0 / 24389.0;
     const kappa = 24389.0 / 27.0;
     if (t > e) {
@@ -264,7 +263,7 @@ function labF(t) {
         return (kappa * t + 16) / 116;
     }
 }
-function labInvf(ft) {
+export function labInvf(ft) {
     const e = 216.0 / 24389.0;
     const kappa = 24389.0 / 27.0;
     const ft3 = ft * ft * ft;
@@ -276,7 +275,7 @@ function labInvf(ft) {
     }
 }
 
-function rgbaArrFromArgb(argb) {
+export function rgbaArrFromArgb(argb) {
     return [
                 redFromArgb(argb),
                 greenFromArgb(argb),
@@ -285,7 +284,7 @@ function rgbaArrFromArgb(argb) {
             ];
 }
 
-function blendArgb(base, added) {
+export function blendArgb(base, added) {
     var base = rgbaArrFromArgb(base);
     var added = rgbaArrFromArgb(added);
 

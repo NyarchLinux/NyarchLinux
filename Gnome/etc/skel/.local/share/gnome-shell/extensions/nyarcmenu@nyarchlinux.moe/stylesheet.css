@@ -1,65 +1,18 @@
-#ExtraLargeIconGrid{
-    width: 150px;
-    height: 150px;
+.ArcMenuIconGrid {
     text-align: center;
     border-radius: 8px;
     padding: 5px;
     spacing: 0px;
     margin: 0px;
 }
-#LargeIconGrid{
-    width: 95px;
-    height: 95px;
-    text-align: center;
-    border-radius: 8px;
-    padding: 5px;
-    spacing: 0px;
-    margin: 0px;
+
+.ArcMenuGroupFolder{
+    border: 2px solid rgba(0, 0, 0, 0);
 }
-#MediumIconGrid{
-    width: 87px;
-    height: 87px;
-    text-align: center;
-    border-radius: 8px;
-    padding: 5px;
-    spacing: 0px;
-    margin: 0px;
-}
-#SmallIconGrid{
-    width: 80px;
-    height: 80px;
-    text-align: center;
-    border-radius: 8px;
-    padding: 5px;
-    spacing: 0px;
-    margin: 0px;
-}
-#LargeRectIconGrid{
-    width: 95px;
-    height: 85px;
-    text-align: center;
-    border-radius: 8px;
-    padding: 5px;
-    spacing: 0px;
-    margin: 0px;
-}
-#MediumRectIconGrid{
-    width: 92px;
-    height: 78px;
-    text-align: center;
-    border-radius: 8px;
-    padding: 5px;
-    spacing: 0px;
-    margin: 0px;
-}
-#SmallRectIconGrid{
-    width: 85px;
-    height: 70px;
-    text-align: center;
-    border-radius: 8px;
-    padding: 5px;
-    spacing: 0px;
-    margin: 0px;
+
+.ArcMenuIconGrid:drop {
+    border: 2px solid rgba(53, 132, 228, 0.8);
+    background-color: rgba(53, 132, 228, 0.2);
 }
 
 .bottomOfScreenMenu{
@@ -129,12 +82,12 @@
     border-color: rgb(61, 174, 235);
 }
 
-StScrollView .small-vfade{
+.small-vfade{
     -st-vfade-offset: 44px;
 }
 
 .arcmenu-margin-box{
-    margin: 0px 0px;
+    margin: 0px 6px;
 }
 
 .arcmenu-menu .popup-menu-ornament{
@@ -169,10 +122,10 @@ StScrollView .small-vfade{
 }
 
 .arcmenu-tooltip{
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     padding: 4px 10px;
     box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
-    max-width: 550px;
+    max-width: 400px;
     min-height: 0px;
 }
 

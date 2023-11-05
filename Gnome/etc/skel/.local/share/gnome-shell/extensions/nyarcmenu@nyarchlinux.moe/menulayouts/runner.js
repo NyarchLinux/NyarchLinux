@@ -1,29 +1,28 @@
-/* eslint-disable jsdoc/require-jsdoc */
-/* exported getMenuLayoutEnum, Menu */
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import Clutter from 'gi://Clutter';
+import GObject from 'gi://GObject';
+import Shell from 'gi://Shell';
+import St from 'gi://St';
 
-const {Clutter, GObject, Shell, St} = imports.gi;
-const {BaseMenuLayout} = Me.imports.menulayouts.baseMenuLayout;
-const Constants = Me.imports.constants;
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const Main = imports.ui.main;
-const MW = Me.imports.menuWidgets;
-const _ = Gettext.gettext;
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+import {BaseMenuLayout} from './baseMenuLayout.js';
+import * as Constants from '../constants.js';
+import * as MW from '../menuWidgets.js';
+
+import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 const padding = 10;
 
-function getMenuLayoutEnum() {
-    return Constants.MenuLayout.RUNNER;
-}
-
-var Menu = class ArcMenuRunnerLayout extends BaseMenuLayout {
+export const Layout = class RunnerLayout extends BaseMenuLayout {
     static {
         GObject.registerClass(this);
     }
 
     constructor(menuButton, isStandalone) {
-        let displayType, searchDisplayType, columnSpacing, rowSpacing, defaultMenuWidth, iconGridStyle;
-        const searchDisplayStyle = Me.settings.get_enum('runner-search-display-style');
+        const {settings} = menuButton.extension;
+
+        let displayType, searchDisplayType, columnSpacing, rowSpacing, defaultMenuWidth, iconGridSize;
+        const searchDisplayStyle = settings.get_enum('runner-search-display-style');
 
         if (searchDisplayStyle === Constants.DisplayType.LIST) {
             displayType = Constants.DisplayType.LIST;
@@ -31,14 +30,14 @@ var Menu = class ArcMenuRunnerLayout extends BaseMenuLayout {
             columnSpacing = 0;
             rowSpacing = 0;
             defaultMenuWidth = null;
-            iconGridStyle = null;
+            iconGridSize = null;
         } else {
             displayType = Constants.DisplayType.GRID;
             searchDisplayType = Constants.DisplayType.GRID;
             columnSpacing = 15;
             rowSpacing = 15;
-            defaultMenuWidth = Me.settings.get_int('runner-menu-width');
-            iconGridStyle = 'LargeIconGrid';
+            defaultMenuWidth = settings.get_int('runner-menu-width');
+            iconGridSize = Constants.GridIconSize.LARGE;
         }
 
         super(menuButton, {
@@ -49,7 +48,7 @@ var Menu = class ArcMenuRunnerLayout extends BaseMenuLayout {
             row_spacing: rowSpacing,
             vertical: true,
             default_menu_width: defaultMenuWidth,
-            icon_grid_style: iconGridStyle,
+            icon_grid_size: iconGridSize,
             category_icon_size: Constants.MEDIUM_ICON_SIZE,
             apps_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
             quicklinks_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
@@ -81,11 +80,11 @@ var Menu = class ArcMenuRunnerLayout extends BaseMenuLayout {
         this.runnerTweaksButton.set({
             x_expand: false,
             y_expand: true,
-            y_align: this.searchBox.y_align = Clutter.ActorAlign.CENTER,
+            y_align: this.searchEntry.y_align = Clutter.ActorAlign.CENTER,
             x_align: Clutter.ActorAlign.CENTER,
         });
 
-        this.topBox.add_child(this.searchBox);
+        this.topBox.add_child(this.searchEntry);
         this.topBox.add_child(this.runnerTweaksButton);
         this.add_child(this.topBox);
 
@@ -110,7 +109,7 @@ var Menu = class ArcMenuRunnerLayout extends BaseMenuLayout {
     }
 
     updateWidth(setDefaultMenuView) {
-        const width = Me.settings.get_int('runner-menu-width') - padding;
+        const width = this._settings.get_int('runner-menu-width') - padding;
         this.menu_width = width;
         if (setDefaultMenuView)
             this.setDefaultMenuView();
@@ -119,7 +118,7 @@ var Menu = class ArcMenuRunnerLayout extends BaseMenuLayout {
     setDefaultMenuView() {
         this.activeMenuItem = null;
         super.setDefaultMenuView();
-        if (Me.settings.get_boolean('runner-show-frequent-apps'))
+        if (this._settings.get_boolean('runner-show-frequent-apps'))
             this.displayFrequentApps();
     }
 
@@ -160,10 +159,10 @@ var Menu = class ArcMenuRunnerLayout extends BaseMenuLayout {
      */
     _getMonitorIndexForPlacement() {
         if (this.is_standalone_runner) {
-            return Me.settings.get_boolean('runner-hotkey-open-primary-monitor')
+            return this._settings.get_boolean('runner-hotkey-open-primary-monitor')
                 ? Main.layoutManager.primaryMonitor.index : Main.layoutManager.currentMonitor.index;
-        } else if (Me.settings.get_enum('menu-button-appearance') === Constants.MenuButtonAppearance.NONE) {
-            return Me.settings.get_boolean('hotkey-open-primary-monitor')
+        } else if (this._settings.get_enum('menu-button-appearance') === Constants.MenuButtonAppearance.NONE) {
+            return this._settings.get_boolean('hotkey-open-primary-monitor')
                 ? Main.layoutManager.primaryMonitor.index : Main.layoutManager.currentMonitor.index;
         } else {
             return Main.layoutManager.findIndexForActor(this.menuButton);
@@ -174,16 +173,16 @@ var Menu = class ArcMenuRunnerLayout extends BaseMenuLayout {
         this.arcMenu._boxPointer.setSourceAlignment(0.5);
         this.arcMenu._arrowAlignment = 0.5;
 
-        const runnerHeight = Me.settings.get_int('runner-menu-height');
-        const runnerWidth = Me.settings.get_int('runner-menu-width');
-        const runnerFontSize = Me.settings.get_int('runner-font-size');
+        const runnerHeight = this._settings.get_int('runner-menu-height');
+        const runnerWidth = this._settings.get_int('runner-menu-width');
+        const runnerFontSize = this._settings.get_int('runner-font-size');
 
         const rect = Main.layoutManager.getWorkAreaForMonitor(this._getMonitorIndexForPlacement());
 
         // Position the runner menu in the center of the current monitor, at top of screen.
         const positionX = Math.round(rect.x + (rect.width / 2));
         let positionY = rect.y;
-        if (Me.settings.get_enum('runner-position') === 1)
+        if (this._settings.get_enum('runner-position') === 1)
             positionY = Math.round(rect.y + (rect.height / 2) - (runnerHeight / 2));
         Main.layoutManager.setDummyCursorGeometry(positionX, positionY, 0, 0);
 
@@ -193,7 +192,7 @@ var Menu = class ArcMenuRunnerLayout extends BaseMenuLayout {
         this.style = `max-height: ${runnerHeight}px; margin: 0px 0px 0px ${padding}px; width: ${runnerWidth}px;`;
         if (runnerFontSize > 0) {
             this.style += `font-size: ${runnerFontSize}pt;`;
-            this.searchBox.style += `font-size: ${runnerFontSize}pt;`;
+            this.searchEntry.style += `font-size: ${runnerFontSize}pt;`;
         }
         this.updateWidth();
     }

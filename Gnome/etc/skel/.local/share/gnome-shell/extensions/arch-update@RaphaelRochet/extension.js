@@ -17,28 +17,19 @@
     Copyright 2016-2022 Raphaël Rochet
 */
 
-const Clutter = imports.gi.Clutter;
+import Clutter from 'gi://Clutter';
+import St from 'gi://St';
+import GObject from 'gi://GObject';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 
-const St = imports.gi.St;
-const GObject = imports.gi.GObject;
-const GLib = imports.gi.GLib;
-const Gio = imports.gi.Gio;
-const Gtk = imports.gi.Gtk;
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import {Button} from 'resource:///org/gnome/shell/ui/panelMenu.js';
 
-const Main = imports.ui.main;
-const Panel = imports.ui.panel;
-const PanelMenu = imports.ui.panelMenu;
-const PopupMenu = imports.ui.popupMenu;
-const MessageTray = imports.ui.messageTray;
-
-const Util = imports.misc.util;
-const ExtensionUtils = imports.misc.extensionUtils;
-const ExtensionManager = imports.ui.main.extensionManager;
-const Me = ExtensionUtils.getCurrentExtension();
-
-const Format = imports.format;
-const Gettext = imports.gettext.domain('arch-update');
-const _ = Gettext.gettext;
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
+import * as Util from 'resource:///org/gnome/shell/misc/util.js';
+import {Extension, gettext as _, ngettext as __} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 /* RegExp to tell what's an update */
 /* I am very loose on this, may make it easier to port to other distros */
@@ -61,16 +52,29 @@ let STRIP_VERSIONS     = false;
 let STRIP_VERSIONS_N   = true;
 let AUTO_EXPAND_LIST   = 0;
 let DISABLE_PARSING    = false;
+let PACKAGE_INFO_CMD   = "xdg-open https://www.archlinux.org/packages/%2$s/%3$s/%1$s";
 
 /* Variables we want to keep when extension is disabled (eg during screen lock) */
 let FIRST_BOOT         = 1;
 let UPDATES_PENDING    = -1;
 let UPDATES_LIST       = [];
 
-
-function init() {
-	String.prototype.format = Format.format;
-	ExtensionUtils.initTranslations("arch-update");
+export default class ArchUpdateIndicatorExtension extends Extension {
+	constructor(metadata) {
+		super(metadata);
+	}
+	init() {
+		String.prototype.format = Format.format;
+	}
+	enable() {
+		this.archupdateindicator = new ArchUpdateIndicator(this);
+		Main.panel.addToStatusArea('ArchUpdateIndicator', this.archupdateindicator);
+		this.archupdateindicator._positionChanged();
+	}
+	disable() {
+		this.archupdateindicator.destroy();
+		this.archupdateindicator = null;
+	}
 }
 
 const ArchUpdateIndicator = GObject.registerClass(
@@ -82,10 +86,18 @@ const ArchUpdateIndicator = GObject.registerClass(
 		_updateProcess_pid: null,
 		_updateList: [],
 	},
-class ArchUpdateIndicator extends PanelMenu.Button {
+class ArchUpdateIndicator extends Button {
 
-	_init() {
+	_init(ext) {
 		super._init(0);
+		this._extension = ext;
+		/* A process builder without i10n for reproducible processing. */
+		this.launcher = new Gio.SubprocessLauncher({
+			flags: (Gio.SubprocessFlags.STDOUT_PIPE |
+				    Gio.SubprocessFlags.STDERR_PIPE)
+		});
+		this.launcher.setenv("LANG", "C", true);
+
 		this.updateIcon = new St.Icon({gicon: this._getCustIcon('arch-unknown-symbolic'), style_class: 'system-status-icon'});
 
 		let box = new St.BoxLayout({ vertical: false, style_class: 'panel-status-menu-box' });
@@ -149,13 +161,10 @@ class ArchUpdateIndicator extends PanelMenu.Button {
 		this._updateList = UPDATES_LIST;
 
 		// Load settings
-		this._settings = ExtensionUtils.getSettings('org.gnome.shell.extensions.arch-update');
+		this._settings = this._extension.getSettings();
 		this._settings.connect('changed', this._positionChanged.bind(this));
 		this._settingsChangedId = this._settings.connect('changed', this._applySettings.bind(this));
 		this._applySettings();
-
-		// Start monitoring external changes
-		this._startFolderMonitor();
 
 		if (FIRST_BOOT) {
 			// Schedule first check only if this is the first extension load
@@ -172,21 +181,14 @@ class ArchUpdateIndicator extends PanelMenu.Button {
 	}
 
 	_getCustIcon(icon_name) {
-		// I did not find a way to lookup icon via Gio, so use Gtk
-		// I couldn't find why, but get_default is sometimes null, hence this additional test
-		// TODO : Maybe switch to St.IconTheme
-		// https://gjs.guide/extensions/upgrading/gnome-shell-44.html#gtk-icontheme
-		// https://gjs-docs.gnome.org/st12~12/st.icontheme
-		if (!USE_BUILDIN_ICONS && St.Settings.get().gtk_icon_theme) {
-			let theme = new Gtk.IconTheme();
-			theme.set_theme_name( St.Settings.get().gtk_icon_theme );
-
+		if (!USE_BUILDIN_ICONS) {
+			let theme = new St.IconTheme();
 			if (theme.has_icon(icon_name)) {
 				return Gio.icon_new_for_string( icon_name );
 			}
 		}
 		// Icon not available in theme, or user prefers built in icon
-		return Gio.icon_new_for_string( Me.dir.get_child('icons').get_path() + "/" + icon_name + ".svg" );
+		return Gio.icon_new_for_string( this._extension.dir.get_child('icons').get_path() + "/" + icon_name + ".svg" );
 	}
 
 	_positionChanged(){
@@ -204,7 +206,7 @@ class ArchUpdateIndicator extends PanelMenu.Button {
 	}
 
 	_openSettings() {
-		ExtensionUtils.openPrefs();
+		this._extension.openPreferences();
 	}
 
 	_openManager() {
@@ -232,9 +234,11 @@ class ArchUpdateIndicator extends PanelMenu.Button {
 		STRIP_VERSIONS = this._settings.get_boolean('strip-versions');
 		STRIP_VERSIONS_N = this._settings.get_boolean('strip-versions-in-notification');
 		AUTO_EXPAND_LIST = this._settings.get_int('auto-expand-list');
+		PACKAGE_INFO_CMD = this._settings.get_string('package-info-cmd');
 		this.managerMenuItem.actor.visible = ( MANAGER_CMD != "" );
 		this._checkShowHide();
 		this._updateStatus();
+		this._startFolderMonitor();
 		let that = this;
 		if (this._TimeoutId) GLib.source_remove(this._TimeoutId);
 		this._TimeoutId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, CHECK_INTERVAL, function () {
@@ -302,7 +306,15 @@ class ArchUpdateIndicator extends PanelMenu.Button {
 	}
 
 	_startFolderMonitor() {
-		if (PACMAN_DIR) {
+		if (this.monitoring && this.monitoring != PACMAN_DIR) {
+			// The path to be monitored has been changed
+			this.monitor.cancel();
+			this.monitor = null;
+			this.monitoring = null;
+		}
+		if (PACMAN_DIR && !this.monitoring) {
+			// If there's a path to monitor and we're not already monitoring
+			this.monitoring = PACMAN_DIR;
 			this.pacman_dir = Gio.file_new_for_path(PACMAN_DIR);
 			this.monitor = this.pacman_dir.monitor_directory(0, null);
 			this.monitor.connect('changed', this._onFolderChanged.bind(this));
@@ -336,7 +348,7 @@ class ArchUpdateIndicator extends PanelMenu.Button {
 		if (updatesCount > 0) {
 			// Updates pending
 			this.updateIcon.set_gicon( this._getCustIcon('arch-updates-symbolic') );
-			this._updateMenuExpander( true, Gettext.ngettext( "%d update pending", "%d updates pending", updatesCount ).format(updatesCount) );
+			this._updateMenuExpander( true, __( "%d update pending", "%d updates pending", updatesCount ).format(updatesCount) );
 			this.label.set_text(updatesCount.toString());
 			if (NOTIFY && UPDATES_PENDING < updatesCount) {
 				if (HOWMUCH > 0) {
@@ -362,14 +374,14 @@ class ArchUpdateIndicator extends PanelMenu.Button {
 					if (updateList.length > 0) {
 						// Show notification only if there's new updates
 						this._showNotification(
-							Gettext.ngettext( "New Arch Linux Update", "New Arch Linux Updates", updateList.length ),
+							__( "New Arch Linux Update", "New Arch Linux Updates", updateList.length ),
 							updateList.join(', ')
 						);
 					}
 				} else {
 					this._showNotification(
-						Gettext.ngettext( "New Arch Linux Update", "New Arch Linux Updates", updatesCount ),
-						Gettext.ngettext( "There is %d update pending", "There are %d updates pending", updatesCount ).format(updatesCount)
+						__( "New Arch Linux Update", "New Arch Linux Updates", updatesCount ),
+						__( "There is %d update pending", "There are %d updates pending", updatesCount ).format(updatesCount)
 					);
 				}
 			}
@@ -421,7 +433,7 @@ class ArchUpdateIndicator extends PanelMenu.Button {
 							var chunks = menutext.split(" ",2);
 							menutext = chunks[0];
 						}
-						this.menuExpander.menu.box.add( new St.Label({ text: menutext }) );
+						this.menuExpander.menu.box.add( this._createPackageLabel(menutext) );
 					} else {
 						let matches = item.match(RE_UpdateLine);
 						if (matches == null) {
@@ -429,10 +441,7 @@ class ArchUpdateIndicator extends PanelMenu.Button {
 							this.menuExpander.menu.box.add( new St.Label({ text: item, style_class: 'arch-updates-update-title' }) );
 						} else {
 							let hBox = new St.BoxLayout({ vertical: false });
-							hBox.add_child( new St.Label({
-								text: matches[1],
-								x_expand: true,
-								style_class: 'arch-updates-update-name' }) );
+							hBox.add_child( this._createPackageLabel(matches[1]) );
 							if (!STRIP_VERSIONS) {
 								hBox.add_child( new St.Label({
 									text: matches[2] + " → ",
@@ -451,6 +460,45 @@ class ArchUpdateIndicator extends PanelMenu.Button {
 		}
 		// 'Update now' visibility is linked so let's save a few lines and set it here
 		this.updateNowMenuItem.actor.reactive = enabled;
+	}
+
+	_createPackageLabel(name) {
+		if (PACKAGE_INFO_CMD) {
+			let label = new St.Label({
+				text: name,
+				style_class: 'arch-updates-update-name-link'
+			});
+			let button = new St.Button({
+				child: label,
+				x_expand: true
+			});
+			button.connect('clicked', this._packageInfo.bind(this, name));
+			return button;
+		} else {
+			return new St.Label({
+				text: name,
+				x_expand: true,
+				style_class: 'arch-updates-update-name'
+			});
+		}
+	}
+
+	_packageInfo(item) {
+		let proc = this.launcher.spawnv(['pacman', '-Si', item]);
+		proc.communicate_utf8_async(null, null, (proc, res) => {
+			let repo = "REPO";
+			let arch = "ARCH";
+			let [,stdout,] = proc.communicate_utf8_finish(res);
+			if (proc.get_successful()) {
+				let m = stdout.match(/^Repository\s+:\s+(\w+).*?^Architecture\s+:\s+(\w+)/ms);
+				if (m !== null) {
+					repo = m[1];
+					arch = m[2];
+				}
+			}
+			let command = PACKAGE_INFO_CMD.format(item, repo, arch);
+			Util.spawnCommandLine(command);
+		});
 	}
 
 	_checkUpdates() {
@@ -518,8 +566,8 @@ class ArchUpdateIndicator extends PanelMenu.Button {
 		if (this._notifSource == null) {
 			// We have to prepare this only once
 			this._notifSource = new MessageTray.SystemNotificationSource();
+			let gicon = Gio.icon_new_for_string( this._extension.dir.get_child('icons').get_path() + "/arch-updates-logo.svg" );
 			this._notifSource.createIcon = function() {
-				let gicon = Gio.icon_new_for_string( Me.dir.get_child('icons').get_path() + "/arch-updates-logo.svg" );
 				return new St.Icon({ gicon: gicon });
 			};
 			// Take care of note leaving unneeded sources
@@ -542,15 +590,3 @@ class ArchUpdateIndicator extends PanelMenu.Button {
 
 });
 
-let archupdateindicator;
-
-function enable() {
-	archupdateindicator = new ArchUpdateIndicator();
-	Main.panel.addToStatusArea('ArchUpdateIndicator', archupdateindicator);
-	archupdateindicator._positionChanged();
-}
-
-function disable() {
-	archupdateindicator.destroy();
-	archupdateindicator = null;
-}

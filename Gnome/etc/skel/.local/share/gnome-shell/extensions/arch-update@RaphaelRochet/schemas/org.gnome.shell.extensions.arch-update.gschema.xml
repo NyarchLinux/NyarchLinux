@@ -125,5 +125,11 @@
       <description></description>
     </key>
 
+    <key name="package-info-cmd" type="s">
+      <default>"xdg-open https://www.archlinux.org/packages/%2$s/%3$s/%1$s"</default>
+      <summary>Command to show info for a package.</summary>
+      <description>String template, takes the package, repo and arch as attributes.</description>
+    </key>
+
   </schema>
 </schemalist>

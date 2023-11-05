@@ -16,9 +16,10 @@
  */
 /* exported EmulateX11WindowType */
 'use strict';
-const GLib = imports.gi.GLib;
-const Meta = imports.gi.Meta;
-const Main = imports.ui.main;
+import GLib from 'gi://GLib'
+import Meta from 'gi://Meta'
+import * as Main from 'resource:///org/gnome/shell/ui/main.js'
+
 
 class ManageWindow {
     /* This class is added to each managed window, and it's used to
@@ -144,7 +145,7 @@ class ManageWindow {
                     this._x = parseInt(coords[0]);
                     this._y = parseInt(coords[1]);
                 } catch (e) {
-                    global.log(`Exception ${e.message}.\n${e.stack}`);
+                    console.log(`Exception ${e.message}.\n${e.stack}`);
                 }
                 try {
                     let extraChars = title.substring(pos + 2).trim().toUpperCase();
@@ -170,7 +171,7 @@ class ManageWindow {
                         }
                     }
                 } catch (e) {
-                    global.log(`Exception ${e.message}.\n${e.stack}`);
+                    console.log(`Exception ${e.message}.\n${e.stack}`);
                 }
             }
             if (this._waylandClient) {
@@ -218,7 +219,7 @@ class ManageWindow {
     }
 }
 
-var EmulateX11WindowType = class {
+export class EmulateX11WindowType {
     /*
      This class makes all the heavy lifting for emulating WindowType.
      Just make one instance of it, call enable(), and whenever a window

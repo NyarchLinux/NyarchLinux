@@ -1,20 +1,16 @@
-/* eslint-disable jsdoc/require-jsdoc */
-/* exported getMenuLayoutEnum, Menu */
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import Clutter from 'gi://Clutter';
+import GObject from 'gi://GObject';
+import St from 'gi://St';
 
-const {Clutter, GObject, St} = imports.gi;
-const {BaseMenuLayout} = Me.imports.menulayouts.baseMenuLayout;
-const Constants = Me.imports.constants;
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const Main = imports.ui.main;
-const MW = Me.imports.menuWidgets;
-const _ = Gettext.gettext;
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-function getMenuLayoutEnum() {
-    return Constants.MenuLayout.AZ;
-}
+import {BaseMenuLayout} from './baseMenuLayout.js';
+import * as Constants from '../constants.js';
+import * as MW from '../menuWidgets.js';
 
-var Menu = class ArcMenuAzLayout extends BaseMenuLayout {
+import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
+
+export const Layout = class AzLayout extends BaseMenuLayout {
     static {
         GObject.registerClass(this);
     }
@@ -29,7 +25,7 @@ var Menu = class ArcMenuAzLayout extends BaseMenuLayout {
             row_spacing: 4,
             vertical: true,
             default_menu_width: 460,
-            icon_grid_style: 'LargeRectIconGrid',
+            icon_grid_size: Constants.GridIconSize.LARGE_RECT,
             category_icon_size: Constants.MEDIUM_ICON_SIZE,
             apps_icon_size: Constants.LARGE_ICON_SIZE,
             quicklinks_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
@@ -42,7 +38,7 @@ var Menu = class ArcMenuAzLayout extends BaseMenuLayout {
                 this.backButton.activate(event);
         });
 
-        this.searchBox.style = 'margin: 5px 10px;';
+        this.searchEntry.style = 'margin: 5px 10px;';
         this.arcMenu.box.style = 'padding: 0px; margin: 0px;';
 
         this._mainBox = new St.BoxLayout({
@@ -117,16 +113,16 @@ var Menu = class ArcMenuAzLayout extends BaseMenuLayout {
         });
         this.actionsBox.style = 'margin: 0px 10px; spacing: 10px;';
 
-        const searchBarLocation = Me.settings.get_enum('searchbar-default-top-location');
+        const searchBarLocation = this._settings.get_enum('searchbar-default-top-location');
         if (searchBarLocation === Constants.SearchbarLocation.TOP) {
-            this.topBox.add_child(this.searchBox);
+            this.topBox.add_child(this.searchEntry);
             this.bottomBox.add_child(this.actionsBox);
         } else {
             this.topBox.add_child(this.actionsBox);
-            this.bottomBox.add_child(this.searchBox);
+            this.bottomBox.add_child(this.searchEntry);
         }
 
-        Me.settings.connectObject('changed::az-extra-buttons', () => this._createExtraButtons(), this);
+        this._settings.connectObject('changed::az-extra-buttons', () => this._createExtraButtons(), this);
         this._createExtraButtons();
 
         this.updateStyle();
@@ -143,12 +139,12 @@ var Menu = class ArcMenuAzLayout extends BaseMenuLayout {
         this.actionsBox.add_child(userMenuItem);
 
         const isContainedInCategory = false;
-        const extraButtons = Me.settings.get_value('az-extra-buttons').deep_unpack();
+        const extraButtons = this._settings.get_value('az-extra-buttons').deep_unpack();
 
         for (let i = 0; i < extraButtons.length; i++) {
             const command = extraButtons[i][2];
             if (command === Constants.ShortcutCommands.SEPARATOR) {
-                const separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.LONG,
+                const separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.LONG,
                     Constants.SeparatorAlignment.VERTICAL);
                 separator.x_expand = false;
                 this.actionsBox.add_child(separator);
@@ -160,7 +156,7 @@ var Menu = class ArcMenuAzLayout extends BaseMenuLayout {
             }
         }
 
-        const powerDisplayStyle = Me.settings.get_enum('power-display-style');
+        const powerDisplayStyle = this._settings.get_enum('power-display-style');
         let leaveButton;
         if (powerDisplayStyle === Constants.PowerDisplayStyle.IN_LINE)
             leaveButton = new MW.PowerOptionsBox(this);
@@ -224,6 +220,10 @@ var Menu = class ArcMenuAzLayout extends BaseMenuLayout {
 
     setGridLayout(displayType, spacing, setStyle = true) {
         if (setStyle) {
+            if (displayType === Constants.DisplayType.LIST)
+                this.applicationsScrollBox.style_class = this._disableFadeEffect ? '' : 'small-vfade';
+            else
+                this.applicationsScrollBox.style_class = this._disableFadeEffect ? '' : 'vfade';
             this.applicationsGrid.x_align = displayType === Constants.DisplayType.LIST ? Clutter.ActorAlign.FILL
                 : Clutter.ActorAlign.CENTER;
         }
@@ -262,10 +262,10 @@ var Menu = class ArcMenuAzLayout extends BaseMenuLayout {
         this.backButton.visible = false;
     }
 
-    _onSearchBoxChanged(searchBox, searchString) {
-        if (!searchBox.isEmpty())
+    _onSearchEntryChanged(searchEntry, searchString) {
+        if (!searchEntry.isEmpty())
             this._hideNavigationRow();
-        super._onSearchBoxChanged(searchBox, searchString);
+        super._onSearchEntryChanged(searchEntry, searchString);
     }
 
     destroy() {

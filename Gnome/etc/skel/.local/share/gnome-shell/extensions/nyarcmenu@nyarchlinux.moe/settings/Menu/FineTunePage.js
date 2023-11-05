@@ -1,15 +1,12 @@
-/* exported FineTunePage */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+import Adw from 'gi://Adw';
+import GObject from 'gi://GObject';
+import Gtk from 'gi://Gtk';
 
-const {Adw, GObject, Gtk} = imports.gi;
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const _ = Gettext.gettext;
+import {SubPage} from './SubPage.js';
 
-const Settings = Me.imports.settings;
-const {SubPage} = Settings.Menu.SubPage;
+import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-var FineTunePage = GObject.registerClass(
+export const FineTunePage = GObject.registerClass(
 class ArcMenuFineTunePage extends SubPage {
     _init(settings, params) {
         super._init(settings, params);

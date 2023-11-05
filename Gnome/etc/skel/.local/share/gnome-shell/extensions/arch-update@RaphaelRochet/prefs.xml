@@ -316,6 +316,21 @@
 		</object>
 	</child>
 
+	<child>
+		<object class="AdwPreferencesGroup">
+			<property name="title" translatable="yes">Command to show info for a package (optional)</property>
+			<child>
+				<object class="AdwActionRow">
+					<property name="activatable-widget">field_packageinfocmd</property>
+					<property name="child">
+						<object class="GtkEntry" id="field_packageinfocmd">
+						</object>
+					</property>
+				</object>
+			</child>
+		</object>
+	</child>
+
 </object>
 <object class="AdwPreferencesPage" id="page_about">
 	<property name="title" translatable="yes">About</property>

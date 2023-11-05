@@ -1,20 +1,16 @@
-/* eslint-disable jsdoc/require-jsdoc */
-/* exported getMenuLayoutEnum, Menu */
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import Clutter from 'gi://Clutter';
+import GObject from 'gi://GObject';
+import Shell from 'gi://Shell';
+import St from 'gi://St';
 
-const {Clutter, GObject, Shell, St} = imports.gi;
-const {BaseMenuLayout} = Me.imports.menulayouts.baseMenuLayout;
-const Constants = Me.imports.constants;
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const MW = Me.imports.menuWidgets;
-const PlaceDisplay = Me.imports.placeDisplay;
-const _ = Gettext.gettext;
+import {BaseMenuLayout} from './baseMenuLayout.js';
+import * as Constants from '../constants.js';
+import * as MW from '../menuWidgets.js';
+import * as PlaceDisplay from '../placeDisplay.js';
 
-function getMenuLayoutEnum() {
-    return Constants.MenuLayout.ARCMENU;
-}
+import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-var Menu = class ArcMenuArcMenuLayout extends BaseMenuLayout {
+export const Layout = class ArcMenuLayout extends BaseMenuLayout {
     static {
         GObject.registerClass(this);
     }
@@ -78,7 +74,7 @@ var Menu = class ArcMenuArcMenuLayout extends BaseMenuLayout {
         });
         this.leftBox.add_child(this.navigateBox);
 
-        const separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM,
+        const separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MEDIUM,
             Constants.SeparatorAlignment.HORIZONTAL);
         this.navigateBox.add_child(separator);
 
@@ -88,28 +84,28 @@ var Menu = class ArcMenuArcMenuLayout extends BaseMenuLayout {
         this._viewAllAppsButton = new MW.ViewAllAppsButton(this);
         this.navigateBox.add_child(this._viewAllAppsButton);
 
-        const searchbarLocation = Me.settings.get_enum('searchbar-default-bottom-location');
+        const searchbarLocation = this._settings.get_enum('searchbar-default-bottom-location');
         if (searchbarLocation === Constants.SearchbarLocation.TOP) {
-            this.searchBox.add_style_class_name('arcmenu-search-top');
-            this.insert_child_at_index(this.searchBox, 0);
+            this.searchEntry.add_style_class_name('arcmenu-search-top');
+            this.insert_child_at_index(this.searchEntry, 0);
         } else if (searchbarLocation === Constants.SearchbarLocation.BOTTOM) {
-            this.searchBox.add_style_class_name('arcmenu-search-bottom');
-            this.leftBox.add_child(this.searchBox);
+            this.searchEntry.add_style_class_name('arcmenu-search-bottom');
+            this.leftBox.add_child(this.searchEntry);
         }
 
-        const verticalSeparator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM,
+        const verticalSeparator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MEDIUM,
             Constants.SeparatorAlignment.VERTICAL);
 
-        const horizontalFlip = Me.settings.get_boolean('enable-horizontal-flip');
+        const horizontalFlip = this._settings.get_boolean('enable-horizontal-flip');
         mainBox.add_child(horizontalFlip ? this.rightBox : this.leftBox);
         mainBox.add_child(verticalSeparator);
         mainBox.add_child(horizontalFlip ? this.leftBox : this.rightBox);
 
-        const userAvatar = Me.settings.get_boolean('disable-user-avatar');
+        const userAvatar = this._settings.get_boolean('disable-user-avatar');
         if (!userAvatar) {
             const userMenuItem = new MW.UserMenuItem(this, Constants.DisplayType.LIST);
             this.rightBox.add_child(userMenuItem);
-            const userAvatarSeparator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.SHORT,
+            const userAvatarSeparator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.SHORT,
                 Constants.SeparatorAlignment.HORIZONTAL);
             this.rightBox.add_child(userAvatarSeparator);
         }
@@ -125,15 +121,15 @@ var Menu = class ArcMenuArcMenuLayout extends BaseMenuLayout {
         // Add place shortcuts to menu (Home,Documents,Downloads,Music,Pictures,Videos)
         this._displayPlaces();
 
-        const haveDirectoryShortcuts = Me.settings.get_value('directory-shortcuts-list').deep_unpack().length > 0;
-        const haveApplicationShortcuts = Me.settings.get_value('application-shortcuts-list').deep_unpack().length > 0;
+        const haveDirectoryShortcuts = this._settings.get_value('directory-shortcuts-list').deep_unpack().length > 0;
+        const haveApplicationShortcuts = this._settings.get_value('application-shortcuts-list').deep_unpack().length > 0;
 
         // check to see if should draw separator
         const needsSeparator = haveDirectoryShortcuts &&
-                               (Me.settings.get_boolean('show-external-devices') || haveApplicationShortcuts ||
-                                Me.settings.get_boolean('show-bookmarks'));
+                               (this._settings.get_boolean('show-external-devices') || haveApplicationShortcuts ||
+                                this._settings.get_boolean('show-bookmarks'));
         if (needsSeparator) {
-            const shortcutsSeparator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.SHORT,
+            const shortcutsSeparator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.SHORT,
                 Constants.SeparatorAlignment.HORIZONTAL);
             this.shortcutsBox.add_child(shortcutsSeparator);
         }
@@ -151,13 +147,13 @@ var Menu = class ArcMenuArcMenuLayout extends BaseMenuLayout {
         for (let i = 0; i < Constants.SECTIONS.length; i++) {
             const id = Constants.SECTIONS[i];
             this._placesSections[id] = new St.BoxLayout({vertical: true});
-            this.placesManager.setConnection(`${id}-updated`, () => this._redisplayPlaces(id), this);
+            this.placesManager.connectObject(`${id}-updated`, () => this._redisplayPlaces(id), this);
 
             this._createPlaces(id);
             externalDevicesBox.add_child(this._placesSections[id]);
         }
 
-        const applicationShortcuts = Me.settings.get_value('application-shortcuts-list').deep_unpack();
+        const applicationShortcuts = this._settings.get_value('application-shortcuts-list').deep_unpack();
         for (let i = 0; i < applicationShortcuts.length; i++) {
             const shortcutMenuItem = this.createMenuItem(applicationShortcuts[i], Constants.DisplayType.LIST, false);
             if (shortcutMenuItem.shouldShow)
@@ -165,7 +161,7 @@ var Menu = class ArcMenuArcMenuLayout extends BaseMenuLayout {
         }
 
         let powerOptionsDisplay;
-        const powerDisplayStyle = Me.settings.get_enum('power-display-style');
+        const powerDisplayStyle = this._settings.get_enum('power-display-style');
         if (powerDisplayStyle === Constants.PowerDisplayStyle.MENU) {
             powerOptionsDisplay = new MW.LeaveButton(this, true);
         } else {
@@ -192,19 +188,19 @@ var Menu = class ArcMenuArcMenuLayout extends BaseMenuLayout {
         this.extraCategoriesLinksBox = new St.BoxLayout({vertical: true});
         this.extraCategoriesLinksBox.visible = false;
 
-        const separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM,
+        const separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MEDIUM,
             Constants.SeparatorAlignment.HORIZONTAL);
         this.extraCategoriesLinksBox.add_child(separator);
 
-        const extraCategoriesLinksLocation = Me.settings.get_enum('arcmenu-extra-categories-links-location');
+        const extraCategoriesLinksLocation = this._settings.get_enum('arcmenu-extra-categories-links-location');
         if (extraCategoriesLinksLocation === Constants.MenuItemLocation.TOP)
             this.leftBox.insert_child_below(this.extraCategoriesLinksBox, this.applicationsScrollBox);
         else
             this.navigateBox.insert_child_above(this.extraCategoriesLinksBox, this.navigateBox.get_child_at_index(0));
 
         this.showExtraCategoriesLinksBox = false;
-        const extraCategories = Me.settings.get_value('arcmenu-extra-categories-links').deep_unpack();
-        const defaultMenuView = Me.settings.get_enum('default-menu-view');
+        const extraCategories = this._settings.get_value('arcmenu-extra-categories-links').deep_unpack();
+        const defaultMenuView = this._settings.get_enum('default-menu-view');
 
         // Don't create extra categories quick links if
         // the default menu view is the categories list
@@ -244,8 +240,8 @@ var Menu = class ArcMenuArcMenuLayout extends BaseMenuLayout {
         this.categoryDirectories = null;
         this.categoryDirectories = new Map();
 
-        const extraCategories = Me.settings.get_value('extra-categories').deep_unpack();
-        const defaultMenuView = Me.settings.get_enum('default-menu-view');
+        const extraCategories = this._settings.get_value('extra-categories').deep_unpack();
+        const defaultMenuView = this._settings.get_enum('default-menu-view');
         if (defaultMenuView === Constants.DefaultMenuView.PINNED_APPS)
             this.hasPinnedApps = true;
 
@@ -273,7 +269,7 @@ var Menu = class ArcMenuArcMenuLayout extends BaseMenuLayout {
     }
 
     displayPinnedApps() {
-        const defaultMenuView = Me.settings.get_enum('default-menu-view');
+        const defaultMenuView = this._settings.get_enum('default-menu-view');
         if (defaultMenuView === Constants.DefaultMenuView.PINNED_APPS) {
             this._viewAllAppsButton.show();
             this.backButton.hide();
@@ -302,7 +298,7 @@ var Menu = class ArcMenuArcMenuLayout extends BaseMenuLayout {
     }
 
     displayCategories() {
-        const defaultMenuView = Me.settings.get_enum('default-menu-view');
+        const defaultMenuView = this._settings.get_enum('default-menu-view');
         if (defaultMenuView === Constants.DefaultMenuView.PINNED_APPS ||
             defaultMenuView === Constants.DefaultMenuView.FREQUENT_APPS) {
             this._viewAllAppsButton.hide();
@@ -321,7 +317,7 @@ var Menu = class ArcMenuArcMenuLayout extends BaseMenuLayout {
     setDefaultMenuView() {
         super.setDefaultMenuView();
 
-        const defaultMenuView = Me.settings.get_enum('default-menu-view');
+        const defaultMenuView = this._settings.get_enum('default-menu-view');
         if (defaultMenuView === Constants.DefaultMenuView.PINNED_APPS)
             this.displayPinnedApps();
         else if (defaultMenuView === Constants.DefaultMenuView.CATEGORIES_LIST)
@@ -382,9 +378,9 @@ var Menu = class ArcMenuArcMenuLayout extends BaseMenuLayout {
         super._clearActorsFromBox(box);
     }
 
-    _onSearchBoxChanged(searchBox, searchString) {
-        super._onSearchBoxChanged(searchBox, searchString);
-        if (!searchBox.isEmpty()) {
+    _onSearchEntryChanged(searchEntry, searchString) {
+        super._onSearchEntryChanged(searchEntry, searchString);
+        if (!searchEntry.isEmpty()) {
             this.extraCategoriesLinksBox.visible = false;
             this.backButton.show();
             this._viewAllAppsButton.hide();

@@ -40,6 +40,10 @@
 .arch-updates-update-name {
 	padding-right: 1em;
 }
+.arch-updates-update-name-link {
+	padding-right: 1em;
+	text-decoration: underline;
+}
 .arch-updates-update-version-from {
 	font-size: 75%;
 	vertical-align: baseline;

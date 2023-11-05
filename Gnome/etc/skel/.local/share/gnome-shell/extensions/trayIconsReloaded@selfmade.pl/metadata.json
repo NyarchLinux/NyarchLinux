@@ -8,9 +8,9 @@
   ],
   "settings-schema": "org.gnome.shell.extensions.trayIconsReloaded",
   "shell-version": [
-    "44"
+    "45"
   ],
   "url": "https://github.com/MartinPL/Tray-Icons-Reloaded",
   "uuid": "trayIconsReloaded@selfmade.pl",
-  "version": 27
+  "version": 29
 }

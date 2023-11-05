@@ -11,14 +11,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const { QuantizerCelebi } = Me.imports.quantize.quantizer_celebi;
-const { Score } = Me.imports.score.score;
-const color_utils = Me.imports.utils.color_utils;
-const {GLib, Gio} = imports.gi;
 
-function createPixelArray(pixels, quality) {
+import {QuantizerCelebi} from "../quantize/quantizer_celebi.js";
+import {Score} from "../score/score.js";
+import * as color_utils from "../utils/color_utils.js";
+import GLib from 'gi://GLib';
+import Gio from 'gi://GLib';
+
+export function createPixelArray(pixels, quality) {
     const pixelArray = [];
 
     for (let i = 0, offset, r, g, b, a; i < pixels.length; i += quality) {
@@ -44,7 +44,7 @@ function createPixelArray(pixels, quality) {
  * @param image The image element
  * @return Source color - the color most suitable for creating a UI theme
  */
-function sourceColorFromImage(image) {
+export function sourceColorFromImage(image) {
     // Convert Image data to Pixel Array
     const image_pixels = image.get_pixels();
     const pixels = createPixelArray(image_pixels, 8);

@@ -1,18 +1,14 @@
-'use strict';
+import Shell from 'gi://Shell';
+import Clutter from 'gi://Clutter';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-const { Shell, GLib, Clutter } = imports.gi;
-const Main = imports.ui.main;
-
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-const { PaintSignals } = Me.imports.effects.paint_signals;
+import { PaintSignals } from '../effects/paint_signals.js';
 const Tweener = imports.tweener.tweener;
 
 const transparent = Clutter.Color.from_pixel(0x00000000);
 const FOLDER_DIALOG_ANIMATION_TIME = 200;
-const FRAME_UPDATE_PERIOD = 16;
 
 const DIALOGS_STYLES = [
-    "",
     "appfolder-dialogs-transparent",
     "appfolder-dialogs-light",
     "appfolder-dialogs-dark"
@@ -123,22 +119,22 @@ let _zoomAndFadeOut = function () {
 };
 
 
-var AppFoldersBlur = class AppFoldersBlur {
-    constructor(connections, prefs) {
+export const AppFoldersBlur = class AppFoldersBlur {
+    constructor(connections, settings, _) {
         this.connections = connections;
         this.paint_signals = new PaintSignals(connections);
-        this.prefs = prefs;
+        this.settings = settings;
     }
 
     enable() {
         this._log("blurring appfolders");
 
-        brightness = this.prefs.appfolder.CUSTOMIZE
-            ? this.prefs.appfolder.BRIGHTNESS
-            : this.prefs.BRIGHTNESS;
-        sigma = this.prefs.appfolder.CUSTOMIZE
-            ? this.prefs.appfolder.SIGMA
-            : this.prefs.SIGMA;
+        brightness = this.settings.appfolder.CUSTOMIZE
+            ? this.settings.appfolder.BRIGHTNESS
+            : this.settings.BRIGHTNESS;
+        sigma = this.settings.appfolder.CUSTOMIZE
+            ? this.settings.appfolder.SIGMA
+            : this.settings.SIGMA;
 
         let appDisplay = Main.overview._overview.controls._appDisplay;
 
@@ -154,8 +150,8 @@ var AppFoldersBlur = class AppFoldersBlur {
     blur_appfolders() {
         let appDisplay = Main.overview._overview.controls._appDisplay;
 
-        if (this.prefs.HACKS_LEVEL === 1 || this.prefs.HACKS_LEVEL === 2)
-            this._log(`appfolders hack level ${this.prefs.HACKS_LEVEL}`);
+        if (this.settings.HACKS_LEVEL === 1 || this.settings.HACKS_LEVEL === 2)
+            this._log(`appfolders hack level ${this.settings.HACKS_LEVEL}`);
 
         appDisplay._folderIcons.forEach(icon => {
             icon._ensureFolderDialog();
@@ -181,12 +177,12 @@ var AppFoldersBlur = class AppFoldersBlur {
                 style => icon._dialog._viewBox.remove_style_class_name(style)
             );
 
-            icon._dialog._viewBox.add_style_class_name(
-                DIALOGS_STYLES[this.prefs.appfolder.STYLE_DIALOGS]
-            );
+            if (this.settings.appfolder.STYLE_DIALOGS > 0)
+                icon._dialog._viewBox.add_style_class_name(
+                    DIALOGS_STYLES[this.settings.appfolder.STYLE_DIALOGS - 1]
+                );
 
             // finally override the builtin functions
-
             icon._dialog._zoomAndFadeIn = _zoomAndFadeIn;
             icon._dialog._zoomAndFadeOut = _zoomAndFadeOut;
 
@@ -201,7 +197,7 @@ var AppFoldersBlur = class AppFoldersBlur {
             //
             // [1]: https://gitlab.gnome.org/GNOME/gnome-shell/-/issues/2857
 
-            if (this.prefs.HACKS_LEVEL === 1 || this.prefs.HACKS_LEVEL === 2) {
+            if (this.settings.HACKS_LEVEL === 1 || this.settings.HACKS_LEVEL === 2) {
                 this.paint_signals.disconnect_all_for_actor(icon._dialog);
                 this.paint_signals.connect(icon._dialog, blur_effect);
             } else {
@@ -212,13 +208,13 @@ var AppFoldersBlur = class AppFoldersBlur {
 
     set_sigma(s) {
         sigma = s;
-        if (this.prefs.appfolder.BLUR)
+        if (this.settings.appfolder.BLUR)
             this.blur_appfolders();
     }
 
     set_brightness(b) {
         brightness = b;
-        if (this.prefs.appfolder.BLUR)
+        if (this.settings.appfolder.BLUR)
             this.blur_appfolders();
     }
 
@@ -259,7 +255,7 @@ var AppFoldersBlur = class AppFoldersBlur {
     }
 
     _log(str) {
-        if (this.prefs.DEBUG)
-            log(`[Blur my Shell > appfolders]   ${str}`);
+        if (this.settings.DEBUG)
+            console.log(`[Blur my Shell > appfolders]   ${str}`);
     }
 };

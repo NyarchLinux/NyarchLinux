@@ -21,6 +21,7 @@
         <value value='17' nick='Eleven'/>
         <value value='18' nick='AZ'/>
         <value value='19' nick='Enterprise'/>
+        <value value='20' nick='Pop'/>
     </enum>
     <enum id='org.gnome.shell.extensions.arcmenu.forcemenulocation'>
         <value value='0' nick='Off'/>
@@ -108,6 +109,7 @@
         <value value="4" nick="Small_Rect"/>
         <value value="5" nick="Medium_Rect"/>
         <value value="6" nick="Large_Rect"/>
+        <value value="7" nick="Custom"/>
     </enum>
     <enum id='org.gnome.shell.extensions.arcmenu.category-icon-type'>
         <value value="0" nick="Full_Color"/>
@@ -191,43 +193,48 @@
     </key>
     <key type="(bs)" name="menu-button-fg-color">
       <default>(false, "rgb(242,242,242)")</default>
-      <summary>ArcMenu menu button fg color. Active when 'override-menu-theme' enabled.</summary>
-      <description>ArcMenu menu button fg color. Active when 'override-menu-theme' enabled.</description>
+      <summary>ArcMenu menu button fg color.</summary>
+      <description>ArcMenu menu button fg color.</description>
+    </key>
+    <key type="(bs)" name="menu-button-bg-color">
+      <default>(false, "rgba(242,242,242,0.2)")</default>
+      <summary>ArcMenu menu button bg color.</summary>
+      <description>ArcMenu menu button bg color.</description>
     </key>
     <key type="(bi)" name="menu-button-border-radius">
       <default>(false, 20)</default>
-      <summary>ArcMenu menu button border radius. Active when 'override-menu-theme' enabled.</summary>
-      <description>ArcMenu menu button border radius. Active when 'override-menu-theme' enabled.</description>
+      <summary>ArcMenu menu button border radius.</summary>
+      <description>ArcMenu menu button border radius.</description>
     </key>
     <key type="(bi)" name="menu-button-border-width">
       <default>(false, 3)</default>
-      <summary>ArcMenu menu button border radius. Active when 'override-menu-theme' enabled.</summary>
-      <description>ArcMenu menu button border radius. Active when 'override-menu-theme' enabled.</description>
+      <summary>ArcMenu menu button border radius.</summary>
+      <description>ArcMenu menu button border radius.</description>
     </key>
     <key type="(bs)" name="menu-button-border-color">
       <default>(false, "transparent")</default>
-      <summary>ArcMenu menu button hover bg color. Active when 'override-menu-theme' enabled.</summary>
-      <description>ArcMenu menu button hover bg color. Active when 'override-menu-theme' enabled.</description>
+      <summary>ArcMenu menu button hover bg color.</summary>
+      <description>ArcMenu menu button hover bg color.</description>
     </key>
     <key type="(bs)" name="menu-button-hover-bg-color">
       <default>(false, "rgba(242,242,242,0.15)")</default>
-      <summary>ArcMenu menu button hover bg color. Active when 'override-menu-theme' enabled.</summary>
-      <description>ArcMenu menu button hover bg color. Active when 'override-menu-theme' enabled.</description>
+      <summary>ArcMenu menu button hover bg color.</summary>
+      <description>ArcMenu menu button hover bg color.</description>
     </key>
     <key type="(bs)" name="menu-button-hover-fg-color">
       <default>(false, "rgb(242,242,242)")</default>
-      <summary>ArcMenu menu button hover fg color. Active when 'override-menu-theme' enabled.</summary>
-      <description>ArcMenu menu button hover fg color. Active when 'override-menu-theme' enabled.</description>
+      <summary>ArcMenu menu button hover fg color.</summary>
+      <description>ArcMenu menu button hover fg color.</description>
     </key>
     <key type="(bs)" name="menu-button-active-bg-color">
       <default>(false, "rgba(242,242,242,0.2)")</default>
-      <summary>ArcMenu menu button active bg color. Active when 'override-menu-theme' enabled.</summary>
-      <description>ArcMenu menu button active bg color. Active when 'override-menu-theme' enabled.</description>
+      <summary>ArcMenu menu button active bg color.</summary>
+      <description>ArcMenu menu button active bg color.</description>
     </key>
     <key type="(bs)" name="menu-button-active-fg-color">
       <default>(false, "rgb(242,242,242)")</default>
-      <summary>ArcMenu menu button active fg color. Active when 'override-menu-theme' enabled.</summary>
-      <description>ArcMenu menu button active fg color. Active when 'override-menu-theme' enabled.</description>
+      <summary>ArcMenu menu button active fg color.</summary>
+      <description>ArcMenu menu button active fg color.</description>
     </key>
     <key name="menu-themes" type="aas">
     <!--Order of elements in a theme:
@@ -595,6 +602,11 @@
       <summary>Size of the menu grid icons.</summary>
       <description>Size of the menu grid icon.</description>
     </key>
+    <key name="custom-grid-icon-size" type="a{si}">
+      <default>{'width': 108, 'height': 108, 'iconSize': 62}</default>
+      <summary>Custom "grid icon" size (width, height, iconSize).</summary>
+      <description>Custom "grid icon" size (width, height, iconSize).</description>
+    </key>
     <key name="button-item-icon-size" enum="org.gnome.shell.extensions.arcmenu.icon-sizes">
       <default>'Default'</default>
       <summary>Size of the button items in ArcMenu.</summary>
@@ -755,6 +767,16 @@
       <default>[["", "", "org.gnome.Nautilus.desktop"], ["", "", "org.gnome.Terminal.desktop"], ["", "", "org.gnome.Settings.desktop"]]</default>
       <summary>List of Windows Layout extra buttons</summary>
       <description>List of Windows Layout extra buttons</description>
+    </key>
+    <key name="pop-folders-data" type="a{ss}">
+      <default>{}</default>
+      <summary>List of org.gnome.desktop.app-folders id:name</summary>
+      <description>List of org.gnome.desktop.app-folders id:name</description>
+    </key>
+    <key name="pop-default-view" type="s">
+      <default>'Library Home'</default>
+      <summary>The folder to display when opening the POP layout</summary>
+      <description>The folder to display when opening the POP layout</description>
     </key>
     <key name="prefs-visible-page" type="i">
       <default>0</default>

@@ -21,158 +21,129 @@
  * along with gnome-shell extension Compiz-windows-effect.  If not, see
  * <http://www.gnu.org/licenses/>.
  */
-const Gtk = imports.gi.Gtk;
-const Extension = imports.misc.extensionUtils.getCurrentExtension();
-const Settings = Extension.imports.settings;
-const Config = imports.misc.config;
+'use strict';
 
-const IS_3_XX_SHELL_VERSION = Config.PACKAGE_VERSION.startsWith("3");
+import Adw from 'gi://Adw';
+import Gtk from 'gi://Gtk';
 
-let frictionSlider = null;
-let springKSlider = null;
-let speedupFactor = null;
-let massSlider = null;
-let xTilesSlider = null;
-let yTilesSlider = null;
-let maximizeEffectSwitch = null;
-let resizeEffectSwitch = null;
+import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-function init() { }
+import { SettingsData } from './settings_data.js';
 
-function buildPrefsWidget() {
-    let config = new Settings.Prefs();
+export default class Prefs extends ExtensionPreferences {
 
-    let frame;
-    if (IS_3_XX_SHELL_VERSION) {
-        frame = new Gtk.Box({
-            orientation: Gtk.Orientation.VERTICAL,
-            border_width: 20,
-            spacing: 20
+    fillPreferencesWindow(window) {
+        const settingsData = new SettingsData(this.getSettings());
+
+        const width = 750;
+        const height = 580;
+        window.set_default_size(width, height);
+
+        const page = Adw.PreferencesPage.new();
+
+        const group1 = Adw.PreferencesGroup.new();
+        this.frictionSlider = this.addSlider(group1, "Friction", settingsData.FRICTION, 1.0, 10.0, 1);
+        this.springKSlider = this.addSlider(group1, "Spring", settingsData.SPRING_K, 1.0, 10.0, 1);
+        this.speedupFactor = this.addSlider(group1, "Speedup Factor", settingsData.SPEEDUP_FACTOR, 2.0, 40.0, 1);
+        this.massSlider = this.addSlider(group1, "Mass", settingsData.MASS, 20.0, 80.0, 0);
+        page.add(group1);
+        
+        const group2 = Adw.PreferencesGroup.new();
+        this.xTilesSlider = this.addSlider(group2, "X Tiles", settingsData.X_TILES, 3.0, 20.0, 0);
+        this.yTilesSlider = this.addSlider(group2, "Y Tiles", settingsData.Y_TILES, 3.0, 20.0, 0);
+        this.maximizeEffectSwitch = this.addBooleanSwitch(group2, "Maximize effect", settingsData.MAXIMIZE_EFFECT);
+        this.resizeEffectSwitch = this.addBooleanSwitch(group2, "Resize effect", settingsData.RESIZE_EFFECT);
+        page.add(group2);
+
+        this.addResetButton(window, settingsData);
+
+        window.add(page);
+    }
+
+    addResetButton(window, settingsData) {
+        const button = new Gtk.Button({vexpand: true, valign: Gtk.Align.END});
+        button.set_icon_name('edit-clear');
+
+        button.connect('clicked', () => {
+            settingsData.FRICTION.set(3.5);
+            settingsData.SPRING_K.set(8.5);
+            settingsData.SPEEDUP_FACTOR.set(16.0);
+            settingsData.MASS.set(50.0);
+            settingsData.X_TILES.set(6.0);
+            settingsData.Y_TILES.set(6.0);
+            settingsData.MAXIMIZE_EFFECT.set(true);
+            settingsData.RESIZE_EFFECT.set(false);
+    
+            this.frictionSlider.set_value(settingsData.FRICTION.get());
+            this.springKSlider.set_value(settingsData.SPRING_K.get());
+            this.speedupFactor.set_value(settingsData.SPEEDUP_FACTOR.get());
+            this.massSlider.set_value(settingsData.MASS.get());
+            this.xTilesSlider.set_value(settingsData.X_TILES.get());
+            this.yTilesSlider.set_value(settingsData.Y_TILES.get());
+            this.maximizeEffectSwitch.set_active(settingsData.MAXIMIZE_EFFECT.get());
+            this.resizeEffectSwitch.set_active(settingsData.RESIZE_EFFECT.get());
         });
-    } else {
-        frame = new Gtk.Box({
-            orientation: Gtk.Orientation.VERTICAL,
-            margin_top: 20,
-            margin_bottom: 20,
-            margin_start: 20,
-            margin_end: 20,
-            spacing: 20
+
+        const header = this.findWidgetByType(window.get_content(), Adw.HeaderBar);
+        if (header) {
+            header.pack_start(button);            
+        }
+        
+        return button;
+    }
+    
+    addSlider(group, labelText, settingsData, lower, upper, decimalDigits) {
+        const scale = new Gtk.Scale({
+            digits: decimalDigits,
+            adjustment: new Gtk.Adjustment({lower: lower, upper: upper}),
+            value_pos: Gtk.PositionType.RIGHT,
+            hexpand: true, 
+            halign: Gtk.Align.END
         });
-    }
+        scale.set_draw_value(true);    
+        scale.set_value(settingsData.get());
+        scale.connect('value-changed', (sw) => {
+            var newval = sw.get_value();
+            if (newval != settingsData.get()) {
+                settingsData.set(newval);
+            }
+        });
+        scale.set_size_request(400, 15);
 
-    frictionSlider = addSlider(frame, "Friction", config.FRICTION, 1.0, 10.0, 1);
-    springKSlider = addSlider(frame, "Spring", config.SPRING_K, 1.0, 10.0, 1);
-    speedupFactor = addSlider(frame, "Speedup Factor", config.SPEEDUP_FACTOR, 2.0, 40.0, 1);
-    massSlider = addSlider(frame, "Mass", config.MASS, 20.0, 80.0, 0);
-    xTilesSlider = addSlider(frame, "X Tiles", config.X_TILES, 3.0, 20.0, 0);
-    yTilesSlider = addSlider(frame, "Y Tiles", config.Y_TILES, 3.0, 20.0, 0);
-    maximizeEffectSwitch = addBooleanSwitch(frame, "Maximize effect", config.MAXIMIZE_EFFECT);
-    resizeEffectSwitch = addBooleanSwitch(frame, "Resize effect", config.RESIZE_EFFECT);
+        const row = Adw.ActionRow.new();
+        row.set_title(labelText);
+        row.add_suffix(scale);
+        group.add(row);
 
-    addDefaultButton(frame, config);
-
-    if (IS_3_XX_SHELL_VERSION) {
-        frame.show_all();
-    }
-
-    return frame;
-}
-
-function addDefaultButton(frame, config) {
-    let button = null;
-    if (IS_3_XX_SHELL_VERSION) {
-        button = new Gtk.Button({label: "Reset to default"});
-    } else {
-        button = new Gtk.Button({label: "Reset to default", vexpand: true, valign: Gtk.Align.END});
-    }
-
-    button.connect('clicked', function () {
-        config.FRICTION.set(3.5);
-        config.SPRING_K.set(8.5);
-        config.SPEEDUP_FACTOR.set(16.0);
-        config.MASS.set(50.0);
-        config.X_TILES.set(6.0);
-        config.Y_TILES.set(6.0);
-        config.MAXIMIZE_EFFECT.set(true);
-        config.RESIZE_EFFECT.set(false);
-
-        frictionSlider.set_value(config.FRICTION.get());
-        springKSlider.set_value(config.SPRING_K.get());
-        speedupFactor.set_value(config.SPEEDUP_FACTOR.get());
-        massSlider.set_value(config.MASS.get());
-        xTilesSlider.set_value(config.X_TILES.get());
-        yTilesSlider.set_value(config.Y_TILES.get());
-        maximizeEffectSwitch.set_active(config.MAXIMIZE_EFFECT.get());
-        resizeEffectSwitch.set_active(config.RESIZE_EFFECT.get());
-    });
-
-    if (IS_3_XX_SHELL_VERSION) {
-        frame.pack_end(button, false, false, 0);
-    } else {
-        frame.append(button);
+        return scale;
     }
     
-    return button;
-}
+    addBooleanSwitch(group, labelText, settingsData) {
+        const gtkSwitch = new Gtk.Switch({hexpand: true, halign: Gtk.Align.END});
+        gtkSwitch.set_active(settingsData.get());
+        gtkSwitch.set_valign(Gtk.Align.CENTER);
+        gtkSwitch.connect('state-set', (sw) => {
+            var newval = sw.get_active();
+            if (newval != settingsData.get()) {
+                settingsData.set(newval);
+            }
+        });
 
-function addSlider(frame, labelText, prefConfig, lower, upper, decimalDigits) {
-    let scale = new Gtk.Scale({
-        digits: decimalDigits,
-        adjustment: new Gtk.Adjustment({lower: lower, upper: upper}),
-        value_pos: Gtk.PositionType.RIGHT,
-        hexpand: true, 
-        halign: Gtk.Align.END
-    });
-    if (!IS_3_XX_SHELL_VERSION) {
-        scale.set_draw_value(true);
+        const row = Adw.ActionRow.new();
+        row.set_title(labelText);
+        row.add_suffix(gtkSwitch);
+        group.add(row);
+        
+        return gtkSwitch;
     }
-    scale.set_value(prefConfig.get());
-    scale.connect('value-changed', function (sw) {
-        var newval = sw.get_value();
-        if (newval != prefConfig.get()) {
-            prefConfig.set(newval);
+
+    findWidgetByType(parent, type) {
+        for (const child of [...parent]) {
+            if (child instanceof type) return child;
+
+            const match = this.findWidgetByType(child, type);
+            if (match) return match;
         }
-    });
-    scale.set_size_request(400, 15);
-
-    let hbox = new Gtk.Box({orientation: Gtk.Orientation.HORIZONTAL, spacing: 20});
-    if (IS_3_XX_SHELL_VERSION) {
-        hbox.add(new Gtk.Label({label: labelText, use_markup: true}));
-        hbox.add(scale);
-        
-        frame.add(hbox);
-    } else {
-        hbox.append(new Gtk.Label({label: labelText, use_markup: true}));
-        hbox.append(scale);
-        
-        frame.append(hbox);
+        return null;
     }
-    
-    return scale;
-}
-
-function addBooleanSwitch(frame, labelText, prefConfig) {
-    let gtkSwitch = new Gtk.Switch({hexpand: true, halign: Gtk.Align.END});
-    gtkSwitch.set_active(prefConfig.get());
-    gtkSwitch.connect('state-set', function (sw) {
-        var newval = sw.get_active();
-        if (newval != prefConfig.get()) {
-            prefConfig.set(newval);
-        }
-    });
-
-    let hbox = new Gtk.Box({orientation: Gtk.Orientation.HORIZONTAL, spacing: 20});
-    if (IS_3_XX_SHELL_VERSION) {
-        hbox.add(new Gtk.Label({label: labelText, use_markup: true}));
-        hbox.add(gtkSwitch);
-        
-        frame.add(hbox);
-    } else {
-        hbox.append(new Gtk.Label({label: labelText, use_markup: true}));
-        hbox.append(gtkSwitch);
-        
-        frame.append(hbox);
-    }
-    
-    return gtkSwitch;
 }

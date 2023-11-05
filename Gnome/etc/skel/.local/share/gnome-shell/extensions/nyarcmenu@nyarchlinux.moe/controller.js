@@ -1,39 +1,51 @@
-/* exported MenuSettingsController */
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const {Gio, GLib, Shell} = imports.gi;
-const Constants = Me.imports.constants;
-const {InputSourceManager} = imports.ui.status.keyboard;
-const Keybinder = Me.imports.keybinder;
-const Main = imports.ui.main;
-const {MenuButton} = Me.imports.menuButton;
-const {StandaloneRunner} = Me.imports.standaloneRunner;
-const Theming = Me.imports.theming;
-const Utils = Me.imports.utils;
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import Shell from 'gi://Shell';
 
-var MenuSettingsController = class {
-    constructor(settingsControllers, panel, panelBox, panelParent, isPrimaryPanel) {
-        this.panel = panel;
+import {InputSourceManager} from 'resource:///org/gnome/shell/ui/status/keyboard.js';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-        global.toggleArcMenu = () => this.toggleMenus();
+import {ArcMenuManager} from './arcmenuManager.js';
+import * as Constants from './constants.js';
+import * as Keybinder from './keybinder.js';
+import {MenuButton} from './menuButton.js';
+import * as Theming from './theming.js';
+import {StandaloneRunner} from './standaloneRunner.js';
+import * as Utils from './utils.js';
 
-        this._settingsConnections = new Utils.SettingsConnectionsHandler();
-
+export const MenuSettingsController = class {
+    constructor(panelInfo, index) {
+        this.panel = panelInfo.panel;
         this.currentMonitorIndex = 0;
-        this.isPrimaryPanel = isPrimaryPanel;
+        this.isPrimaryPanel = index === 0;
 
-        this._menuButton = new MenuButton(this.panel, panelBox, panelParent);
+        this._extension = ArcMenuManager.extension;
+        this._settingsControllers = ArcMenuManager.settingsControllers;
+        this._settings = ArcMenuManager.settings;
 
-        this._settingsControllers = settingsControllers;
+        // Allow other extensions and DBus command to open/close ArcMenu
+        if (!global.toggleArcMenu) {
+            global.toggleArcMenu = () => this.toggleMenus();
+            this._service = new Utils.DBusService();
+            this._service.ToggleArcMenu = () => {
+                this.toggleMenus();
+            };
+        }
+
+        this._settingsConnections = new Utils.SettingsConnectionsHandler(this._settings);
+        this._menuButton = new MenuButton(panelInfo, index);
 
         if (this.isPrimaryPanel) {
             this._overrideOverlayKey = new Keybinder.OverrideOverlayKey();
-            this._customKeybinding = new Keybinder.CustomKeybinding();
+            this._customKeybinding = new Keybinder.CustomKeybinding(this._settings);
             this._appSystem = Shell.AppSystem.get_default();
             this._updateHotKeyBinder();
             this._initRecentAppsTracker();
             this._inputSourceManagerOverride();
         }
+
         this._setButtonAppearance();
         this._setButtonText();
         this._setButtonIcon();
@@ -93,63 +105,46 @@ var MenuSettingsController = class {
     }
 
     connectSettingsEvents() {
-        this._settingsConnections.connectMultipleEvents(
-            ['override-menu-theme', 'menu-background-color', 'menu-foreground-color', 'menu-border-color',
-                'menu-border-width', 'menu-border-radius', 'menu-font-size', 'menu-separator-color',
-                'menu-item-hover-bg-color', 'menu-item-hover-fg-color', 'menu-item-active-bg-color',
-                'menu-item-active-fg-color', 'menu-button-fg-color', 'menu-button-hover-bg-color',
-                'menu-button-hover-fg-color', 'menu-button-active-bg-color', 'menu-button-active-fg-color',
-                'menu-button-border-radius', 'menu-button-border-width', 'menu-button-border-color',
-                'menu-arrow-rise', 'search-entry-border-radius'],
-            this._overrideMenuTheme.bind(this)
-        );
+        this._settingsConnections.connect('override-menu-theme', 'menu-background-color', 'menu-foreground-color',
+            'menu-border-color', 'menu-border-width', 'menu-border-radius', 'menu-font-size', 'menu-separator-color',
+            'menu-item-hover-bg-color', 'menu-item-hover-fg-color', 'menu-item-active-bg-color',
+            'menu-item-active-fg-color', 'menu-button-fg-color', 'menu-button-bg-color',
+            'menu-button-hover-bg-color', 'menu-button-hover-fg-color', 'menu-button-active-bg-color',
+            'menu-button-active-fg-color', 'menu-button-border-radius', 'menu-button-border-width',
+            'menu-button-border-color', 'menu-arrow-rise', 'search-entry-border-radius',
+            this._overrideMenuTheme.bind(this));
 
-        this._settingsConnections.connectMultipleEvents(
-            ['enable-menu-hotkey', 'menu-hotkey-type', 'runner-menu-hotkey-type',
-                'enable-standlone-runner-menu'],
-            this._updateHotKeyBinder.bind(this)
-        );
+        this._settingsConnections.connect('enable-menu-hotkey', 'menu-hotkey-type', 'runner-menu-hotkey-type',
+            'enable-standlone-runner-menu', this._updateHotKeyBinder.bind(this));
 
-        this._settingsConnections.connectMultipleEvents(
-            ['position-in-panel', 'menu-button-position-offset'],
-            this._setButtonPosition.bind(this)
-        );
+        this._settingsConnections.connect('position-in-panel', 'menu-button-position-offset',
+            this._setButtonPosition.bind(this));
 
-        this._settingsConnections.connectMultipleEvents(
-            ['menu-button-icon', 'distro-icon', 'arc-menu-icon', 'custom-menu-button-icon'],
-            this._setButtonIcon.bind(this)
-        );
+        this._settingsConnections.connect('menu-button-icon', 'distro-icon', 'arc-menu-icon', 'custom-menu-button-icon',
+            this._setButtonIcon.bind(this));
 
-        this._settingsConnections.connectMultipleEvents(
-            ['directory-shortcuts-list', 'application-shortcuts-list', 'extra-categories',
-                'power-options', 'show-external-devices', 'show-bookmarks', 'disable-user-avatar',
-                'avatar-style', 'enable-activities-shortcut', 'enable-horizontal-flip', 'power-display-style',
-                'searchbar-default-bottom-location', 'searchbar-default-top-location', 'multi-lined-labels',
-                'apps-show-extra-details', 'show-search-result-details', 'search-provider-open-windows',
-                'search-provider-recent-files', 'misc-item-icon-size', 'windows-disable-pinned-apps',
-                'disable-scrollview-fade-effect', 'windows-disable-frequent-apps', 'default-menu-view',
-                'default-menu-view-tognee', 'alphabetize-all-programs', 'menu-item-grid-icon-size',
-                'menu-item-icon-size', 'button-item-icon-size', 'quicklinks-item-icon-size',
-                'menu-item-category-icon-size', 'category-icon-type', 'shortcut-icon-type',
-                'arcmenu-extra-categories-links', 'arcmenu-extra-categories-links-location',
-                'runner-show-frequent-apps', 'default-menu-view-redmond', 'disable-recently-installed-apps',
-                'runner-search-display-style', 'raven-search-display-style'],
-            this._recreateMenuLayout.bind(this)
-        );
+        this._settingsConnections.connect('directory-shortcuts-list', 'application-shortcuts-list', 'extra-categories',
+            'power-options', 'show-external-devices', 'show-bookmarks', 'disable-user-avatar',
+            'avatar-style', 'enable-activities-shortcut', 'enable-horizontal-flip', 'power-display-style',
+            'searchbar-default-bottom-location', 'searchbar-default-top-location', 'multi-lined-labels',
+            'apps-show-extra-details', 'show-search-result-details', 'search-provider-open-windows',
+            'search-provider-recent-files', 'misc-item-icon-size', 'windows-disable-pinned-apps',
+            'disable-scrollview-fade-effect', 'windows-disable-frequent-apps', 'default-menu-view',
+            'default-menu-view-tognee', 'alphabetize-all-programs', 'menu-item-grid-icon-size',
+            'menu-item-icon-size', 'button-item-icon-size', 'quicklinks-item-icon-size',
+            'menu-item-category-icon-size', 'category-icon-type', 'shortcut-icon-type',
+            'arcmenu-extra-categories-links', 'arcmenu-extra-categories-links-location',
+            'runner-show-frequent-apps', 'default-menu-view-redmond', 'disable-recently-installed-apps',
+            'runner-search-display-style', 'raven-search-display-style', 'custom-grid-icon-size',
+            this._recreateMenuLayout.bind(this));
 
-        this._settingsConnections.connectMultipleEvents(
-            ['left-panel-width', 'right-panel-width', 'menu-width-adjustment'],
-            this._updateMenuWidth.bind(this)
-        );
+        this._settingsConnections.connect('left-panel-width', 'right-panel-width', 'menu-width-adjustment',
+            this._updateMenuWidth.bind(this));
 
-        this._settingsConnections.connectMultipleEvents(
-            ['pinned-app-list', 'enable-weather-widget-unity', 'enable-clock-widget-unity',
-                'enable-weather-widget-raven', 'enable-clock-widget-raven'],
-            this._updatePinnedApps.bind(this)
-        );
+        this._settingsConnections.connect('pinned-app-list', 'enable-weather-widget-unity', 'enable-clock-widget-unity',
+            'enable-weather-widget-raven', 'enable-clock-widget-raven', this._updatePinnedApps.bind(this));
 
-        this._settingsConnections.connect('menu-position-alignment',
-            this._setMenuPositionAlignment.bind(this));
+        this._settingsConnections.connect('menu-position-alignment', this._setMenuPositionAlignment.bind(this));
         this._settingsConnections.connect('menu-button-appearance', this._setButtonAppearance.bind(this));
         this._settingsConnections.connect('custom-menu-button-text', this._setButtonText.bind(this));
         this._settingsConnections.connect('custom-menu-button-icon-size', this._setButtonIconSize.bind(this));
@@ -158,8 +153,7 @@ var MenuSettingsController = class {
         this._settingsConnections.connect('enable-unity-homescreen', this._setDefaultMenuView.bind(this));
         this._settingsConnections.connect('menu-layout', this._changeMenuLayout.bind(this));
         this._settingsConnections.connect('runner-position', this._updateLocation.bind(this));
-        this._settingsConnections.connect('show-activities-button',
-            this._configureActivitiesButton.bind(this));
+        this._settingsConnections.connect('show-activities-button', this._configureActivitiesButton.bind(this));
         this._settingsConnections.connect('force-menu-location', this._forceMenuLocation.bind(this));
     }
 
@@ -171,7 +165,7 @@ var MenuSettingsController = class {
             GLib.source_remove(this._writeTimeoutId);
 
         this._writeTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300, () => {
-            Theming.updateStylesheet(Me.settings);
+            Theming.updateStylesheet();
             this._writeTimeoutId = null;
             return GLib.SOURCE_REMOVE;
         });
@@ -191,7 +185,7 @@ var MenuSettingsController = class {
         this._appList = this._listAllApps();
 
         this._installedChangedId = this._appSystem.connect('installed-changed', () => {
-            const isDisabled = Me.settings.get_boolean('disable-recently-installed-apps');
+            const isDisabled = this._settings.get_boolean('disable-recently-installed-apps');
             const appList = this._listAllApps();
 
             // Filter to find if a new application has been installed
@@ -200,9 +194,9 @@ var MenuSettingsController = class {
 
             if (newAppsList.length && !isDisabled) {
                 // A new app has been installed, Save it in settings
-                const recentApps = Me.settings.get_strv('recently-installed-apps');
+                const recentApps = this._settings.get_strv('recently-installed-apps');
                 const newRecentApps = [...new Set(recentApps.concat(newAppsList))];
-                Me.settings.set_strv('recently-installed-apps', newRecentApps);
+                this._settings.set_strv('recently-installed-apps', newRecentApps);
             }
 
             for (let i = 0; i < this._settingsControllers.length; i++) {
@@ -252,7 +246,7 @@ var MenuSettingsController = class {
             this.runnerMenu.toggleMenu();
         if (global.dashToPanel || global.azTaskbar) {
             const MultipleArcMenus = this._settingsControllers.length > 1;
-            const ShowArcMenuOnPrimaryMonitor = Me.settings.get_boolean('hotkey-open-primary-monitor');
+            const ShowArcMenuOnPrimaryMonitor = this._settings.get_boolean('hotkey-open-primary-monitor');
             if (MultipleArcMenus && ShowArcMenuOnPrimaryMonitor)
                 this._toggleMenuOnMonitor(Main.layoutManager.primaryMonitor);
             else if (MultipleArcMenus && !ShowArcMenuOnPrimaryMonitor)
@@ -312,11 +306,11 @@ var MenuSettingsController = class {
 
     _updateHotKeyBinder() {
         if (this.isPrimaryPanel) {
-            const enableMenuHotkey = Me.settings.get_boolean('enable-menu-hotkey');
-            const enableStandaloneRunnerMenu = Me.settings.get_boolean('enable-standlone-runner-menu');
+            const enableMenuHotkey = this._settings.get_boolean('enable-menu-hotkey');
+            const enableStandaloneRunnerMenu = this._settings.get_boolean('enable-standlone-runner-menu');
 
-            const runnerHotKey = Me.settings.get_enum('runner-menu-hotkey-type');
-            const menuHotkey = Me.settings.get_enum('menu-hotkey-type');
+            const runnerHotKey = this._settings.get_enum('runner-menu-hotkey-type');
+            const menuHotkey = this._settings.get_enum('menu-hotkey-type');
 
             this._customKeybinding.unbind('ToggleArcMenu');
             this._customKeybinding.unbind('ToggleRunnerMenu');
@@ -363,7 +357,7 @@ var MenuSettingsController = class {
     }
 
     _setButtonAppearance() {
-        const menuButtonAppearance = Me.settings.get_enum('menu-button-appearance');
+        const menuButtonAppearance = this._settings.get_enum('menu-button-appearance');
         const {menuButtonWidget} = this._menuButton;
 
         this._menuButton.container.set_width(-1);
@@ -373,6 +367,7 @@ var MenuSettingsController = class {
         switch (menuButtonAppearance) {
         case Constants.MenuButtonAppearance.TEXT:
             menuButtonWidget.showText();
+            menuButtonWidget.setLabelStyle(null);
             break;
         case Constants.MenuButtonAppearance.ICON_TEXT:
             menuButtonWidget.showIconText();
@@ -397,29 +392,29 @@ var MenuSettingsController = class {
         const {menuButtonWidget} = this._menuButton;
         const label = menuButtonWidget.getPanelLabel();
 
-        const customTextLabel = Me.settings.get_string('custom-menu-button-text');
+        const customTextLabel = this._settings.get_string('custom-menu-button-text');
         label.set_text(customTextLabel);
     }
 
     _setButtonIcon() {
-        const path = Me.settings.get_string('custom-menu-button-icon');
+        const path = this._settings.get_string('custom-menu-button-icon');
         const {menuButtonWidget} = this._menuButton;
         const stIcon = menuButtonWidget.getPanelIcon();
 
-        const iconString = Utils.getMenuButtonIcon(Me.settings, path);
+        const iconString = Utils.getMenuButtonIcon(path);
         stIcon.set_gicon(Gio.icon_new_for_string(iconString));
     }
 
     _setButtonIconSize() {
         const {menuButtonWidget} = this._menuButton;
         const stIcon = menuButtonWidget.getPanelIcon();
-        const iconSize = Me.settings.get_double('custom-menu-button-icon-size');
+        const iconSize = this._settings.get_double('custom-menu-button-icon-size');
         const size = iconSize;
         stIcon.icon_size = size;
     }
 
     _setButtonIconPadding() {
-        const padding = Me.settings.get_int('button-padding');
+        const padding = this._settings.get_int('button-padding');
         if (padding > -1)
             this._menuButton.style = `-natural-hpadding: ${padding  * 2}px; -minimum-hpadding: ${padding}px;`;
         else
@@ -440,8 +435,8 @@ var MenuSettingsController = class {
     }
 
     _getMenuPosition() {
-        const offset = Me.settings.get_int('menu-button-position-offset');
-        switch (Me.settings.get_enum('position-in-panel')) {
+        const offset = this._settings.get_int('menu-button-position-offset');
+        switch (this._settings.get_enum('position-in-panel')) {
         case Constants.MenuPosition.CENTER:
             return [offset, 'center'];
         case Constants.MenuPosition.RIGHT: {
@@ -461,7 +456,7 @@ var MenuSettingsController = class {
     }
 
     _configureActivitiesButton() {
-        const showActivities = Me.settings.get_boolean('show-activities-button');
+        const showActivities = this._settings.get_boolean('show-activities-button');
         if (this.panel.statusArea.activities)
             this.panel.statusArea.activities.visible = showActivities;
     }
@@ -490,10 +485,18 @@ var MenuSettingsController = class {
     }
 
     _isButtonEnabled() {
-        return this.panel.statusArea['ArcMenu'] !== null;
+        return this.panel && this.panel.statusArea['ArcMenu'] !== null;
     }
 
     destroy() {
+        if (this._service) {
+            this._service.destroy();
+            this._service = null;
+        }
+
+        if (global.toggleArcMenu)
+            delete global.toggleArcMenu;
+
         if (this._inputSourceManagerProto) {
             this._inputSourceManagerProto._getCurrentWindow = this._origGetCurrentWindow;
             delete this._inputSourceManagerProto;
@@ -520,10 +523,10 @@ var MenuSettingsController = class {
         this._settingsConnections.destroy();
         this._settingsConnections = null;
 
-        if (this.panel === undefined)
-            this._menuButton.destroy();
-        else if (this._isButtonEnabled())
+        if (this._isButtonEnabled())
             this._disableButton();
+        else
+            this._menuButton.destroy();
 
         if (this.isPrimaryPanel) {
             this._overrideOverlayKey.destroy();
@@ -531,6 +534,5 @@ var MenuSettingsController = class {
         }
 
         this._menuButton = null;
-        delete global.toggleArcMenu;
     }
 };

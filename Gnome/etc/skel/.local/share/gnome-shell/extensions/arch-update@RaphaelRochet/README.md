@@ -28,6 +28,21 @@ To install, simply download as zip and unzip contents in ~/.local/share/gnome-sh
 
 ## Changes
 
+### v57
+- Fix pacman dir change needing restart
+- Fix notifications not working
+- Updated translation : Dutch
+
+### v56
+- Code changes to commply with Gnome Guidelines
+
+### v55
+- Gnome 45
+- New feature : Show package info
+
+### v53
+- Fix deprectated code
+
 ### v52
 - Gnome 44
 - Move to GTK4

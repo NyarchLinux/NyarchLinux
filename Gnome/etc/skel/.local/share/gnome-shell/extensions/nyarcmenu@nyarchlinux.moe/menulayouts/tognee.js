@@ -1,19 +1,14 @@
-/* eslint-disable jsdoc/require-jsdoc */
-/* exported getMenuLayoutEnum, Menu */
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import Clutter from 'gi://Clutter';
+import GObject from 'gi://GObject';
+import St from 'gi://St';
 
-const {Clutter, GObject, St} = imports.gi;
-const {BaseMenuLayout} = Me.imports.menulayouts.baseMenuLayout;
-const Constants = Me.imports.constants;
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const MW = Me.imports.menuWidgets;
-const _ = Gettext.gettext;
+import {BaseMenuLayout} from './baseMenuLayout.js';
+import * as Constants from '../constants.js';
+import * as MW from '../menuWidgets.js';
 
-function getMenuLayoutEnum() {
-    return Constants.MenuLayout.TOGNEE;
-}
+import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-var Menu = class ArcMenuTogneeLayout extends BaseMenuLayout {
+export const Layout = class TogneeLayout extends BaseMenuLayout {
     static {
         GObject.registerClass(this);
     }
@@ -72,18 +67,18 @@ var Menu = class ArcMenuTogneeLayout extends BaseMenuLayout {
             y_align: Clutter.ActorAlign.END,
         });
         this.backButton = new MW.BackButton(this);
-        this.navigateBox.add_child(new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM,
+        this.navigateBox.add_child(new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MEDIUM,
             Constants.SeparatorAlignment.HORIZONTAL));
         this.navigateBox.add_child(this.backButton);
         this.appBox.add_child(this.navigateBox);
 
-        const searchbarLocation = Me.settings.get_enum('searchbar-default-bottom-location');
+        const searchbarLocation = this._settings.get_enum('searchbar-default-bottom-location');
         if (searchbarLocation === Constants.SearchbarLocation.TOP) {
-            this.searchBox.add_style_class_name('arcmenu-search-top');
-            this.appBox.insert_child_at_index(this.searchBox, 0);
+            this.searchEntry.add_style_class_name('arcmenu-search-top');
+            this.appBox.insert_child_at_index(this.searchEntry, 0);
         } else if (searchbarLocation === Constants.SearchbarLocation.BOTTOM) {
-            this.searchBox.add_style_class_name('arcmenu-search-bottom');
-            this.appBox.add_child(this.searchBox);
+            this.searchEntry.add_style_class_name('arcmenu-search-bottom');
+            this.appBox.add_child(this.searchEntry);
         }
 
         // Contains shortcutsBox and power buttons
@@ -94,10 +89,10 @@ var Menu = class ArcMenuTogneeLayout extends BaseMenuLayout {
             style: 'spacing: 6px;',
         });
 
-        const verticalSeparator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM,
+        const verticalSeparator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MEDIUM,
             Constants.SeparatorAlignment.VERTICAL);
 
-        const horizontalFlip = Me.settings.get_boolean('enable-horizontal-flip');
+        const horizontalFlip = this._settings.get_boolean('enable-horizontal-flip');
         this._mainBox.add_child(horizontalFlip ? this.appBox : this.quickBox);
         this._mainBox.add_child(verticalSeparator);
         this._mainBox.add_child(horizontalFlip ? this.quickBox : this.appBox);
@@ -123,15 +118,15 @@ var Menu = class ArcMenuTogneeLayout extends BaseMenuLayout {
 
         this._displayPlaces();
 
-        const haveDirectoryShortcuts = Me.settings.get_value('directory-shortcuts-list').deep_unpack().length > 0;
-        const haveApplicationShortcuts = Me.settings.get_value('application-shortcuts-list').deep_unpack().length > 0;
+        const haveDirectoryShortcuts = this._settings.get_value('directory-shortcuts-list').deep_unpack().length > 0;
+        const haveApplicationShortcuts = this._settings.get_value('application-shortcuts-list').deep_unpack().length > 0;
         if (haveDirectoryShortcuts && haveApplicationShortcuts) {
-            const separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.LONG,
+            const separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.LONG,
                 Constants.SeparatorAlignment.HORIZONTAL);
             this.shortcutsBox.add_child(separator);
         }
 
-        const applicationShortcuts = Me.settings.get_value('application-shortcuts-list').deep_unpack();
+        const applicationShortcuts = this._settings.get_value('application-shortcuts-list').deep_unpack();
         for (let i = 0; i < applicationShortcuts.length; i++) {
             const shortcutMenuItem = this.createMenuItem(applicationShortcuts[i], Constants.DisplayType.BUTTON, false);
             if (shortcutMenuItem.shouldShow)
@@ -139,13 +134,13 @@ var Menu = class ArcMenuTogneeLayout extends BaseMenuLayout {
         }
 
         let leaveButton;
-        const powerDisplayStyle = Me.settings.get_enum('power-display-style');
+        const powerDisplayStyle = this._settings.get_enum('power-display-style');
         if (powerDisplayStyle === Constants.PowerDisplayStyle.IN_LINE)
             leaveButton = new MW.PowerOptionsBox(this, true);
         else
             leaveButton = new MW.LeaveButton(this);
 
-        const separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.LONG,
+        const separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.LONG,
             Constants.SeparatorAlignment.HORIZONTAL);
         this.quickBox.add_child(separator);
         this.quickBox.add_child(leaveButton);
@@ -157,7 +152,7 @@ var Menu = class ArcMenuTogneeLayout extends BaseMenuLayout {
     }
 
     updateWidth(setDefaultMenuView) {
-        const widthAdjustment = Me.settings.get_int('menu-width-adjustment');
+        const widthAdjustment = this._settings.get_int('menu-width-adjustment');
         let menuWidth = this.default_menu_width + widthAdjustment;
         // Set a 175px minimum limit for the menu width
         menuWidth = Math.max(175, menuWidth);
@@ -168,7 +163,7 @@ var Menu = class ArcMenuTogneeLayout extends BaseMenuLayout {
     }
 
     _displayPlaces() {
-        const directoryShortcuts = Me.settings.get_value('directory-shortcuts-list').deep_unpack();
+        const directoryShortcuts = this._settings.get_value('directory-shortcuts-list').deep_unpack();
         for (let i = 0; i < directoryShortcuts.length; i++) {
             const directory = directoryShortcuts[i];
             const isContainedInCategory = false;
@@ -181,7 +176,7 @@ var Menu = class ArcMenuTogneeLayout extends BaseMenuLayout {
         this.categoryDirectories = null;
         this.categoryDirectories = new Map();
 
-        const extraCategories = Me.settings.get_value('extra-categories').deep_unpack();
+        const extraCategories = this._settings.get_value('extra-categories').deep_unpack();
         for (let i = 0; i < extraCategories.length; i++) {
             const categoryEnum = extraCategories[i][0];
             const shouldShow = extraCategories[i][1];
@@ -214,7 +209,7 @@ var Menu = class ArcMenuTogneeLayout extends BaseMenuLayout {
     setDefaultMenuView() {
         super.setDefaultMenuView();
 
-        const defaultMenuView = Me.settings.get_enum('default-menu-view-tognee');
+        const defaultMenuView = this._settings.get_enum('default-menu-view-tognee');
         if (defaultMenuView === Constants.DefaultMenuViewTognee.CATEGORIES_LIST)
             this.displayCategories();
         else if (defaultMenuView === Constants.DefaultMenuViewTognee.ALL_PROGRAMS)
@@ -232,11 +227,11 @@ var Menu = class ArcMenuTogneeLayout extends BaseMenuLayout {
         this.navigateBox.show();
     }
 
-    _onSearchBoxChanged(searchBox, searchString) {
-        super._onSearchBoxChanged(searchBox, searchString);
-        if (searchBox.isEmpty()) {
+    _onSearchEntryChanged(searchEntry, searchString) {
+        super._onSearchEntryChanged(searchEntry, searchString);
+        if (searchEntry.isEmpty()) {
             this.navigateBox.hide();
-        } else if (!searchBox.isEmpty()) {
+        } else if (!searchEntry.isEmpty()) {
             this.navigateBox.show();
             this.activeCategoryType = Constants.CategoryType.SEARCH_RESULTS;
         }

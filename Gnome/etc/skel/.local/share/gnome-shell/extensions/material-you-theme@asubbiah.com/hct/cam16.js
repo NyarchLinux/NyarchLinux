@@ -11,11 +11,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const utils = Me.imports.utils.color_utils;
-const math = Me.imports.utils.math_utils;
-const { ViewingConditions } = Me.imports.hct.viewing_conditions;
+
+import * as utils from "../utils/color_utils.js";
+import * as math from "../utils/math_utils.js";
+import {ViewingConditions} from "../hct/viewing_conditions.js";
 
 /**
  * CAM16, a color appearance model. Colors are not just defined by their hex
@@ -34,7 +33,7 @@ const { ViewingConditions } = Me.imports.hct.viewing_conditions;
  * point is accurately measured as a slightly chromatic blue by CAM16. (roughly,
  * hue 203, chroma 3, lightness 100)
  */
-var Cam16 = class Cam16 {
+export var Cam16 = class Cam16 {
     /**
      * All of the CAM16 dimensions can be calculated from 3 of the dimensions, in
      * the following combinations:

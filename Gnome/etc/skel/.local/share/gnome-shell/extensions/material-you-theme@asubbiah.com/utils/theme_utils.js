@@ -11,13 +11,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const { Blend } = Me.imports.blend.blend;
-const { CorePalette } = Me.imports.palettes.core_palette;
-const { Scheme } = Me.imports.scheme.scheme;
-const { sourceColorFromImage } = Me.imports.utils.image_utils;
-const { hexFromArgb } = Me.imports.utils.string_utils;
+import {Blend} from "../blend/blend.js";
+import {CorePalette} from "../palettes/core_palette.js";
+import {Scheme} from "../scheme/scheme.js";
+import {sourceColorFromImage} from "../utils/image_utils.js";
+import {hexFromArgb} from "../utils/string_utils.js";
 
 /**
  * Generate a theme from a source color
@@ -26,7 +24,7 @@ const { hexFromArgb } = Me.imports.utils.string_utils;
  * @param customColors Array of custom colors
  * @return Theme object
  */
-function themeFromSourceColor(source, customColors = []) {
+export function themeFromSourceColor(source, customColors = []) {
     const palette = new CorePalette(source);
     return {
         source,
@@ -52,7 +50,7 @@ function themeFromSourceColor(source, customColors = []) {
  * @param customColors Array of custom colors
  * @return Theme object
  */
-function themeFromImage(image, customColors = []) {
+export function themeFromImage(image, customColors = []) {
     const source = sourceColorFromImage(image);
     return themeFromSourceColor(source, customColors);
 }
@@ -65,7 +63,7 @@ function themeFromImage(image, customColors = []) {
  *
  * @link https://m3.material.io/styles/color/the-color-system/color-roles
  */
-function customColor(source, color) {
+export function customColor(source, color) {
     let value = color.value;
     const from = value;
     const to = source;
@@ -97,7 +95,7 @@ function customColor(source, color) {
  * @param theme Theme object
  * @param options Options
  */
-function applyTheme(theme, options) {
+export function applyTheme(theme, options) {
     var _a;
     const target = (options === null || options === void 0 ? void 0 : options.target) || document.body;
     const isDark = (_a = options === null || options === void 0 ? void 0 : options.dark) !== null && _a !== void 0 ? _a : false;

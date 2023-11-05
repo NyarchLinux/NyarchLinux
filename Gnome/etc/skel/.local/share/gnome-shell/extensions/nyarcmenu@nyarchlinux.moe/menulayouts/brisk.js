@@ -1,19 +1,14 @@
-/* eslint-disable jsdoc/require-jsdoc */
-/* exported getMenuLayoutEnum, Menu */
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import Clutter from 'gi://Clutter';
+import GObject from 'gi://GObject';
+import St from 'gi://St';
 
-const {Clutter, GObject, St} = imports.gi;
-const {BaseMenuLayout} = Me.imports.menulayouts.baseMenuLayout;
-const Constants = Me.imports.constants;
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const MW = Me.imports.menuWidgets;
-const _ = Gettext.gettext;
+import {BaseMenuLayout} from './baseMenuLayout.js';
+import * as Constants from '../constants.js';
+import * as MW from '../menuWidgets.js';
 
-function getMenuLayoutEnum() {
-    return Constants.MenuLayout.BRISK;
-}
+import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-var Menu = class ArcMenuBriskLayout extends BaseMenuLayout {
+export const Layout = class BriskLayout extends BaseMenuLayout {
     static {
         GObject.registerClass(this);
     }
@@ -65,9 +60,9 @@ var Menu = class ArcMenuBriskLayout extends BaseMenuLayout {
             vertical: true,
         });
 
-        const verticalSeparator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM,
+        const verticalSeparator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MEDIUM,
             Constants.SeparatorAlignment.VERTICAL);
-        const horizontalFlip = Me.settings.get_boolean('enable-horizontal-flip');
+        const horizontalFlip = this._settings.get_boolean('enable-horizontal-flip');
         this._mainBox.add_child(horizontalFlip ? this.rightBox : this.leftBox);
         this._mainBox.add_child(verticalSeparator);
         this._mainBox.add_child(horizontalFlip ? this.leftBox : this.rightBox);
@@ -92,7 +87,7 @@ var Menu = class ArcMenuBriskLayout extends BaseMenuLayout {
         this.leftBox.add_child(this.actionsBox);
 
         let powerOptionsItem;
-        const powerDisplayStyle = Me.settings.get_enum('power-display-style');
+        const powerDisplayStyle = this._settings.get_enum('power-display-style');
         if (powerDisplayStyle === Constants.PowerDisplayStyle.MENU) {
             powerOptionsItem = new MW.LeaveButton(this, true);
         } else {
@@ -103,21 +98,21 @@ var Menu = class ArcMenuBriskLayout extends BaseMenuLayout {
         powerOptionsItem.y_align = Clutter.ActorAlign.END;
         this.leftBox.add_child(powerOptionsItem);
 
-        const searchBarLocation = Me.settings.get_enum('searchbar-default-top-location');
+        const searchBarLocation = this._settings.get_enum('searchbar-default-top-location');
         if (searchBarLocation === Constants.SearchbarLocation.TOP) {
-            this.searchBox.add_style_class_name('arcmenu-search-top');
-            this.searchBox.style = 'margin-bottom: 0px;';
-            this.insert_child_at_index(this.searchBox, 0);
+            this.searchEntry.add_style_class_name('arcmenu-search-top');
+            this.searchEntry.style = 'margin-bottom: 0px;';
+            this.insert_child_at_index(this.searchEntry, 0);
 
-            const separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM,
+            const separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MEDIUM,
                 Constants.SeparatorAlignment.HORIZONTAL);
             this.insert_child_at_index(separator, 1);
         } else if (searchBarLocation === Constants.SearchbarLocation.BOTTOM) {
-            this.searchBox.add_style_class_name('arcmenu-search-bottom');
-            this.add_child(this.searchBox);
+            this.searchEntry.add_style_class_name('arcmenu-search-bottom');
+            this.add_child(this.searchEntry);
         }
 
-        Me.settings.connectObject('changed::brisk-extra-shortcuts', () => this._createExtraShortcuts(), this);
+        this._settings.connectObject('changed::brisk-extra-shortcuts', () => this._createExtraShortcuts(), this);
         this._createExtraShortcuts();
 
         this.updateWidth();
@@ -129,7 +124,7 @@ var Menu = class ArcMenuBriskLayout extends BaseMenuLayout {
 
     _createExtraShortcuts() {
         this.actionsBox.destroy_all_children();
-        const extraShortcuts = Me.settings.get_value('brisk-extra-shortcuts').deep_unpack();
+        const extraShortcuts = this._settings.get_value('brisk-extra-shortcuts').deep_unpack();
 
         if (extraShortcuts.length === 0)
             return;
@@ -139,7 +134,7 @@ var Menu = class ArcMenuBriskLayout extends BaseMenuLayout {
         for (let i = 0; i < extraShortcuts.length; i++) {
             const command = extraShortcuts[i][2];
             if (command === Constants.ShortcutCommands.SEPARATOR) {
-                const separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM,
+                const separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MEDIUM,
                     Constants.SeparatorAlignment.HORIZONTAL);
                 this.actionsBox.add_child(separator);
             } else {
@@ -149,10 +144,11 @@ var Menu = class ArcMenuBriskLayout extends BaseMenuLayout {
             }
         }
 
-        let separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM,
+        let separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MEDIUM,
             Constants.SeparatorAlignment.HORIZONTAL);
         this.actionsBox.insert_child_at_index(separator, 0);
-        separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM, Constants.SeparatorAlignment.HORIZONTAL);
+        separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MEDIUM,
+            Constants.SeparatorAlignment.HORIZONTAL);
         this.actionsBox.add_child(separator);
     }
 
@@ -175,7 +171,7 @@ var Menu = class ArcMenuBriskLayout extends BaseMenuLayout {
         this.categoryDirectories = null;
         this.categoryDirectories = new Map();
 
-        const extraCategories = Me.settings.get_value('extra-categories').deep_unpack();
+        const extraCategories = this._settings.get_value('extra-categories').deep_unpack();
 
         for (let i = 0; i < extraCategories.length; i++) {
             const categoryEnum = extraCategories[i][0];
