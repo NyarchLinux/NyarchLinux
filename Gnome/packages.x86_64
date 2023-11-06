@@ -7,12 +7,10 @@ archinstall
 b43-fwcutter
 base
 bind
-brltty
+#brltty
 broadcom-wl-dkms
 btrfs-progs
 cryptsetup
-darkhttpd
-ddrescue
 dhclient
 dhcpcd
 diffutils
@@ -53,10 +51,7 @@ linux-firmware-marvell
 linux-firmware-qcom
 linux-firmware-qlogic
 linux-firmware-whence
-livecd-sounds
-lsscsi
 lvm2
-lynx
 man-db
 man-pages
 mc
@@ -78,8 +73,6 @@ nvme-cli
 open-iscsi
 open-vm-tools
 openconnect
-openssh
-openvpn
 partclone
 parted
 partimage
@@ -313,7 +306,6 @@ accountsservice
 adwaita-icon-theme
 baobab
 dconf-editor
-eog
 evince
 gnome-applets
 gnome-backgrounds
@@ -352,6 +344,7 @@ gnome-weather
 grilo-plugins
 gsound
 gvfs-google
+loupe
 mutter
 nautilus
 neofetch
