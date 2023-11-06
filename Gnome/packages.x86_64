@@ -372,6 +372,7 @@ gdm
 
 # Calamares dependencies (not listed elsewhere)
 calamares
+ckbcomp
 boost
 boost-libs
 extra-cmake-modules
