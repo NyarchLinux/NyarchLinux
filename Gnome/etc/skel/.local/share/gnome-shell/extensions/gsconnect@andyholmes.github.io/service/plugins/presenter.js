@@ -32,7 +32,10 @@ var Plugin = GObject.registerClass({
     _init(device) {
         super._init(device, 'presenter');
 
-        this._input = Components.acquire('input');
+        if (!globalThis.HAVE_GNOME)
+            this._input = Components.acquire('ydotool');
+        else
+            this._input = Components.acquire('input');
     }
 
     handlePacket(packet) {
@@ -48,8 +51,12 @@ var Plugin = GObject.registerClass({
     }
 
     destroy() {
-        if (this._input !== undefined)
-            this._input = Components.release('input');
+        if (this._input !== undefined) {
+            if (!globalThis.HAVE_GNOME)
+                this._input = Components.release('ydotool');
+            else
+                this._input = Components.release('input');
+        }
 
         super.destroy();
     }

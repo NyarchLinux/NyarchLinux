@@ -11,10 +11,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const utils = Me.imports.utils.color_utils;
-const math = Me.imports.utils.math_utils;
+
+import * as utils from "../utils/color_utils.js";
+import * as math from "../utils/math_utils.js";
 
 /**
  * In traditional color spaces, a color can be identified solely by the
@@ -29,7 +28,7 @@ const math = Me.imports.utils.math_utils;
  * This class caches intermediate values of the CAM16 conversion process that
  * depend only on viewing conditions, enabling speed ups.
  */
-var ViewingConditions = class ViewingConditions {
+export var ViewingConditions = class ViewingConditions {
     /**
      * Parameters are intermediate values of the CAM16 conversion process. Their
      * names are shorthand for technical color science terminology, this class

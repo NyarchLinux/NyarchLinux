@@ -1,18 +1,16 @@
-/* exported ThemePage */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+import Adw from 'gi://Adw';
+import GdkPixbuf from 'gi://GdkPixbuf';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import Gtk from 'gi://Gtk';
 
-const {Adw, GdkPixbuf, GLib, GObject, Gtk} = imports.gi;
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const {SettingsUtils} = Me.imports.settings;
-const _ = Gettext.gettext;
+import * as SettingsUtils from '../SettingsUtils.js';
+import {SubPage} from './SubPage.js';
+import {SaveThemeDialog, ManageThemesDialog} from './ThemingDialog.js';
 
-const Settings = Me.imports.settings;
-const {SubPage} = Settings.Menu.SubPage;
-const {SaveThemeDialog} = Settings.Menu.ThemingDialog;
-const {ManageThemesDialog} = Settings.Menu.ThemingDialog;
+import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-var ThemePage = GObject.registerClass(
+export const ThemePage = GObject.registerClass(
 class ArcMenuThemePage extends SubPage {
     _init(settings, params) {
         super._init(settings, params);

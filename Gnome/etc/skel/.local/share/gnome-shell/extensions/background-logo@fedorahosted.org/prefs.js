@@ -1,17 +1,14 @@
-/* exported init, buildPrefsWidget */
-const { Adw, Gdk, GdkPixbuf, Gio, GLib, GObject, Gtk } = imports.gi;
+import Adw from 'gi://Adw';
+import Gdk from 'gi://Gdk';
+import GdkPixbuf from 'gi://GdkPixbuf';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import GnomeDesktop from 'gi://GnomeDesktop?version=4.0';
+import Gtk from 'gi://Gtk';
 const ByteArray = imports.byteArray;
 
-imports.gi.versions.GnomeDesktop = '4.0';
-
-let GnomeDesktop = null;
-try {
-    GnomeDesktop = imports.gi.GnomeDesktop;
-} catch (e) {
-    // not compatible with GTK4 yet
-}
-
-const ExtensionUtils = imports.misc.extensionUtils;
+import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 const BACKGROUND_SCHEMA = 'org.gnome.desktop.background';
 
@@ -47,7 +44,7 @@ class PreviewGroup extends Adw.PreferencesGroup {
         });
 
         this._preview.set_draw_func(this._drawPreview.bind(this));
-        const previewRow = new Adw.PreferencesRow({ activatable: false });
+        const previewRow = new Adw.PreferencesRow({activatable: false});
         previewRow.set_child(this._preview);
         this.add(previewRow);
     }
@@ -68,7 +65,7 @@ class PreviewGroup extends Adw.PreferencesGroup {
 
     _getSlideShowSlide(file, width, height) {
         if (GnomeDesktop) {
-            const slideShow = new GnomeDesktop.BGSlideShow({ file });
+            const slideShow = new GnomeDesktop.BGSlideShow({file});
             slideShow.load();
 
             const [progress_, duration_, isFixed_, filename1, filename2_] =
@@ -83,7 +80,7 @@ class PreviewGroup extends Adw.PreferencesGroup {
     }
 
     _createBackgroundThumbnail(width, height) {
-        let settings = new Gio.Settings({ schema_id: BACKGROUND_SCHEMA });
+        let settings = new Gio.Settings({schema_id: BACKGROUND_SCHEMA});
         const bgKey = this._styleManager.dark
             ? 'picture-uri-dark'
             : 'picture-uri';
@@ -121,7 +118,7 @@ class PreviewGroup extends Adw.PreferencesGroup {
         if (position.endsWith('left'))
             x = scaledBorder;
         else if (position.endsWith('right'))
-            x = (width - this._logo.get_width() - scaledBorder);
+            x = width - this._logo.get_width() - scaledBorder;
         else
             x = (width - this._logo.get_width()) / 2;
 
@@ -149,14 +146,14 @@ const LogoPosition = GObject.registerClass({
     },
 }, class LogoPosition extends GObject.Object {
     _init(name, value) {
-        super._init({ name, value });
+        super._init({name, value});
     }
 });
 
 const LogoGroup = GObject.registerClass(
 class LogoGroup extends Adw.PreferencesGroup {
     _init(settings) {
-        super._init({ title: 'Logo' });
+        super._init({title: 'Logo'});
 
         this._settings = settings;
         this._fileChooserKey = '';
@@ -208,7 +205,7 @@ class LogoGroup extends Adw.PreferencesGroup {
         filenameDarkRow.add_suffix(this._filenameDarkLabel);
         this.add(filenameDarkRow);
 
-        const positionModel = new Gio.ListStore({ item_type: LogoPosition });
+        const positionModel = new Gio.ListStore({item_type: LogoPosition});
         positionModel.append(new LogoPosition('Center', 'center'));
         positionModel.append(new LogoPosition('Bottom left', 'bottom-left'));
         positionModel.append(new LogoPosition('Bottom center', 'bottom-center'));
@@ -224,7 +221,7 @@ class LogoGroup extends Adw.PreferencesGroup {
         this.add(this._positionRow);
 
         this._positionRow.connect('notify::selected-item', () => {
-            const { selectedItem } = this._positionRow;
+            const {selectedItem} = this._positionRow;
             this._settings.set_string('logo-position', selectedItem.value);
         });
         this._settings.connect('changed::logo-position',
@@ -253,7 +250,7 @@ class LogoGroup extends Adw.PreferencesGroup {
 
     _updateSelectedPosition() {
         const position = this._settings.get_string('logo-position');
-        const { model } = this._positionRow;
+        const {model} = this._positionRow;
         for (let i = 0; i < model.get_n_items(); i++) {
             const item = model.get_item(i);
             if (item.value === position) {
@@ -297,7 +294,7 @@ class LogoGroup extends Adw.PreferencesGroup {
 const OptionsGroup = GObject.registerClass(
 class OptionsGroup extends Adw.PreferencesGroup {
     _init(settings) {
-        super._init({ title: 'Options' });
+        super._init({title: 'Options'});
 
         this._settings = settings;
         const alwaysShowSwitch = new Gtk.Switch({
@@ -318,10 +315,8 @@ class OptionsGroup extends Adw.PreferencesGroup {
 
 const BackgroundLogoPrefsWidget = GObject.registerClass(
 class BackgroundLogoPrefsWidget extends Adw.PreferencesPage {
-    _init() {
+    _init(settings) {
         super._init();
-
-        const settings = ExtensionUtils.getSettings();
 
         this.add(new PreviewGroup(settings));
         this.add(new LogoGroup(settings));
@@ -329,11 +324,8 @@ class BackgroundLogoPrefsWidget extends Adw.PreferencesPage {
     }
 });
 
-/** */
-function init() {
-}
-
-/** */
-function buildPrefsWidget() {
-    return new BackgroundLogoPrefsWidget();
+export default class BackgroundLogoPreferences extends ExtensionPreferences {
+    getPreferencesWidget() {
+        return new BackgroundLogoPrefsWidget(this.getSettings());
+    }
 }

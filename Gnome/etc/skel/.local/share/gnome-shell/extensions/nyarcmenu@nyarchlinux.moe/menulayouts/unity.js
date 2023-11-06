@@ -1,21 +1,18 @@
-/* eslint-disable jsdoc/require-jsdoc */
-/* exported getMenuLayoutEnum, Menu */
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import Clutter from 'gi://Clutter';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import St from 'gi://St';
 
-const {Clutter, GLib, GObject, St} = imports.gi;
-const {BaseMenuLayout} = Me.imports.menulayouts.baseMenuLayout;
-const Constants = Me.imports.constants;
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const Main = imports.ui.main;
-const MW = Me.imports.menuWidgets;
-const PopupMenu = imports.ui.popupMenu;
-const _ = Gettext.gettext;
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
-function getMenuLayoutEnum() {
-    return Constants.MenuLayout.UNITY;
-}
+import {BaseMenuLayout} from './baseMenuLayout.js';
+import * as Constants from '../constants.js';
+import * as MW from '../menuWidgets.js';
 
-var Menu = class ArcMenuUnityLayout extends BaseMenuLayout {
+import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
+
+export const Layout = class UnityLayout extends BaseMenuLayout {
     static {
         GObject.registerClass(this);
     }
@@ -30,7 +27,7 @@ var Menu = class ArcMenuUnityLayout extends BaseMenuLayout {
             row_spacing: 15,
             vertical: true,
             default_menu_width: 750,
-            icon_grid_style: 'LargeIconGrid',
+            icon_grid_size: Constants.GridIconSize.LARGE,
             category_icon_size: Constants.MEDIUM_ICON_SIZE,
             apps_icon_size: Constants.EXTRA_LARGE_ICON_SIZE,
             quicklinks_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
@@ -38,7 +35,7 @@ var Menu = class ArcMenuUnityLayout extends BaseMenuLayout {
             pinned_apps_icon_size: Constants.MEDIUM_ICON_SIZE,
         });
 
-        const homeScreen = Me.settings.get_boolean('enable-unity-homescreen');
+        const homeScreen = this._settings.get_boolean('enable-unity-homescreen');
         this.activeCategoryName = homeScreen ? _('Pinned') : _('All Programs');
 
         this.topBox = new St.BoxLayout({
@@ -60,12 +57,12 @@ var Menu = class ArcMenuUnityLayout extends BaseMenuLayout {
         });
         this.add_child(this._mainBox);
 
-        this.searchBox.set({
+        this.searchEntry.set({
             y_align: Clutter.ActorAlign.CENTER,
             y_expand: true,
             style: 'margin: 0px 15px 0px 15px;',
         });
-        this.topBox.add_child(this.searchBox);
+        this.topBox.add_child(this.searchEntry);
 
         this.categoriesButton = new MW.CategoriesButton(this);
         this.topBox.add_child(this.categoriesButton);
@@ -85,26 +82,7 @@ var Menu = class ArcMenuUnityLayout extends BaseMenuLayout {
         this.applicationsScrollBox.add_actor(this.applicationsBox);
         this._mainBox.add_child(this.applicationsScrollBox);
 
-        this.actionsContainerBox = new St.BoxLayout({
-            x_expand: true,
-            y_expand: true,
-            x_align: Clutter.ActorAlign.FILL,
-            y_align: Clutter.ActorAlign.END,
-            vertical: false,
-        });
-        this._mainBox.add_child(this.actionsContainerBox);
-
-        this.actionsBox = new St.BoxLayout({
-            x_expand: true,
-            y_expand: true,
-            x_align: Clutter.ActorAlign.CENTER,
-            y_align: Clutter.ActorAlign.CENTER,
-            vertical: false,
-            style: 'spacing: 10px;',
-        });
-        this.actionsContainerBox.add_child(this.actionsBox);
-
-        this.widgetBox = new St.BoxLayout({
+        this._widgetBox = new St.BoxLayout({
             x_expand: false,
             y_expand: false,
             x_align: Clutter.ActorAlign.CENTER,
@@ -113,9 +91,8 @@ var Menu = class ArcMenuUnityLayout extends BaseMenuLayout {
             style_class: 'datemenu-displays-box',
             style: 'margin: 0px; spacing: 10px; padding-bottom: 6px;',
         });
-
-        this._weatherItem = new MW.WeatherSection(this);
-        this._clocksItem = new MW.WorldClocksSection(this);
+        this._mainBox.add_child(this._widgetBox);
+        this._widgetBox.hide();
 
         this.appShortcuts = [];
         this.shortcutsBox = new St.BoxLayout({
@@ -137,31 +114,74 @@ var Menu = class ArcMenuUnityLayout extends BaseMenuLayout {
             layout_manager: layout,
         });
         layout.hookup_style(this.shortcutsGrid);
-
         this.shortcutsBox.add_child(this.shortcutsGrid);
 
-        const applicationShortcuts = Me.settings.get_value('application-shortcuts-list').deep_unpack();
+        this.actionsContainerBox = new St.BoxLayout({
+            x_expand: true,
+            y_expand: true,
+            x_align: Clutter.ActorAlign.FILL,
+            y_align: Clutter.ActorAlign.END,
+            vertical: false,
+        });
+        this._mainBox.add_child(this.actionsContainerBox);
+
+        this.actionsBox = new St.BoxLayout({
+            x_expand: true,
+            y_expand: true,
+            x_align: Clutter.ActorAlign.CENTER,
+            y_align: Clutter.ActorAlign.CENTER,
+            vertical: false,
+            style: 'spacing: 10px;',
+        });
+        this.actionsContainerBox.add_child(this.actionsBox);
+
+        const applicationShortcuts = this._settings.get_value('application-shortcuts-list').deep_unpack();
         for (let i = 0; i < applicationShortcuts.length; i++) {
             const shortcutMenuItem = this.createMenuItem(applicationShortcuts[i], Constants.DisplayType.GRID, false);
             if (shortcutMenuItem.shouldShow)
                 this.appShortcuts.push(shortcutMenuItem);
         }
 
-        Me.settings.connectObject('changed::unity-extra-buttons', () => this._createExtraButtons(), this);
+        this._settings.connectObject('changed::unity-extra-buttons', () => this._createExtraButtons(), this);
+        this._settings.connectObject('changed::enable-clock-widget-unity', () => this._updateWidgets(), this);
+        this._settings.connectObject('changed::enable-weather-widget-unity', () => this._updateWidgets(), this);
+
         this._createExtraButtons();
+        this._updateWidgets();
 
         this.updateStyle();
         this.updateWidth();
+        this._createCategoriesMenu();
         this.loadCategories();
         this.loadPinnedApps();
-        this._createCategoriesMenu();
 
         this.setDefaultMenuView();
     }
 
+    _updateWidgets() {
+        const clockWidgetEnabled = this._settings.get_boolean('enable-clock-widget-unity');
+        const weatherWidgetEnabled = this._settings.get_boolean('enable-weather-widget-unity');
+
+        if (clockWidgetEnabled && !this._clocksItem) {
+            this._clocksItem = new MW.WorldClocksWidget(this);
+            this._widgetBox.add_child(this._clocksItem);
+        } else if (!clockWidgetEnabled && this._clocksItem) {
+            this._clocksItem.destroy();
+            this._clocksItem = null;
+        }
+
+        if (weatherWidgetEnabled && !this._weatherItem) {
+            this._weatherItem = new MW.WeatherWidget(this);
+            this._widgetBox.add_child(this._weatherItem);
+        } else if (!weatherWidgetEnabled && this._weatherItem) {
+            this._weatherItem.destroy();
+            this._weatherItem = null;
+        }
+    }
+
     _createExtraButtons() {
         this.actionsBox.destroy_all_children();
-        const extraButtons = Me.settings.get_value('unity-extra-buttons').deep_unpack();
+        const extraButtons = this._settings.get_value('unity-extra-buttons').deep_unpack();
 
         if (extraButtons.length === 0)
             return;
@@ -170,7 +190,7 @@ var Menu = class ArcMenuUnityLayout extends BaseMenuLayout {
         for (let i = 0; i < extraButtons.length; i++) {
             const command = extraButtons[i][2];
             if (command === Constants.ShortcutCommands.SEPARATOR) {
-                const separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.LONG,
+                const separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.LONG,
                     Constants.SeparatorAlignment.VERTICAL);
                 this.actionsBox.add_child(separator);
             } else {
@@ -239,7 +259,6 @@ var Menu = class ArcMenuUnityLayout extends BaseMenuLayout {
 
         categoriesPopupBox.style = `max-height: ${height}px`;
 
-        this._displayCategories();
         this.subMenuManager.addMenu(this.categoriesMenu);
         this.categoriesMenu.actor.hide();
         Main.uiGroup.add_child(this.categoriesMenu.actor);
@@ -254,7 +273,7 @@ var Menu = class ArcMenuUnityLayout extends BaseMenuLayout {
 
     setDefaultMenuView() {
         super.setDefaultMenuView();
-        const homeScreen = Me.settings.get_boolean('enable-unity-homescreen');
+        const homeScreen = this._settings.get_boolean('enable-unity-homescreen');
         if (homeScreen) {
             this.activeCategoryName = _('Pinned');
             this.activeCategoryType = Constants.CategoryType.HOME_SCREEN;
@@ -275,7 +294,7 @@ var Menu = class ArcMenuUnityLayout extends BaseMenuLayout {
         borderRadius /= scaleFactor;
 
         const borderRadiusStyle = `border-radius: 0px 0px ${borderRadius}px ${borderRadius}px;`;
-        const style = `margin: 0px; spacing: 0px; background-color: rgba(10, 10, 15, 0.1); padding: 5px 5px;
+        const style = `margin: 6px 0px 0px 0px; spacing: 0px; background-color: rgba(10, 10, 15, 0.1); padding: 5px 5px;
                        border-color: rgba(186, 196,201, 0.2); border-top-width: 1px;`;
 
         this.actionsContainerBox.style = style + borderRadiusStyle;
@@ -290,7 +309,7 @@ var Menu = class ArcMenuUnityLayout extends BaseMenuLayout {
         this.categoryDirectories.set(Constants.CategoryType.HOME_SCREEN, categoryMenuItem);
         this.hasPinnedApps = true;
 
-        const extraCategories = Me.settings.get_value('extra-categories').deep_unpack();
+        const extraCategories = this._settings.get_value('extra-categories').deep_unpack();
         for (let i = 0; i < extraCategories.length; i++) {
             const categoryEnum = extraCategories[i][0];
             const shouldShow = extraCategories[i][1];
@@ -303,9 +322,11 @@ var Menu = class ArcMenuUnityLayout extends BaseMenuLayout {
         }
 
         super.loadCategories();
+        this._displayCategories();
     }
 
     _displayCategories() {
+        this.categoriesBox.destroy_all_children();
         let hasExtraCategory = false;
         let separatorAdded = false;
 
@@ -315,7 +336,7 @@ var Menu = class ArcMenuUnityLayout extends BaseMenuLayout {
             if (!hasExtraCategory) {
                 hasExtraCategory = isExtraCategory;
             } else if (!isExtraCategory && !separatorAdded) {
-                this.categoriesBox.add_child(new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM,
+                this.categoriesBox.add_child(new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MEDIUM,
                     Constants.SeparatorAlignment.HORIZONTAL));
                 separatorAdded = true;
             }
@@ -330,8 +351,6 @@ var Menu = class ArcMenuUnityLayout extends BaseMenuLayout {
         else
             this._clearActorsFromBox();
 
-        this._mainBox.remove_child(this.actionsContainerBox);
-
         this.activeCategoryName = _('Pinned');
         this._displayAppList(this.pinnedAppsArray, Constants.CategoryType.PINNED_APPS, this.applicationsGrid);
         this.activeCategoryName = _('Shortcuts');
@@ -340,16 +359,13 @@ var Menu = class ArcMenuUnityLayout extends BaseMenuLayout {
         if (!this.applicationsBox.contains(this.shortcutsBox))
             this.applicationsBox.add_child(this.shortcutsBox);
 
-        this.widgetBox.remove_all_children();
+        this._widgetBox.hide();
 
-        if (Me.settings.get_boolean('enable-clock-widget-unity'))
-            this.widgetBox.add_child(this._clocksItem);
-        if (Me.settings.get_boolean('enable-weather-widget-unity'))
-            this.widgetBox.add_child(this._weatherItem);
-        if (!this._mainBox.contains(this.widgetBox))
-            this._mainBox.add_child(this.widgetBox);
+        const clockWidgetEnabled = this._settings.get_boolean('enable-clock-widget-unity');
+        const weatherWidgetEnabled = this._settings.get_boolean('enable-weather-widget-unity');
 
-        this._mainBox.add_child(this.actionsContainerBox);
+        if (clockWidgetEnabled || weatherWidgetEnabled)
+            this._widgetBox.show();
     }
 
     displayRecentFiles() {
@@ -367,8 +383,8 @@ var Menu = class ArcMenuUnityLayout extends BaseMenuLayout {
     _clearActorsFromBox(box) {
         if (this.categoriesMenu.isOpen)
             this.categoriesMenu.toggle();
-        if (this._mainBox.contains(this.widgetBox))
-            this._mainBox.remove_child(this.widgetBox);
+
+        this._widgetBox.hide();
 
         super._clearActorsFromBox(box);
     }

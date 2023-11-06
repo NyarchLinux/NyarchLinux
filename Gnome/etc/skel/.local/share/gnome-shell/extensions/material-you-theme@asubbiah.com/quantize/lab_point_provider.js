@@ -11,15 +11,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const utils = Me.imports.utils.color_utils;
+import * as utils from "../utils/color_utils.js";
 
 /**
  * Provides conversions needed for K-Means quantization. Converting input to
  * points, and converting the final state of the K-Means algorithm to colors.
  */
-var LabPointProvider = class LabPointProvider {
+export var LabPointProvider = class LabPointProvider {
     /**
      * Convert a color represented in ARGB to a 3-element array of L*a*b*
      * coordinates of the color.

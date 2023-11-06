@@ -15,18 +15,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
-const { Clutter, Gio, GLib, GObject, Meta, St } = imports.gi;
+import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import Meta from 'gi://Meta';
+import St from 'gi://St';
 
-const Background = imports.ui.background;
-const ExtensionUtils = imports.misc.extensionUtils;
-const Main = imports.ui.main;
+import {Extension, InjectionManager} from 'resource:///org/gnome/shell/extensions/extension.js';
+
+import * as Background from 'resource:///org/gnome/shell/ui/background.js';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 var IconContainer = GObject.registerClass(
 class IconContainer extends St.Widget {
-    _init(params) {
-        super._init(params);
-    }
-
     vfunc_get_preferred_width(forHeight) {
         let width = super.vfunc_get_preferred_width(forHeight);
         return width.map(w => w * this.scale_x);
@@ -46,7 +48,7 @@ class BackgroundLogo extends St.Widget {
 
         this._logoFile = null;
 
-        this._settings = ExtensionUtils.getSettings();
+        this._settings = Extension.lookupByURL(import.meta.url).getSettings();
         this._ifaceSettings = new Gio.Settings({
             schema_id: 'org.gnome.desktop.interface',
         });
@@ -89,7 +91,7 @@ class BackgroundLogo extends St.Widget {
         this._backgroundActor.content.connect('notify::brightness',
             this._updateOpacity.bind(this));
 
-        this._bin = new IconContainer({ x_expand: true, y_expand: true });
+        this._bin = new IconContainer({x_expand: true, y_expand: true});
         this.add_actor(this._bin);
         this._bin.connect('resource-scale-changed',
             this._updateLogoTexture.bind(this));
@@ -128,7 +130,7 @@ class BackgroundLogo extends St.Widget {
     }
 
     _getWidthForRelativeSize(size) {
-        let { width } = this._getMonitorArea();
+        let {width} = this._getMonitorArea();
         return width * size / 100;
     }
 
@@ -136,7 +138,7 @@ class BackgroundLogo extends St.Widget {
         if (!this.has_allocation())
             return 1;
 
-        let { width } = this._getMonitorArea();
+        let {width} = this._getMonitorArea();
         return this.allocation.get_width() / width;
     }
 
@@ -185,7 +187,7 @@ class BackgroundLogo extends St.Widget {
         else
             yAlign = Clutter.ActorAlign.CENTER;
 
-        this._bin.set({ xAlign, yAlign });
+        this._bin.set({xAlign, yAlign});
     }
 
     _updateBorder() {
@@ -200,7 +202,7 @@ class BackgroundLogo extends St.Widget {
     }
 
     _updateVisibility() {
-        const { background } = this._backgroundActor.content;
+        const {background} = this._backgroundActor.content;
         const colorScheme = this._ifaceSettings.get_string('color-scheme');
         const uriKey = colorScheme === 'prefer-dark'
             ? 'picture-uri-dark'
@@ -253,10 +255,10 @@ class BackgroundLogo extends St.Widget {
 });
 
 
-class Extension {
-    constructor() {
-        this._bgManagerProto = Background.BackgroundManager.prototype;
-        this._createBackgroundOrig = this._bgManagerProto._createBackgroundActor;
+export default class BackgroundLogoExtension extends Extension {
+    constructor(metadata) {
+        super(metadata);
+        this._injectionManager = new InjectionManager();
     }
 
     _reloadBackgrounds() {
@@ -264,23 +266,22 @@ class Extension {
     }
 
     enable() {
-        const { _createBackgroundOrig } = this;
-        this._bgManagerProto._createBackgroundActor = function () {
-            const backgroundActor = _createBackgroundOrig.call(this);
-            const logo_ = new BackgroundLogo(backgroundActor);
+        const bgMgrProto = Background.BackgroundManager.prototype;
+        this._injectionManager.overrideMethod(bgMgrProto, '_createBackgroundActor', originalMethod => {
+            /* eslint-disable no-invalid-this */
+            return function () {
+                const backgroundActor = originalMethod.call(this);
+                const logo_ = new BackgroundLogo(backgroundActor);
 
-            return backgroundActor;
-        };
+                return backgroundActor;
+            };
+            /* eslint-enable */
+        });
         this._reloadBackgrounds();
     }
 
     disable() {
-        this._bgManagerProto._createBackgroundActor = this._createBackgroundOrig;
+        this._injectionManager.clear();
         this._reloadBackgrounds();
     }
-}
-
-/** */
-function init() {
-    return new Extension();
 }

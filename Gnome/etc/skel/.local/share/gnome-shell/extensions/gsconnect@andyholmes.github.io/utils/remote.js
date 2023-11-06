@@ -517,4 +517,3 @@ var Service = GObject.registerClass({
         }
     }
 });
-

@@ -22,182 +22,148 @@
  * along with gnome-shell extension Compiz-alike-magic-lamp-effect.  If not, see
  * <http://www.gnu.org/licenses/>.
  */
-const Gtk = imports.gi.Gtk;
-const Extension = imports.misc.extensionUtils.getCurrentExtension();
-const Settings = Extension.imports.settings;
-const Config = imports.misc.config;
+'use strict';
 
-const IS_3_XX_SHELL_VERSION = Config.PACKAGE_VERSION.startsWith("3");
+import Adw from 'gi://Adw';
+import Gtk from 'gi://Gtk';
 
-let effectComboBox = null;
-let durationSlider = null;
-let xTilesSlider = null;
-let yTilesSlider = null;
+import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-function init() { }
+import { SettingsData } from './settings_data.js';
 
-function buildPrefsWidget() {
-    let config = new Settings.Prefs();
+export default class Prefs extends ExtensionPreferences {
 
-    let frame;
-    if (IS_3_XX_SHELL_VERSION) {
-        frame = new Gtk.Box({
-            orientation: Gtk.Orientation.VERTICAL,
-            border_width: 20,
-            spacing: 20
+    fillPreferencesWindow(window) {
+        const settingsData = new SettingsData(this.getSettings());
+
+        const width = 750;
+        const height = 380;
+        window.set_default_size(width, height);
+
+        const page = Adw.PreferencesPage.new();
+
+        const group1 = Adw.PreferencesGroup.new();
+        this.effectComboBox = this.addComboBox(group1, "Effect", settingsData.EFFECT);
+        this.durationSlider = this.addSlider(group1, "Duration (ms)", settingsData.DURATION, 100.0, 1000.0, 0);
+        page.add(group1);
+        
+        const group2 = Adw.PreferencesGroup.new();
+        this.xTilesSlider = this.addSlider(group2, "X Tiles", settingsData.X_TILES, 3.0, 50.0, 0);
+        this.yTilesSlider = this.addSlider(group2, "Y Tiles", settingsData.Y_TILES, 3.0, 50.0, 0);
+        page.add(group2);
+
+        this.addResetButton(window, settingsData);
+
+        window.add(page);
+    }
+
+    addResetButton(window, settingsData) {
+        const button = new Gtk.Button({vexpand: true, valign: Gtk.Align.END});
+        button.set_icon_name('edit-clear');
+
+        button.connect('clicked', () => {
+            settingsData.EFFECT.set("default");
+            settingsData.DURATION.set(500.0);
+            settingsData.X_TILES.set(15.0);
+            settingsData.Y_TILES.set(20.0);
+
+            this.effectComboBox.set_active(0);
+            this.durationSlider.set_value(settingsData.DURATION.get());
+            this.xTilesSlider.set_value(settingsData.X_TILES.get());
+            this.yTilesSlider.set_value(settingsData.Y_TILES.get());
         });
-    } else {
-        frame = new Gtk.Box({
-            orientation: Gtk.Orientation.VERTICAL,
-            margin_top: 20,
-            margin_bottom: 20,
-            margin_start: 20,
-            margin_end: 20,
-            spacing: 20
+
+        const header = this.findWidgetByType(window.get_content(), Adw.HeaderBar);
+        if (header) {
+            header.pack_start(button);            
+        }
+        
+        return button;
+    }
+    
+    addSlider(group, labelText, settingsData, lower, upper, decimalDigits) {
+        const scale = new Gtk.Scale({
+            digits: decimalDigits,
+            adjustment: new Gtk.Adjustment({lower: lower, upper: upper}),
+            value_pos: Gtk.PositionType.RIGHT,
+            hexpand: true, 
+            halign: Gtk.Align.END
         });
+        scale.set_draw_value(true);    
+        scale.set_value(settingsData.get());
+        scale.connect('value-changed', (sw) => {
+            var newval = sw.get_value();
+            if (newval != settingsData.get()) {
+                settingsData.set(newval);
+            }
+        });
+        scale.set_size_request(400, 15);
+
+        const row = Adw.ActionRow.new();
+        row.set_title(labelText);
+        row.add_suffix(scale);
+        group.add(row);
+
+        return scale;
     }
 
-    effectComboBox = addComboBox(frame, "Effect", config.EFFECT);
-    durationSlider = addSlider(frame, "Duration (ms)", config.DURATION, 100.0, 1000.0, 0);
-    xTilesSlider = addSlider(frame, "X Tiles", config.X_TILES, 3.0, 50.0, 0);
-    yTilesSlider = addSlider(frame, "Y Tiles", config.Y_TILES, 3.0, 50.0, 0);
+    addComboBox(group, labelText, settingsData) {
+        let gtkComboBoxText = new Gtk.ComboBoxText({hexpand: true, halign: Gtk.Align.END});
+        gtkComboBoxText.set_valign(Gtk.Align.CENTER);
 
-    addDefaultButton(frame, config);
+        let activeIndex = 0;
+        let activeValue = settingsData.get();
+        let values = ["default", "sine"];
 
-    if (IS_3_XX_SHELL_VERSION) {
-        frame.show_all();
-    }
+        for (let i = 0; i < values.length; i++) {
+            gtkComboBoxText.append_text(values[i]);
+            if (activeValue && activeValue == values[i]) {
+                activeIndex = i;
+            }
+        }
 
-    return frame;
-}
+        gtkComboBoxText.set_active(activeIndex);
+        gtkComboBoxText.connect('changed', function (sw) {
+            var newval = values[sw.get_active()];
+            if (newval != settingsData.get()) {
+                settingsData.set(newval);
+            }
+        });
 
-function addDefaultButton(frame, config) {
-    let button = null;
-    if (IS_3_XX_SHELL_VERSION) {
-        button = new Gtk.Button({label: "Reset to default"});
-    } else {
-        button = new Gtk.Button({label: "Reset to default", vexpand: true, valign: Gtk.Align.END});
-    }
-
-    button.connect('clicked', function () {
-        config.EFFECT.set("default");
-        config.DURATION.set(500.0);
-        config.X_TILES.set(15.0);
-        config.Y_TILES.set(20.0);
-
-        effectComboBox.set_active(0);
-        durationSlider.set_value(config.DURATION.get());
-        xTilesSlider.set_value(config.X_TILES.get());
-        yTilesSlider.set_value(config.Y_TILES.get());
-    });
-
-    if (IS_3_XX_SHELL_VERSION) {
-        frame.pack_end(button, false, false, 0);
-    } else {
-        frame.append(new Gtk.Label({}));
-        frame.append(new Gtk.Label({}));
-        frame.append(button);
+        const row = Adw.ActionRow.new();
+        row.set_title(labelText);
+        row.add_suffix(gtkComboBoxText);
+        group.add(row);
+        
+        return gtkComboBoxText;
     }
     
-    return button;
-}
+    addBooleanSwitch(group, labelText, settingsData) {
+        const gtkSwitch = new Gtk.Switch({hexpand: true, halign: Gtk.Align.END});
+        gtkSwitch.set_active(settingsData.get());
+        gtkSwitch.set_valign(Gtk.Align.CENTER);
+        gtkSwitch.connect('state-set', (sw) => {
+            var newval = sw.get_active();
+            if (newval != settingsData.get()) {
+                settingsData.set(newval);
+            }
+        });
 
-function addSlider(frame, labelText, prefConfig, lower, upper, decimalDigits) {
-    let scale = new Gtk.Scale({
-        digits: decimalDigits,
-        adjustment: new Gtk.Adjustment({lower: lower, upper: upper}),
-        value_pos: Gtk.PositionType.RIGHT,
-        hexpand: true, 
-        halign: Gtk.Align.END
-    });
-    if (!IS_3_XX_SHELL_VERSION) {
-        scale.set_draw_value(true);
+        const row = Adw.ActionRow.new();
+        row.set_title(labelText);
+        row.add_suffix(gtkSwitch);
+        group.add(row);
+        
+        return gtkSwitch;
     }
-    scale.set_value(prefConfig.get());
-    scale.connect('value-changed', function (sw) {
-        var newval = sw.get_value();
-        if (newval != prefConfig.get()) {
-            prefConfig.set(newval);
+
+    findWidgetByType(parent, type) {
+        for (const child of [...parent]) {
+            if (child instanceof type) return child;
+
+            const match = this.findWidgetByType(child, type);
+            if (match) return match;
         }
-    });
-    scale.set_size_request(400, 15);
-
-    let hbox = new Gtk.Box({orientation: Gtk.Orientation.HORIZONTAL, spacing: 20});
-    if (IS_3_XX_SHELL_VERSION) {
-        hbox.add(new Gtk.Label({label: labelText, use_markup: true}));
-        hbox.add(scale);
-        
-        frame.add(hbox);
-    } else {
-        hbox.append(new Gtk.Label({label: labelText, use_markup: true}));
-        hbox.append(scale);
-        
-        frame.append(hbox);
+        return null;
     }
-    
-    return scale;
-}
-
-function addComboBox(frame, labelText, prefConfig) {
-    let gtkComboBoxText = new Gtk.ComboBoxText({hexpand: true, halign: Gtk.Align.END});
-
-    let activeIndex = 0;
-    let activeValue = prefConfig.get();
-    let values = ["default", "sine"];
-
-    for (let i = 0; i < values.length; i++) {
-        gtkComboBoxText.append_text(values[i]);
-        if (activeValue && activeValue == values[i]) {
-            activeIndex = i;
-        }
-    }
-
-    gtkComboBoxText.set_active(activeIndex);
-    gtkComboBoxText.connect('changed', function (sw) {
-        var newval = values[sw.get_active()];
-        if (newval != prefConfig.get()) {
-            prefConfig.set(newval);
-        }
-    });
-
-    let hbox = new Gtk.Box({orientation: Gtk.Orientation.HORIZONTAL, spacing: 20});
-    if (IS_3_XX_SHELL_VERSION) {
-        hbox.add(new Gtk.Label({label: labelText, use_markup: true}));
-        hbox.add(gtkComboBoxText);
-
-        frame.add(hbox);
-    } else {
-        hbox.append(new Gtk.Label({label: labelText, use_markup: true}));
-        hbox.append(gtkComboBoxText);
-        
-        frame.append(hbox);
-    }
-    
-    return gtkComboBoxText;
-}
-
-function addBooleanSwitch(frame, labelText, prefConfig) {
-    let gtkSwitch = new Gtk.Switch({hexpand: true, halign: Gtk.Align.END});
-    gtkSwitch.set_active(prefConfig.get());
-    gtkSwitch.connect('state-set', function (sw) {
-        var newval = sw.get_active();
-        if (newval != prefConfig.get()) {
-            prefConfig.set(newval);
-        }
-    });
-
-    let hbox = new Gtk.Box({orientation: Gtk.Orientation.HORIZONTAL, spacing: 20});
-    if (IS_3_XX_SHELL_VERSION) {
-        hbox.add(new Gtk.Label({label: labelText, use_markup: true}));
-        hbox.add(gtkSwitch);
-        
-        frame.add(hbox);
-    } else {
-        hbox.append(new Gtk.Label({label: labelText, use_markup: true}));
-        hbox.append(gtkSwitch);
-        
-        frame.append(hbox);
-    }
-    
-    return gtkSwitch;
 }

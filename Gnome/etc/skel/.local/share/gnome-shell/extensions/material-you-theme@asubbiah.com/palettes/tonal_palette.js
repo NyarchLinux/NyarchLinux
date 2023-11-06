@@ -11,14 +11,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const { Hct } = Me.imports.hct.hct;
+import {Hct} from "../hct/hct.js";
 /**
  *  A convenience class for retrieving colors that are constant in hue and
  *  chroma, but vary in tone.
  */
-var TonalPalette = class TonalPalette {
+export var TonalPalette = class TonalPalette {
     constructor(hue, chroma) {
         this.hue = hue;
         this.chroma = chroma;

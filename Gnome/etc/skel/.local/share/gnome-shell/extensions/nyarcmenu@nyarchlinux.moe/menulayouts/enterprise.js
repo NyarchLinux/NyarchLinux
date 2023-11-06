@@ -1,19 +1,14 @@
-/* eslint-disable jsdoc/require-jsdoc */
-/* exported getMenuLayoutEnum, Menu */
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import Clutter from 'gi://Clutter';
+import GObject from 'gi://GObject';
+import St from 'gi://St';
 
-const {Clutter, GObject, St} = imports.gi;
-const {BaseMenuLayout} = Me.imports.menulayouts.baseMenuLayout;
-const Constants = Me.imports.constants;
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const MW = Me.imports.menuWidgets;
-const _ = Gettext.gettext;
+import {BaseMenuLayout} from './baseMenuLayout.js';
+import * as Constants from '../constants.js';
+import * as MW from '../menuWidgets.js';
 
-function getMenuLayoutEnum() {
-    return Constants.MenuLayout.ENTERPRISE;
-}
+import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-var Menu = class ArcMenuEnterpriseLayout extends BaseMenuLayout {
+export const Layout = class EnterpriseLayout extends BaseMenuLayout {
     static {
         GObject.registerClass(this);
     }
@@ -30,7 +25,7 @@ var Menu = class ArcMenuEnterpriseLayout extends BaseMenuLayout {
             row_spacing: 4,
             vertical: true,
             default_menu_width: 450,
-            icon_grid_style: 'LargeRectIconGrid',
+            icon_grid_size: Constants.GridIconSize.LARGE_RECT,
             category_icon_size: Constants.MEDIUM_ICON_SIZE,
             apps_icon_size: Constants.LARGE_ICON_SIZE,
             quicklinks_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
@@ -62,7 +57,7 @@ var Menu = class ArcMenuEnterpriseLayout extends BaseMenuLayout {
             style: 'font-weight: bold;',
         });
 
-        this.searchBox.set({
+        this.searchEntry.set({
             x_expand: false,
             y_align: Clutter.ActorAlign.CENTER,
         });
@@ -97,15 +92,15 @@ var Menu = class ArcMenuEnterpriseLayout extends BaseMenuLayout {
             vertical: true,
         });
 
-        const verticalSeparator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM,
+        const verticalSeparator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MEDIUM,
             Constants.SeparatorAlignment.VERTICAL);
 
-        const horizontalFlip = Me.settings.get_boolean('enable-horizontal-flip');
+        const horizontalFlip = this._settings.get_boolean('enable-horizontal-flip');
         this._mainBox.add_child(horizontalFlip ? this.rightBox : this.leftBox);
         this._mainBox.add_child(verticalSeparator);
         this._mainBox.add_child(horizontalFlip ? this.leftBox : this.rightBox);
-        this.topBox.add_child(horizontalFlip ? this.searchBox : this.userMenuBox);
-        this.topBox.add_child(horizontalFlip ? this.userMenuBox : this.searchBox);
+        this.topBox.add_child(horizontalFlip ? this.searchEntry : this.userMenuBox);
+        this.topBox.add_child(horizontalFlip ? this.userMenuBox : this.searchEntry);
         this.userMenuBox.add_child(horizontalFlip ? this.userMenuIcon.label : this.userMenuIcon);
         this.userMenuBox.add_child(horizontalFlip ? this.userMenuIcon : this.userMenuIcon.label);
         this.userMenuIcon.label.style += horizontalFlip ? 'padding-right: 14px;' : 'padding-left: 14px;';
@@ -123,7 +118,7 @@ var Menu = class ArcMenuEnterpriseLayout extends BaseMenuLayout {
         this.categoriesScrollBox.add_actor(this.categoriesBox);
 
         let powerOptionsDisplay;
-        const powerDisplayStyle = Me.settings.get_enum('power-display-style');
+        const powerDisplayStyle = this._settings.get_enum('power-display-style');
         if (powerDisplayStyle === Constants.PowerDisplayStyle.MENU) {
             powerOptionsDisplay = new MW.LeaveButton(this, true);
         } else {
@@ -133,12 +128,12 @@ var Menu = class ArcMenuEnterpriseLayout extends BaseMenuLayout {
                 x_align: Clutter.ActorAlign.CENTER,
             });
         }
-        this.leftBox.add_child(new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM,
+        this.leftBox.add_child(new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MEDIUM,
             Constants.SeparatorAlignment.HORIZONTAL));
         this.leftBox.add_child(powerOptionsDisplay);
 
-        const searchbarLocation = Me.settings.get_enum('searchbar-default-top-location');
-        const separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM,
+        const searchbarLocation = this._settings.get_enum('searchbar-default-top-location');
+        const separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MEDIUM,
             Constants.SeparatorAlignment.HORIZONTAL);
 
         if (searchbarLocation === Constants.SearchbarLocation.TOP) {
@@ -157,17 +152,17 @@ var Menu = class ArcMenuEnterpriseLayout extends BaseMenuLayout {
 
     updateWidth(setDefaultMenuView) {
         const leftPanelWidthOffset = 70;
-        const leftPanelWidth = Me.settings.get_int('left-panel-width') - leftPanelWidthOffset;
+        const leftPanelWidth = this._settings.get_int('left-panel-width') - leftPanelWidthOffset;
         this.leftBox.style = `width: ${leftPanelWidth}px;`;
 
-        const widthAdjustment = Me.settings.get_int('menu-width-adjustment');
+        const widthAdjustment = this._settings.get_int('menu-width-adjustment');
         let menuWidth = this.default_menu_width + widthAdjustment;
         // Set a 300px minimum limit for the menu width
         menuWidth = Math.max(300, menuWidth);
         this.applicationsScrollBox.style = `width: ${menuWidth}px;`;
         this.menu_width = menuWidth;
 
-        this.searchBox.style = `width: ${menuWidth - 26}px;`;
+        this.searchEntry.style = `width: ${menuWidth - 26}px;`;
 
         if (setDefaultMenuView)
             this.setDefaultMenuView();
@@ -186,7 +181,7 @@ var Menu = class ArcMenuEnterpriseLayout extends BaseMenuLayout {
         this.categoryDirectories = null;
         this.categoryDirectories = new Map();
 
-        const extraCategories = Me.settings.get_value('extra-categories').deep_unpack();
+        const extraCategories = this._settings.get_value('extra-categories').deep_unpack();
         for (let i = 0; i < extraCategories.length; i++) {
             const categoryEnum = extraCategories[i][0];
             const shouldShow = extraCategories[i][1];

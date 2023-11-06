@@ -1,16 +1,19 @@
-const { GObject, Clutter, St, GLib } = imports.gi;
-const { panelMenu, popupMenu } = imports.ui;
-const { getCurrentExtension } = imports.misc.extensionUtils;
-const AppManager = getCurrentExtension().imports.AppManager;
+import GObject from 'gi://GObject';
+import Clutter from 'gi://Clutter';
+import St from 'gi://St';
+import GLib from 'gi://GLib';
+import * as panelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import * as popupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import * as AppManager from './AppManager.js';
 
-var TrayIndicator = GObject.registerClass(
+export const TrayIndicator = GObject.registerClass(
 	class TrayIndicator extends panelMenu.Button {
-		_init(settings) {
+		_init(extension) {
 			this._icons = [];
 
 			super._init(0.0, null, false);
-			this._settings = settings;
-			this._appManager = new AppManager.AppManager(this._settings);
+			this._settings = extension._settings;
+			this._appManager = new AppManager.AppManager(extension);
 			this._overflow = false;
 
 			this._indicators = new St.BoxLayout();

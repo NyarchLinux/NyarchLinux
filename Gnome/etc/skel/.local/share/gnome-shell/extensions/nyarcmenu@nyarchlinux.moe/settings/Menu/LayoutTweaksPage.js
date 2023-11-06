@@ -1,17 +1,16 @@
-/* exported LayoutTweaksPage */
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-const {Adw, GObject, Gtk} = imports.gi;
-const Constants = Me.imports.constants;
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const {SettingsUtils} = Me.imports.settings;
-const _ = Gettext.gettext;
+import Adw from 'gi://Adw';
+import GObject from 'gi://GObject';
+import Gtk from 'gi://Gtk';
 
-const Settings = Me.imports.settings;
-const {SubPage} = Settings.Menu.SubPage;
-const {ListPinnedPage} = Me.imports.settings.Menu.ListPinnedPage;
-const {ListOtherPage} = Me.imports.settings.Menu.ListOtherPage;
+import * as Constants from '../../constants.js';
+import {ListPinnedPage} from './ListPinnedPage.js';
+import {ListOtherPage} from './ListOtherPage.js';
+import * as SettingsUtils from '../SettingsUtils.js';
+import {SubPage} from './SubPage.js';
 
-var LayoutTweaksPage = GObject.registerClass(
+import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
+
+export const LayoutTweaksPage = GObject.registerClass(
 class ArcMenuLayoutTweaksPage extends SubPage {
     _init(settings, params) {
         super._init(settings, params);
@@ -21,7 +20,8 @@ class ArcMenuLayoutTweaksPage extends SubPage {
     }
 
     setActiveLayout(menuLayout) {
-        this.headerLabel.title = _(SettingsUtils.getMenuLayoutTweaksName(menuLayout));
+        const layoutName = SettingsUtils.getMenuLayoutName(menuLayout);
+        this.headerLabel.title = _('%s Layout Tweaks').format(_(layoutName));
 
         for (const child of this.page.children)
             this.page.remove(child);
@@ -94,6 +94,9 @@ class ArcMenuLayoutTweaksPage extends SubPage {
             break;
         case Constants.MenuLayout.ENTERPRISE:
             this._loadEnterpriseTweaks();
+            break;
+        case Constants.MenuLayout.POP:
+            this._loadPopTweaks();
             break;
         default:
             this._loadPlaceHolderTweaks();
@@ -221,6 +224,46 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         tweaksGroup.add(this._createFlipHorizontalRow());
         tweaksGroup.add(this._createVertSeparatorRow());
         this.add(tweaksGroup);
+    }
+
+    _loadPopTweaks() {
+        const tweaksGroup = new Adw.PreferencesGroup();
+        this.add(tweaksGroup);
+
+        const populateComboRow = () => {
+            const folderNamesList = new Gtk.StringList();
+
+            const foldersData = this._settings.get_value('pop-folders-data').deep_unpack();
+            const defaultViewName = this._settings.get_string('pop-default-view');
+            let defaultViewIndex;
+            let count = 0;
+            for (const [key, value] of Object.entries(foldersData)) {
+                if (key === defaultViewName)
+                    defaultViewIndex = count;
+
+                folderNamesList.append(value);
+                count++;
+            }
+            defaultViewRow.model = folderNamesList;
+            defaultViewRow.selected = defaultViewIndex;
+        };
+
+        const defaultViewRow = new Adw.ComboRow({
+            title: _('Default View'),
+        });
+
+        populateComboRow();
+
+        this._settings.connect('changed::pop-folders-data', () => populateComboRow());
+
+        defaultViewRow.connect('notify::selected', widget => {
+            const foldersData = this._settings.get_value('pop-folders-data').deep_unpack();
+            const selectedId = Object.keys(foldersData).find(key => foldersData[key] === widget.selected_item.string);
+            this._settings.set_string('pop-default-view', selectedId);
+        });
+
+        tweaksGroup.add(defaultViewRow);
+        tweaksGroup.add(this._createSearchBarLocationRow());
     }
 
     _loadElevenTweaks() {

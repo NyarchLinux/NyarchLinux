@@ -1,30 +1,28 @@
-/* exported getMenuLayoutEnum, BaseMenuLayout */
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import GMenu from 'gi://GMenu';
+import GObject from 'gi://GObject';
+import Shell from 'gi://Shell';
+import St from 'gi://St';
 
-const {Clutter, GLib, Gio, GMenu, GObject, Shell, St} = imports.gi;
-const AppFavorites = imports.ui.appFavorites;
-const Config = imports.misc.config;
-const Constants = Me.imports.constants;
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const MW = Me.imports.menuWidgets;
-const PlaceDisplay = Me.imports.placeDisplay;
-const {RecentFilesManager} = Me.imports.recentFilesManager;
-const Utils =  Me.imports.utils;
-const _ = Gettext.gettext;
+import * as AppFavorites from 'resource:///org/gnome/shell/ui/appFavorites.js';
 
-const Search = Config.PACKAGE_VERSION < '43' ? Me.imports.search : Me.imports.gnome43.search;
+import {ArcMenuManager} from '../arcmenuManager.js';
+import * as Constants from '../constants.js';
+import * as MW from '../menuWidgets.js';
+import * as PlaceDisplay from '../placeDisplay.js';
+import {RecentFilesManager} from '../recentFilesManager.js';
+import {SearchResults} from '../search.js';
+import * as Utils from '../utils.js';
+
+import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
+
 const MAX_RECENT_FILES = 25;
-
-/**
- * @returns Returns the current Constants.MenuLayout Enum
- */
-function getMenuLayoutEnum() {
-    return null;
-}
 
 // This class handles the core functionality of all the menu layouts.
 // Each menu layout extends this class.
-var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
+export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
     static [GObject.properties] = {
         'has-search': GObject.ParamSpec.boolean(
             'has-search', 'has-search', 'has-search',
@@ -60,9 +58,9 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
         'default-menu-width': GObject.ParamSpec.uint(
             'default-menu-width', 'default-menu-width', 'default-menu-width',
             GObject.ParamFlags.READWRITE, 0, GLib.MAXINT32, 0),
-        'icon-grid-style': GObject.ParamSpec.string(
-            'icon-grid-style', 'icon-grid-style', 'icon-grid-style',
-            GObject.ParamFlags.READWRITE, ''),
+        'icon-grid-size': GObject.ParamSpec.uint(
+            'icon-grid-size', 'icon-grid-size', 'icon-grid-size',
+            GObject.ParamFlags.READWRITE, 0, GLib.MAXINT32, 0),
         'category-icon-size': GObject.ParamSpec.uint(
             'category-icon-size', 'category-icon-size', 'category-icon-size',
             GObject.ParamFlags.READWRITE, 0, GLib.MAXINT32, 0),
@@ -94,15 +92,19 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
             y_align: Clutter.ActorAlign.FILL,
         });
         this._delegate = this;
-        this.menuButton = menuButton;
+
+        this._menuButton = menuButton;
+        this._settings = ArcMenuManager.settings;
+        this._extension = ArcMenuManager.extension;
 
         this.contextMenuManager = menuButton.contextMenuManager;
         this.subMenuManager = menuButton.subMenuManager;
         this.arcMenu = menuButton.arcMenu;
+
         this._focusChild = null;
         this.hasPinnedApps = false;
         this.activeCategoryType = -1;
-        this._disableFadeEffect = Me.settings.get_boolean('disable-scrollview-fade-effect');
+        this._disableFadeEffect = this._settings.get_boolean('disable-scrollview-fade-effect');
 
         this.connect('key-press-event', this._onMainBoxKeyPress.bind(this));
 
@@ -118,10 +120,10 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
         }, this);
 
         if (this.has_search) {
-            this.searchResults = new Search.SearchResults(this);
-            this.searchBox = new MW.SearchBox(this);
-            this.searchBox.connectObject('search-changed', this._onSearchBoxChanged.bind(this), this);
-            this.searchBox.connectObject('entry-key-press', this._onSearchBoxKeyPress.bind(this), this);
+            this.searchResults = new SearchResults(this);
+            this.searchEntry = new MW.SearchEntry(this);
+            this.searchEntry.connectObject('search-changed', this._onSearchEntryChanged.bind(this), this);
+            this.searchEntry.connectObject('entry-key-press', this._onSearchEntryKeyPress.bind(this), this);
         }
 
         const layout = new Clutter.GridLayout({
@@ -140,9 +142,21 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
         this.connect('destroy', () => this._onDestroy());
     }
 
+    get settings() {
+        return this._settings;
+    }
+
+    get extension() {
+        return this._extension;
+    }
+
+    get menuButton() {
+        return this._menuButton;
+    }
+
     setDefaultMenuView() {
         if (this.has_search) {
-            this.searchBox.clearWithoutSearchChangeEvent();
+            this.searchEntry.clearWithoutSearchChangeEvent();
             this.searchResults.setTerms([]);
         }
 
@@ -152,12 +166,12 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
 
     updateWidth(setDefaultMenuView, leftPanelWidthOffset = 0, rightPanelWidthOffset = 0) {
         if (this.is_dual_panel) {
-            const leftPanelWidth = Me.settings.get_int('left-panel-width') + leftPanelWidthOffset;
-            const rightPanelWidth = Me.settings.get_int('right-panel-width') + rightPanelWidthOffset;
+            const leftPanelWidth = this._settings.get_int('left-panel-width') + leftPanelWidthOffset;
+            const rightPanelWidth = this._settings.get_int('right-panel-width') + rightPanelWidthOffset;
             this.leftBox.style = `width: ${leftPanelWidth}px;`;
             this.rightBox.style = `width: ${rightPanelWidth}px;`;
         } else {
-            const widthAdjustment = Me.settings.get_int('menu-width-adjustment');
+            const widthAdjustment = this._settings.get_int('menu-width-adjustment');
             let menuWidth = this.default_menu_width + widthAdjustment;
             // Set a 300px minimum limit for the menu width
             menuWidth = Math.max(300, menuWidth);
@@ -178,28 +192,11 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
     }
 
     getIconWidthFromSetting() {
-        let gridIconWidth;
-        const iconSizeEnum = Me.settings.get_enum('menu-item-grid-icon-size');
+        const gridIconPadding = 10;
+        const iconSizeEnum = this._settings.get_enum('menu-item-grid-icon-size');
 
-        if (iconSizeEnum === Constants.GridIconSize.DEFAULT) {
-            return this.getIconWidthFromStyleClass(this.icon_grid_style);
-        } else {
-            Constants.GridIconInfo.forEach(info => {
-                if (iconSizeEnum === info.ENUM)
-                    gridIconWidth = info.SIZE;
-            });
-        }
-        return gridIconWidth;
-    }
-
-    getIconWidthFromStyleClass(name) {
-        let gridIconWidth;
-
-        Constants.GridIconInfo.forEach(info => {
-            if (name === info.NAME)
-                gridIconWidth = info.SIZE;
-        });
-        return gridIconWidth;
+        const {width, height_, iconSize_} = Utils.getGridIconSize(iconSizeEnum, this.icon_grid_size);
+        return width + gridIconPadding;
     }
 
     resetScrollBarPosition() {
@@ -216,9 +213,9 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
         }
     }
 
-    reloadApplications() {
+    reloadApplications(forceReload = false) {
         // Only reload applications if the menu is closed.
-        if (this.arcMenu.isOpen) {
+        if (!forceReload && this.arcMenu.isOpen) {
             this.reloadQueued = true;
             if (!this._reloadAppsOnMenuClosedID) {
                 this._reloadAppsOnMenuClosedID = this.arcMenu.connect('menu-closed', () => {
@@ -230,7 +227,7 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
             return;
         }
 
-        this.searchResults.setTerms([]);
+        this.searchResults?.setTerms([]);
 
         if (this.applicationsMap) {
             this.applicationsMap.forEach((value, _key, _map) => {
@@ -316,7 +313,7 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
     }
 
     _loadCategory(categoryMenuItem, dir) {
-        const showNewAppsIndicator = !Me.settings.get_boolean('disable-recently-installed-apps');
+        const showNewAppsIndicator = !this._settings.get_boolean('disable-recently-installed-apps');
         const iter = dir.iter();
         let nextType;
         while ((nextType = iter.next()) !== GMenu.TreeItemType.INVALID) {
@@ -352,8 +349,8 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
     }
 
     setNewAppIndicator() {
-        const disabled = Me.settings.get_boolean('disable-recently-installed-apps');
-        if (!disabled) {
+        const disabled = this._settings.get_boolean('disable-recently-installed-apps');
+        if (!disabled && this.categoryDirectories) {
             for (const categoryMenuItem of this.categoryDirectories.values()) {
                 categoryMenuItem.setNewAppIndicator(false);
                 for (let i = 0; i < categoryMenuItem.appList.length; i++) {
@@ -388,7 +385,7 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
             if (!hasExtraCategory) {
                 hasExtraCategory = isExtraCategory;
             } else if (!isExtraCategory && !separatorAdded) {
-                categoriesBox.add_child(new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM,
+                categoriesBox.add_child(new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MEDIUM,
                     Constants.SeparatorAlignment.HORIZONTAL));
                 separatorAdded = true;
             }
@@ -439,26 +436,25 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
             box.add_child(showMoreItem);
         }
 
-        for (const file of recentFiles) {
-            this.recentFilesManager.queryInfoAsync(file).then(result => {
+        for (const fileUri of recentFiles) {
+            this.recentFilesManager.queryInfoAsync(fileUri).then(result => {
                 const {recentFile} = result;
                 const {error} = result;
 
                 if (error)
                     return;
 
-                const gioFile = Gio.File.new_for_uri(recentFile.get_uri());
-                const filePath = gioFile.get_path();
-                const name = recentFile.get_display_name();
-                const icon = Gio.content_type_get_symbolic_icon(recentFile.get_mime_type()).to_string();
+                const filePath = recentFile.get_path();
+                const name = recentFile.get_basename();
+                const mimeType = this.recentFilesManager.getMimeType(fileUri);
+                const icon = Gio.content_type_get_symbolic_icon(mimeType)?.to_string();
                 const isContainedInCategory = true;
 
                 const placeMenuItem = this.createMenuItem([name, icon, filePath],
                     Constants.DisplayType.LIST, isContainedInCategory);
                 placeMenuItem.setAsRecentFile(recentFile, () => {
                     try {
-                        const {recentManager} = this.recentFilesManager;
-                        recentManager.remove_item(placeMenuItem.fileUri);
+                        this.recentFilesManager.removeItem(placeMenuItem.fileUri);
                     } catch (err) {
                         log(err);
                     }
@@ -479,7 +475,7 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
     }
 
     _displayPlaces() {
-        const directoryShortcuts = Me.settings.get_value('directory-shortcuts-list').deep_unpack();
+        const directoryShortcuts = this._settings.get_value('directory-shortcuts-list').deep_unpack();
         for (let i = 0; i < directoryShortcuts.length; i++) {
             const directory = directoryShortcuts[i];
             const isContainedInCategory = false;
@@ -490,7 +486,8 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
     }
 
     createMenuItem(menuItemArray, displayType, isContainedInCategory) {
-        let [shortcutName, shortcutIcon, shortcutCommand] = menuItemArray;
+        let [,, shortcutCommand] = menuItemArray;
+        const [shortcutName, shortcutIcon] = menuItemArray;
         let app = Shell.AppSystem.get_default().lookup_app(shortcutCommand);
 
         // Ubunutu 22.04 uses old version of GNOME settings
@@ -581,7 +578,7 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
     }
 
     loadPinnedApps() {
-        const pinnedApps = Me.settings.get_strv('pinned-app-list');
+        const pinnedApps = this._settings.get_strv('pinned-app-list');
 
         this.pinnedAppsArray = null;
         this.pinnedAppsArray = [];
@@ -601,7 +598,7 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
                     array.push(this.pinnedAppsArray[j]._icon);
                     array.push(this.pinnedAppsArray[j]._command);
                 }
-                Me.settings.set_strv('pinned-app-list', array);
+                this._settings.set_strv('pinned-app-list', array);
             }, this);
             this.pinnedAppsArray.push(pinnedAppsMenuItem);
         }
@@ -626,18 +623,19 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
     _createPlaces(id) {
         const places = this.placesManager.get(id);
 
-        const haveApplicationShortcuts = Me.settings.get_value('application-shortcuts-list').deep_unpack().length > 0;
+        const applicationShortcuts = this._settings.get_value('application-shortcuts-list').deep_unpack();
+        const haveApplicationShortcuts = applicationShortcuts.length > 0;
         const haveNetworkDevices = this.placesManager.get('network').length > 0;
         const haveExternalDevices = this.placesManager.get('devices').length > 0;
         const haveBookmarks = this.placesManager.get('bookmarks').length > 0;
 
-        if (Me.settings.get_boolean('show-bookmarks')) {
+        if (this._settings.get_boolean('show-bookmarks')) {
             if (id === 'bookmarks' && haveBookmarks) {
                 const needsSeparator = haveApplicationShortcuts;
                 this._addPlacesToMenu(id, places, needsSeparator);
             }
         }
-        if (Me.settings.get_boolean('show-external-devices')) {
+        if (this._settings.get_boolean('show-external-devices')) {
             if (id === 'devices' && haveExternalDevices) {
                 const needsSeparator = !haveNetworkDevices && (haveBookmarks || haveApplicationShortcuts);
                 this._addPlacesToMenu(id, places, needsSeparator);
@@ -656,7 +654,7 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
         }
 
         if (needsSeparator) {
-            const separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.SHORT,
+            const separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.SHORT,
                 Constants.SeparatorAlignment.HORIZONTAL);
             this._placesSections[id].add_child(separator);
         }
@@ -675,9 +673,6 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
         this.activeCategoryItem = categoryItem;
         this.activeCategoryItem.isActiveCategory = true;
         this.activeCategoryItem.add_style_pseudo_class('active');
-
-        this._futureActiveItem = categoryItem;
-        this.activeMenuItem = categoryItem;
     }
 
     populateFrequentAppsList(categoryMenuItem) {
@@ -690,7 +685,7 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
     }
 
     _clearActorsFromBox(box) {
-        this.blockActiveState = true;
+        this.blockHoverState = true;
         this.recentFilesManager?.cancelCurrentQueries();
         if (!box) {
             box = this.applicationsBox;
@@ -719,7 +714,7 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
         let left = 0;
         this._futureActiveItem = false;
         let currentCharacter;
-        const alphabetizeAllPrograms = Me.settings.get_boolean('alphabetize-all-programs') &&
+        const alphabetizeAllPrograms = this._settings.get_boolean('alphabetize-all-programs') &&
             this.display_type === Constants.DisplayType.LIST;
         const rtl = this.get_text_direction() === Clutter.TextDirection.RTL;
 
@@ -809,16 +804,14 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
     }
 
     set activeMenuItem(item) {
+        // track the active menu item for keyboard navigation
         const itemChanged = item !== this._activeMenuItem;
-        if (itemChanged) {
+        if (itemChanged)
             this._activeMenuItem = item;
-            if (this.arcMenu.isOpen && item && this.supports_category_hover_activation)
-                item.grab_key_focus();
-        }
     }
 
-    _onSearchBoxChanged(searchBox, searchString) {
-        if (searchBox.isEmpty()) {
+    _onSearchEntryChanged(searchEntry, searchString) {
+        if (searchEntry.isEmpty()) {
             if (this.applicationsBox.contains(this.searchResults))
                 this.applicationsBox.remove_child(this.searchResults);
 
@@ -843,14 +836,14 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
                 // Prevent a mouse hover event from setting a new active menu item, until next mouse move event.
                 // Used to prevent the top search result from instantly changing
                 // if users mouse is over a differnt menu item.
-                this.blockActiveState = true;
+                this.blockHoverState = true;
 
                 this.searchResults.setTerms(searchString.split(/\s+/));
             }
         }
     }
 
-    _onSearchBoxKeyPress(searchBox, event) {
+    _onSearchEntryKeyPress(searchEntry, event) {
         const symbol = event.get_key_symbol();
         switch (symbol) {
         case Clutter.KEY_Up:
@@ -865,7 +858,7 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
             if (symbol === Clutter.KEY_Left)
                 direction = St.DirectionType.LEFT;
 
-            let cursorPosition = this.searchBox.clutter_text.get_cursor_position();
+            let cursorPosition = this.searchEntry.clutter_text.get_cursor_position();
 
             if (cursorPosition === Constants.CaretPosition.END && symbol === Clutter.KEY_Right)
                 cursorPosition = Constants.CaretPosition.END;
@@ -898,26 +891,29 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
     }
 
     _onMainBoxKeyPress(actor, event) {
+        // Prevent a mouse hover event from setting a new active menu item, until next mouse move event.
+        this.blockHoverState = true;
+
         const symbol = event.get_key_symbol();
         const unicode = Clutter.keysym_to_unicode(symbol);
 
         /*
-        * Pass ctrl key event to searchbox.
+        * Pass ctrl key event to searchEntry.
         * Useful for paste event (ctrl+v),
-        * if searchbox entry doesn't have key focus
+        * if searchEntry entry doesn't have key focus
         */
-        if (this.searchBox && (symbol === Clutter.KEY_Control_L || symbol === Clutter.KEY_Control_R)) {
-            global.stage.set_key_focus(this.searchBox.clutter_text);
-            this.searchBox.clutter_text.event(event, false);
+        if (this.searchEntry && (symbol === Clutter.KEY_Control_L || symbol === Clutter.KEY_Control_R)) {
+            global.stage.set_key_focus(this.searchEntry.clutter_text);
+            this.searchEntry.clutter_text.event(event, false);
             return Clutter.EVENT_PROPAGATE;
         }
 
         switch (symbol) {
         case Clutter.KEY_BackSpace:
-            if (this.searchBox && !this.searchBox.hasKeyFocus() && !this.searchBox.isEmpty()) {
-                this.searchBox.grab_key_focus();
-                const newText = this.searchBox.getText().slice(0, -1);
-                this.searchBox.setText(newText);
+            if (this.searchEntry && !this.searchEntry.hasKeyFocus() && !this.searchEntry.isEmpty()) {
+                this.searchEntry.grab_key_focus();
+                const newText = this.searchEntry.getText().slice(0, -1);
+                this.searchEntry.setText(newText);
             }
             return Clutter.EVENT_PROPAGATE;
         case Clutter.KEY_Tab:
@@ -940,7 +936,7 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
             else if (symbol === Clutter.KEY_ISO_Left_Tab)
                 direction = St.DirectionType.TAB_BACKWARD;
 
-            if (this.has_search && this.searchBox.hasKeyFocus() &&
+            if (this.has_search && this.searchEntry.hasKeyFocus() &&
                 this.searchResults.hasActiveResult() && this.searchResults.get_parent()) {
                 const topSearchResult = this.searchResults.getTopResult();
                 if (topSearchResult.has_style_pseudo_class('active')) {
@@ -963,9 +959,9 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
         case Clutter.KEY_Escape:
             return Clutter.EVENT_PROPAGATE;
         default:
-            if (unicode !== 0 && this.searchBox) {
-                global.stage.set_key_focus(this.searchBox.clutter_text);
-                this.searchBox.clutter_text.event(event, false);
+            if (unicode !== 0 && this.searchEntry) {
+                global.stage.set_key_focus(this.searchEntry.clutter_text);
+                this.searchEntry.clutter_text.event(event, false);
             }
         }
         return Clutter.EVENT_PROPAGATE;
@@ -999,16 +995,17 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
 
         if (this.placesManager) {
             for (const id in this._placesSections) {
-                this._placesSections[id].get_children().forEach(child => {
-                    child.destroy();
-                });
+                if (Object.hasOwn(this._placesSections, id)) {
+                    const children = this._placesSections[id].get_children();
+                    children.forEach(child => child.destroy());
+                }
             }
             this.placesManager.destroy();
             this.placesManager = null;
         }
 
-        if (this.searchBox)
-            this.searchBox.destroy();
+        if (this.searchEntry)
+            this.searchEntry.destroy();
 
         if (this.searchResults) {
             this.searchResults.setTerms([]);
@@ -1050,12 +1047,12 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
         panAction.connectObject('pan', action => {
             // blocks activate event while panning scroll view
             this.blockActivateEvent = true;
-            if (this.menuButton.tooltipShowingID) {
-                GLib.source_remove(this.menuButton.tooltipShowingID);
-                this.menuButton.tooltipShowingID = null;
+            if (this._menuButton.tooltipShowingID) {
+                GLib.source_remove(this._menuButton.tooltipShowingID);
+                this._menuButton.tooltipShowingID = null;
             }
-            if (this.menuButton.tooltip.visible)
-                this.menuButton.tooltip.hide(true);
+            if (this._menuButton.tooltip.visible)
+                this._menuButton.tooltip.hide(true);
             this.onPan(action, scrollBox);
         }, this);
         panAction.connectObject('gesture-cancel', action => this.onPanEnd(action, scrollBox), this);
@@ -1066,7 +1063,7 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
     }
 
     _createLabelWithSeparator(headerLabel) {
-        const separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.HEADER_LABEL,
+        const separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.HEADER_LABEL,
             Constants.SeparatorAlignment.HORIZONTAL, headerLabel);
         return separator;
     }
@@ -1076,6 +1073,10 @@ var BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
             style: 'padding: 9px 12px;',
             x_expand: true,
             x_align: Clutter.ActorAlign.FILL,
+            style_class: 'popup-menu-item',
+            reactive: true,
+            track_hover: false,
+            can_focus: false,
         });
         const label = new St.Label({
             text: _(title),

@@ -11,9 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const utils = Me.imports.utils.color_utils;
+import * as utils from "../utils/color_utils.js";
 /**
  * Quantizes an image into a map, with keys of ARGB colors, and values of the
  * number of times that color appears in the image.
@@ -23,7 +21,7 @@ const utils = Me.imports.utils.color_utils;
 // namespace facilitates this.
 //
 // tslint:disable-next-line:class-as-namespace
-var QuantizerMap = class QuantizerMap {
+export var QuantizerMap = class QuantizerMap {
     /**
      * @param pixels Colors in ARGB format.
      * @return A Map with keys of ARGB colors, and values of the number of times

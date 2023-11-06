@@ -1,26 +1,32 @@
-/* exported StandaloneRunner */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const {Clutter, GLib, St} = imports.gi;
-const Constants = Me.imports.constants;
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const Main = imports.ui.main;
-const MenuButton = Me.imports.menuButton;
-const MW = Me.imports.menuWidgets;
-const PopupMenu = imports.ui.popupMenu;
-const Utils = Me.imports.utils;
-const _ = Gettext.gettext;
+import Clutter from 'gi://Clutter';
+import GLib from 'gi://GLib';
+import St from 'gi://St';
 
-var StandaloneRunner = class ArcMenuStandaloneRunner {
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+
+import {ArcMenu} from './menuButton.js';
+import {ArcMenuManager} from './arcmenuManager.js';
+import * as Constants from './constants.js';
+import * as LayoutHandler from './menulayouts/layoutHandler.js';
+import * as MW from './menuWidgets.js';
+
+export const StandaloneRunner = class ArcMenuStandaloneRunner {
     constructor() {
+        this._settings = ArcMenuManager.settings;
+        this._extension = ArcMenuManager.extension;
+
+        // Link search providers to this menu
+        this.searchProviderDisplayId = 'StandaloneRunner';
+
         this.tooltipShowing = false;
         this.tooltipShowingID = null;
-
         this.tooltip = new MW.Tooltip(this);
 
         // Create Main Menus - ArcMenu and arcMenu's context menu
-        this.arcMenu = new MenuButton.ArcMenu(Main.layoutManager.dummyCursor, 0.5, St.Side.TOP, this);
+        this.arcMenu = new ArcMenu(Main.layoutManager.dummyCursor, 0.5, St.Side.TOP, this);
         this.arcMenu.connect('open-state-changed', this._onOpenStateChanged.bind(this));
 
         this.menuManager = new PopupMenu.PopupMenuManager(Main.panel);
@@ -40,6 +46,14 @@ var StandaloneRunner = class ArcMenuStandaloneRunner {
         // Sub Menu Manager - Control all other popup menus
         this.subMenuManager = new PopupMenu.PopupMenuManager(this.arcMenu);
         this.subMenuManager._changeMenu = () => {};
+    }
+
+    get extension() {
+        return this._extension;
+    }
+
+    get settings() {
+        return this._settings;
     }
 
     initiate() {
@@ -65,7 +79,7 @@ var StandaloneRunner = class ArcMenuStandaloneRunner {
 
         this._createMenuLayoutTimeoutID = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 200, () => {
             const standaloneRunner = true;
-            this._menuLayout = Utils.getMenuLayout(this, Constants.MenuLayout.RUNNER, standaloneRunner);
+            this._menuLayout = LayoutHandler.createMenuLayout(this, Constants.MenuLayout.RUNNER, standaloneRunner);
             this.arcMenu.box.add_child(this._menuLayout);
 
             this._createMenuLayoutTimeoutID = null;

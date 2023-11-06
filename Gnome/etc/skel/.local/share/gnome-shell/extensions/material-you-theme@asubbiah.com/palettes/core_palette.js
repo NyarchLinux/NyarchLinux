@@ -11,10 +11,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const { Hct } = Me.imports.hct.hct;
-const { TonalPalette } = Me.imports.palettes.tonal_palette;
+
+import {Hct} from "../hct/hct.js";
+import {TonalPalette} from "../palettes/tonal_palette.js";
 const errorColor = new TonalPalette(25, 84);
 
 /**
@@ -22,7 +21,7 @@ const errorColor = new TonalPalette(25, 84);
  * color scheme. 5 sets of tones are generated, all except one use the same hue
  * as the key color, and all vary in chroma.
  */
-var CorePalette = class CorePalette {
+export var CorePalette = class CorePalette {
     constructor(argb) {
         const hct = Hct.fromInt(argb);
         const hue = hct.hue;

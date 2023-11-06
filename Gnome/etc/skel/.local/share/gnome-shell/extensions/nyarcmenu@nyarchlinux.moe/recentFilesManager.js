@@ -1,28 +1,51 @@
-/* exported RecentFilesManager */
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const {Gtk, Gio} = imports.gi;
+import {ArcMenuManager} from './arcmenuManager.js';
+
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 
 Gio._promisify(Gio.File.prototype, 'query_info_async');
 
-var RecentFilesManager = class ArcMenuRecentFilesManager {
+export const RecentFilesManager = class ArcMenuRecentFilesManager {
     constructor() {
-        this._recentManager = new Gtk.RecentManager();
+        this._bookmarksFile = new GLib.BookmarkFile();
+        this._recentFile = GLib.build_filenamev([GLib.get_user_data_dir(), 'recently-used.xbel']);
         this._queryCancellables = [];
+
+        this._settings = ArcMenuManager.settings;
     }
 
     getRecentFiles() {
-        const recentManagerItems = this._recentManager.get_items();
-        recentManagerItems.sort((a, b) => b.get_modified() - a.get_modified());
-        return recentManagerItems;
+        try {
+            this._bookmarksFile.load_from_file(this._recentFile);
+        } catch (e) {
+            if (!e.matches(GLib.BookmarkFileError.FILE_NOT_FOUND)) {
+                log(`Could not open recent files: ${e.message}`);
+                return [];
+            }
+        }
+
+        const recentFilesUris = this._bookmarksFile.get_uris();
+        recentFilesUris.sort((a, b) => this._bookmarksFile.get_modified(b) - this._bookmarksFile.get_modified(a));
+        return recentFilesUris;
     }
 
-    get recentManager() {
-        return this._recentManager;
+    removeItem(uri) {
+        try {
+            this._bookmarksFile.remove_item(uri);
+            this._bookmarksFile.to_file(this._recentFile);
+        } catch (e) {
+            log(`Could not save recent file ${uri}: ${e.message}`);
+        }
     }
 
-    async queryInfoAsync(recentFile) {
-        const file = Gio.File.new_for_uri(recentFile.get_uri());
+    getMimeType(uri) {
+        return this._bookmarksFile.get_mime_type(uri);
+    }
+
+    async queryInfoAsync(recentFileUri) {
+        const file = Gio.File.new_for_uri(recentFileUri);
         const cancellable = new Gio.Cancellable();
 
         if (file === null)
@@ -38,12 +61,12 @@ var RecentFilesManager = class ArcMenuRecentFilesManager {
 
             if (fileInfo) {
                 const isHidden = fileInfo.get_attribute_boolean('standard::is-hidden');
-                const showHidden = Me.settings.get_boolean('show-hidden-recent-files');
+                const showHidden = this._settings.get_boolean('show-hidden-recent-files');
 
                 if (isHidden && !showHidden)
-                    return {error: `${recentFile.get_display_name()} is hidden.`};
+                    return {error: `${file.get_basename()} is hidden.`};
 
-                return {recentFile};
+                return {recentFile: file};
             }
             return {error: 'No File Info Found.'};
         } catch (err) {
@@ -74,6 +97,5 @@ var RecentFilesManager = class ArcMenuRecentFilesManager {
 
     destroy() {
         this.cancelCurrentQueries();
-        this._recentManager = null;
     }
 };

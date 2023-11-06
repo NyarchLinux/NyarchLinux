@@ -1,9 +1,8 @@
-'use strict';
+import GObject from 'gi://GObject';
+import Clutter from 'gi://Clutter';
 
-const { GObject, Clutter } = imports.gi;
 
-
-var PaintSignals = class PaintSignals {
+export const PaintSignals = class PaintSignals {
     constructor(connections) {
         this.buffer = [];
         this.connections = connections;
@@ -73,7 +72,7 @@ var PaintSignals = class PaintSignals {
     }
 };
 
-var EmitPaintSignal = GObject.registerClass({
+export const EmitPaintSignal = GObject.registerClass({
     GTypeName: 'EmitPaintSignal',
     Signals: {
         'update-blur': {

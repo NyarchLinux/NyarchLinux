@@ -17,6 +17,7 @@ const Util           = imports.misc.util;
 const Main           = imports.ui.main;
 const Layout         = imports.ui.layout;
 const WorkspacesView = imports.ui.workspacesView.WorkspacesView;
+const SwipeTracker   = imports.ui.swipeTracker.SwipeTracker;
 const FitMode        = imports.ui.workspacesView.FitMode;
 const WorkspaceAnimationController =
   imports.ui.workspaceAnimation.WorkspaceAnimationController;
@@ -54,6 +55,7 @@ class Extension {
     this._settings = ExtensionUtils.getSettings();
 
     // We will monkey-patch these methods. Let's store the original ones.
+    this._origEndGesture            = SwipeTracker.prototype._endGesture;
     this._origUpdateWorkspacesState = WorkspacesView.prototype._updateWorkspacesState;
     this._origGetSpacing            = WorkspacesView.prototype._getSpacing;
     this._origUpdateVisibility      = WorkspacesView.prototype._updateVisibility;
@@ -486,6 +488,19 @@ class Extension {
     // We want to be able to rotate the cube with the left mouse button, so we add an
     // additional gesture to these two SwipeTracker instances tracking single-click drags.
 
+    // First, we fix an issue which leads to very quick workspace switches when the
+    // SwipeTracker are used with mouse clicks. When the mouse button is released, no
+    // event is added to the history. This means that the velocity is always calculated
+    // relative to the last received mouse movement. Even if he mouse pointer was
+    // stationary for some time, high velocities will be computed.
+    SwipeTracker.prototype._endGesture = function(time, distance, isTouchpad) {
+      // Add a final time step to the history.
+      this._history.append(time, 0);
+
+      // Then call the original method.
+      extensionThis._origEndGesture.apply(this, [time, distance, isTouchpad]);
+    };
+
     // Add single-click drag gesture to the desktop.
     if (this._settings.get_boolean('enable-desktop-dragging')) {
       this._addDesktopDragGesture();
@@ -757,6 +772,7 @@ class Extension {
   disable() {
 
     // Restore the original behavior.
+    SwipeTracker.prototype._endGesture              = this._origEndGesture;
     WorkspacesView.prototype._updateWorkspacesState = this._origUpdateWorkspacesState;
     WorkspacesView.prototype._getSpacing            = this._origGetSpacing;
     WorkspacesView.prototype._updateVisibility      = this._origUpdateVisibility;

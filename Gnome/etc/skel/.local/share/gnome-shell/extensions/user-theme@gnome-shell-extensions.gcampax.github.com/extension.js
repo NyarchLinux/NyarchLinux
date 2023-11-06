@@ -1,26 +1,33 @@
+// SPDX-FileCopyrightText: 2011 John Stowers <john.stowers@gmail.com>
+// SPDX-FileCopyrightText: 2011 Giovanni Campagna <gcampagna@src.gnome.org>
+// SPDX-FileCopyrightText: 2011 Elad Alfassa <el.il@doom.co.il>
+// SPDX-FileCopyrightText: 2014 Florian Müllner <fmuellner@gnome.org>
+//
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 // -*- mode: js2; indent-tabs-mode: nil; js2-basic-offset: 4 -*-
 // Load shell theme from ~/.local/share/themes/name/gnome-shell
-/* exported init */
 
-const {Gio} = imports.gi;
+import Gio from 'gi://Gio';
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const Main = imports.ui.main;
+import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const Me = ExtensionUtils.getCurrentExtension();
-const Util = Me.imports.util;
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+import {getThemeDirs, getModeThemeDirs} from './util.js';
 
 const SETTINGS_KEY = 'name';
 
-class ThemeManager {
+export default class ThemeManager extends Extension {
     enable() {
-        this._settings = ExtensionUtils.getSettings();
-        this._settings.connect(`changed::${SETTINGS_KEY}`, this._changeTheme.bind(this));
+        this._settings = this.getSettings();
+        this._settings.connectObject(`changed::${SETTINGS_KEY}`,
+            this._changeTheme.bind(this), this);
         this._changeTheme();
     }
 
     disable() {
-        this._settings?.run_dispose();
+        this._settings?.disconnectObject();
         this._settings = null;
 
         Main.setThemeStylesheet(null);
@@ -32,10 +39,10 @@ class ThemeManager {
         let themeName = this._settings.get_string(SETTINGS_KEY);
 
         if (themeName) {
-            const stylesheetPaths = Util.getThemeDirs()
+            const stylesheetPaths = getThemeDirs()
                 .map(dir => `${dir}/${themeName}/gnome-shell/gnome-shell.css`);
 
-            stylesheetPaths.push(...Util.getModeThemeDirs()
+            stylesheetPaths.push(...getModeThemeDirs()
                 .map(dir => `${dir}/${themeName}.css`));
 
             stylesheet = stylesheetPaths.find(path => {
@@ -45,17 +52,10 @@ class ThemeManager {
         }
 
         if (stylesheet)
-            global.log(`loading user theme: ${stylesheet}`);
+            log(`loading user theme: ${stylesheet}`);
         else
-            global.log('loading default theme (Adwaita)');
+            log('loading default theme (Adwaita)');
         Main.setThemeStylesheet(stylesheet);
         Main.loadTheme();
     }
-}
-
-/**
- * @returns {ThemeManager} - the extension state object
- */
-function init() {
-    return new ThemeManager();
 }

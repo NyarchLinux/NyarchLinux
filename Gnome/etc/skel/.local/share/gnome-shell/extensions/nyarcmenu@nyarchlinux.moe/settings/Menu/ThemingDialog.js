@@ -1,14 +1,16 @@
-/* exported ManageThemesDialog */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+import Adw from 'gi://Adw';
+import GdkPixbuf from 'gi://GdkPixbuf';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import Gtk from 'gi://Gtk';
 
-const {Adw, GdkPixbuf, Gio, GLib, GObject, Gtk} = imports.gi;
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const PW = Me.imports.prefsWidgets;
-const {SettingsUtils} = Me.imports.settings;
-const _ = Gettext.gettext;
+import * as PW from '../../prefsWidgets.js';
+import * as SettingsUtils from '../SettingsUtils.js';
 
-var SaveThemeDialog = GObject.registerClass(
+import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
+
+export const SaveThemeDialog = GObject.registerClass(
 class ArcMenuSaveThemeDialog extends PW.DialogWindow {
     _init(settings, parent, themeName) {
         super._init(_('Save Theme As...'), parent);
@@ -53,7 +55,7 @@ class ArcMenuSaveThemeDialog extends PW.DialogWindow {
     }
 });
 
-var ManageThemesDialog = GObject.registerClass(
+export const ManageThemesDialog = GObject.registerClass(
 class ArcMenuManageThemesDialog extends PW.DialogWindow {
     _init(settings, parent) {
         super._init(_('Manage Themes'), parent);

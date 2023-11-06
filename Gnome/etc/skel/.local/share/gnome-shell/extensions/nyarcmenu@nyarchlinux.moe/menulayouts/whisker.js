@@ -1,19 +1,14 @@
-/* eslint-disable jsdoc/require-jsdoc */
-/* exported getMenuLayoutEnum, Menu */
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import Clutter from 'gi://Clutter';
+import GObject from 'gi://GObject';
+import St from 'gi://St';
 
-const {Clutter, GObject, St} = imports.gi;
-const {BaseMenuLayout} = Me.imports.menulayouts.baseMenuLayout;
-const Constants = Me.imports.constants;
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const MW = Me.imports.menuWidgets;
-const _ = Gettext.gettext;
+import {BaseMenuLayout} from './baseMenuLayout.js';
+import * as Constants from '../constants.js';
+import * as MW from '../menuWidgets.js';
 
-function getMenuLayoutEnum() {
-    return Constants.MenuLayout.WHISKER;
-}
+import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-var Menu = class ArcMenuWhiskerLayout extends BaseMenuLayout {
+export const Layout = class WhiskerLayout extends BaseMenuLayout {
     static {
         GObject.registerClass(this);
     }
@@ -53,20 +48,20 @@ var Menu = class ArcMenuWhiskerLayout extends BaseMenuLayout {
         });
         this.actionsBox.add_child(userMenuItem);
 
-        const settingsButton = this.createMenuItem([_('Settings'), '', 'org.gnome.Settings.desktop'],
+        const settingsButton = this.createMenuItem([_('Settings'), '', 'org.gnothis._settings.desktop'],
             Constants.DisplayType.BUTTON, false);
         if (settingsButton.shouldShow)
             this.actionsBox.add_child(settingsButton);
 
         let powerOptionsBox;
-        const powerDisplayStyle = Me.settings.get_enum('power-display-style');
+        const powerDisplayStyle = this._settings.get_enum('power-display-style');
         if (powerDisplayStyle === Constants.PowerDisplayStyle.MENU)
             powerOptionsBox = new MW.LeaveButton(this);
         else
             powerOptionsBox = new MW.PowerOptionsBox(this);
         this.actionsBox.add_child(powerOptionsBox);
 
-        const separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM,
+        const separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MEDIUM,
             Constants.SeparatorAlignment.HORIZONTAL);
         this.add_child(separator);
 
@@ -100,10 +95,10 @@ var Menu = class ArcMenuWhiskerLayout extends BaseMenuLayout {
             vertical: true,
         });
 
-        const verticalSeparator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM,
+        const verticalSeparator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MEDIUM,
             Constants.SeparatorAlignment.VERTICAL);
 
-        const horizontalFlip = Me.settings.get_boolean('enable-horizontal-flip');
+        const horizontalFlip = this._settings.get_boolean('enable-horizontal-flip');
         this._mainBox.add_child(horizontalFlip ? this.rightBox : this.leftBox);
         this._mainBox.add_child(verticalSeparator);
         this._mainBox.add_child(horizontalFlip ? this.leftBox : this.rightBox);
@@ -119,14 +114,14 @@ var Menu = class ArcMenuWhiskerLayout extends BaseMenuLayout {
         this.categoriesBox = new St.BoxLayout({vertical: true});
         this.categoriesScrollBox.add_actor(this.categoriesBox);
 
-        const searchbarLocation = Me.settings.get_enum('searchbar-default-top-location');
+        const searchbarLocation = this._settings.get_enum('searchbar-default-top-location');
         if (searchbarLocation === Constants.SearchbarLocation.TOP) {
-            this.searchBox.add_style_class_name('arcmenu-search-top');
-            this.searchBox.style = 'margin-top: 0px; margin-bottom: 6px;';
-            this.insert_child_at_index(this.searchBox, 0);
+            this.searchEntry.add_style_class_name('arcmenu-search-top');
+            this.searchEntry.style = 'margin-top: 0px; margin-bottom: 6px;';
+            this.insert_child_at_index(this.searchEntry, 0);
         } else if (searchbarLocation === Constants.SearchbarLocation.BOTTOM) {
-            this.searchBox.add_style_class_name('arcmenu-search-bottom');
-            this.add_child(this.searchBox);
+            this.searchEntry.add_style_class_name('arcmenu-search-bottom');
+            this.add_child(this.searchEntry);
         }
 
         this.updateWidth();
@@ -154,7 +149,7 @@ var Menu = class ArcMenuWhiskerLayout extends BaseMenuLayout {
         this.categoryDirectories = null;
         this.categoryDirectories = new Map();
 
-        const extraCategories = Me.settings.get_value('extra-categories').deep_unpack();
+        const extraCategories = this._settings.get_value('extra-categories').deep_unpack();
         for (let i = 0; i < extraCategories.length; i++) {
             const categoryEnum = extraCategories[i][0];
             const shouldShow = extraCategories[i][1];

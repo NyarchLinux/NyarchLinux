@@ -4,8 +4,6 @@
 
 'use strict';
 
-const ByteArray = imports.byteArray;
-
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 const GObject = imports.gi.GObject;
@@ -185,23 +183,13 @@ var Plugin = GObject.registerClass({
             GLib.mkdir_with_parents(cachedir, 448);
 
             this._cacheFile = Gio.File.new_for_path(
-                GLib.build_filenamev([cachedir, `${this.name}.json`])
-            );
+                GLib.build_filenamev([cachedir, `${this.name}.json`]));
 
             // Read the cache from disk
-            await new Promise((resolve, reject) => {
-                this._cacheFile.load_contents_async(null, (file, res) => {
-                    try {
-                        const contents = file.load_contents_finish(res)[1];
-                        const cache = JSON.parse(ByteArray.toString(contents));
-                        Object.assign(this, cache);
-
-                        resolve();
-                    } catch (e) {
-                        reject(e);
-                    }
-                });
-            });
+            const [contents] = await this._cacheFile.load_contents_async(
+                this.cancellable);
+            const cache = JSON.parse(new TextDecoder().decode(contents));
+            Object.assign(this, cache);
         } catch (e) {
             debug(e.message, `${this.device.name}: ${this.name}`);
         } finally {

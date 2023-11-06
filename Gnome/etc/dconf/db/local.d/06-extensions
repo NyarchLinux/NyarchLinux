@@ -1,6 +1,6 @@
 [org/gnome/shell]
-disabled-extensions=['workspace-indicator@gnome-shell-extensions.gcampax.github.com', 'compiz-windows-effect@hermes83.github.com', 'desktop-cube@schneegans.github.com', 'color-picker@tuberry', 'dash-to-dock-cosmic-@halfmexicanhalfamazing@gmail.com']
-enabled-extensions=['arch-update@RaphaelRochet', 'compiz-alike-magic-lamp-effect@hermes83.github.com', 'user-theme@gnome-shell-extensions.gcampax.github.com', 'material-you-theme@asubbiah.com', 'rounded-window-corners@yilozt', 'Rounded_Corners@lennart-k', 'bluetooth-quick-connect@bjarosze.gmail.com', 'gsconnect@andyholmes.github.io', 'dash-to-panel@jderose9.github.com', 'nyarcmenu@nyarchlinux.moe', 'blur-my-shell@aunetx', 'background-logo@fedorahosted.org']
+disabled-extensions=['workspace-indicator@gnome-shell-extensions.gcampax.github.com', 'compiz-windows-effect@hermes83.github.com', 'desktop-cube@schneegans.github.com', 'color-picker@tuberry', 'dash-to-dock-cosmic-@halfmexicanhalfamazing@gmail.com', 'dash-to-panel@jderose9.github.com', 'nyarcmenu@nyarchlinux.moe']
+enabled-extensions=['arch-update@RaphaelRochet', 'compiz-alike-magic-lamp-effect@hermes83.github.com', 'user-theme@gnome-shell-extensions.gcampax.github.com', 'material-you-theme@asubbiah.com', 'rounded-window-corners@yilozt', 'Rounded_Corners@lennart-k', 'bluetooth-quick-connect@bjarosze.gmail.com', 'gsconnect@andyholmes.github.io', 'blur-my-shell@aunetx', 'background-logo@fedorahosted.org', 'dash-to-dock@micxgx.gmail.com']
 disable-extension-version-validation=true
 
 [org/gnome/shell/extensions/arcmenu]
@@ -67,7 +67,7 @@ name='MaterialYou'
 resize-height=200
 resize-width=200
 scheme='Default'
-accent-color='4282549748'
+accent-color='4289825924'
 enable-accent-colors=false
 enable-pywal-theming=true
 
@@ -82,3 +82,15 @@ logo-size=10.485232067510548
 
 [org/gnome/shell/extensions/arch-update]
 always-visible=false
+
+[org/gnome/shell/extensions/dash-to-dock]
+background-color='rgb(198,70,0)'
+background-opacity=0.80000000000000004
+custom-background-color=false
+dash-max-icon-size=48
+dock-position='BOTTOM'
+height-fraction=0.90000000000000002
+max-alpha=0.80000000000000004
+preferred-monitor=-2
+preferred-monitor-by-connector='Virtual-1'
+transparency-mode='DYNAMIC'

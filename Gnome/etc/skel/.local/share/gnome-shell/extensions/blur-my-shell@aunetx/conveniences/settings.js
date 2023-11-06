@@ -1,12 +1,9 @@
-'use strict';
+import GLib from 'gi://GLib';
 
-const { Gio, GLib } = imports.gi;
 const Signals = imports.signals;
 
-const ExtensionUtils = imports.misc.extensionUtils;
-
 /// An enum non-extensively describing the type of gsettings key.
-var Type = {
+export const Type = {
     B: 'Boolean',
     I: 'Integer',
     D: 'Double',
@@ -19,16 +16,16 @@ var Type = {
 ///
 /// Should be initialized with an array of keys, for example:
 ///
-/// let prefs = new Prefs([
+/// let settings = new Settings([
 ///     { type: Type.I, name: "panel-corner-radius" },
 ///     { type: Type.B, name: "debug" }
 /// ]);
 ///
 /// Each {type, name} object represents a gsettings key, which must be created
 /// in the gschemas.xml file of the extension.
-var Prefs = class Prefs {
-    constructor(keys) {
-        let settings = this.settings = ExtensionUtils.getSettings();
+export const Settings = class Settings {
+    constructor(keys, settings) {
+        this.settings = settings;
         this.keys = keys;
 
         this.keys.forEach(bundle => {
@@ -159,13 +156,13 @@ var Prefs = class Prefs {
     }
 
     /// From the gschema name, returns the name of the associated property on
-    /// the Prefs object.
+    /// the Settings object.
     get_property_name(name) {
         return name.replaceAll('-', '_').toUpperCase();
     }
 
-    /// Remove all connections managed by the Prefs object, i.e. created with
-    /// `prefs.PROPERTY_changed(callback)`.
+    /// Remove all connections managed by the Settings object, i.e. created with
+    /// `settings.PROPERTY_changed(callback)`.
     disconnect_all_settings() {
         this.keys.forEach(bundle => {
             let component = this;
@@ -182,4 +179,4 @@ var Prefs = class Prefs {
     }
 };
 
-Signals.addSignalMethods(Prefs.prototype);
+Signals.addSignalMethods(Settings.prototype);

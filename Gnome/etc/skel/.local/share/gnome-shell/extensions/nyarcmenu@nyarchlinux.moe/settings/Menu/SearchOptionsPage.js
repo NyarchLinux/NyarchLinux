@@ -1,15 +1,13 @@
-/* exported SearchOptionsPage */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+import Adw from 'gi://Adw';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import Gtk from 'gi://Gtk';
 
-const {Adw, GLib, GObject, Gtk} = imports.gi;
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const _ = Gettext.gettext;
+import {SubPage} from './SubPage.js';
 
-const Settings = Me.imports.settings;
-const {SubPage} = Settings.Menu.SubPage;
+import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-var SearchOptionsPage = GObject.registerClass(
+export const SearchOptionsPage = GObject.registerClass(
 class ArcMenuSearchOptionsPage extends SubPage {
     _init(settings, params) {
         super._init(settings, params);

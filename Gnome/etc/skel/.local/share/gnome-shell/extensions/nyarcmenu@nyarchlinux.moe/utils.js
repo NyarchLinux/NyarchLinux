@@ -1,16 +1,55 @@
-/* eslint-disable no-unused-vars */
 /* eslint-disable jsdoc/require-jsdoc */
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import Pango from 'gi://Pango';
+import Shell from 'gi://Shell';
+import St from 'gi://St';
 
-const {Clutter, Gio, GLib, Pango, Shell, St} = imports.gi;
-const Constants = Me.imports.constants;
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const Main = imports.ui.main;
-const MenuLayouts = Me.imports.menulayouts;
-const _ = Gettext.gettext;
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as Constants from './constants.js';
+import {getLoginManager} from 'resource:///org/gnome/shell/misc/loginManager.js';
 
-function activateHibernateOrSleep(powerType) {
-    const loginManager = imports.misc.loginManager.getLoginManager();
+import {ArcMenuManager} from './arcmenuManager.js';
+
+import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
+
+const InterfaceXml = `<node>
+  <interface name="com.Extensions.ArcMenu">
+    <method name="ToggleArcMenu"/>
+  </interface>
+</node>`;
+
+export const DBusService = class {
+    constructor() {
+        this.ToggleArcMenu = () => {};
+
+        this._dbusExportedObject = Gio.DBusExportedObject.wrapJSObject(InterfaceXml, this);
+
+        const onBusAcquired = (connection, _name) => {
+            try {
+                this._dbusExportedObject.export(connection, '/com/Extensions/ArcMenu');
+            } catch (error) {
+                global.log(`ArcMenu Error - onBusAcquired export failed: ${error}`);
+            }
+        };
+
+        function onNameAcquired() { }
+
+        function onNameLost() { }
+
+        this._ownerId = Gio.bus_own_name(Gio.BusType.SESSION, 'com.Extensions.ArcMenu', Gio.BusNameOwnerFlags.NONE,
+            onBusAcquired, onNameAcquired, onNameLost);
+    }
+
+    destroy() {
+        this._dbusExportedObject.unexport();
+        Gio.bus_unown_name(this._ownerId);
+    }
+};
+
+export function activateHibernateOrSleep(powerType) {
+    const loginManager = getLoginManager();
     let callName, activateCall;
 
     if (powerType === Constants.PowerType.HIBERNATE) {
@@ -39,8 +78,8 @@ function activateHibernateOrSleep(powerType) {
     });
 }
 
-function canHibernateOrSleep(callName, asyncCallback) {
-    const loginManager = imports.misc.loginManager.getLoginManager();
+export function canHibernateOrSleep(callName, asyncCallback) {
+    const loginManager = getLoginManager();
 
     if (!loginManager._proxy)
         asyncCallback(false);
@@ -61,35 +100,17 @@ function canHibernateOrSleep(callName, asyncCallback) {
     });
 }
 
-function getMenuLayout(menuButton, layoutEnum, isStandaloneRunner) {
-    if (layoutEnum === Constants.MenuLayout.GNOME_OVERVIEW)
-        return null;
-
-    for (const menuLayout in MenuLayouts) {
-        const LayoutClass = MenuLayouts[menuLayout];
-        if (LayoutClass.getMenuLayoutEnum() === layoutEnum) {
-            const {Menu} = LayoutClass;
-            return new Menu(menuButton, isStandaloneRunner);
-        }
-    }
-
-    const {Menu} = MenuLayouts.arcmenu;
-    return new Menu(menuButton, isStandaloneRunner);
-}
-
-var SettingsConnectionsHandler = class ArcMenuSettingsConnectionsHandler {
-    constructor() {
+export const SettingsConnectionsHandler = class ArcMenuSettingsConnectionsHandler {
+    constructor(settings) {
         this._connections = new Map();
         this._eventPrefix = 'changed::';
+        this._settings = settings;
     }
 
-    connect(event, callback) {
-        this._connections.set(Me.settings.connect(this._eventPrefix + event, callback), Me.settings);
-    }
-
-    connectMultipleEvents(events, callback) {
-        for (const event of events)
-            this._connections.set(Me.settings.connect(this._eventPrefix + event, callback), Me.settings);
+    connect(...args) {
+        const callback = args.pop();
+        for (const event of args)
+            this._connections.set(this._settings.connect(this._eventPrefix + event, callback), this._settings);
     }
 
     destroy() {
@@ -102,7 +123,7 @@ var SettingsConnectionsHandler = class ArcMenuSettingsConnectionsHandler {
     }
 };
 
-function convertToButton(item) {
+export function convertToButton(item) {
     item.tooltipLocation = Constants.TooltipLocation.BOTTOM_CENTERED;
     item.remove_child(item._ornamentLabel);
     item.remove_child(item.label);
@@ -115,21 +136,24 @@ function convertToButton(item) {
     });
 }
 
-function convertToGridLayout(item) {
+export function convertToGridLayout(item) {
     const menuLayout = item._menuLayout;
     const icon = item._iconBin;
 
-    const iconSizeEnum = Me.settings.get_enum('menu-item-grid-icon-size');
-    const defaultIconStyle = menuLayout.icon_grid_style;
-    const gridIconStyle = getGridIconStyle(iconSizeEnum, defaultIconStyle);
+    const {settings} = ArcMenuManager;
+
+    const iconSizeEnum = settings.get_enum('menu-item-grid-icon-size');
+    const defaultIconSize = menuLayout.icon_grid_size;
+    const {width, height, iconSize_} = getGridIconSize(iconSizeEnum, defaultIconSize);
 
     if (item._ornamentLabel)
         item.remove_child(item._ornamentLabel);
 
+    item.add_style_class_name('ArcMenuIconGrid');
     item.set({
         vertical: true,
-        name: gridIconStyle,
         tooltipLocation: Constants.TooltipLocation.BOTTOM_CENTERED,
+        style: `width: ${width}px; height: ${height}px;`,
     });
 
     icon?.set({
@@ -147,7 +171,7 @@ function convertToGridLayout(item) {
         });
     }
 
-    if (!Me.settings.get_boolean('multi-lined-labels'))
+    if (!settings.get_boolean('multi-lined-labels'))
         return;
 
     icon?.set({
@@ -162,7 +186,7 @@ function convertToGridLayout(item) {
     });
 }
 
-function getIconSize(iconSizeEnum, defaultIconSize) {
+export function getIconSize(iconSizeEnum, defaultIconSize) {
     switch (iconSizeEnum) {
     case Constants.IconSize.DEFAULT:
         return defaultIconSize;
@@ -183,89 +207,68 @@ function getIconSize(iconSizeEnum, defaultIconSize) {
     }
 }
 
-function getGridIconSize(iconSizeEnum, defaultIconStyle) {
-    let iconSize;
-    if (iconSizeEnum === Constants.GridIconSize.DEFAULT) {
-        Constants.GridIconInfo.forEach(info => {
-            if (info.NAME === defaultIconStyle) {
-                iconSize = info.ICON_SIZE;
-            }
-        });
-    } else {
-        iconSize = Constants.GridIconInfo[iconSizeEnum - 1].ICON_SIZE;
+export function getGridIconSize(iconSizeEnum, defaultIconSize) {
+    const {settings} = ArcMenuManager;
+
+    if (iconSizeEnum === Constants.GridIconSize.CUSTOM) {
+        const {width, height, iconSize} = settings.get_value('custom-grid-icon-size').deep_unpack();
+        return {width, height, iconSize};
     }
 
-    return iconSize;
+    if (iconSizeEnum === Constants.GridIconSize.DEFAULT)
+        iconSizeEnum = defaultIconSize;
+
+    let width, height, iconSize;
+    Constants.GridIconInfo.forEach(info => {
+        if (iconSizeEnum === info.ENUM) {
+            width = info.WIDTH;
+            height = info.HEIGHT;
+            iconSize = info.ICON_SIZE;
+        }
+    });
+    return {width, height, iconSize};
 }
 
-function getGridIconStyle(iconSizeEnum, defaultIconStyle) {
-    switch (iconSizeEnum) {
-    case Constants.GridIconSize.DEFAULT:
-        return defaultIconStyle;
-    case Constants.GridIconSize.SMALL:
-        return 'SmallIconGrid';
-    case Constants.GridIconSize.MEDIUM:
-        return 'MediumIconGrid';
-    case Constants.GridIconSize.LARGE:
-        return 'LargeIconGrid';
-    case Constants.GridIconSize.SMALL_RECT:
-        return 'SmallRectIconGrid';
-    case Constants.GridIconSize.MEDIUM_RECT:
-        return 'MediumRectIconGrid';
-    case Constants.GridIconSize.LARGE_RECT:
-        return 'LargeRectIconGrid';
-    default:
-        return defaultIconStyle;
-    }
-}
+export function getCategoryDetails(currentCategory) {
+    const extensionPath = ArcMenuManager.extension.path;
 
-function getCategoryDetails(currentCategory) {
     let name, gicon, fallbackIcon = null;
 
     for (const entry of Constants.Categories) {
         if (entry.CATEGORY === currentCategory) {
             name = entry.NAME;
             gicon = Gio.icon_new_for_string(entry.ICON);
-            if (entry.PATH) {
-                let iconString = entry.ICON + ".svg";
-                fallbackIcon = Gio.icon_new_for_string(Me.path + '/media/icons/menu_icons/category_icons/' + iconString);
-                return [name, fallbackIcon, fallbackIcon];
-            } else { 
-                return [name, gicon, fallbackIcon];
-            }
-            
+            return [name, gicon, fallbackIcon];
         }
     }
 
-    if(currentCategory === Constants.CategoryType.HOME_SCREEN){
-        name = _("Home");
-        //gicon = Gio.icon_new_for_string('computer-symbolic');
-        let iconString = "computer-symbolic.svg";
-        fallbackIcon = Gio.icon_new_for_string(Me.path + '/media/icons/menu_icons/category_icons/' + iconString);
-        return [name, fallbackIcon, fallbackIcon];
-    }
-    else{
+    if (currentCategory === Constants.CategoryType.HOME_SCREEN) {
+        name = _('Home');
+        gicon = Gio.icon_new_for_string('computer-symbolic');
+        return [name, gicon, fallbackIcon];
+    } else {
         name = currentCategory.get_name();
+        const categoryIcon = currentCategory.get_icon();
+        const fallbackIconDirectory = `${extensionPath}/icons/category-icons/`;
 
-        if (!currentCategory.get_icon()) {
+        if (!categoryIcon) {
             gicon = null;
-            fallbackIcon = Gio.icon_new_for_string(`${Me.path}/media/icons/menu_icons/category_icons/applications-other-symbolic.svg`);
+            fallbackIcon = Gio.icon_new_for_string(`${fallbackIconDirectory}applications-other-symbolic.svg`);
             return [name, gicon, fallbackIcon];
         }
 
-        gicon = currentCategory.get_icon();
+        const categoryIconName = categoryIcon.to_string();
+        const symbolicName = `${categoryIconName}-symbolic`;
+        const symbolicIconFile = `${symbolicName}.svg`;
 
-        const iconString = `${currentCategory.get_icon().to_string()}-symbolic.svg`;
-        fallbackIcon = Gio.icon_new_for_string(`${Me.path}/media/icons/menu_icons/category_icons/${iconString}`);
+        gicon = categoryIcon;
 
-        fallbackIcon = Gio.icon_new_for_string(Me.path + '/media/icons/menu_icons/category_icons/' + iconString);
-        // return [name, gicon, fallbackIcon]; 
-        // Force use the icon in the sources
+        fallbackIcon = Gio.icon_new_for_string(`${fallbackIconDirectory}${symbolicIconFile}`);
         return [name, fallbackIcon, fallbackIcon];
     }
 }
 
-function getPowerTypeFromShortcutCommand(command) {
+export function getPowerTypeFromShortcutCommand(command) {
     switch (command) {
     case Constants.ShortcutCommands.LOG_OUT:
         return Constants.PowerType.LOGOUT;
@@ -288,20 +291,24 @@ function getPowerTypeFromShortcutCommand(command) {
     }
 }
 
-function getMenuButtonIcon(settings, path) {
+export function getMenuButtonIcon(path) {
+    const extensionPath = ArcMenuManager.extension.path;
+    const {settings} = ArcMenuManager;
+
     const iconType = settings.get_enum('menu-button-icon');
+    const iconDirectory = `${extensionPath}/icons/hicolor/16x16/actions/`;
 
     if (iconType === Constants.MenuIconType.CUSTOM) {
         if (path && GLib.file_test(path, GLib.FileTest.IS_REGULAR))
             return path;
     } else if (iconType === Constants.MenuIconType.DISTRO_ICON) {
         const iconEnum = settings.get_int('distro-icon');
-        const iconPath = Me.path + Constants.DistroIcons[iconEnum].PATH;
+        const iconPath = `${iconDirectory + Constants.DistroIcons[iconEnum].PATH}.svg`;
         if (GLib.file_test(iconPath, GLib.FileTest.IS_REGULAR))
             return iconPath;
     } else {
         const iconEnum = settings.get_int('arc-menu-icon');
-        const iconPath = Me.path + Constants.MenuIcons[iconEnum].PATH;
+        const iconPath = `${iconDirectory + Constants.MenuIcons[iconEnum].PATH}.svg`;
         if (Constants.MenuIcons[iconEnum].PATH === 'view-app-grid-symbolic')
             return 'view-app-grid-symbolic';
         else if (GLib.file_test(iconPath, GLib.FileTest.IS_REGULAR))
@@ -312,7 +319,7 @@ function getMenuButtonIcon(settings, path) {
     return 'start-here-symbolic';
 }
 
-function findSoftwareManager() {
+export function findSoftwareManager() {
     const appSys = Shell.AppSystem.get_default();
 
     for (const softwareManagerID of Constants.SoftwareManagerIDs) {
@@ -323,12 +330,12 @@ function findSoftwareManager() {
     return 'ArcMenu_InvalidShortcut.desktop';
 }
 
-function areaOfTriangle(p1, p2, p3) {
+export function areaOfTriangle(p1, p2, p3) {
     return Math.abs((p1[0] * (p2[1] - p3[1]) + p2[0] * (p3[1] - p1[1]) + p3[0] * (p1[1] - p2[1])) / 2.0);
 }
 
 // modified from GNOME shell's ensureActorVisibleInScrollView()
-function ensureActorVisibleInScrollView(actor, axis = Clutter.Orientation.VERTICAL) {
+export function ensureActorVisibleInScrollView(actor, axis = Clutter.Orientation.VERTICAL) {
     let box = actor.get_allocation_box();
     let {y1} = box, {y2} = box;
     let {x1} = box, {x2} = box;
@@ -346,51 +353,38 @@ function ensureActorVisibleInScrollView(actor, axis = Clutter.Orientation.VERTIC
         parent = parent.get_parent();
     }
 
-    let adjustment, startPoint, endPoint;
-
-    if (axis === Clutter.Orientation.VERTICAL) {
-        adjustment = parent.vscroll.adjustment;
-        startPoint = y1;
-        endPoint = y2;
-    } else {
-        adjustment = parent.hscroll.adjustment;
-        startPoint = x1;
-        endPoint = x2;
-    }
-
-    let [value, lower_, upper, stepIncrement_, pageIncrement_, pageSize] = adjustment.get_values();
+    const isVertical = axis === Clutter.Orientation.VERTICAL;
+    const {adjustment} = isVertical ? parent.vscroll : parent.hscroll;
+    const [startPoint, endPoint] = isVertical ? [y1, y2] : [x1, x2];
+    const [value, lower_, upper, stepIncrement_, pageIncrement_, pageSize] = adjustment.get_values();
 
     let offset = 0;
+    let newValue;
+
     const fade = parent.get_effect('fade');
     if (fade)
-        offset = axis === Clutter.Orientation.VERTICAL ? fade.fade_margins.top : fade.fade_margins.left;
+        offset = isVertical ? fade.fade_margins.top : fade.fade_margins.left;
 
     if (startPoint < value + offset)
-        value = Math.max(0, startPoint - offset);
+        newValue = Math.max(0, startPoint - offset);
     else if (endPoint > value + pageSize - offset)
-        value = Math.min(upper, endPoint + offset - pageSize);
+        newValue = Math.min(upper, endPoint + offset - pageSize);
     else
         return;
 
-    adjustment.ease(value, {
+    adjustment.ease(newValue, {
         mode: Clutter.AnimationMode.EASE_OUT_QUAD,
         duration: 100,
     });
 }
 
-// modified from GNOME shell to allow opening other extension setttings
-function openPrefs(uuid) {
-    try {
-        const {extensionManager} = imports.ui.main;
-        extensionManager.openExtensionPrefs(uuid, '', {});
-    } catch (e) {
-        if (e.name === 'ImportError')
-            throw new Error('openPrefs() cannot be called from preferences');
-        logError(e, 'Failed to open extension preferences');
-    }
+export function openPrefs(uuid) {
+    const extension = Extension.lookupByUUID(uuid);
+    if (extension !== null)
+        extension.openPreferences();
 }
 
-function getDashToPanelPosition(settings, index) {
+export function getDashToPanelPosition(settings, index) {
     var positions = null;
     var side = 'NONE';
 

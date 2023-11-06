@@ -1,24 +1,23 @@
-/* exported MenuPage */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+import Adw from 'gi://Adw';
+import Gio from 'gi://Gio';
+import GObject from 'gi://GObject';
+import Gtk from 'gi://Gtk';
 
-const {Adw, Gio, GObject, Gtk} = imports.gi;
-const Constants = Me.imports.constants;
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const Settings = Me.imports.settings;
-const _ = Gettext.gettext;
+import * as Constants from '../constants.js';
+import * as SettingsUtils from './SettingsUtils.js';
 
-const {FineTunePage} = Settings.Menu.FineTunePage;
-const {LayoutsPage} = Settings.Menu.LayoutsPage;
-const {LayoutTweaksPage} = Settings.Menu.LayoutTweaksPage;
-const {ListOtherPage} = Settings.Menu.ListOtherPage;
-const {ListPinnedPage} = Settings.Menu.ListPinnedPage;
-const {SearchOptionsPage} = Settings.Menu.SearchOptionsPage;
-const {ThemePage} = Settings.Menu.ThemePage;
-const {VisualSettingsPage} = Settings.Menu.VisualSettings;
-const {SettingsUtils} = Settings;
+import {FineTunePage} from './Menu/FineTunePage.js';
+import {LayoutsPage} from './Menu/LayoutsPage.js';
+import {LayoutTweaksPage} from './Menu/LayoutTweaksPage.js';
+import {ListOtherPage} from './Menu/ListOtherPage.js';
+import {ListPinnedPage} from './Menu/ListPinnedPage.js';
+import {SearchOptionsPage} from './Menu/SearchOptionsPage.js';
+import {ThemePage} from './Menu/ThemePage.js';
+import {VisualSettingsPage} from './Menu/VisualSettings.js';
 
-var MenuPage = GObject.registerClass(
+import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
+
+export const MenuPage = GObject.registerClass(
 class ArcMenuMenuPage extends Adw.PreferencesPage {
     _init(settings, window) {
         super._init({
@@ -45,8 +44,10 @@ class ArcMenuMenuPage extends Adw.PreferencesPage {
             pageClass: LayoutsPage,
         });
         this.layoutRow.settingPage.connect('response', (_w, response) => {
-            if (response === Gtk.ResponseType.APPLY)
-                this.tweaksRow.title = _(SettingsUtils.getMenuLayoutTweaksName(this._settings.get_enum('menu-layout')));
+            if (response === Gtk.ResponseType.APPLY) {
+                const layoutName = SettingsUtils.getMenuLayoutName(this._settings.get_enum('menu-layout'));
+                this.tweaksRow.title = _('%s Layout Tweaks').format(_(layoutName));
+            }
         });
         menuLooksGroup.add(this.layoutRow);
 
@@ -85,8 +86,9 @@ class ArcMenuMenuPage extends Adw.PreferencesPage {
         });
         this.add(whatToShowGroup);
 
+        const layoutName = SettingsUtils.getMenuLayoutName(this._settings.get_enum('menu-layout'));
         this.tweaksRow = new SettingRow({
-            title: _(SettingsUtils.getMenuLayoutTweaksName(this._settings.get_enum('menu-layout'))),
+            title: _('%s Layout Tweaks').format(_(layoutName)),
             subtitle: _('Settings specific to the current menu layout'),
             icon_name: 'emblem-system-symbolic',
         });

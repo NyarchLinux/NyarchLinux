@@ -1,4 +1,4 @@
-var base_presets = {
+export var base_presets = {
     "dark": {
         "name": "base-preset",
         "variables": {
@@ -34,7 +34,18 @@ var base_presets = {
             "popover_bg_color": "#383838",
             "popover_fg_color": "#ffffff",
             "shade_color": "#383838",
-            "scrollbar_outline_color": "rgba(0, 0, 0, 0.5)"
+            "scrollbar_outline_color": "rgba(0, 0, 0, 0.5)",
+            "thumbnail_bg_color": "#383838",
+            "thumbnail_fg_color": "#ffffff",
+            "sidebar_bg_color": "#242424",
+            "sidebar_fg_color": "#ffffff",
+            "sidebar_border_color": "#242424",
+            "sidebar_backdrop_color": "#242424",
+            "sidebar_shade_color": "rgba(0,0,0,0.36)",
+            "secondary_sidebar_bg_color": "#2a2a2a",
+            "secondary_sidebar_fg_color": "#ffffff",
+            "secondary_sidebar_backdrop_color": "#272727",
+            "secondary_sidebar_shade_color": "rgba(0, 0, 0, 0.36)"
         },
         "palette": {
             "blue_": {
@@ -141,7 +152,21 @@ var base_presets = {
             "popover_bg_color": "#ffffff",
             "popover_fg_color": "rgba(0, 0, 0, 0.8)",
             "shade_color": "#ffffff",
-            "scrollbar_outline_color": "#ffffff"
+            "scrollbar_outline_color": "#ffffff",
+            "sidebar_bg_color": "#fafafa",
+            "sidebar_fg_color": "#000000",
+            "sidebar_border_color": "#fafafa",
+            "sidebar_backdrop_color": "#fafafa",
+            "thumbnail_bg_color": "#ffffff",
+            "thumbnail_fg_color": "rgba(0, 0, 0, 0.8)",
+            "sidebar_bg_color": "#ebebeb",
+            "sidebar_fg_color": "rgba(0, 0, 0, 0.8)",
+            "sidebar_backdrop_color": "#f2f2f2",
+            "sidebar_shade_color": "rgba(0, 0, 0, 0.07)",
+            "secondary_sidebar_bg_color": "#f3f3f3",
+            "secondary_sidebar_fg_color": "rgba(0, 0, 0, 0.8)",
+            "secondary_sidebar_backdrop_color": "#f6f6f6",
+            "secondary_sidebar_shade_color": "rgba(0, 0, 0, 0.07)"
         },
         "palette": {
             "blue_": {

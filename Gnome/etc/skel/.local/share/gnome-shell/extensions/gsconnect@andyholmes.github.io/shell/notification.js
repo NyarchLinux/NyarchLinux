@@ -2,21 +2,18 @@
 //
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-'use strict';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import St from 'gi://St';
 
-const Gio = imports.gi.Gio;
-const GLib = imports.gi.GLib;
-const GObject = imports.gi.GObject;
-const St = imports.gi.St;
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
+import * as NotificationDaemon from 'resource:///org/gnome/shell/ui/notificationDaemon.js';
 
-const Main = imports.ui.main;
-const MessageTray = imports.ui.messageTray;
-const NotificationDaemon = imports.ui.notificationDaemon;
+import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
+import {getIcon} from './utils.js';
 
-const Extension = imports.misc.extensionUtils.getCurrentExtension();
-
-// eslint-disable-next-line no-redeclare
-const _ = Extension._;
 const APP_ID = 'org.gnome.Shell.Extensions.GSConnect';
 const APP_PATH = '/org/gnome/Shell/Extensions/GSConnect';
 
@@ -26,6 +23,20 @@ const DEVICE_REGEX = new RegExp(/^([^|]+)\|([\s\S]+)$/);
 
 // requestReplyId Pattern (<device-id>|<remote-id>)|<reply-id>)
 const REPLY_REGEX = new RegExp(/^([^|]+)\|([\s\S]+)\|([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/, 'i');
+
+
+/**
+ * Extracted from notificationDaemon.js, as it's no longer exported
+ * https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/main/js/ui/notificationDaemon.js#L556
+ * @returns {{ 'desktop-startup-id': string }} Object with ID containing current time
+ */
+function getPlatformData() {
+    const startupId = GLib.Variant.new('s', `_TIME${global.get_current_time()}`);
+    return {'desktop-startup-id': startupId};
+}
+
+// This is no longer directly exported, so we do this instead for now
+const GtkNotificationDaemon = Main.notificationDaemon._gtkNotificationDaemon.constructor;
 
 
 /**
@@ -121,7 +132,7 @@ const NotificationBanner = GObject.registerClass({
             true,
             new GLib.Variant('(ssa{ss})', [requestReplyId, text, {}]),
         ]);
-        const platformData = NotificationDaemon.getPlatformData();
+        const platformData = getPlatformData();
 
         Gio.DBus.session.call(
             APP_ID,
@@ -172,7 +183,7 @@ const Source = GObject.registerClass({
             true,
             new GLib.Variant('s', notification.remoteId),
         ]);
-        const platformData = NotificationDaemon.getPlatformData();
+        const platformData = getPlatformData();
 
         Gio.DBus.session.call(
             APP_ID,
@@ -222,7 +233,7 @@ const Source = GObject.registerClass({
             let gicon = Gio.Icon.deserialize(notificationParams.icon);
 
             if (gicon instanceof Gio.ThemedIcon) {
-                gicon = Extension.getIcon(gicon.names[0]);
+                gicon = getIcon(gicon.names[0]);
                 notificationParams.icon = gicon.serialize();
             }
         }
@@ -308,7 +319,7 @@ const Source = GObject.registerClass({
  * If there is an active GtkNotificationDaemonAppSource for GSConnect when the
  * extension is loaded, it has to be patched in place.
  */
-function patchGSConnectNotificationSource() {
+export function patchGSConnectNotificationSource() {
     const source = Main.notificationDaemon._gtkNotificationDaemon._sources[APP_ID];
 
     if (source !== undefined) {
@@ -334,7 +345,7 @@ function patchGSConnectNotificationSource() {
  * Wrap GtkNotificationDaemon._ensureAppSource() to patch GSConnect's app source
  * https://gitlab.gnome.org/GNOME/gnome-shell/blob/master/js/ui/notificationDaemon.js#L742-755
  */
-const __ensureAppSource = NotificationDaemon.GtkNotificationDaemon.prototype._ensureAppSource;
+const __ensureAppSource = GtkNotificationDaemon.prototype._ensureAppSource;
 
 // eslint-disable-next-line func-style
 const _ensureAppSource = function (appId) {
@@ -351,13 +362,13 @@ const _ensureAppSource = function (appId) {
 };
 
 
-function patchGtkNotificationDaemon() {
-    NotificationDaemon.GtkNotificationDaemon.prototype._ensureAppSource = _ensureAppSource;
+export function patchGtkNotificationDaemon() {
+    GtkNotificationDaemon.prototype._ensureAppSource = _ensureAppSource;
 }
 
 
-function unpatchGtkNotificationDaemon() {
-    NotificationDaemon.GtkNotificationDaemon.prototype._ensureAppSource = __ensureAppSource;
+export function unpatchGtkNotificationDaemon() {
+    GtkNotificationDaemon.prototype._ensureAppSource = __ensureAppSource;
 }
 
 /**
@@ -366,7 +377,7 @@ function unpatchGtkNotificationDaemon() {
  */
 const _addNotification = NotificationDaemon.GtkNotificationDaemonAppSource.prototype.addNotification;
 
-function patchGtkNotificationSources() {
+export function patchGtkNotificationSources() {
     // This should diverge as little as possible from the original
     // eslint-disable-next-line func-style
     const addNotification = function (notificationId, notificationParams, showBanner) {
@@ -408,7 +419,7 @@ function patchGtkNotificationSources() {
             true,
             new GLib.Variant('s', `gtk|${this._appId}|${id}`),
         ]);
-        const platformData = NotificationDaemon.getPlatformData();
+        const platformData = getPlatformData();
 
         Gio.DBus.session.call(
             APP_ID,
@@ -436,7 +447,7 @@ function patchGtkNotificationSources() {
 }
 
 
-function unpatchGtkNotificationSources() {
+export function unpatchGtkNotificationSources() {
     NotificationDaemon.GtkNotificationDaemonAppSource.prototype.addNotification = _addNotification;
     delete NotificationDaemon.GtkNotificationDaemonAppSource.prototype._withdrawGSConnectNotification;
 }

@@ -1,78 +1,58 @@
-/* exported getStylesheetFiles, createStylesheet, unloadStylesheet,
-   deleteStylesheet, updateStylesheet */
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-const {Clutter, Gio, GLib, St} = imports.gi;
-const Main = imports.ui.main;
-const ExtensionUtils = imports.misc.extensionUtils;
-const { ExtensionState } = ExtensionUtils;
-const Constants = Me.imports.constants;
+import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import St from 'gi://St';
+
+import {ArcMenuManager} from './arcmenuManager.js';
 
 Gio._promisify(Gio.File.prototype, 'replace_contents_bytes_async', 'replace_contents_finish');
-Gio._promisify(Gio.File.prototype, 'create_async');
-Gio._promisify(Gio.File.prototype, 'make_directory_async');
 Gio._promisify(Gio.File.prototype, 'delete_async');
-let themeContext = St.ThemeContext.get_for_stage(global.stage);
 
-
-/**
- *  @returns The stylesheet file
- */
-function getStylesheetFiles() {
-    const directoryPath = GLib.build_filenamev([GLib.get_home_dir(), '.local/share/arcmenu']);
-    const stylesheetPath = GLib.build_filenamev([directoryPath, 'stylesheet.css']);
-
-    const directory = Gio.File.new_for_path(directoryPath);
-    const stylesheet = Gio.File.new_for_path(stylesheetPath);
-
-    return [directory, stylesheet];
-}
+const FileName = 'XXXXXX-arcmenu-stylesheet.css';
 
 /**
- * @param {Gio.Settings} settings ArcMenu Settings
+ * Create and load a custom stylesheet file into global.stage St.Theme
  */
-async function createStylesheet(settings) {
+export function createStylesheet() {
     try {
-        const [directory, stylesheet] = getStylesheetFiles();
-
-        if (!directory.query_exists(null))
-            await directory.make_directory_async(0, null);
-        if (!stylesheet.query_exists(null))
-            await stylesheet.create_async(Gio.FileCreateFlags.NONE, 0, null);
-
-        Me.customStylesheet = stylesheet;
-        updateStylesheet(settings);
+        const [file] = Gio.File.new_tmp(FileName);
+        ArcMenuManager.customStylesheet = file;
+        updateStylesheet();
     } catch (e) {
         log(`ArcMenu - Error creating custom stylesheet: ${e}`);
     }
 }
 
 /**
- *  @description Unload the custom stylesheet from GNOME shell
+ * Unload the custom stylesheet from global.stage St.Theme
  */
 function unloadStylesheet() {
-    if (!Me.customStylesheet)
+    if (!ArcMenuManager.customStylesheet)
         return;
 
     const theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
-    theme.unload_stylesheet(Me.customStylesheet);
+    theme.unload_stylesheet(ArcMenuManager.customStylesheet);
 }
 
 /**
- *  @description Delete the custom stylesheet file
+ * Delete and unload the custom stylesheet file from global.stage St.Theme
  */
-async function deleteStylesheet() {
+export async function deleteStylesheet() {
     unloadStylesheet();
+
+    const {extension} = ArcMenuManager;
+    const stylesheet = ArcMenuManager.customStylesheet;
 
     try {
         const [directory, stylesheet] = getStylesheetFiles();
 
         if (stylesheet.query_exists(null))
-            await stylesheet.delete_async(0, null);
-        if (directory.query_exists(null))
-            await directory.delete_async(0, null);
+            await stylesheet.delete_async(GLib.PRIORITY_DEFAULT, null);
     } catch (e) {
         if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND))
             log(`ArcMenu - Error deleting custom stylesheet: ${e}`);
+    } finally {
+        delete extension.customStylesheet;
     }
 }
 function read_file(path) {
@@ -86,6 +66,7 @@ function read_file(path) {
 function get_gtk4_theme() {
     let config_path = GLib.get_home_dir() + "/.config";
     let gtk4path = config_path + "/gtk-4.0/gtk.css";
+    let color_string;
     try {
         color_string = read_file(gtk4path);
         log("BUEBIUEB");
@@ -93,11 +74,14 @@ function get_gtk4_theme() {
         log(e);
         return null;
     }
-    lines = color_string.split("\n");
+    let lines = color_string.split("\n");
+    let key;
+    let value;
+    let spl;
     const colors = {};
     for (const string of lines) {
         try{
-            let spl = string.split(' ');
+            spl = string.split(' ');
             if (spl.length < 3) {
                 continue;
             }
@@ -110,22 +94,23 @@ function get_gtk4_theme() {
     }
     return colors;
 }
-
-async function updateStylesheet(settings){
-    const stylesheet = Me.customStylesheet;
-
+/**
+ * Write theme data to custom stylesheet and reload into global.stage St.Theme
+ */
+export async function updateStylesheet() {
+    const {settings} = ArcMenuManager;
+    const stylesheet = ArcMenuManager.customStylesheet;
     if (!stylesheet) {
         log('ArcMenu - Warning: Custom stylesheet not found! Unable to set contents of custom stylesheet.');
         return;
     }
-    blurMyShell = Main.extensionManager.lookup(Constants.BLUR_MY_SHELL_UUID);
+    //blurMyShell = Main.extensionManager.lookup(Constants.BLUR_MY_SHELL_UUID);
     //const ctx = St.ThemeContext.get_for_stage(global.stage);
     unloadStylesheet();
     
     let customMenuThemeCSS = ``;
     let extraStylingCSS = ``;
     let colors = get_gtk4_theme();
-
     let menuBorderColor = settings.get_string('menu-border-color');
     let menuBorderWidth = settings.get_int('menu-border-width');
     let menuBorderRadius = settings.get_int('menu-border-radius');
@@ -139,7 +124,7 @@ async function updateStylesheet(settings){
     let itemActiveFGColor;
     let ravenMenu;
     let menubgtrasparency = 1;
-    if (blurMyShell.state === ExtensionState.ENABLED) {
+    if (true) {
         menubgtrasparency = 0.8;
     }
     if (colors == null) {
@@ -325,9 +310,9 @@ async function updateStylesheet(settings){
             return;
         }
 
-        Me.customStylesheet = stylesheet;
-        let theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
-        theme.load_stylesheet(Me.customStylesheet);
+        ArcMenuManager.customStylesheet = stylesheet;
+        const theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
+        theme.load_stylesheet(ArcMenuManager.customStylesheet);
     }
     catch(e){
         log(`ArcMenu - Error replacing contents of custom stylesheet: ${e}`);
@@ -452,6 +437,9 @@ async function updateStylesheet(settings){
         .arcmenu-menu StScrollBar StButton#vhandle:active, .arcmenu-menu StScrollBar StButton#hhandle:active {
             background-color: ${modifyColorLuminance(menuBGColor, 0.25)};
         }
+        .arcmenu-menu .popup-menu-item {
+            color: ${menuFGColor};
+        }
         .arcmenu-menu .popup-menu-item:focus, .arcmenu-menu .popup-menu-item:hover,
         .arcmenu-menu .popup-menu-item:checked, .arcmenu-menu .popup-menu-item.selected,
         .arcmenu-menu StButton:focus, .arcmenu-menu StButton:hover, .arcmenu-menu StButton:checked {
@@ -529,9 +517,9 @@ async function updateStylesheet(settings){
             return;
         }
 
-        Me.customStylesheet = stylesheet;
+        ArcMenuManager.customStylesheet = stylesheet;
         const theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
-        theme.load_stylesheet(Me.customStylesheet);
+        theme.load_stylesheet(ArcMenuManager.customStylesheet);
     } catch (e) {
         log(`ArcMenu - Error replacing contents of custom stylesheet: ${e}`);
     }
@@ -544,7 +532,7 @@ async function updateStylesheet(settings){
  * @param {number} overrideAlpha change the color alpha to this value
  * @returns a string in rbga() format representing the new modified color
  */
-function modifyColorLuminance(colorString, luminanceAdjustment, overrideAlpha) {
+function modifyColorLuminance(colorString, luminanceAdjustment, overrideAlpha = null) {
     const color = Clutter.color_from_string(colorString)[1];
     const [hue, luminance, saturation] = color.to_hls();
     let modifiedLuminance;

@@ -1,18 +1,17 @@
-/* exported ListPinnedPage */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+import Adw from 'gi://Adw';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import Gtk from 'gi://Gtk';
 
-const {Adw, Gio, GLib, GObject, Gtk} = imports.gi;
-const Constants = Me.imports.constants;
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const PW = Me.imports.prefsWidgets;
-const {SettingsUtils} = Me.imports.settings;
-const _ = Gettext.gettext;
+import * as Constants from '../../constants.js';
+import * as PW from '../../prefsWidgets.js';
+import * as SettingsUtils from '../SettingsUtils.js';
+import {SubPage} from './SubPage.js';
 
-const Settings = Me.imports.settings;
-const {SubPage} = Settings.Menu.SubPage;
+import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-var ListPinnedPage = GObject.registerClass(
+export const ListPinnedPage = GObject.registerClass(
 class ArcMenuListPinnedPage extends SubPage {
     _init(settings, params) {
         super._init(settings, params);
@@ -208,7 +207,8 @@ class ArcMenuListPinnedPage extends SubPage {
         let shortcutIcon = shortcutData.icon ?? '';
 
         if (shortcutIcon === Constants.ShortcutCommands.ARCMENU_ICON) {
-            shortcutIcon = Constants.ArcMenuLogoSymbolic;
+            const extension = ExtensionPreferences.lookupByURL(import.meta.url);
+            shortcutIcon = `${extension.path}/${Constants.ArcMenuLogoSymbolic}`;
         } else if (row.shortcut_command === 'org.gnome.Settings.desktop' && !appInfo) {
             appInfo = Gio.DesktopAppInfo.new('gnome-control-center.desktop');
         } else if (row.shortcut_command === Constants.ShortcutCommands.SOFTWARE) {
@@ -238,7 +238,7 @@ class ArcMenuListPinnedPage extends SubPage {
         row.title = GLib.markup_escape_text(row.shortcut_name, -1);
 
         if (row.shortcut_command.endsWith('.desktop') && !appInfo) {
-            row.gicon = Gio.icon_new_for_string('settings-warning-symbolic');
+            row.gicon = Gio.icon_new_for_string('dialog-warning-symbolic');
             row.title = `<b><i>${_('Invalid Shortcut')}</i></b> - ${row.title ? _(row.title) : row.shortcut_command}`;
             row.css_classes = ['error'];
         } else {
@@ -328,8 +328,10 @@ class ArcMenuAddAppsToPinnedListWindow extends PW.DialogWindow {
 
         this._createShortcutsArray();
 
+        const extension = ExtensionPreferences.lookupByURL(import.meta.url);
+
         if (this._dialogType === Constants.MenuSettingsListType.PINNED_APPS) {
-            const extraItem = [[_('ArcMenu Settings'), Constants.ArcMenuLogoSymbolic,
+            const extraItem = [[_('ArcMenu Settings'), `${extension.path}/${Constants.ArcMenuLogoSymbolic}`,
                 Constants.ShortcutCommands.ARCMENU_SETTINGS]];
             this._loadExtraCategories(extraItem);
             this._loadCategories();
@@ -338,7 +340,7 @@ class ArcMenuAddAppsToPinnedListWindow extends PW.DialogWindow {
             this._loadExtraCategories(extraLinks);
         } else if (this._dialogType === Constants.MenuSettingsListType.APPLICATIONS) {
             const extraLinks = [];
-            extraLinks.push([_('ArcMenu Settings'), Constants.ArcMenuLogoSymbolic,
+            extraLinks.push([_('ArcMenu Settings'), `${extension.path}/${Constants.ArcMenuLogoSymbolic}`,
                 Constants.ShortcutCommands.ARCMENU_SETTINGS]);
             extraLinks.push([_('Run Command...'), 'system-run-symbolic', Constants.ShortcutCommands.RUN_COMMAND]);
             extraLinks.push([_('Activities Overview'), 'view-fullscreen-symbolic',
@@ -348,17 +350,17 @@ class ArcMenuAddAppsToPinnedListWindow extends PW.DialogWindow {
             this._loadCategories();
         } else if (this._dialogType === Constants.MenuSettingsListType.CONTEXT_MENU) {
             const extraLinks = [];
-            extraLinks.push([_('ArcMenu Settings'), Constants.ArcMenuLogoSymbolic,
+            extraLinks.push([_('ArcMenu Settings'), `${extension.path}/${Constants.ArcMenuLogoSymbolic}`,
                 Constants.ShortcutCommands.SETTINGS]);
-            extraLinks.push([_('Menu Settings'), Constants.ArcMenuLogoSymbolic,
+            extraLinks.push([_('Menu Settings'), `${extension.path}/${Constants.ArcMenuLogoSymbolic}`,
                 Constants.ShortcutCommands.SETTINGS_MENU]);
-            extraLinks.push([_('Menu Theming'), Constants.ArcMenuLogoSymbolic,
+            extraLinks.push([_('Menu Theming'), `${extension.path}/${Constants.ArcMenuLogoSymbolic}`,
                 Constants.ShortcutCommands.SETTINGS_THEME]);
-            extraLinks.push([_('Change Menu Layout'), Constants.ArcMenuLogoSymbolic,
+            extraLinks.push([_('Change Menu Layout'), `${extension.path}/${Constants.ArcMenuLogoSymbolic}`,
                 Constants.ShortcutCommands.SETTINGS_LAYOUT]);
-            extraLinks.push([_('Menu Button Settings'), Constants.ArcMenuLogoSymbolic,
+            extraLinks.push([_('Menu Button Settings'), `${extension.path}/${Constants.ArcMenuLogoSymbolic}`,
                 Constants.ShortcutCommands.SETTINGS_BUTTON]);
-            extraLinks.push([_('About'), Constants.ArcMenuLogoSymbolic, Constants.ShortcutCommands.SETTINGS_ABOUT]);
+            extraLinks.push([_('About'), `${extension.path}/${Constants.ArcMenuLogoSymbolic}`, Constants.ShortcutCommands.SETTINGS_ABOUT]);
             extraLinks.push([_('Panel Extension Settings'), 'application-x-addon-symbolic',
                 Constants.ShortcutCommands.PANEL_EXTENSION_SETTINGS]);
             extraLinks.push([_('Activities Overview'), 'view-fullscreen-symbolic',

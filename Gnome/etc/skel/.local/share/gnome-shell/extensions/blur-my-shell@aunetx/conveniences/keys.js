@@ -1,12 +1,7 @@
-'use strict';
-
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-
-const { Type } = Me.imports.conveniences.settings;
+import { Type } from './settings.js';
 
 // This lists the preferences keys
-var Keys = [
+export const Keys = [
     {
         component: "general", schemas: [
             { type: Type.I, name: "sigma" },
@@ -126,6 +121,11 @@ var Keys = [
     {
         component: "hidetopbar", schemas: [
             { type: Type.B, name: "compatibility" },
+        ]
+    },
+    {
+        component: "dash-to-panel", schemas: [
+            { type: Type.B, name: "blur-original-panel" },
         ]
     },
 ];

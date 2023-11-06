@@ -20,7 +20,7 @@
  *
  * @return 1 if num > 0, -1 if num < 0, and 0 if num = 0
  */
-function signum(num) {
+export function signum(num) {
     if (num < 0) {
         return -1;
     }
@@ -36,7 +36,7 @@ function signum(num) {
  *
  * @return start if amount = 0 and stop if amount = 1
  */
-function lerp(start, stop, amount) {
+export function lerp(start, stop, amount) {
     return (1.0 - amount) * start + amount * stop;
 }
 /**
@@ -45,7 +45,7 @@ function lerp(start, stop, amount) {
  * @return input when min <= input <= max, and either min or max
  * otherwise.
  */
-function clampInt(min, max, input) {
+export function clampInt(min, max, input) {
     if (input < min) {
         return min;
     }
@@ -60,7 +60,7 @@ function clampInt(min, max, input) {
  * @return input when min <= input <= max, and either min or max
  * otherwise.
  */
-function clampDouble(min, max, input) {
+export function clampDouble(min, max, input) {
     if (input < min) {
         return min;
     }
@@ -75,7 +75,7 @@ function clampDouble(min, max, input) {
  * @return a degree measure between 0 (inclusive) and 360
  * (exclusive).
  */
-function sanitizeDegreesInt(degrees) {
+export function sanitizeDegreesInt(degrees) {
     degrees = degrees % 360;
     if (degrees < 0) {
         degrees = degrees + 360;
@@ -88,7 +88,7 @@ function sanitizeDegreesInt(degrees) {
  * @return a degree measure between 0.0 (inclusive) and 360.0
  * (exclusive).
  */
-function sanitizeDegreesDouble(degrees) {
+export function sanitizeDegreesDouble(degrees) {
     degrees = degrees % 360.0;
     if (degrees < 0) {
         degrees = degrees + 360.0;
@@ -98,13 +98,13 @@ function sanitizeDegreesDouble(degrees) {
 /**
  * Distance of two points on a circle, represented using degrees.
  */
-function differenceDegrees(a, b) {
+export function differenceDegrees(a, b) {
     return 180.0 - Math.abs(Math.abs(a - b) - 180.0);
 }
 /**
  * Multiplies a 1x3 row vector with a 3x3 matrix.
  */
-function matrixMultiply(row, matrix) {
+export function matrixMultiply(row, matrix) {
     const a = row[0] * matrix[0][0] + row[1] * matrix[0][1] + row[2] * matrix[0][2];
     const b = row[0] * matrix[1][0] + row[1] * matrix[1][1] + row[2] * matrix[1][2];
     const c = row[0] * matrix[2][0] + row[1] * matrix[2][1] + row[2] * matrix[2][2];

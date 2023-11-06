@@ -1,17 +1,17 @@
-/* exported PlaceInfo, RootInfo, PlacesManager */
 /*
  * Credits: this file is a copy of GNOME's 'placeDisplay.js' file from the 'Places Status Indicator' extension.
  * https://gitlab.gnome.org/GNOME/gnome-shell-extensions/-/blob/main/extensions/places-menu/placeDisplay.js
  */
 
-const {Gio, GLib, Shell} = imports.gi;
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const _ = Gettext.gettext;
+import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const Main = imports.ui.main;
-const ShellMountOperation = imports.ui.shellMountOperation;
-const Signals = imports.signals;
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import Shell from 'gi://Shell';
+import {EventEmitter} from 'resource:///org/gnome/shell/misc/signals.js';
+
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as ShellMountOperation from 'resource:///org/gnome/shell/ui/shellMountOperation.js';
 
 Gio._promisify(Gio.AppInfo, 'launch_default_for_uri_async');
 Gio._promisify(Gio.File.prototype, 'mount_enclosing_volume');
@@ -25,8 +25,10 @@ const Hostname1Iface = '<node> \
 </node>';
 const Hostname1 = Gio.DBusProxy.makeProxyWrapper(Hostname1Iface);
 
-var PlaceInfo = class ArcMenuPlaceInfo {
+export class PlaceInfo extends EventEmitter {
     constructor(...params) {
+        super();
+
         this._init(...params);
     }
 
@@ -122,10 +124,9 @@ var PlaceInfo = class ArcMenuPlaceInfo {
             throw e;
         }
     }
-};
-Signals.addSignalMethods(PlaceInfo.prototype);
+}
 
-var RootInfo = class ArcMenuRootInfo extends PlaceInfo {
+export class RootInfo extends PlaceInfo {
     _init() {
         super._init('devices', Gio.File.new_for_path('/'), _('Computer'));
 
@@ -136,7 +137,7 @@ var RootInfo = class ArcMenuRootInfo extends PlaceInfo {
                 return;
 
             this._proxy = obj;
-            this._propChangedId = this._proxy.connect('g-properties-changed',
+            this._proxy.connect('g-properties-changed',
                 this._propertiesChanged.bind(this));
             this._propertiesChanged(obj);
         });
@@ -166,7 +167,7 @@ var RootInfo = class ArcMenuRootInfo extends PlaceInfo {
         }
         super.destroy();
     }
-};
+}
 
 var PlaceDeviceInfo = class ArcMenuPlaceDeviceInfo extends PlaceInfo {
     _init(kind, mount) {
@@ -262,25 +263,37 @@ const DEFAULT_DIRECTORIES = [
     GLib.UserDirectory.DIRECTORY_VIDEOS,
 ];
 
-var PlacesManager = class ArcMenuPlacesManager {
+export const PlacesManager = class ArcMenuPlacesManager extends EventEmitter {
     constructor() {
+        super();
+
         this._places = {
             special: [],
             devices: [],
             bookmarks: [],
             network: [],
         };
-        this._connections = new Map();
+
         this._settings = new Gio.Settings({schema_id: BACKGROUND_SCHEMA});
-        this._showDesktopIconsChangedId = this._settings.connect(
-            'changed::show-desktop-icons', this._updateSpecials.bind(this));
+        this._settings.connectObject('changed::show-desktop-icons',
+            () => this._updateSpecials(), this);
         this._updateSpecials();
 
         /*
         * Show devices, code more or less ported from nautilus-places-sidebar.c
         */
         this._volumeMonitor = Gio.VolumeMonitor.get();
-        this._connectVolumeMonitorSignals();
+        this._volumeMonitor.connectObject(
+            'volume-added', () => this._updateMounts(),
+            'volume-removed', () => this._updateMounts(),
+            'volume-changed', () => this._updateMounts(),
+            'mount-added', () => this._updateMounts(),
+            'mount-removed', () => this._updateMounts(),
+            'mount-changed', () => this._updateMounts(),
+            'drive-connected', () => this._updateMounts(),
+            'drive-disconnected', () => this._updateMounts(),
+            'drive-changed', () => this._updateMounts(),
+            this);
         this._updateMounts();
 
         this._bookmarksFile = this._findBookmarksFile();
@@ -305,45 +318,15 @@ var PlacesManager = class ArcMenuPlacesManager {
         }
     }
 
-    setConnection(signal, callback) {
-        this._connections.set(this.connect(signal, callback), this);
-    }
-
-    _connectVolumeMonitorSignals() {
-        const signals = [
-            'volume-added',
-            'volume-removed',
-            'volume-changed',
-            'mount-added',
-            'mount-removed',
-            'mount-changed',
-            'drive-connected',
-            'drive-disconnected',
-            'drive-changed',
-        ];
-
-        this._volumeMonitorSignals = [];
-        const func = this._updateMounts.bind(this);
-        for (let i = 0; i < signals.length; i++) {
-            const id = this._volumeMonitor.connect(signals[i], func);
-            this._volumeMonitorSignals.push(id);
-        }
-    }
-
     destroy() {
-        this._connections.forEach((object, id) => {
-            object.disconnect(id);
-            id = null;
-        });
+        this._settings?.disconnectObject(this);
+        this._settings = null;
 
-        this._connections = null;
+        this._volumeMonitor.disconnectObject(this);
 
         if (this._settings)
             this._settings.disconnect(this._showDesktopIconsChangedId);
         this._settings = null;
-
-        for (let i = 0; i < this._volumeMonitorSignals.length; i++)
-            this._volumeMonitor.disconnect(this._volumeMonitorSignals[i]);
 
         if (this._monitor)
             this._monitor.cancel();
@@ -373,7 +356,8 @@ var PlacesManager = class ArcMenuPlacesManager {
             if (!specialPath || specialPath === homePath)
                 continue;
 
-            let file = Gio.File.new_for_path(specialPath), info;
+            const file = Gio.File.new_for_path(specialPath);
+            let info;
             try {
                 info = new PlaceInfo('special', file);
             } catch (e) {
@@ -562,4 +546,3 @@ var PlacesManager = class ArcMenuPlacesManager {
         return this._places[kind];
     }
 };
-Signals.addSignalMethods(PlacesManager.prototype);

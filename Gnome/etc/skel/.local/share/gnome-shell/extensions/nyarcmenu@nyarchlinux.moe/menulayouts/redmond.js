@@ -1,20 +1,15 @@
-/* eslint-disable jsdoc/require-jsdoc */
-/* exported getMenuLayoutEnum, Menu */
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import Clutter from 'gi://Clutter';
+import GObject from 'gi://GObject';
+import St from 'gi://St';
 
-const {Clutter, GObject, St} = imports.gi;
-const {BaseMenuLayout} = Me.imports.menulayouts.baseMenuLayout;
-const Constants = Me.imports.constants;
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const MW = Me.imports.menuWidgets;
-const PlaceDisplay = Me.imports.placeDisplay;
-const _ = Gettext.gettext;
+import {BaseMenuLayout} from './baseMenuLayout.js';
+import * as Constants from '../constants.js';
+import * as MW from '../menuWidgets.js';
+import * as PlaceDisplay from '../placeDisplay.js';
 
-function getMenuLayoutEnum() {
-    return Constants.MenuLayout.REDMOND;
-}
+import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-var Menu = class ArcMenuRedmondLayout extends BaseMenuLayout {
+export const Layout = class RedmondLayout extends BaseMenuLayout {
     static {
         GObject.registerClass(this);
     }
@@ -27,7 +22,7 @@ var Menu = class ArcMenuRedmondLayout extends BaseMenuLayout {
             column_spacing: 10,
             row_spacing: 10,
             default_menu_width: 415,
-            icon_grid_style: 'SmallIconGrid',
+            icon_grid_size: Constants.GridIconSize.SMALL,
             vertical: false,
             category_icon_size: Constants.MEDIUM_ICON_SIZE,
             apps_icon_size: Constants.LARGE_ICON_SIZE,
@@ -55,10 +50,10 @@ var Menu = class ArcMenuRedmondLayout extends BaseMenuLayout {
             vertical: true,
         });
 
-        const verticalSeparator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.MEDIUM,
+        const verticalSeparator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MEDIUM,
             Constants.SeparatorAlignment.VERTICAL);
 
-        const horizontalFlip = Me.settings.get_boolean('enable-horizontal-flip');
+        const horizontalFlip = this._settings.get_boolean('enable-horizontal-flip');
         this.add_child(horizontalFlip ? this.rightBox : mainBox);
         this.add_child(verticalSeparator);
         this.add_child(horizontalFlip ? mainBox : this.rightBox);
@@ -72,7 +67,7 @@ var Menu = class ArcMenuRedmondLayout extends BaseMenuLayout {
         });
         mainBox.add_child(this.navBox);
 
-        const defaultMenuView = Me.settings.get_enum('default-menu-view-redmond');
+        const defaultMenuView = this._settings.get_enum('default-menu-view-redmond');
         if (defaultMenuView === Constants.DefaultMenuViewRedmond.PINNED_APPS) {
             this.backButton = this._createNavigationRow(_('All Apps'), Constants.Direction.GO_PREVIOUS,
                 _('Back'), () => this.setDefaultMenuView());
@@ -105,20 +100,20 @@ var Menu = class ArcMenuRedmondLayout extends BaseMenuLayout {
         this.applicationsScrollBox.add_actor(this.applicationsBox);
         mainBox.add_child(this.applicationsScrollBox);
 
-        const searchbarLocation = Me.settings.get_enum('searchbar-default-top-location');
+        const searchbarLocation = this._settings.get_enum('searchbar-default-top-location');
         if (searchbarLocation === Constants.SearchbarLocation.TOP) {
-            this.searchBox.add_style_class_name('arcmenu-search-top');
-            mainBox.insert_child_at_index(this.searchBox, 0);
+            this.searchEntry.add_style_class_name('arcmenu-search-top');
+            mainBox.insert_child_at_index(this.searchEntry, 0);
         } else if (searchbarLocation === Constants.SearchbarLocation.BOTTOM) {
-            this.searchBox.add_style_class_name('arcmenu-search-bottom');
-            mainBox.add_child(this.searchBox);
+            this.searchEntry.add_style_class_name('arcmenu-search-bottom');
+            mainBox.add_child(this.searchEntry);
         }
 
-        const userAvatar = Me.settings.get_boolean('disable-user-avatar');
+        const userAvatar = this._settings.get_boolean('disable-user-avatar');
         if (!userAvatar) {
             const userMenuItem = new MW.UserMenuItem(this, Constants.DisplayType.LIST);
             this.rightBox.add_child(userMenuItem);
-            const separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.SHORT,
+            const separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.SHORT,
                 Constants.SeparatorAlignment.HORIZONTAL);
             this.rightBox.add_child(separator);
         }
@@ -134,15 +129,15 @@ var Menu = class ArcMenuRedmondLayout extends BaseMenuLayout {
         // Add place shortcuts to menu (Home,Documents,Downloads,Music,Pictures,Videos)
         this._displayPlaces();
 
-        const haveDirectoryShortcuts = Me.settings.get_value('directory-shortcuts-list').deep_unpack().length > 0;
-        const haveApplicationShortcuts = Me.settings.get_value('application-shortcuts-list').deep_unpack().length > 0;
+        const haveDirectoryShortcuts = this._settings.get_value('directory-shortcuts-list').deep_unpack().length > 0;
+        const haveApplicationShortcuts = this._settings.get_value('application-shortcuts-list').deep_unpack().length > 0;
 
         // check to see if should draw separator
         const needsSeparator = haveDirectoryShortcuts &&
-                               (Me.settings.get_boolean('show-external-devices') || haveApplicationShortcuts ||
-                                Me.settings.get_boolean('show-bookmarks'));
+                               (this._settings.get_boolean('show-external-devices') || haveApplicationShortcuts ||
+                                this._settings.get_boolean('show-bookmarks'));
         if (needsSeparator) {
-            const separator = new MW.ArcMenuSeparator(Constants.SeparatorStyle.SHORT,
+            const separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.SHORT,
                 Constants.SeparatorAlignment.HORIZONTAL);
             this.shortcutsBox.add_child(separator);
         }
@@ -160,13 +155,13 @@ var Menu = class ArcMenuRedmondLayout extends BaseMenuLayout {
         for (let i = 0; i < Constants.SECTIONS.length; i++) {
             const id = Constants.SECTIONS[i];
             this._placesSections[id] = new St.BoxLayout({vertical: true});
-            this.placesManager.setConnection(`${id}-updated`, () => this._redisplayPlaces(id), this);
+            this.placesManager.connectObject(`${id}-updated`, () => this._redisplayPlaces(id), this);
 
             this._createPlaces(id);
             externalDevicesBox.add_child(this._placesSections[id]);
         }
 
-        const applicationShortcuts = Me.settings.get_value('application-shortcuts-list').deep_unpack();
+        const applicationShortcuts = this._settings.get_value('application-shortcuts-list').deep_unpack();
         for (let i = 0; i < applicationShortcuts.length; i++) {
             const shortcutMenuItem = this.createMenuItem(applicationShortcuts[i], Constants.DisplayType.LIST, false);
             if (shortcutMenuItem.shouldShow)
@@ -174,7 +169,7 @@ var Menu = class ArcMenuRedmondLayout extends BaseMenuLayout {
         }
 
         let powerOptionsDisplay;
-        const powerDisplayStyle = Me.settings.get_enum('power-display-style');
+        const powerDisplayStyle = this._settings.get_enum('power-display-style');
         if (powerDisplayStyle === Constants.PowerDisplayStyle.MENU) {
             powerOptionsDisplay = new MW.LeaveButton(this, true);
         } else {
@@ -199,10 +194,10 @@ var Menu = class ArcMenuRedmondLayout extends BaseMenuLayout {
     }
 
     updateWidth(setDefaultMenuView) {
-        const rightPanelWidth = Me.settings.get_int('right-panel-width');
+        const rightPanelWidth = this._settings.get_int('right-panel-width');
         this.rightBox.style = `width: ${rightPanelWidth}px;`;
 
-        const widthAdjustment = Me.settings.get_int('menu-width-adjustment');
+        const widthAdjustment = this._settings.get_int('menu-width-adjustment');
         let menuWidth = this.default_menu_width + widthAdjustment;
         // Set a 300px minimum limit for the menu width
         menuWidth = Math.max(300, menuWidth);
@@ -220,7 +215,7 @@ var Menu = class ArcMenuRedmondLayout extends BaseMenuLayout {
         this._viewAllAppsButton.show();
         this.backButton.hide();
 
-        const defaultMenuView = Me.settings.get_enum('default-menu-view-redmond');
+        const defaultMenuView = this._settings.get_enum('default-menu-view-redmond');
         if (defaultMenuView === Constants.DefaultMenuViewRedmond.PINNED_APPS)
             this.displayPinnedApps();
         else if (defaultMenuView === Constants.DefaultMenuViewRedmond.ALL_PROGRAMS)
@@ -228,7 +223,7 @@ var Menu = class ArcMenuRedmondLayout extends BaseMenuLayout {
     }
 
     displayPinnedApps() {
-        const defaultMenuView = Me.settings.get_enum('default-menu-view-redmond');
+        const defaultMenuView = this._settings.get_enum('default-menu-view-redmond');
         if (defaultMenuView === Constants.DefaultMenuViewRedmond.PINNED_APPS) {
             this._viewAllAppsButton.show();
             this.backButton.hide();
@@ -243,7 +238,7 @@ var Menu = class ArcMenuRedmondLayout extends BaseMenuLayout {
     displayAllApps() {
         super.displayAllApps();
 
-        const defaultMenuView = Me.settings.get_enum('default-menu-view-redmond');
+        const defaultMenuView = this._settings.get_enum('default-menu-view-redmond');
         if (defaultMenuView === Constants.DefaultMenuViewRedmond.PINNED_APPS) {
             this._viewAllAppsButton.hide();
             this.backButton.show();
@@ -259,9 +254,9 @@ var Menu = class ArcMenuRedmondLayout extends BaseMenuLayout {
         super.loadCategories();
     }
 
-    _onSearchBoxChanged(searchBox, searchString) {
-        if (!searchBox.isEmpty())
+    _onSearchEntryChanged(searchEntry, searchString) {
+        if (!searchEntry.isEmpty())
             this.navBox.hide();
-        super._onSearchBoxChanged(searchBox, searchString);
+        super._onSearchEntryChanged(searchEntry, searchString);
     }
 };

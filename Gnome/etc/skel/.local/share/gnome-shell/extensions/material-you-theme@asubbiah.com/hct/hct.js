@@ -26,19 +26,17 @@
  * calculate. A difference of 40 in HCT tone guarantees a contrast ratio >= 3.0,
  * and a difference of 50 guarantees a contrast ratio >= 4.5.
  */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const utils = Me.imports.utils.color_utils;
-const math = Me.imports.utils.math_utils;
-const { Cam16 } = Me.imports.hct.cam16;
-const { ViewingConditions } = Me.imports.hct.viewing_conditions;
+import * as utils from "../utils/color_utils.js";
+import * as math from "../utils/math_utils.js";
+import {Cam16} from "../hct/cam16.js";
+import {ViewingConditions} from "../hct/viewing_conditions.js";
 
 /**
  * HCT, hue, chroma, and tone. A color system that provides a perceptually
  * accurate color measurement system that can also accurately render what colors
  * will appear as in different lighting environments.
  */
-var Hct = class Hct {
+export var Hct = class Hct {
     constructor(internalHue, internalChroma, internalTone) {
         this.internalHue = internalHue;
         this.internalChroma = internalChroma;
@@ -141,7 +139,7 @@ const LIGHTNESS_SEARCH_ENDPOINT = 0.01;
  * @param tone Lightness. Ranges from 0 to 100.
  * @return ARGB representation of a color in default viewing conditions
  */
-function getInt(hue, chroma, tone) {
+export function getInt(hue, chroma, tone) {
     return getIntInViewingConditions(math.sanitizeDegreesDouble(hue), chroma, math.clampDouble(0.0, 100.0, tone), ViewingConditions.make());
 }
 /**
@@ -151,7 +149,7 @@ function getInt(hue, chroma, tone) {
  * @param viewingConditions Information about the environment where the color
  *     was observed.
  */
-function getIntInViewingConditions(hue, chroma, tone, viewingConditions) {
+export function getIntInViewingConditions(hue, chroma, tone, viewingConditions) {
     if (chroma < 1.0 || Math.round(tone) <= 0.0 || Math.round(tone) >= 100.0) {
         return utils.argbFromLstar(tone);
     }
@@ -194,7 +192,7 @@ function getIntInViewingConditions(hue, chroma, tone, viewingConditions) {
  * @return CAM16 instance within error tolerance of the provided dimensions,
  *     or null.
  */
-function findCamByJ(hue, chroma, tone) {
+export function findCamByJ(hue, chroma, tone) {
     let low = 0.0;
     let high = 100.0;
     let mid = 0.0;

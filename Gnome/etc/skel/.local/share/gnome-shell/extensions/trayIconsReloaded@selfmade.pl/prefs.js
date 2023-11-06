@@ -1,8 +1,13 @@
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-const Prefs = Me.imports.preferences.Prefs.Prefs;
+import Adw from "gi://Adw"
+import * as Prefs from "./preferences/Prefs.js"
+import { ExtensionPreferences } from "resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js"
 
-function buildPrefsWidget() {
-	return new Prefs();
+export default class TrayIconsReloadedPreferences extends ExtensionPreferences {
+    fillPreferencesWindow(window) {
+        const page = new Adw.PreferencesPage()
+        const group = new Adw.PreferencesGroup()
+        group.add(new Prefs.Prefs(this.getSettings())) // TODO: We should embrace fully AdwPreferencesPage
+        page.add(group)
+        window.add(page)
+    }
 }
-
-function init() {}

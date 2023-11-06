@@ -2,15 +2,16 @@
 //
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-'use strict';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import Gtk from 'gi://Gtk';
 
-const ByteArray = imports.byteArray;
+import Config from '../config.mjs';
 
-const GLib = imports.gi.GLib;
-const Gio = imports.gi.Gio;
-
-const Extension = imports.misc.extensionUtils.getCurrentExtension();
-const Config = Extension.imports.config;
+let St = null; // St is not available for prefs.js importing this file.
+try {
+    St = (await import('gi://St')).default;
+} catch (e) { }
 
 
 /**
@@ -19,11 +20,11 @@ const Config = Extension.imports.config;
  * @param {string} name - A themed icon name
  * @return {Gio.Icon} A themed icon
  */
-function getIcon(name) {
+export function getIcon(name) {
     if (getIcon._resource === undefined) {
         // Setup the desktop icons
-        const settings = imports.gi.St.Settings.get();
-        getIcon._desktop = new imports.gi.Gtk.IconTheme();
+        const settings = St.Settings.get();
+        getIcon._desktop = new Gtk.IconTheme();
         getIcon._desktop.set_theme_name(settings.gtk_icon_theme);
         settings.connect('notify::gtk-icon-theme', (settings_, key_) => {
             getIcon._desktop.set_theme_name(settings_.gtk_icon_theme);
@@ -79,7 +80,7 @@ function getResource(relativePath) {
             Gio.ResourceLookupFlags.NONE
         );
 
-        const source = ByteArray.toString(bytes.toArray());
+        const source = new TextDecoder().decode(bytes.toArray());
 
         return source.replace('@PACKAGE_DATADIR@', Config.PACKAGE_DATADIR);
     } catch (e) {
@@ -128,11 +129,68 @@ function _installResource(dirname, basename, relativePath) {
     }
 }
 
+/**
+ * Use Gio.File to ensure a file's executable bits are set.
+ *
+ * @param {string} filepath - An absolute path to a file
+ * @returns {boolean} - True if the file already was, or is now, executable
+ */
+function _setExecutable(filepath) {
+    try {
+        const file = Gio.File.new_for_path(filepath);
+        const finfo = file.query_info(
+            `${Gio.FILE_ATTRIBUTE_STANDARD_TYPE},${Gio.FILE_ATTRIBUTE_UNIX_MODE}`,
+            Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
+            null);
+
+        if (!finfo.has_attribute(Gio.FILE_ATTRIBUTE_UNIX_MODE))
+            return false;
+
+        const mode = finfo.get_attribute_uint32(
+            Gio.FILE_ATTRIBUTE_UNIX_MODE);
+        const new_mode = (mode | 0o111);
+        if (mode === new_mode)
+            return true;
+
+        return file.set_attribute_uint32(
+            Gio.FILE_ATTRIBUTE_UNIX_MODE,
+            new_mode,
+            Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
+            null);
+    } catch (e) {
+        logError(e, 'GSConnect');
+        return false;
+    }
+}
+
+/**
+ * Ensure critical files in the extension directory have the
+ * correct permissions.
+ */
+export function ensurePermissions() {
+    if (Config.IS_USER) {
+        const executableFiles = [
+            'gsconnect-preferences',
+            'service/daemon.js',
+            'service/nativeMessagingHost.js',
+        ];
+        for (const file of executableFiles)
+            _setExecutable(GLib.build_filenamev([Config.PACKAGE_DATADIR, file]));
+    }
+}
 
 /**
  * Install the files necessary for the GSConnect service to run.
  */
-function installService() {
+export function installService() {
+    const settings = new Gio.Settings({
+        settings_schema: Config.GSCHEMA.lookup(
+            'org.gnome.Shell.Extensions.GSConnect',
+            null
+        ),
+        path: '/org/gnome/shell/extensions/gsconnect/',
+    });
+
     const confDir = GLib.get_user_config_dir();
     const dataDir = GLib.get_user_data_dir();
     const homeDir = GLib.get_home_dir();
@@ -202,8 +260,10 @@ function installService() {
         }
 
         // WebExtension Manifests
-        for (const [dirname, contents] of manifests)
-            _installFile(dirname, manifestFile, contents);
+        if (settings.get_boolean('create-native-messaging-hosts')) {
+            for (const [dirname, contents] of manifests)
+                _installFile(dirname, manifestFile, contents);
+        }
 
         // Otherwise, if running as a system extension, ensure anything previously
         // installed when running as a user extension is removed.
@@ -221,4 +281,3 @@ function installService() {
             GLib.unlink(GLib.build_filenamev([manifest[0], manifestFile]));
     }
 }
-

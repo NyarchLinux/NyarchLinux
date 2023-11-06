@@ -1,15 +1,16 @@
-'use strict';
+import Adw from 'gi://Adw';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import Gio from 'gi://Gio';
+import Gtk from 'gi://Gtk';
 
-const { Adw, GLib, GObject, Gio, Gtk } = imports.gi;
-const ExtensionUtils = imports.misc.extensionUtils;
-
-const Me = ExtensionUtils.getCurrentExtension();
-const { pick, on_picking, on_picked } = Me.imports.dbus.client;
+import { pick, on_picking, on_picked } from '../dbus/client.js';
 
 
-var WindowRow = GObject.registerClass({
+
+export const WindowRow = GObject.registerClass({
     GTypeName: 'WindowRow',
-    Template: `file://${GLib.build_filenamev([Me.path, 'ui', 'window-row.ui'])}`,
+    Template: GLib.uri_resolve_relative(import.meta.url, '../ui/window-row.ui', GLib.UriFlags.NONE),
     InternalChildren: [
         'window_picker',
         'window_class',
@@ -96,7 +97,7 @@ var WindowRow = GObject.registerClass({
         on_picked(wm_class => {
             if (should_take_answer) {
                 if (wm_class == 'window-not-found') {
-                    log("Can't pick window from here");
+                    console.warn("Can't pick window from here");
                     return;
                 }
                 this._window_class.buffer.text = wm_class;

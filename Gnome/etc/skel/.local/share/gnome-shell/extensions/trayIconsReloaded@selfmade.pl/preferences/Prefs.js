@@ -1,10 +1,11 @@
-const { GObject, Gtk, Gio, Gdk } = imports.gi;
-const ExtensionUtils = imports.misc.extensionUtils;
-const getSettings = ExtensionUtils.getSettings;
-const Me = ExtensionUtils.getCurrentExtension();
-const AppRow = Me.imports.preferences.AppRow.AppRow;
-const AppChooser = Me.imports.preferences.AppChooser.AppChooser;
-const Adw = imports.gi.Adw;
+import GObject from 'gi://GObject';
+import Gtk from 'gi://Gtk';
+import Gio from 'gi://Gio';
+import Gdk from 'gi://Gdk';
+import GLib from 'gi://GLib';
+import * as AppRow from './AppRow.js';
+import * as AppChooser from './AppChooser.js';
+import Adw from 'gi://Adw';
 
 const schemaNames = [
 	"tray-position",
@@ -28,16 +29,16 @@ const settingIds = schemaNames.map(function (name) {
 	return name.replaceAll("-", "_");
 });
 
-var Prefs = GObject.registerClass(
+export const Prefs = GObject.registerClass(
 	{
 		GTypeName: "Prefs",
-		Template: Me.dir.get_child("preferences/Prefs.xml").get_uri(),
+		Template: GLib.uri_resolve_relative(import.meta.url, "./Prefs.xml", GLib.UriFlags.NONE),
 		InternalChildren: ["headerBar", "appList", ...settingIds],
 	},
 	class Prefs extends Gtk.Box {
-		_init(params = {}) {
-			super._init(params);
-			this._settings = getSettings();
+		_init(getSettings) {
+			super._init();
+			this._settings = getSettings;
 			this._bindSettings(schemaNames);
 
 			this.connect("realize", () => {
@@ -52,7 +53,7 @@ var Prefs = GObject.registerClass(
 			let provider = new Gtk.CssProvider();
 			provider.load_from_file(
 				Gio.File.new_for_uri(
-					Me.dir.get_child("preferences/Prefs.css").get_uri()
+					GLib.uri_resolve_relative(import.meta.url, "./Prefs.css", GLib.UriFlags.NONE)
 				)
 			);
 			Gtk.StyleContext.add_provider_for_display(
@@ -70,7 +71,7 @@ var Prefs = GObject.registerClass(
 		}
 
 		showAppChooser() {
-			const dialog = new AppChooser(this.get_root(), this._settings);
+			const dialog = new AppChooser.AppChooser(this.get_root(), this._settings);
 			dialog.show();
 		}
 
@@ -84,7 +85,7 @@ var Prefs = GObject.registerClass(
 
 			newApps.forEach((appInfo, index) => {
 				if (!oldApps.some((row) => row.appId == appInfo.id)) {
-					const appRow = new AppRow(appInfo, this._settings);
+					const appRow = new AppRow.AppRow(appInfo, this._settings);
 					this._appList.insert(appRow, index);
 
 					if (this._notFirstSync) {

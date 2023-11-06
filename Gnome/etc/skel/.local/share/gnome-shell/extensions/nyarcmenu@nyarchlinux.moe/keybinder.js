@@ -1,14 +1,15 @@
-/* exported OverrideOverlayKey, CustomKeybinding */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+import Gio from 'gi://Gio';
+import GObject from 'gi://GObject';
+import Meta from 'gi://Meta';
+import Shell from 'gi://Shell';
 
-const {Gio, GObject, Meta, Shell} = imports.gi;
-const Constants = Me.imports.constants;
-const Main = imports.ui.main;
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+import * as Constants from './constants.js';
 
 const MUTTER_SCHEMA = 'org.gnome.mutter';
 
-var OverrideOverlayKey = class {
+export const OverrideOverlayKey = class {
     constructor() {
         this.isOverrideOverlayEnabled = false;
         this._ignoreHotKeyChangedEvent = false;
@@ -97,8 +98,9 @@ var OverrideOverlayKey = class {
     }
 };
 
-var CustomKeybinding = class {
-    constructor() {
+export const CustomKeybinding = class {
+    constructor(settings) {
+        this._settings = settings;
         this._keybindings = new Map();
     }
 
@@ -106,7 +108,7 @@ var CustomKeybinding = class {
         if (!this._keybindings.has(keybindingNameKey)) {
             this._keybindings.set(keybindingNameKey, keybindingValueKey);
 
-            Main.wm.addKeybinding(keybindingValueKey, ExtensionUtils.getSettings(),
+            Main.wm.addKeybinding(keybindingValueKey, this._settings,
                 Meta.KeyBindingFlags.IGNORE_AUTOREPEAT,
                 Shell.ActionMode.NORMAL | Shell.ActionMode.OVERVIEW | Shell.ActionMode.POPUP,
                 keybindingHandler);

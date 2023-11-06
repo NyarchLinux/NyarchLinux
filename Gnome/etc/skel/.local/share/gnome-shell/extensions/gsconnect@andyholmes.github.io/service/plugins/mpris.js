@@ -446,10 +446,6 @@ var Plugin = GObject.registerClass({
 /*
  * A class for mirroring a remote Media Player on DBus
  */
-const MPRISIface = Config.DBUS.lookup_interface('org.mpris.MediaPlayer2');
-const MPRISPlayerIface = Config.DBUS.lookup_interface('org.mpris.MediaPlayer2.Player');
-
-
 const PlayerRemote = GObject.registerClass({
     GTypeName: 'GSConnectMPRISPlayerRemote',
 }, class PlayerRemote extends MPRIS.Player {
@@ -562,6 +558,8 @@ const PlayerRemote = GObject.registerClass({
         try {
             if (this._connection === null) {
                 this._connection = await DBus.newConnection();
+                const MPRISIface = Config.DBUS.lookup_interface('org.mpris.MediaPlayer2');
+                const MPRISPlayerIface = Config.DBUS.lookup_interface('org.mpris.MediaPlayer2.Player');
 
                 if (this._applicationIface === null) {
                     this._applicationIface = new DBus.Interface({
@@ -647,7 +645,9 @@ const PlayerRemote = GObject.registerClass({
         this.freeze_notify();
 
         // Metadata
-        if (state.hasOwnProperty('nowPlaying'))
+        if (state.hasOwnProperty('nowPlaying') ||
+            state.hasOwnProperty('artist') ||
+            state.hasOwnProperty('title'))
             this._updateMetadata(state);
 
         // Playback Status

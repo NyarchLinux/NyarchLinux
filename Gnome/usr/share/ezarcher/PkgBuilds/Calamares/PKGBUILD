@@ -9,9 +9,9 @@ arch=('x86_64')
 license=(GPL)
 url="https://github.com/calamares/calamares"
 license=('LGPL')
-depends=('cmake' 'kconfig' 'kcoreaddons' 'kiconthemes' 'ki18n' 'kio' 'solid' 'yaml-cpp' 'kpmcore' 'qt5-webengine' 'kwidgetsaddons'
-         'icu' 'qt5-location' 'boost-libs' 'qt5-svg' 'qt5ct' 'polkit-qt5' 'gtk-update-icon-cache' 'plasma-framework' 'parted'
-         'qt5-xmlpatterns' 'squashfs-tools' 'libpwquality' 'dmidecode' 'kparts' 'kdbusaddons' 'kservice' 'udisks2' 'upower')
+depends=('cmake' 'kconfig5' 'kcoreaddons5' 'kiconthemes5' 'ki18n5' 'kio5' 'solid5' 'yaml-cpp' 'kpmcore' 'qt5-webengine' 'kwidgetsaddons5'
+         'icu' 'qt5-location' 'boost-libs' 'qt5-svg' 'qt5ct' 'polkit-qt5' 'gtk-update-icon-cache' 'plasma-framework5' 'parted'
+         'qt5-xmlpatterns' 'squashfs-tools' 'libpwquality' 'dmidecode' 'kparts5' 'kdbusaddons5' 'kservice5' 'udisks2' 'upower')
 makedepends=('extra-cmake-modules' 'qt5-tools' 'qt5-translations' 'git' 'boost')
 
 source=("$pkgname-$pkgver.tar.gz::https://github.com/calamares/calamares/releases/download/v$pkgver/calamares-$pkgver.tar.gz")

@@ -242,7 +242,6 @@ wireplumber
 # pulseaudio-equalizer
 # pulseaudio-jack
 sox
-transcode
 x265
 x264
 xvidcore
@@ -312,8 +311,6 @@ system-config-printer
 # Gnome
 accountsservice
 adwaita-icon-theme
-adwaita-qt5
-adwaita-qt6
 baobab
 dconf-editor
 eog
@@ -374,56 +371,24 @@ yelp
 gdm
 
 # Calamares dependencies (not listed elsewhere)
-boost
-boost-libs
-extra-cmake-modules
-gtk-update-icon-cache
-icu
-kconfig
-kcoreaddons
-kdbusaddons
-kiconthemes
-ki18n
-kio
-kparts
-kpmcore
-kservice
-kwidgetsaddons
-libpwquality
-plasma-framework
-polkit-qt5
-qt5-location
-qt5-svg
-qt5-tools
-qt5-translations
-qt5-webengine
-qt5-xmlpatterns
-qt5ct
-solid
-yaml-cpp
-
-# Calamares
 calamares
-ckbcomp
-mkinitcpio-openswap
-glibc
 boost
 boost-libs
 extra-cmake-modules
 gtk-update-icon-cache
 icu
-kconfig
-kcoreaddons
-kdbusaddons
-kiconthemes
-ki18n
-kio
-kparts
+kconfig5
+kcoreaddons5
+kdbusaddons5
+kiconthemes5
+ki18n5
+kio5
+kparts5
 kpmcore
-kservice
-kwidgetsaddons
+kservice5
+kwidgetsaddons5
 libpwquality
-plasma-framework
+plasma-framework5
 polkit-qt5
 qt5-location
 qt5-svg
@@ -432,7 +397,7 @@ qt5-translations
 qt5-webengine
 qt5-xmlpatterns
 qt5ct
-solid
+solid5
 yaml-cpp
 
 # AUR

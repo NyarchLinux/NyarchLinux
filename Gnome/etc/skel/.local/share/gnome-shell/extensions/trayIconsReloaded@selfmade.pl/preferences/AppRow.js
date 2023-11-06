@@ -1,11 +1,12 @@
-const { GObject, Gtk, Gio } = imports.gi;
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+import GObject from 'gi://GObject';
+import Gtk from 'gi://Gtk';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 
-var AppRow = GObject.registerClass(
+export const AppRow = GObject.registerClass(
 	{
 		GTypeName: "AppRow",
-		Template: Me.dir.get_child("preferences/AppRow.xml").get_uri(),
+		Template: GLib.uri_resolve_relative(import.meta.url, "./AppRow.xml", GLib.UriFlags.NONE),
 		InternalChildren: ["icon", "label", "revealButton", "revealer", "hidden"],
 	},
 	class AppRow extends Gtk.ListBoxRow {

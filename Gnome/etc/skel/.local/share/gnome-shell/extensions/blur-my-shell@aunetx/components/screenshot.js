@@ -1,18 +1,14 @@
-'use strict';
-
-const { Shell, Gio, Meta } = imports.gi;
-const Main = imports.ui.main;
-
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-const ColorEffect = Me.imports.effects.color_effect.ColorEffect;
-const NoiseEffect = Me.imports.effects.noise_effect.NoiseEffect;
+import Shell from 'gi://Shell';
+import Meta from 'gi://Meta';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 
-var ScreenshotBlur = class ScreenshotBlur {
-    constructor(connections, prefs) {
+export const ScreenshotBlur = class ScreenshotBlur {
+    constructor(connections, settings, effects_manager) {
         this.connections = connections;
         this.effects = [];
-        this.prefs = prefs;
+        this.settings = settings;
+        this.effects_manager = effects_manager;
     }
 
     enable() {
@@ -65,25 +61,30 @@ var ScreenshotBlur = class ScreenshotBlur {
     }
 
     create_background_actor(monitor) {
-        let bg_actor = new Meta.BackgroundActor;
+        let bg_actor = new Meta.BackgroundActor({
+            meta_display: global.display,
+            monitor: monitor.index
+        });
         let background = Main.layoutManager._backgroundGroup.get_child_at_index(
             Main.layoutManager.monitors.length - monitor.index - 1
         );
 
         if (!background) {
-            this._log("could not get background for screenshot's window selector");
+            this._warn("could not get background for screenshot's window selector");
             return bg_actor;
         }
 
-        bg_actor.set_content(background.get_content());
+        bg_actor.content.set({
+            background: background.get_content().background
+        });
 
         let blur_effect = new Shell.BlurEffect({
-            brightness: this.prefs.screenshot.CUSTOMIZE
-                ? this.prefs.screenshot.BRIGHTNESS
-                : this.prefs.BRIGHTNESS,
-            sigma: this.prefs.screenshot.CUSTOMIZE
-                ? this.prefs.screenshot.SIGMA
-                : this.prefs.SIGMA
+            brightness: this.settings.screenshot.CUSTOMIZE
+                ? this.settings.screenshot.BRIGHTNESS
+                : this.settings.BRIGHTNESS,
+            sigma: this.settings.screenshot.CUSTOMIZE
+                ? this.settings.screenshot.SIGMA
+                : this.settings.SIGMA
                 * monitor.geometry_scale,
             mode: Shell.BlurMode.ACTOR
         });
@@ -91,20 +92,20 @@ var ScreenshotBlur = class ScreenshotBlur {
         // store the scale in the effect in order to retrieve it in set_sigma
         blur_effect.scale = monitor.geometry_scale;
 
-        let color_effect = new ColorEffect({
-            color: this.prefs.screenshot.CUSTOMIZE
-                ? this.prefs.screenshot.COLOR
-                : this.prefs.COLOR
-        });
+        let color_effect = this.effects_manager.new_color_effect({
+            color: this.settings.screenshot.CUSTOMIZE
+                ? this.settings.screenshot.COLOR
+                : this.settings.COLOR
+        }, this.settings);
 
-        let noise_effect = new NoiseEffect({
-            noise: this.prefs.screenshot.CUSTOMIZE
-                ? this.prefs.screenshot.NOISE_AMOUNT
-                : this.prefs.NOISE_AMOUNT,
-            lightness: this.prefs.screenshot.CUSTOMIZE
-                ? this.prefs.screenshot.NOISE_LIGHTNESS
-                : this.prefs.NOISE_LIGHTNESS
-        });
+        let noise_effect = this.effects_manager.new_noise_effect({
+            noise: this.settings.screenshot.CUSTOMIZE
+                ? this.settings.screenshot.NOISE_AMOUNT
+                : this.settings.NOISE_AMOUNT,
+            lightness: this.settings.screenshot.CUSTOMIZE
+                ? this.settings.screenshot.NOISE_LIGHTNESS
+                : this.settings.NOISE_LIGHTNESS
+        }, this.settings);
 
         bg_actor.add_effect(color_effect);
         bg_actor.add_effect(noise_effect);
@@ -146,8 +147,10 @@ var ScreenshotBlur = class ScreenshotBlur {
 
     remove() {
         Main.screenshotUI._windowSelectors.forEach(actor => {
-            if (actor._blur_actor)
+            if (actor._blur_actor) {
                 actor.remove_child(actor._blur_actor);
+                actor._blur_actor.destroy();
+            }
         });
         this.effects = [];
     }
@@ -160,7 +163,11 @@ var ScreenshotBlur = class ScreenshotBlur {
     }
 
     _log(str) {
-        if (this.prefs.DEBUG)
-            log(`[Blur my Shell > screenshot]   ${str}`);
+        if (this.settings.DEBUG)
+            console.log(`[Blur my Shell > screenshot]   ${str}`);
+    }
+
+    _warn(str) {
+        console.warn(`[Blur my Shell > screenshot]   ${str}`);
     }
 };

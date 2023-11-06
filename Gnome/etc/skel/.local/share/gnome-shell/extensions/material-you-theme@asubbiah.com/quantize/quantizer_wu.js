@@ -11,10 +11,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const utils = Me.imports.utils.color_utils;
-const { QuantizerMap } = Me.imports.quantize.quantizer_map;
+
+import * as utils from "../utils/color_utils.js";
+import {QuantizerMap} from "../quantize/quantizer_map.js";
 
 const INDEX_BITS = 5;
 const SIDE_LENGTH = 33; // ((1 << INDEX_INDEX_BITS) + 1)
@@ -32,7 +31,7 @@ const directions = {
  * The algorithm was described by Xiaolin Wu in Graphic Gems II, published in
  * 1991.
  */
-var QuantizerWu = class QuantizerWu {
+export var QuantizerWu = class QuantizerWu {
     constructor(weights = [], momentsR = [], momentsG = [], momentsB = [], moments = [], cubes = []) {
         this.weights = weights;
         this.momentsR = momentsR;

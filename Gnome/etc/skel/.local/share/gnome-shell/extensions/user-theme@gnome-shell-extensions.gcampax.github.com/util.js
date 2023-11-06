@@ -1,12 +1,15 @@
-/* exported getThemeDirs getModeThemeDirs */
-const {GLib} = imports.gi;
+// SPDX-FileCopyrightText: 2020 Florian Müllner <fmuellner@gnome.org>
+//
+// SPDX-License-Identifier: GPL-2.0-or-later
+
+import GLib from 'gi://GLib';
 
 const fn = (...args) => GLib.build_filenamev(args);
 
 /**
  * @returns {string[]} - an ordered list of theme directories
  */
-function getThemeDirs() {
+export function getThemeDirs() {
     return [
         fn(GLib.get_home_dir(), '.themes'),
         fn(GLib.get_user_data_dir(), 'themes'),
@@ -17,7 +20,7 @@ function getThemeDirs() {
 /**
  * @returns {string[]} - an ordered list of mode theme directories
  */
-function getModeThemeDirs() {
+export function getModeThemeDirs() {
     return GLib.get_system_data_dirs()
         .map(dir => fn(dir, 'gnome-shell', 'theme'));
 }

@@ -1,18 +1,13 @@
-/* eslint-disable jsdoc/require-jsdoc */
-/* exported getMenuLayoutEnum, Menu */
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import Clutter from 'gi://Clutter';
+import GObject from 'gi://GObject';
+import St from 'gi://St';
 
-const {Clutter, GObject, St} = imports.gi;
-const {BaseMenuLayout} = Me.imports.menulayouts.baseMenuLayout;
-const Constants = Me.imports.constants;
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const _ = Gettext.gettext;
+import {BaseMenuLayout} from './baseMenuLayout.js';
+import * as Constants from '../constants.js';
 
-function getMenuLayoutEnum() {
-    return Constants.MenuLayout.CHROMEBOOK;
-}
+import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-var Menu = class ArcMenuChromebookLayout extends BaseMenuLayout {
+export const Layout = class ChromebookLayout extends BaseMenuLayout {
     static {
         GObject.registerClass(this);
     }
@@ -25,7 +20,7 @@ var Menu = class ArcMenuChromebookLayout extends BaseMenuLayout {
             column_spacing: 10,
             row_spacing: 10,
             default_menu_width: 415,
-            icon_grid_style: 'SmallIconGrid',
+            icon_grid_size: Constants.GridIconSize.SMALL,
             vertical: true,
             category_icon_size: Constants.MEDIUM_ICON_SIZE,
             apps_icon_size: Constants.LARGE_ICON_SIZE,
@@ -48,13 +43,13 @@ var Menu = class ArcMenuChromebookLayout extends BaseMenuLayout {
         this.applicationsScrollBox.add_actor(this.applicationsBox);
         this.add_child(this.applicationsScrollBox);
 
-        const searchBarLocation = Me.settings.get_enum('searchbar-default-top-location');
+        const searchBarLocation = this._settings.get_enum('searchbar-default-top-location');
         if (searchBarLocation === Constants.SearchbarLocation.TOP) {
-            this.searchBox.add_style_class_name('arcmenu-search-top');
-            this.insert_child_at_index(this.searchBox, 0);
+            this.searchEntry.add_style_class_name('arcmenu-search-top');
+            this.insert_child_at_index(this.searchEntry, 0);
         } else if (searchBarLocation === Constants.SearchbarLocation.BOTTOM) {
-            this.searchBox.add_style_class_name('arcmenu-search-bottom');
-            this.add_child(this.searchBox);
+            this.searchEntry.add_style_class_name('arcmenu-search-bottom');
+            this.add_child(this.searchEntry);
         }
 
         this.updateWidth();

@@ -17,14 +17,10 @@
  */
 /* exported GnomeShellOverride */
 'use strict';
-const Shell = imports.gi.Shell;
-const Meta = imports.gi.Meta;
-var WorkspaceAnimation = null;
-try {
-    WorkspaceAnimation = imports.ui.workspaceAnimation;
-} catch (err) {
-    log('Workspace Animation does not exist');
-}
+import Shell from 'gi://Shell'
+import Meta from 'gi://Meta'
+
+import * as WorkspaceAnimation from 'resource:///org/gnome/shell/ui/workspaceAnimation.js'
 
 var replaceData = {};
 
@@ -36,7 +32,7 @@ var replaceData = {};
     */
 
 
-var GnomeShellOverride = class {
+export class GnomeShellOverride {
     constructor() {
         this._isX11 = !Meta.is_wayland_compositor();
     }

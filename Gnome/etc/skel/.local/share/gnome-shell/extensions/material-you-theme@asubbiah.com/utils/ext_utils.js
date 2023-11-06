@@ -1,9 +1,7 @@
-const { Gio } = imports.gi;
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const EXTENSIONDIR = Me.dir.get_path();
+import Gio from 'gi://Gio';
 
-function check_npm() {
-    const file = Gio.File.new_for_path(EXTENSIONDIR + "/node_modules/sass/sass.js");
+
+export function check_npm(extensiondir) {
+    const file = Gio.File.new_for_path(extensiondir + "/node_modules/sass/sass.js");
     return file.query_exists(null);
 }

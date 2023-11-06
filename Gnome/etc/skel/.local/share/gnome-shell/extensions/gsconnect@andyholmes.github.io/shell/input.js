@@ -2,14 +2,11 @@
 //
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-'use strict';
+import Gio from 'gi://Gio';
 
-const Gio = imports.gi.Gio;
-const Extension = imports.misc.extensionUtils.getCurrentExtension();
+import Config from '../config.mjs';
 
-const Config = Extension.imports.config;
-
-var LockscreenRemoteAccess = class LockscreenRemoteAccess {
+export class LockscreenRemoteAccess {
 
     constructor() {
         this._inhibitor = null;
@@ -38,4 +35,4 @@ var LockscreenRemoteAccess = class LockscreenRemoteAccess {
         global.backend.get_remote_access_controller().inhibit_remote_access = this._inhibitor;
         this._inhibitor = null;
     }
-};
+}

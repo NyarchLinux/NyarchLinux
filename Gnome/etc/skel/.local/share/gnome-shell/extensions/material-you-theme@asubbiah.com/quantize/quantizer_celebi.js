@@ -11,10 +11,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const { QuantizerWsmeans } = Me.imports.quantize.quantizer_wsmeans;
-const { QuantizerWu } = Me.imports.quantize.quantizer_wu;
+import {QuantizerWsmeans} from "../quantize/quantizer_wsmeans.js";
+import {QuantizerWu} from "../quantize/quantizer_wu.js";
 
 /**
  * An image quantizer that improves on the quality of a standard K-Means
@@ -32,7 +30,7 @@ const { QuantizerWu } = Me.imports.quantize.quantizer_wu;
 // namespace facilitates this.
 //
 // tslint:disable-next-line:class-as-namespace
-var QuantizerCelebi = class QuantizerCelebi {
+export var QuantizerCelebi = class QuantizerCelebi {
     /**
      * @param pixels Colors in ARGB format.
      * @param maxColors The number of colors to divide the image into. A lower

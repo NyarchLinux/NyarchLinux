@@ -1,0 +1,27 @@
+{
+    "wallpaper": "/home/weeb/.local/share/backgrounds/2023-11-06-13-15-02-default.png",
+    "alpha": "100",
+    "special": {
+        "background": "#1e0d0a",
+        "foreground": "#f2e0cc",
+        "cursor": "#f2e0cc"
+    },
+    "colors": {
+        "color0": "#1e0d0a",
+        "color1": "#CB7359",
+        "color2": "#C08C5D",
+        "color3": "#DE9870",
+        "color4": "#948082",
+        "color5": "#B1968F",
+        "color6": "#E7AF91",
+        "color7": "#f2e0cc",
+        "color8": "#a99c8e",
+        "color9": "#CB7359",
+        "color10": "#C08C5D",
+        "color11": "#DE9870",
+        "color12": "#948082",
+        "color13": "#B1968F",
+        "color14": "#E7AF91",
+        "color15": "#f2e0cc"
+    }
+}

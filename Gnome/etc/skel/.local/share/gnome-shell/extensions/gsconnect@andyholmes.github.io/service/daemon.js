@@ -6,10 +6,6 @@
 
 'use strict';
 
-// Allow TLSv1.0 certificates
-// See https://github.com/GSConnect/gnome-shell-extension-gsconnect/issues/930
-imports.gi.GLib.setenv('G_TLS_GNUTLS_PRIORITY', 'NORMAL:%COMPAT:+VERS-TLS1.0', true);
-
 imports.gi.versions.Gdk = '3.0';
 imports.gi.versions.GdkPixbuf = '2.0';
 imports.gi.versions.Gio = '2.0';
@@ -25,15 +21,20 @@ const GLib = imports.gi.GLib;
 const GObject = imports.gi.GObject;
 const Gtk = imports.gi.Gtk;
 
-
 // Bootstrap
 function get_datadir() {
-    const m = /@(.+):\d+/.exec((new Error()).stack.split('\n')[1]);
-    return Gio.File.new_for_path(m[1]).get_parent().get_parent().get_path();
+    let [, path] = /@([^:]+):\d+/.exec(new Error().stack.split('\n')[1]);
+    const info = Gio.File.new_for_path(path)
+        .query_info('standard::*', Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, null);
+    path = info.get_is_symlink() ? info.get_symlink_target() : path;
+
+    return Gio.File.new_for_path(path).get_parent().get_parent().get_path();
 }
 
 imports.searchPath.unshift(get_datadir());
 imports.config.PACKAGE_DATADIR = imports.searchPath[0];
+
+const _setup = imports.service.utils.setup;
 
 
 // Local Imports
@@ -465,15 +466,6 @@ const Service = GObject.registerClass({
         );
 
         this.add_main_option(
-            'photo',
-            0,
-            GLib.OptionFlags.NONE,
-            GLib.OptionArg.NONE,
-            _('Photo'),
-            null
-        );
-
-        this.add_main_option(
             'ping',
             0,
             GLib.OptionFlags.NONE,
@@ -640,7 +632,7 @@ const Service = GObject.registerClass({
         const files = options.lookup_value('share-file', null).deepUnpack();
 
         for (let file of files) {
-            file = imports.byteArray.toString(file);
+            file = new TextDecoder().decode(file);
             this._cliAction(device, 'shareFile', GLib.Variant.new('(sb)', [file, false]));
         }
     }
@@ -701,9 +693,6 @@ const Service = GObject.registerClass({
 
             if (options.contains('notification'))
                 this._cliNotify(id, options);
-
-            if (options.contains('photo'))
-                this._cliAction(id, 'photo');
 
             if (options.contains('ping'))
                 this._cliAction(id, 'ping', GLib.Variant.new_string(''));

@@ -1,14 +1,12 @@
-'use strict';
-
-const { Adw, GLib, GObject, Gio } = imports.gi;
-const ExtensionUtils = imports.misc.extensionUtils;
-
-const Me = ExtensionUtils.getCurrentExtension();
+import Adw from 'gi://Adw';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import Gio from 'gi://Gio';
 
 
-var Dash = GObject.registerClass({
+export const Dash = GObject.registerClass({
     GTypeName: 'Dash',
-    Template: `file://${GLib.build_filenamev([Me.path, 'ui', 'dash.ui'])}`,
+    Template: GLib.uri_resolve_relative(import.meta.url, '../ui/dash.ui', GLib.UriFlags.NONE),
     InternalChildren: [
         'blur',
         'customize',
@@ -23,7 +21,7 @@ var Dash = GObject.registerClass({
         this.preferences = preferences;
 
         this.preferences.dash_to_dock.settings.bind(
-            'blur', this._blur, 'state',
+            'blur', this._blur, 'active',
             Gio.SettingsBindFlags.DEFAULT
         );
         this.preferences.dash_to_dock.settings.bind(
@@ -36,10 +34,10 @@ var Dash = GObject.registerClass({
             Gio.SettingsBindFlags.DEFAULT
         );
         this.preferences.dash_to_dock.settings.bind(
-            'unblur-in-overview', this._unblur_in_overview, 'state',
+            'unblur-in-overview', this._unblur_in_overview, 'active',
             Gio.SettingsBindFlags.DEFAULT
         );
 
-        this._customize.connect_to(this.preferences.dash_to_dock, false);
+        this._customize.connect_to(this.preferences, this.preferences.dash_to_dock, false);
     }
 });

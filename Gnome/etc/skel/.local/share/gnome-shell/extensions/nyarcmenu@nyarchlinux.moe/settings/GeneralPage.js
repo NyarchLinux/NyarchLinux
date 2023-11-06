@@ -1,13 +1,12 @@
-/* exported GeneralPage */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+import Adw from 'gi://Adw';
+import GObject from 'gi://GObject';
+import Gtk from 'gi://Gtk';
 
-const {Adw, GdkPixbuf, GObject, Gtk} = imports.gi;
-const Constants = Me.imports.constants;
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const _ = Gettext.gettext;
+import * as Constants from '../constants.js';
 
-var GeneralPage = GObject.registerClass(
+import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
+
+export const GeneralPage = GObject.registerClass(
 class ArcMenuGeneralPage extends Adw.PreferencesPage {
     _init(settings) {
         super._init({
@@ -88,8 +87,8 @@ class ArcMenuGeneralPage extends Adw.PreferencesPage {
         });
         multiMonitorSwitch.connect('notify::active', widget => {
             this._settings.set_boolean('multi-monitor', widget.get_active());
-            menuHotkeyRow.displayRows();
-            standaloneRunnerRow.displayRows();
+            this.menuHotkeyRow.displayRows();
+            this.standaloneRunnerRow.displayRows();
         });
 
         const multiMonitorRow = new Adw.ActionRow({
@@ -129,10 +128,10 @@ class ArcMenuGeneralPage extends Adw.PreferencesPage {
         });
         this.add(generalGroup);
 
-        const menuHotkeyRow = this._createExpanderRow(_('ArcMenu Hotkey'), true);
-        const standaloneRunnerRow = this._createExpanderRow(_('Standalone Runner Menu'), false);
-        generalGroup.add(menuHotkeyRow);
-        generalGroup.add(standaloneRunnerRow);
+        this.menuHotkeyRow = this._createExpanderRow(_('ArcMenu Hotkey'), true);
+        this.standaloneRunnerRow = this._createExpanderRow(_('Standalone Runner Menu'), false);
+        generalGroup.add(this.menuHotkeyRow);
+        generalGroup.add(this.standaloneRunnerRow);
 
         const hideOverviewSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER,
@@ -148,6 +147,48 @@ class ArcMenuGeneralPage extends Adw.PreferencesPage {
         });
         hideOverviewRow.add_suffix(hideOverviewSwitch);
         generalGroup.add(hideOverviewRow);
+        this._setConflictError();
+    }
+
+    _checkHotkeyConflict() {
+        const superKey = 0;
+        const menuHotkeyType = this._settings.get_enum('menu-hotkey-type');
+        const runnerHotkeyType = this._settings.get_enum('runner-menu-hotkey-type');
+        const menuHotkey = this._settings.get_strv('arcmenu-custom-hotkey').toString();
+        const runnerHotkey = this._settings.get_strv('runner-menu-custom-hotkey').toString();
+
+        if (menuHotkeyType === runnerHotkeyType && menuHotkeyType === superKey)
+            return true;
+
+        if (menuHotkeyType === runnerHotkeyType)
+            return menuHotkey === runnerHotkey;
+
+        return false;
+    }
+
+    _setConflictError() {
+        const hasError = this._checkHotkeyConflict();
+        if (hasError) {
+            if (this.get_root()) {
+                const dialog = new Gtk.MessageDialog({
+                    text: `<b>${_('Hotkey Conflict')}</b>`,
+                    secondary_text: _('ArcMenu and Standalone Runner are assigned the same hotkey'),
+                    use_markup: true,
+                    buttons: Gtk.ButtonsType.OK,
+                    message_type: Gtk.MessageType.WARNING,
+                    transient_for: this.get_root(),
+                    modal: true,
+                });
+                dialog.connect('response', () => dialog.destroy());
+                dialog.show();
+            }
+
+            this.menuHotkeyRow._errorBox.visible = true;
+            this.standaloneRunnerRow._errorBox.visible = true;
+        } else {
+            this.menuHotkeyRow._errorBox.visible = false;
+            this.standaloneRunnerRow._errorBox.visible = false;
+        }
     }
 
     _createExpanderRow(title, isMenuHotkey) {
@@ -216,6 +257,7 @@ class ArcMenuGeneralPage extends Adw.PreferencesPage {
                 if (response === Gtk.ResponseType.APPLY) {
                     this._settings.set_strv(customHotkeySetting, [dialog.resultsText]);
                     shortcutCell.accelerator = dialog.resultsText;
+                    this._setConflictError();
                 }
                 dialog.destroy();
             });
@@ -239,8 +281,27 @@ class ArcMenuGeneralPage extends Adw.PreferencesPage {
         hotkeyRow.connect('notify::selected', widget => {
             expanderRow.displayRows();
             this._settings.set_enum(hotkeySetting, widget.selected);
+            this._setConflictError();
         });
         expanderRow.displayRows();
+        const errorBox = new Gtk.Box({
+            orientation: Gtk.Orientation.HORIZONTAL,
+            spacing: 6,
+            margin_end: 6,
+        });
+        const errorLabel = new Gtk.Label({
+            label: _('Hotkey Conflict'),
+            css_classes: ['error'],
+        });
+        const errorIcon = new Gtk.Image({
+            icon_name: 'dialog-error',
+            css_classes: ['error'],
+        });
+        errorBox.append(errorIcon);
+        errorBox.append(errorLabel);
+
+        expanderRow._errorBox = errorBox;
+        expanderRow.add_suffix(errorBox);
 
         return expanderRow;
     }
@@ -381,12 +442,10 @@ class ArcMenuHotkeyDialog extends Gtk.Window {
         });
         vbox.append(keyLabel);
 
-        const pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(`${Me.path}/media/icons/prefs_icons/keyboard-symbolic.svg`, 256, 72);
-        const keyboardImage = Gtk.Picture.new_for_pixbuf(pixbuf);
-        keyboardImage.hexpand = true;
-        keyboardImage.vexpand = true;
-        keyboardImage.halign = Gtk.Align.CENTER;
-        keyboardImage.valign = Gtk.Align.CENTER;
+        const keyboardImage = new Gtk.Image({
+            icon_name: 'settings-keyboard',
+            pixel_size: 256,
+        });
         vbox.append(keyboardImage);
 
         const resultsRow = new Adw.ActionRow({
