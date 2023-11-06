@@ -22,3 +22,5 @@ categories=['X-SuSE-YaST']
 name='suse-yast.directory'
 translate=true
 
+[org/gnome/mutter]
+experimental-features=['scale-monitor-framebuffer']
