@@ -1,14 +1,13 @@
 {
     "wallpaper": "/home/weeb/.local/share/backgrounds/2023-11-06-13-15-02-default.png",
     "alpha": "100",
-
     "special": {
-        "background": "#1f1b16",
+        "background": "#1e0d0a",
         "foreground": "#f2e0cc",
         "cursor": "#f2e0cc"
     },
     "colors": {
-        "color0": "#1f1b16",
+        "color0": "#1e0d0a",
         "color1": "#CB7359",
         "color2": "#C08C5D",
         "color3": "#DE9870",
