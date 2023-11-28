@@ -66,8 +66,8 @@ pacman -S --noconfirm archlinux-keyring
 pacman -S --needed --noconfirm archiso mkinitcpio-archiso
 }
 
-# Copy ezreleng to working directory
-cpezreleng () {
+# Copy releng to working directory
+cpreleng () {
 cp -r /usr/share/archiso/configs/releng/ ./releng
 rm ./releng/airootfs/etc/motd
 rm -r ./releng/airootfs/etc/pacman.d
@@ -77,20 +77,20 @@ rm -r ./releng/efiboot
 rm -r ./releng/syslinux
 }
 
-# Copy ezrepo to opt
-cpezrepo () {
+# Copy repo to opt
+cprepo () {
 cp -r ./opt/repo /opt/
 }
 
-# Remove ezrepo from opt
-rmezrepo () {
+# Remove repo from opt
+rmrepo () {
 rm -r /opt/repo
 }
 
 # Remove auto-login, cloud-init, hyper-v, ied, sshd, & vmware services
 rmunitsd () {
 rm -r ./releng/airootfs/etc/systemd/system/cloud-init.target.wants
-# rm -r ./ezreleng/airootfs/etc/systemd/system/getty@tty1.service.d
+# rm -r ./releng/airootfs/etc/systemd/system/getty@tty1.service.d
 rm ./releng/airootfs/etc/systemd/system/multi-user.target.wants/hv_fcopy_daemon.service
 rm ./releng/airootfs/etc/systemd/system/multi-user.target.wants/hv_kvp_daemon.service
 rm ./releng/airootfs/etc/systemd/system/multi-user.target.wants/hv_vss_daemon.service
@@ -246,9 +246,9 @@ rootuser
 handlerror
 prepreqs
 cleanup
-cpezreleng
+cpreleng
 addnmlinks
-cpezrepo
+cprepo
 rmunitsd
 rmbloatdesktop
 cpmyfiles
@@ -261,7 +261,7 @@ setkeylayout
 crtkeyboard
 crtlocalec
 runmkarchiso
-rmezrepo
+rmrepo
 
 
 # Disclaimer:
