@@ -1,5 +1,5 @@
 # remove from airootfs!
-# custom ezarcher hook
+# custom Nyarch hook
 
 [Trigger]
 Operation = Install
@@ -9,7 +9,7 @@ Type = Package
 Target = *
 
 [Action]
-Description = Remov custom pacman hooks...
+Description = Remove custom pacman hooks...
 When = PostTransaction
 Depends = sh
 Depends = coreutils

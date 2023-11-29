@@ -1,5 +1,5 @@
 # remove from airootfs!
-# custom ezarcher hook
+# custom Nyarch hook
 [Trigger]
 Operation = Install
 Type = Package

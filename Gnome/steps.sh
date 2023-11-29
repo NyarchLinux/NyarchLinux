@@ -54,7 +54,7 @@ trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 
 # Clean up working directories
 cleanup () {
-[[ -d ./ezreleng ]] && rm -r ./ezreleng
+[[ -d ./releng ]] && rm -r ./releng
 [[ -d ./work ]] && rm -r ./work
 [[ -d ./out ]] && mv ./out ../
 sleep 2
@@ -66,93 +66,92 @@ pacman -S --noconfirm archlinux-keyring
 pacman -S --needed --noconfirm archiso mkinitcpio-archiso
 }
 
-# Copy ezreleng to working directory
-cpezreleng () {
-cp -r /usr/share/archiso/configs/releng/ ./ezreleng
-rm ./ezreleng/airootfs/etc/motd
-rm -r ./ezreleng/airootfs/etc/pacman.d
-rm -r ./ezreleng/airootfs/etc/xdg
-rm -r ./ezreleng/grub
-rm -r ./ezreleng/efiboot
-rm -r ./ezreleng/syslinux
+# Copy releng to working directory
+cpreleng () {
+cp -r /usr/share/archiso/configs/releng/ ./releng
+rm ./releng/airootfs/etc/motd
+rm -r ./releng/airootfs/etc/pacman.d
+rm -r ./releng/airootfs/etc/xdg
+rm -r ./releng/grub
+rm -r ./releng/efiboot
+rm -r ./releng/syslinux
 }
 
-# Copy ezrepo to opt
-cpezrepo () {
-cp -r ./opt/ezrepo /opt/
+# Copy repo to opt
+cprepo () {
+cp -r ./opt/repo /opt/
 }
 
-# Remove ezrepo from opt
-rmezrepo () {
-rm -r /opt/ezrepo
+# Remove repo from opt
+rmrepo () {
+rm -r /opt/repo
 }
 
 # Remove auto-login, cloud-init, hyper-v, ied, sshd, & vmware services
 rmunitsd () {
-rm -r ./ezreleng/airootfs/etc/systemd/system/cloud-init.target.wants
-# rm -r ./ezreleng/airootfs/etc/systemd/system/getty@tty1.service.d
-rm ./ezreleng/airootfs/etc/systemd/system/multi-user.target.wants/hv_fcopy_daemon.service
-rm ./ezreleng/airootfs/etc/systemd/system/multi-user.target.wants/hv_kvp_daemon.service
-rm ./ezreleng/airootfs/etc/systemd/system/multi-user.target.wants/hv_vss_daemon.service
-rm ./ezreleng/airootfs/etc/systemd/system/multi-user.target.wants/vmware-vmblock-fuse.service
-rm ./ezreleng/airootfs/etc/systemd/system/multi-user.target.wants/vmtoolsd.service
-rm ./ezreleng/airootfs/etc/systemd/system/multi-user.target.wants/sshd.service
-rm ./ezreleng/airootfs/etc/systemd/system/multi-user.target.wants/iwd.service
+rm -r ./releng/airootfs/etc/systemd/system/cloud-init.target.wants
+# rm -r ./releng/airootfs/etc/systemd/system/getty@tty1.service.d
+rm ./releng/airootfs/etc/systemd/system/multi-user.target.wants/hv_fcopy_daemon.service
+rm ./releng/airootfs/etc/systemd/system/multi-user.target.wants/hv_kvp_daemon.service
+rm ./releng/airootfs/etc/systemd/system/multi-user.target.wants/hv_vss_daemon.service
+rm ./releng/airootfs/etc/systemd/system/multi-user.target.wants/vmware-vmblock-fuse.service
+rm ./releng/airootfs/etc/systemd/system/multi-user.target.wants/vmtoolsd.service
+rm ./releng/airootfs/etc/systemd/system/multi-user.target.wants/sshd.service
+rm ./releng/airootfs/etc/systemd/system/multi-user.target.wants/iwd.service
 }
 
 # Remove unwanted desktop files
 rmbloatdesktop () {
-rm -rf ./ezreleng/airootfs/usr/share/applications/cmake-gui.desktop
-rm -rf ./ezreleng/airootfs/usr/share/applications/bvnc.desktop
-rm -rf ./ezreleng/airootfs/usr/share/applications/avahi-discover.desktop
-rm -rf ./ezreleng/airootfs/usr/share/applications/stoken-gui.desktop
-rm -rf ./ezreleng/airootfs/usr/share/applications/stoken-gui-small.desktop
-rm -rf ./ezreleng/airootfs/usr/share/applications/qv4l2.desktop
+rm -rf ./releng/airootfs/usr/share/applications/cmake-gui.desktop
+rm -rf ./releng/airootfs/usr/share/applications/bvnc.desktop
+rm -rf ./releng/airootfs/usr/share/applications/avahi-discover.desktop
+rm -rf ./releng/airootfs/usr/share/applications/stoken-gui.desktop
+rm -rf ./releng/airootfs/usr/share/applications/stoken-gui-small.desktop
+rm -rf ./releng/airootfs/usr/share/applications/qv4l2.desktop
 }
 
 # Add cups, haveged, NetworkManager, & sddm systemd links
 addnmlinks () {
-mkdir -p ./ezreleng/airootfs/etc/systemd/system/network-online.target.wants
-mkdir -p ./ezreleng/airootfs/etc/systemd/system/multi-user.target.wants
-mkdir -p ./ezreleng/airootfs/etc/systemd/system/printer.target.wants
-mkdir -p ./ezreleng/airootfs/etc/systemd/system/sockets.target.wants
-mkdir -p ./ezreleng/airootfs/etc/systemd/system/timers.target.wants
-mkdir -p ./ezreleng/airootfs/etc/systemd/system/sysinit.target.wants
-ln -sf /usr/lib/systemd/system/NetworkManager-wait-online.service ./ezreleng/airootfs/etc/systemd/system/network-online.target.wants/NetworkManager-wait-online.service
-ln -sf /usr/lib/systemd/system/NetworkManager-dispatcher.service ./ezreleng/airootfs/etc/systemd/system/dbus-org.freedesktop.nm-dispatcher.service
-ln -sf /usr/lib/systemd/system/NetworkManager.service ./ezreleng/airootfs/etc/systemd/system/multi-user.target.wants/NetworkManager.service
-ln -sf /usr/lib/systemd/system/haveged.service ./ezreleng/airootfs/etc/systemd/system/sysinit.target.wants/haveged.service
-ln -sf /usr/lib/systemd/system/cups.service ./ezreleng/airootfs/etc/systemd/system/printer.target.wants/cups.service
-ln -sf /usr/lib/systemd/system/cups.socket ./ezreleng/airootfs/etc/systemd/system/sockets.target.wants/cups.socket
-ln -sf /usr/lib/systemd/system/cups.path ./ezreleng/airootfs/etc/systemd/system/multi-user.target.wants/cups.path
-ln -sf /usr/lib/systemd/system/gdm.service ./ezreleng/airootfs/etc/systemd/system/display-manager.service
+mkdir -p ./releng/airootfs/etc/systemd/system/network-online.target.wants
+mkdir -p ./releng/airootfs/etc/systemd/system/multi-user.target.wants
+mkdir -p ./releng/airootfs/etc/systemd/system/printer.target.wants
+mkdir -p ./releng/airootfs/etc/systemd/system/sockets.target.wants
+mkdir -p ./releng/airootfs/etc/systemd/system/timers.target.wants
+mkdir -p ./releng/airootfs/etc/systemd/system/sysinit.target.wants
+ln -sf /usr/lib/systemd/system/NetworkManager-wait-online.service ./releng/airootfs/etc/systemd/system/network-online.target.wants/NetworkManager-wait-online.service
+ln -sf /usr/lib/systemd/system/NetworkManager-dispatcher.service ./releng/airootfs/etc/systemd/system/dbus-org.freedesktop.nm-dispatcher.service
+ln -sf /usr/lib/systemd/system/NetworkManager.service ./releng/airootfs/etc/systemd/system/multi-user.target.wants/NetworkManager.service
+ln -sf /usr/lib/systemd/system/haveged.service ./releng/airootfs/etc/systemd/system/sysinit.target.wants/haveged.service
+ln -sf /usr/lib/systemd/system/cups.service ./releng/airootfs/etc/systemd/system/printer.target.wants/cups.service
+ln -sf /usr/lib/systemd/system/cups.socket ./releng/airootfs/etc/systemd/system/sockets.target.wants/cups.socket
+ln -sf /usr/lib/systemd/system/cups.path ./releng/airootfs/etc/systemd/system/multi-user.target.wants/cups.path
+ln -sf /usr/lib/systemd/system/gdm.service ./releng/airootfs/etc/systemd/system/display-manager.service
 }
 
 # Copy files to customize the ISO
 cpmyfiles () {
-cp pacman.conf ./ezreleng/
-cp profiledef.sh ./ezreleng/
-cp packages.x86_64 ./ezreleng/
-cp -r grub ./ezreleng/
-cp -r efiboot ./ezreleng/
-cp -r syslinux ./ezreleng/
-cp -r etc ./ezreleng/airootfs/
-cp -r opt ./ezreleng/airootfs/
-cp -r usr ./ezreleng/airootfs/
-mkdir -p ./ezreleng/airootfs/var/lib/
-cp -r /var/lib/flatpak/ ./ezreleng/airootfs/var/lib/flatpak
-ln -sf /usr/share/ezarcher ./ezreleng/airootfs/etc/skel/ezarcher
+cp pacman.conf ./releng/
+cp profiledef.sh ./releng/
+cp packages.x86_64 ./releng/
+cp -r grub ./releng/
+cp -r efiboot ./releng/
+cp -r syslinux ./releng/
+cp -r etc ./releng/airootfs/
+cp -r opt ./releng/airootfs/
+cp -r usr ./releng/airootfs/
+mkdir -p ./releng/airootfs/var/lib/
+cp -r /var/lib/flatpak/ ./releng/airootfs/var/lib/flatpak
 }
 
 # Set hostname
 sethostname () {
-echo "${MYHOSTNM}" > ./ezreleng/airootfs/etc/hostname
+echo "${MYHOSTNM}" > ./releng/airootfs/etc/hostname
 }
 
 # Create passwd file
 crtpasswd () {
 echo "root:x:0:0:root:/root:/usr/bin/bash
-"${MYUSERNM}":x:1010:1010::/home/"${MYUSERNM}":/bin/bash" > ./ezreleng/airootfs/etc/passwd
+"${MYUSERNM}":x:1010:1010::/home/"${MYUSERNM}":/bin/bash" > ./releng/airootfs/etc/passwd
 }
 
 # Create group file
@@ -175,7 +174,7 @@ storage:x:860:"${MYUSERNM}"
 optical:x:870:"${MYUSERNM}"
 sambashare:x:880:"${MYUSERNM}"
 users:x:985:"${MYUSERNM}"
-"${MYUSERNM}":x:1010:" > ./ezreleng/airootfs/etc/group
+"${MYUSERNM}":x:1010:" > ./releng/airootfs/etc/group
 }
 
 # Create shadow file
@@ -183,7 +182,7 @@ crtshadow () {
 usr_hash=$(openssl passwd -6 "${MYUSRPASSWD}")
 root_hash=$(openssl passwd -6 "${RTPASSWD}")
 echo "root:"${root_hash}":14871::::::
-"${MYUSERNM}":"${usr_hash}":14871::::::" > ./ezreleng/airootfs/etc/shadow
+"${MYUSERNM}":"${usr_hash}":14871::::::" > ./releng/airootfs/etc/shadow
 }
 
 # create gshadow file
@@ -205,38 +204,38 @@ video:!*::"${MYUSERNM}"
 storage:!*::"${MYUSERNM}"
 optical:!*::"${MYUSERNM}"
 sambashare:!*::"${MYUSERNM}"
-"${MYUSERNM}":!*::" > ./ezreleng/airootfs/etc/gshadow
+"${MYUSERNM}":!*::" > ./releng/airootfs/etc/gshadow
 }
 
 # Set the keyboard layout
 setkeylayout () {
-echo "KEYMAP="${KEYMP}"" > ./ezreleng/airootfs/etc/vconsole.conf
+echo "KEYMAP="${KEYMP}"" > ./releng/airootfs/etc/vconsole.conf
 }
 
 # Create 00-keyboard.conf file
 crtkeyboard () {
-mkdir -p ./ezreleng/airootfs/etc/X11/xorg.conf.d
+mkdir -p ./releng/airootfs/etc/X11/xorg.conf.d
 echo "Section \"InputClass\"
         Identifier \"system-keyboard\"
         MatchIsKeyboard \"on\"
         Option \"XkbLayout\" \""${KEYMP}"\"
         Option \"XkbModel\" \""${KEYMOD}"\"
-EndSection" > ./ezreleng/airootfs/etc/X11/xorg.conf.d/00-keyboard.conf
+EndSection" > ./releng/airootfs/etc/X11/xorg.conf.d/00-keyboard.conf
 }
 
 # Set and fix locale.conf, locale.gen, and keyboard
 crtlocalec () {
-sed -i "s/pc105/"${KEYMOD}"/g" ./ezreleng/airootfs/etc/default/keyboard
-sed -i "s/us/"${KEYMP}"/g" ./ezreleng/airootfs/etc/default/keyboard
-sed -i "s/en_US/"${LCLST}"/g" ./ezreleng/airootfs/etc/default/locale
-sed -i "s/en_US/"${LCLST}"/g" ./ezreleng/airootfs/etc/locale.conf
-#echo ""${LCLST}".UTF-8 UTF-8" > ./ezreleng/airootfs/etc/locale.gen
-#echo "C.UTF-8 UTF-8" >> ./ezreleng/airootfs/etc/locale.gen
+sed -i "s/pc105/"${KEYMOD}"/g" ./releng/airootfs/etc/default/keyboard
+sed -i "s/us/"${KEYMP}"/g" ./releng/airootfs/etc/default/keyboard
+sed -i "s/en_US/"${LCLST}"/g" ./releng/airootfs/etc/default/locale
+sed -i "s/en_US/"${LCLST}"/g" ./releng/airootfs/etc/locale.conf
+#echo ""${LCLST}".UTF-8 UTF-8" > ./releng/airootfs/etc/locale.gen
+#echo "C.UTF-8 UTF-8" >> ./releng/airootfs/etc/locale.gen
 }
 
 # Start mkarchiso
 runmkarchiso () {
-mkarchiso -v -w ./work -o ./out ./ezreleng
+mkarchiso -v -w ./work -o ./out ./releng
 }
 
 # ----------------------------------------
@@ -247,9 +246,9 @@ rootuser
 handlerror
 prepreqs
 cleanup
-cpezreleng
+cpreleng
 addnmlinks
-cpezrepo
+cprepo
 rmunitsd
 rmbloatdesktop
 cpmyfiles
@@ -262,7 +261,7 @@ setkeylayout
 crtkeyboard
 crtlocalec
 runmkarchiso
-rmezrepo
+rmrepo
 
 
 # Disclaimer:
