@@ -265,7 +265,6 @@ network-manager-applet
 nftables
 nm-connection-editor
 nss-mdns
-openresolv
 r8168
 wget
 whois
