@@ -1,11 +1,10 @@
-﻿/* === This file is part of Calamares - <http://github.com/calamares> ===
+/* === This file is part of Calamares - <https://calamares.io> ===
  *
- *   Copyright 2015, Teo Mrnjavac <teo@kde.org>
+ *   SPDX-FileCopyrightText: 2015 Teo Mrnjavac <teo@kde.org>
+ *   SPDX-FileCopyrightText: 2018 Adriaan de Groot <groot@kde.org>
+ *   SPDX-License-Identifier: GPL-3.0-or-later
  *
- *   Calamares is free software: you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation, either version 3 of the License, or
- *   (at your option) any later version.
+ *   Calamares is Free Software: see the License-Identifier above.
  *
  *   Calamares is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -25,122 +24,127 @@ Presentation
 {
     id: presentation
 
+    function nextSlide() {
+        console.log("Process is running in the background...");
+        presentation.goToNextSlide();
+    }
+
     Timer {
         id: advanceTimer
-        interval: 30000
+        interval: 60000
         running: true
         repeat: true
-        onTriggered: presentation.goToNextSlide()
+        onTriggered: nextSlide()
     }
 
     Slide {
-        anchors.fill: parent
-        anchors.verticalCenterOffset: 0
-
-
-        Image {
-            id: background1
-            source: "slide1.png"
-            width: parent.width; height: parent.height          
-            horizontalAlignment: Image.AlignCenter
-    		verticalAlignment: Image.AlignTop
-
+           anchors.fill: parent
+        Rectangle {
             anchors.fill: parent
+            border.width: 0
+            color: "#051531"
+            Image {
+                id: slide01
+                source: "slide1.png"
+                fillMode: Image.PreserveAspectFit
+                anchors.fill: parent
+            }
         }
     }
 
     Slide {
-        anchors.fill: parent
-        anchors.verticalCenterOffset: 0
-
-
-        Image {
-            id: background2
-            source: "slide2.png"
-            width: parent.width; height: parent.height          
-            horizontalAlignment: Image.AlignCenter
-    		verticalAlignment: Image.AlignTop
-
+           anchors.fill: parent
+        Rectangle {
             anchors.fill: parent
+            border.width: 0
+            color: "#051531"
+            Image {
+                id: slide02
+                source: "slide2.png"
+                fillMode: Image.PreserveAspectFit
+                anchors.fill: parent
+            }
         }
     }
 
     Slide {
-        anchors.fill: parent
-        anchors.verticalCenterOffset: 0
-
-
-        Image {
-            id: background3
-            source: "slide3.png"
-            width: parent.width; height: parent.height          
-            horizontalAlignment: Image.AlignCenter
-    		verticalAlignment: Image.AlignTop
-
             anchors.fill: parent
+        Rectangle {
+            anchors.fill: parent
+            border.width: 0
+            color: "#051531"
+            Image {
+                id: slide03
+                source: "slide3.png"
+                fillMode: Image.PreserveAspectFit
+                anchors.fill: parent
+            }
         }
     }
 
     Slide {
-        anchors.fill: parent
-        anchors.verticalCenterOffset: 0
-
-
-        Image {
-            id: background4
-            source: "slide4.png"
-            width: parent.width; height: parent.height          
-            horizontalAlignment: Image.AlignCenter
-    		verticalAlignment: Image.AlignTop
-
+           anchors.fill: parent
+        Rectangle {
             anchors.fill: parent
+            border.width: 0
+            color: "#051531"
+            Image {
+                id: slide04
+                source: "slide4.png"
+                fillMode: Image.PreserveAspectFit
+                anchors.fill: parent
+            }
+        }
+    }
+
+    Slide {
+           anchors.fill: parent
+        Rectangle {
+            anchors.fill: parent
+            border.width: 0
+            color: "#051531"
+            Image {
+                id: slide05
+                source: "slide5.png"
+                fillMode: Image.PreserveAspectFit
+                anchors.fill: parent
+            }
         }
     }
     Slide {
-        anchors.fill: parent
-        anchors.verticalCenterOffset: 0
-
-
-        Image {
-            id: background5
-            source: "slide5.png"
-            width: parent.width; height: parent.height          
-            horizontalAlignment: Image.AlignCenter
-    		verticalAlignment: Image.AlignTop
-
+           anchors.fill: parent
+        Rectangle {
             anchors.fill: parent
+            border.width: 0
+            color: "#051531"
+            Image {
+                id: slide06
+                source: "slide6.png"
+                fillMode: Image.PreserveAspectFit
+                anchors.fill: parent
+            }
         }
     }
     Slide {
-        anchors.fill: parent
-        anchors.verticalCenterOffset: 0
-
-
-        Image {
-            id: background6
-            source: "slide6.png"
-            width: parent.width; height: parent.height          
-            horizontalAlignment: Image.AlignCenter
-    		verticalAlignment: Image.AlignTop
-
+           anchors.fill: parent
+        Rectangle {
             anchors.fill: parent
+            border.width: 0
+            color: "#051531"
+            Image {
+                id: slide07
+                source: "slide7.png"
+                fillMode: Image.PreserveAspectFit
+                anchors.fill: parent
+            }
         }
     }
-    Slide {
-        anchors.fill: parent
-        anchors.verticalCenterOffset: 0
-
-
-        Image {
-            id: background7
-            source: "slide7.png"
-            width: parent.width; height: parent.height          
-            horizontalAlignment: Image.AlignCenter
-    		verticalAlignment: Image.AlignTop
-
-            anchors.fill: parent
-        }
+    function onActivate() {
+        console.log("QML Component (default slideshow) activated");
+        presentation.currentSlide = 0;
     }
-    Component.onCompleted: advanceTimer.running = true
+
+    function onLeave() {
+        console.log("QML Component (default slideshow) deactivated");
+    }
 }
-

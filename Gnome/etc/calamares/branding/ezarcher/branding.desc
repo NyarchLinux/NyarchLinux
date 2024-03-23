@@ -122,7 +122,7 @@ navigation: widget
 # are visible as buttons there if the corresponding *show* keys
 # are set to "true" (they can also be overridden).
 strings:
-    productName:         "@{NAME}"
+    productName:         "Nyarch Linux"
     shortProductName:    nyarch
     version:             23.11
     shortVersion:        23.11
@@ -181,10 +181,10 @@ images:
 # branding component also ships a stylesheet.qss. Then they are
 # the corresponding CSS attributes of #sidebarApp.
 style:
-   sidebarBackground:    "#592C28"
-   sidebarText:          "#FFFFFF"
-   sidebarTextSelect:    "#171925"
-   sidebarTextHighlight: "#A6382E"
+   SidebarBackground:    "#592C28"
+   SidebarText:          "#FFFFFF"
+   SidebarTextCurrent:    "#171925"
+   SidebarBackgroundCurrent: "#A6382E"
 
 ### SLIDESHOW
 #
