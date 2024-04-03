@@ -1,7 +1,7 @@
 [org/gnome/shell]
 disabled-extensions=['compiz-windows-effect@hermes83.github.com', 'desktop-cube@schneegans.github.com', 'dash-to-panel@jderose9.github.com', 'arcmenu@arcmenu.com', 'trayIconsReloaded@selfmade.pl', 'ding@rastersoft.com']
 disable-extension-version-validation=true
-disable-user-extensions=true
+disable-user-extensions=false
 
 [org/gnome/shell/extensions/arcmenu]
 application-shortcuts=[{'name': 'Software', 'icon': 'org.gnome.Software', 'id': 'ArcMenu_Software'}, {'name': 'Settings', 'icon': 'org.gnome.Settings', 'id': 'org.gnome.Settings.desktop'}, {'name': 'Tweaks', 'icon': 'org.gnome.tweaks', 'id': 'org.gnome.tweaks.desktop'}, {'name': 'Terminal', 'icon': 'org.gnome.Terminal', 'id': 'org.gnome.Terminal.desktop'}, {'name': 'Activities Overview', 'icon': 'view-fullscreen-symbolic', 'id': 'ArcMenu_ActivitiesOverview'}, {'name': 'Extension Manager', 'icon': 'com.mattjakeman.ExtensionManager', 'id': 'com.mattjakeman.ExtensionManager.desktop'}]
