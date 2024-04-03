@@ -1,8 +1,0 @@
-{
-"uuid": "background-logo@fedorahosted.org",
-"name": "Background Logo",
-"description": "Overlay a tasteful logo on the background to enhance the user experience",
-"settings-schema": "org.fedorahosted.background-logo-extension",
-"shell-version": ["45"],
-"url": "https://pagure.io/background-logo-extension"
-}
