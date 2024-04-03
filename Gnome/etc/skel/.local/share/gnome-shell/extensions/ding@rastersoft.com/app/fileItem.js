@@ -54,6 +54,39 @@ var FileItem = class extends desktopIconItem.desktopIconItem {
         /* Set the metadata and update relevant UI */
         this._updateMetadataFromFileInfo(fileInfo);
 
+        let accessible = this._containerAccessibility.get_accessible();
+        switch (this._fileExtra) {
+            default:
+                if (this._isDirectory) {
+                    /** TRANSLATORS: when using a screen reader, this is the text read when a folder is
+                        selected. Example: if a folder named "things" is selected, it will say "Folder things" */
+                    accessible.set_name(_("Folder ${VisibleName}").replace("${VisibleName}", this._getVisibleName()));
+                } else {
+                    /** TRANSLATORS: when using a screen reader, this is the text read when a normal file is
+                        selected. Example: if a file named "my_picture.jpg" is selected, it will say "File my_picture.jpg" */
+                    accessible.set_name(_("File ${VisibleName}").replace("${VisibleName}", this._getVisibleName()));
+                }
+                break;
+            case  Enums.FileType.USER_DIRECTORY_HOME:
+                accessible.set_name(_("Home"));
+                break;
+            case Enums.FileType.USER_DIRECTORY_TRASH:
+                /** TRANSLATORS: when using a screen reader, this is the text read when the trash folder is
+                    selected. */
+                accessible.set_name(_("Trash"));
+                break;
+            case Enums.FileType.EXTERNAL_DRIVE:
+                /** TRANSLATORS: when using a screen reader, this is the text read when an external drive is
+                    selected. Example: if a USB stick named "my_portable" is selected, it will say "Drive my_portable" */
+                accessible.set_name(_("Drive ${VisibleName}").replace("${VisibleName}", this._getVisibleName()));
+                break;
+            case Enums.FileType.STACK_TOP:
+                /** TRANSLATORS: when using a screen reader, this is the text read when a stack is
+                    selected. Example: if a stack named "pictures" is selected, it will say "Stack pictures" */
+                accessible.set_name(_("Stack ${VisibleName}").replace("${VisibleName}", this._getVisibleName()));
+                break;
+        }
+
         this._updateIcon().catch(e => {
             print(`Exception while updating an icon: ${e.message}\n${e.stack}`);
         });
@@ -71,32 +104,32 @@ var FileItem = class extends desktopIconItem.desktopIconItem {
             this._monitorTrashDir = this._file.monitor_directory(Gio.FileMonitorFlags.WATCH_MOVES, null);
             this._monitorTrashId = this._monitorTrashDir.connect('changed', (obj, file, otherFile, eventType) => {
                 switch (eventType) {
-                case Gio.FileMonitorEvent.DELETED:
-                case Gio.FileMonitorEvent.MOVED_OUT:
-                case Gio.FileMonitorEvent.CREATED:
-                case Gio.FileMonitorEvent.MOVED_IN:
-                    if (this._queryTrashInfoCancellable || this._scheduleTrashRefreshId) {
-                        if (this._scheduleTrashRefreshId) {
-                            GLib.source_remove(this._scheduleTrashRefreshId);
-                        }
-                        if (this._queryTrashInfoCancellable) {
-                            this._queryTrashInfoCancellable.cancel();
-                            this._queryTrashInfoCancellable = null;
-                        }
-                        this._scheduleTrashRefreshId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 200, () => {
+                    case Gio.FileMonitorEvent.DELETED:
+                    case Gio.FileMonitorEvent.MOVED_OUT:
+                    case Gio.FileMonitorEvent.CREATED:
+                    case Gio.FileMonitorEvent.MOVED_IN:
+                        if (this._queryTrashInfoCancellable || this._scheduleTrashRefreshId) {
+                            if (this._scheduleTrashRefreshId) {
+                                GLib.source_remove(this._scheduleTrashRefreshId);
+                            }
+                            if (this._queryTrashInfoCancellable) {
+                                this._queryTrashInfoCancellable.cancel();
+                                this._queryTrashInfoCancellable = null;
+                            }
+                            this._scheduleTrashRefreshId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 200, () => {
+                                this._refreshTrashIcon();
+                                this._scheduleTrashRefreshId = 0;
+                                return GLib.SOURCE_REMOVE;
+                            });
+                        } else {
                             this._refreshTrashIcon();
-                            this._scheduleTrashRefreshId = 0;
-                            return GLib.SOURCE_REMOVE;
-                        });
-                    } else {
-                        this._refreshTrashIcon();
-                        // after a refresh, don't allow more refreshes until 200ms after, to coalesce extra events
-                        this._scheduleTrashRefreshId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 200, () => {
-                            this._scheduleTrashRefreshId = 0;
-                            return GLib.SOURCE_REMOVE;
-                        });
-                    }
-                    break;
+                            // after a refresh, don't allow more refreshes until 200ms after, to coalesce extra events
+                            this._scheduleTrashRefreshId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 200, () => {
+                                this._scheduleTrashRefreshId = 0;
+                                return GLib.SOURCE_REMOVE;
+                            });
+                        }
+                        break;
                 }
             });
         } else {
@@ -244,20 +277,22 @@ var FileItem = class extends desktopIconItem.desktopIconItem {
         this._isDesktopFile = this._attributeContentType == 'application/x-desktop';
 
         if (this._isDesktopFile && this._writableByOthers) {
-            log(`desktop-icons: File ${this._displayName} is writable by others - will not allow launching`);
+            console.log(`desktop-icons: File ${this._displayName} is writable by others - will not allow launching`);
         }
 
         if (this._isDesktopFile) {
             try {
                 this._desktopFile = Gio.DesktopAppInfo.new_from_filename(this._file.get_path());
                 if (!this._desktopFile) {
-                    log(`Couldn’t parse ${this._displayName} as a desktop file, will treat it as a regular file.`);
+                    console.log(`Couldn’t parse ${this._displayName} as a desktop file, will treat it as a regular file.`);
                     this._isValidDesktopFile = false;
                 } else {
                     this._isValidDesktopFile = true;
                 }
             } catch (e) {
-                print(`Error reading Desktop file ${this.uri}: ${e}`);
+                let title = _("Error while reading Desktop file");
+                let error = `${this.uri}: ${e}`;
+                this._logAndPopupError(title, error, `${title}: ${error}`);
             }
         } else {
             this._isValidDesktopFile = false;
@@ -282,15 +317,20 @@ var FileItem = class extends desktopIconItem.desktopIconItem {
         this._isBrokenSymlink = this._isSymlink && this._fileType == Gio.FileType.SYMBOLIC_LINK;
     }
 
+    _logAndPopupError(title, error, logError) {
+        log(`Error: ${logError}`);
+        this._showerrorpopup(title, error);
+    }
+
     _doOpenContext(context, fileList) {
         if (!fileList) {
             fileList = [];
         }
         if (this._isBrokenSymlink) {
-            log(`Error: Can’t open ${this.file.get_uri()} because it is a broken symlink.`);
             let title = _('Broken Link');
             let error = _('Can not open this File because it is a Broken Symlink');
-            this._showerrorpopup(title, error);
+            let logError = `Error: Can’t open ${this.file.get_uri()} because it is a broken symlink.`;
+            this._logAndPopupError(title, error, logError);
             return;
         }
 
@@ -302,10 +342,10 @@ var FileItem = class extends desktopIconItem.desktopIconItem {
         if (this._isDirectory && this._desktopManager.useNemo) {
             try {
                 DesktopIconsUtil.trySpawn(GLib.get_home_dir(), ['nemo', this.file.get_uri()], DesktopIconsUtil.getFilteredEnviron());
+                return;
             } catch (err) {
-                log(`Error trying to launch Nemo: ${err.message}\n${err}`);
+                console.log(`Couldn't launch Nemo: ${err.message}\n${err}`);
             }
-            return;
         }
 
         if (!DBusUtils.GnomeArchiveManager.isAvailable &&
@@ -320,7 +360,10 @@ var FileItem = class extends desktopIconItem.desktopIconItem {
                 try {
                     Gio.AppInfo.launch_default_for_uri_finish(result);
                 } catch (e) {
-                    log(`Error opening file ${this.file.get_uri()}: ${e.message}`);
+                    let title = _("Can't open the file");
+                    let error = `${e.message}`;
+                    let logError = `while opening file ${this.file.get_uri()}: ${e.message}`;
+                    this._logAndPopupError(title, error, logError);
                 }
             }
         );
@@ -423,7 +466,7 @@ var FileItem = class extends desktopIconItem.desktopIconItem {
             this._connectSignal(dropDestination, 'drag-data-received', (widget, context, x, y, selection, info, time) => {
                 const forceCopy = context.get_selected_action() === Gdk.DragAction.COPY;
                 if (info === Enums.DndTargetInfo.GNOME_ICON_LIST ||
-                        info === Enums.DndTargetInfo.URI_LIST) {
+                    info === Enums.DndTargetInfo.URI_LIST) {
                     let fileList = DesktopIconsUtil.getFilesFromNautilusDnD(selection, info);
                     if (fileList.length != 0) {
                         if (this._hasToRouteDragToGrid()) {
@@ -567,7 +610,10 @@ var FileItem = class extends desktopIconItem.desktopIconItem {
                     try {
                         source.set_attributes_finish(result);
                     } catch (error) {
-                        log(`Failed to set execution flag: ${error.message}`);
+                        let title = _('Failed to set execution flag');
+                        let err = error.message;
+                        let logError = `${title}: ${err}`;
+                        this._logAndPopupError(title, err, logError);
                     }
                 });
         }
@@ -576,12 +622,16 @@ var FileItem = class extends desktopIconItem.desktopIconItem {
 
     doDiscreteGpu() {
         if (!DBusUtils.discreteGpuAvailable) {
-            log('Could not apply discrete GPU environment, switcheroo-control not available');
+            let title = _('Could not apply discrete GPU environment');
+            let error = 'switcheroo-control not available';
+            this._logAndPopupError(title, error, `${title}: ${error}`);
             return;
         }
         let gpus = DBusUtils.SwitcherooControl.proxy.GPUs;
         if (!gpus) {
-            log('Could not apply discrete GPU environment. No GPUs in list.');
+            let title = _('Could not apply discrete GPU environment');
+            let error = 'No GPUs in list.';
+            this._logAndPopupError(title, error, `${title}: ${error}`);
             return;
         }
 
@@ -608,7 +658,9 @@ var FileItem = class extends desktopIconItem.desktopIconItem {
             this._doOpenContext(context, null);
             return;
         }
-        log('Could not find discrete GPU data in switcheroo-control');
+        let title = _('Could not find discrete GPU data');
+        let error = 'Could not find discrete GPU data in switcheroo-control';
+        this._logAndPopupError(title, error, error);
     }
 
     _onOpenTerminalClicked() {
@@ -731,7 +783,10 @@ var FileItem = class extends desktopIconItem.desktopIconItem {
                     this._refreshMetadataAsync(true);
                 } catch (error) {
                     if (!error.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED)) {
-                        log(`Failed to set metadata::trusted: ${error.message}`);
+                        let title = _('Failed to set metadata::trusted flag');
+                        let err = error.message;
+                        let logError = `${title}: ${err}`;
+                        this._logAndPopupError(title, err, logError);
                     }
                 }
             });
@@ -767,10 +822,10 @@ var FileItem = class extends desktopIconItem.desktopIconItem {
 
     get trustedDesktopFile() {
         return this._isValidDesktopFile &&
-               this._attributeCanExecute &&
-               this.metadataTrusted &&
-               !this._desktopManager.writableByOthers &&
-               !this._writableByOthers;
+            this._attributeCanExecute &&
+            this.metadataTrusted &&
+            !this._desktopManager.writableByOthers &&
+            !this._writableByOthers;
     }
 
     get uri() {

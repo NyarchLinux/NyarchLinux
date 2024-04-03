@@ -11,16 +11,15 @@
 
 'use strict';
 
-const {Clutter, GObject, Meta, Shell} = imports.gi;
+import Meta from 'gi://Meta';
+import Clutter from 'gi://Clutter';
+import GObject from 'gi://GObject';
+import Shell from 'gi://Shell';
 
-const Util          = imports.misc.util;
-const Main          = imports.ui.main;
-const ControlsState = imports.ui.overviewControls.ControlsState;
-const Workspace     = imports.ui.workspace.Workspace;
-
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me             = imports.misc.extensionUtils.getCurrentExtension();
-const utils          = Me.imports.src.utils;
+import * as Util from 'resource:///org/gnome/shell/misc/util.js';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import {ControlsState} from 'resource:///org/gnome/shell/ui/overviewControls.js';
+import {Workspace} from 'resource:///org/gnome/shell/ui/workspace.js';
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // In GNOME Shell, SwipeTrackers are used all over the place to capture swipe gestures. //
@@ -44,7 +43,7 @@ const State = {
 };
 
 // clang-format off
-var DragGesture =
+export var DragGesture =
   GObject.registerClass({
       Properties: {
         'distance': GObject.ParamSpec.double(
@@ -72,8 +71,8 @@ var DragGesture =
     // We listen to the 'captured-event' to be able to intercept some other actions. The
     // main problem is the long-press action of the desktop background actor. This
     // swallows any click events preventing us from dragging the desktop background.
-    // By connecting to 'captured-event', we have to extra-careful to propagate any event
-    // we are not interested in.
+    // By connecting to 'captured-event', we have to extra-careful to propagate any
+    // event we are not interested in.
     this._actorConnection1 = actor.connect('captured-event', (a, e) => {
       return this._handleEvent(e);
     });
@@ -120,20 +119,26 @@ var DragGesture =
       return Clutter.EVENT_PROPAGATE;
     }
 
-    // When a mouse button is pressed or a touch event starts, we store the corresponding
-    // position. The gesture is maybe triggered later, if the pointer was moved a little.
+    // When a mouse button is pressed or a touch event starts, we store the
+    // corresponding position. The gesture is maybe triggered later, if the pointer was
+    // moved a little.
     if (event.type() == Clutter.EventType.BUTTON_PRESS ||
         event.type() == Clutter.EventType.TOUCH_BEGIN) {
 
-      // Here's a minor hack: In the overview, there are some draggable things like window
-      // previews which "compete" with this gesture. Sometimes, the cube is dragged,
-      // sometimes the window previews. So we make sure that we do only start the gesture
-      // for events which originate from the given actor or from a workspace's background.
-      if (Main.actionMode != Shell.ActionMode.OVERVIEW ||
-          event.get_source() == this._actor ||
-          event.get_source().get_parent() instanceof Workspace) {
-        this._clickPos = event.get_coords();
-        this._state    = State.PENDING;
+      const source = global.stage.get_event_actor(event);
+
+      if (source) {
+
+        // Here's a minor hack: In the overview, there are some draggable things like
+        // window previews which "compete" with this gesture. Sometimes, the cube is
+        // dragged, sometimes the window previews. So we make sure that we do only start
+        // the gesture for events which originate from the given actor or from a
+        // workspace's background.
+        if (Main.actionMode != Shell.ActionMode.OVERVIEW || source == this._actor ||
+            source.get_parent() instanceof Workspace) {
+          this._clickPos = event.get_coords();
+          this._state    = State.PENDING;
+        }
       }
 
       return Clutter.EVENT_PROPAGATE;

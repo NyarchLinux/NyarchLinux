@@ -21,6 +21,7 @@ export const LockscreenBlur = class LockscreenBlur {
         this.connections = connections;
         this.settings = settings;
         this.effects_manager = effects_manager;
+        this.enabled = false;
     }
 
     enable() {
@@ -43,6 +44,8 @@ export const LockscreenBlur = class LockscreenBlur {
             : this.settings.NOISE_LIGHTNESS;
 
         this.update_lockscreen();
+
+        this.enabled = true;
     }
 
     update_lockscreen() {
@@ -64,7 +67,7 @@ export const LockscreenBlur = class LockscreenBlur {
 
         let blur_effect = new Shell.BlurEffect({
             name: 'blur',
-            sigma: sigma,
+            radius: sigma * 2,
             brightness: brightness
         });
 
@@ -118,7 +121,7 @@ export const LockscreenBlur = class LockscreenBlur {
             if (blur_effect) {
                 blur_effect.set({
                     brightness: brightness,
-                    sigma: sigma * blur_effect.scale,
+                    radius: sigma * 2 * blur_effect.scale,
                 });
             }
         }
@@ -158,6 +161,8 @@ export const LockscreenBlur = class LockscreenBlur {
             original_updateBackgroundEffects;
 
         this.connections.disconnect_all();
+
+        this.enabled = false;
     }
 
     _log(str) {

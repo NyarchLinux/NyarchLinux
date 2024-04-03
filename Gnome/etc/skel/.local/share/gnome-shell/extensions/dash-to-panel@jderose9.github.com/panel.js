@@ -262,12 +262,12 @@ export const Panel = GObject.registerClass({
             ],
             [
                 this._centerBox,
-                'actor-added',
+                'child-added',
                 () => this._onBoxActorAdded(this._centerBox)
             ],
             [
                 this._rightBox,
-                'actor-added',
+                'child-added',
                 () => this._onBoxActorAdded(this._rightBox)
             ],
             [
@@ -553,7 +553,7 @@ export const Panel = GObject.registerClass({
             let parent = this.statusArea[propName].container.get_parent();
 
             if (parent) {
-                parent.remove_actor(this.statusArea[propName].container);
+                parent.remove_child(this.statusArea[propName].container);
             }
 
             //calling this.statusArea[propName].destroy(); is buggy for now, gnome-shell never
@@ -1061,6 +1061,11 @@ export const Panel = GObject.registerClass({
 
             this._setShowDesktopButtonStyle();
 
+            this._showDesktopButton.connect('touch-event', (actor, event) => {
+              if (event.type() == Clutter.EventType.TOUCH_BEGIN) {
+                this._onShowDesktopButtonPress();
+              }
+            });
             this._showDesktopButton.connect('button-press-event', () => this._onShowDesktopButtonPress());
             this._showDesktopButton.connect('enter-event', () => {
                 this._showDesktopButton.add_style_class_name(this._getBackgroundBrightness() ?

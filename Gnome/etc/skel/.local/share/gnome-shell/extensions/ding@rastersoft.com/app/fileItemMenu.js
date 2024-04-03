@@ -56,7 +56,7 @@ var FileItemMenu = class {
                 DBusUtils.GnomeArchiveManager.proxy.GetSupportedTypesRemote('extract',
                     (result, error) => {
                         if (error) {
-                            logError(error, "Can't get the extractable types; ensure that File-Roller is installed.\n");
+                            console.error(error, "Can't get the extractable types; ensure that File-Roller is installed.\n");
                             return;
                         }
                         for (let key of result.values()) {
@@ -69,7 +69,7 @@ var FileItemMenu = class {
             }
             this._askedSupportedTypes = true;
         } catch (e) {
-            logError(e, 'Error while getting supported types.');
+            console.error(e, 'Error while getting supported types.');
         }
     }
 
@@ -385,7 +385,7 @@ var FileItemMenu = class {
                 }
                 return;
             } catch (err) {
-                logError(err, 'Error trying to launch Nemo.');
+                console.error(err, 'Error trying to launch Nemo.');
             }
         }
         const timestamp = Gtk.get_current_event_time();

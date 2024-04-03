@@ -53,6 +53,9 @@ export const PanelBlur = class PanelBlur {
         // the blur when a window is near a panel
         this.connect_to_windows_and_overview();
 
+        // update the classname if the panel to have or have not light text
+        this.update_light_text_classname();
+
         // connect to every background change (even without changing image)
         // FIXME this signal is fired very often, so we should find another one
         //       fired only when necessary (but that still catches all cases)
@@ -167,10 +170,9 @@ export const PanelBlur = class PanelBlur {
             brightness: this.settings.panel.CUSTOMIZE
                 ? this.settings.panel.BRIGHTNESS
                 : this.settings.BRIGHTNESS,
-            sigma: this.settings.panel.CUSTOMIZE
+            radius: (this.settings.panel.CUSTOMIZE
                 ? this.settings.panel.SIGMA
-                : this.settings.SIGMA
-                * monitor.geometry_scale,
+                : this.settings.SIGMA) * 2 * monitor.geometry_scale,
             mode: this.settings.panel.STATIC_BLUR
                 ? Shell.BlurMode.ACTOR
                 : Shell.BlurMode.BACKGROUND
@@ -317,7 +319,7 @@ export const PanelBlur = class PanelBlur {
                 Main.layoutManager.monitors.length
                 - this.find_monitor_for(actors.widgets.panel).index - 1
             );
-            if (bg)
+            if (bg && bg.get_content())
                 actors.widgets.background.content.set({
                     background: bg.get_content().background
                 });
@@ -408,6 +410,9 @@ export const PanelBlur = class PanelBlur {
                 this.connections.connect(
                     appDisplay, 'hide', this.show.bind(this)
                 );
+                this.connections.connect(
+                    Main.overview, 'hidden', this.show.bind(this)
+                );
             }
 
         }
@@ -436,10 +441,10 @@ export const PanelBlur = class PanelBlur {
             }
 
             // manage windows at their creation/removal
-            this.connections.connect(global.window_group, 'actor-added',
+            this.connections.connect(global.window_group, 'child-added',
                 this.on_window_actor_added.bind(this)
             );
-            this.connections.connect(global.window_group, 'actor-removed',
+            this.connections.connect(global.window_group, 'child-removed',
                 this.on_window_actor_removed.bind(this)
             );
 
@@ -487,6 +492,14 @@ export const PanelBlur = class PanelBlur {
         this.window_signal_ids = new Map();
     }
 
+    /// Update the css classname of the panel for light theme
+    update_light_text_classname(disable = false) {
+        if (this.settings.panel.FORCE_LIGHT_TEXT && !disable)
+            Main.panel.add_style_class_name("panel-light-text");
+        else
+            Main.panel.remove_style_class_name("panel-light-text");
+    }
+
     /// Callback when a new window is added
     on_window_actor_added(container, meta_window_actor) {
         this.window_signal_ids.set(meta_window_actor, [
@@ -532,6 +545,7 @@ export const PanelBlur = class PanelBlur {
             && meta_window.get_window_type() !== Meta.WindowType.DESKTOP
             // exclude Desktop Icons NG
             && meta_window.get_gtk_application_id() !== "com.rastersoft.ding"
+            && meta_window.get_gtk_application_id() !== "com.desktop.ding"
         );
 
         // check if at least one window is near enough to each panel and act
@@ -590,7 +604,7 @@ export const PanelBlur = class PanelBlur {
     /// enabling/disabling other effects.
     invalidate_blur(actors) {
         if (this.settings.panel.STATIC_BLUR && actors.widgets.background)
-            actors.widgets.background.get_content().invalidate();
+            actors.widgets.background.get_content()?.invalidate();
     }
 
     invalidate_all_blur() {
@@ -599,7 +613,7 @@ export const PanelBlur = class PanelBlur {
 
     set_sigma(s) {
         this.actors_list.forEach(actors => {
-            actors.effects.blur.sigma = s * actors.effects.blur.scale;
+            actors.effects.blur.radius = s * 2 * actors.effects.blur.scale;
             this.invalidate_blur(actors);
         });
     }
@@ -661,6 +675,8 @@ export const PanelBlur = class PanelBlur {
         this._log("removing blur from top panel");
 
         this.disconnect_from_windows_and_overview();
+
+        this.update_light_text_classname(true);
 
         this.actors_list.forEach(actors => {
             this.set_should_override_panel(actors, false);

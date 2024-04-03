@@ -1,0 +1,152 @@
+.ArcMenuIconGrid {
+    text-align: center;
+    border-radius: 8px;
+    padding: 5px;
+    spacing: 0px;
+    margin: 0px;
+}
+
+.ArcMenuGroupFolder{
+    border: 2px solid rgba(0, 0, 0, 0);
+}
+
+.ArcMenuIconGrid:drop {
+    box-shadow: inset 0px 0px 0px 2px rgba(53, 132, 228, 0.8);
+    background-color: rgba(53, 132, 228, 0.2);
+}
+
+.arcmenu-menu-item:drop {
+    box-shadow: inset 0px 0px 0px 2px rgba(53, 132, 228, 0.8);
+    background-color: rgba(53, 132, 228, 0.2);
+}
+
+.folder-header {
+    font-weight: 800;
+    font-size: 16px;
+}
+
+.arcmenu-folder-dialog {
+    border-width: 2px;
+}
+
+.folder-name-container{
+    spacing: 12px;
+}
+
+.bottomOfScreenMenu{
+    margin-bottom: 0px;
+}
+
+.arcmenu-search-entry{
+    min-height: 0px;
+    border-width: 1px;
+    padding: 7px 9px;
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+}
+
+.arcmenu-search-top{
+    margin: 0px 0px 6px 0px;
+}
+
+.arcmenu-search-bottom{
+    margin: 6px 0px 0px 0px;
+}
+
+.symbolic-icons{
+    -st-icon-style: symbolic;
+}
+.regular-icons{
+    -st-icon-style: regular;
+}
+
+.arcmenu-menu-item{
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+#arcmenu-plasma-button-top{
+    width: 90px;
+    height: 65px;
+    border-radius: 8px;
+    text-align: center;
+    padding: 5px;
+    spacing: 0px;
+    margin: 0px;
+    border-top-width: 2px;
+    border-color: transparent;
+}
+#arcmenu-plasma-button-top:active-item, .arcmenu-plasma-button-top:active{
+    background-color: rgba(245, 245, 245, .05);
+    border-top-width: 2px;
+    border-color: rgb(61, 174, 235);
+}
+#arcmenu-plasma-button-bottom{
+    width: 90px;
+    height: 65px;
+    border-radius: 8px;
+    text-align: center;
+    padding: 5px;
+    spacing: 0px;
+    margin: 0px;
+    border-bottom-width: 2px;
+    border-color: transparent;
+}
+#arcmenu-plasma-button-bottom:active-item, .arcmenu-plasma-button-bottom:active{
+    background-color: rgba(245, 245, 245, .05);
+    border-bottom-width: 2px;
+    border-color: rgb(61, 174, 235);
+}
+
+.small-vfade{
+    -st-vfade-offset: 44px;
+}
+
+.arcmenu-margin-box{
+    margin: 0px 6px;
+}
+
+.arcmenu-button{
+    -st-icon-style: symbolic;
+    border-width: 1px;
+    border-radius: 8px;
+    padding: 8px;
+    min-height: 0px;
+}
+
+.arcmenu-small-button {
+    border-radius: 8px;
+    padding: 1px 6px;
+    min-height: auto;
+}
+
+.arcmenu-avatar-round{
+    background-size: contain;
+    border-radius: 999px;
+}
+.arcmenu-avatar-square{
+    background-size: contain;
+    border-radius: 0px;
+}
+
+.arcmenu-tooltip{
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 4px 10px;
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    min-height: 0px;
+}
+
+/* Recently Installed App Indicator on parent category */
+/*
+.arcmenu-indicator{
+    color: rgb(41, 165, 249);
+}
+*/
+
+/* Recently Installed App Indicator Text */
+.arcmenu-text-indicator{
+    font-size: small;
+    border-radius: 8px; 
+    margin: 0px; 
+    padding: 0px 10px;
+}

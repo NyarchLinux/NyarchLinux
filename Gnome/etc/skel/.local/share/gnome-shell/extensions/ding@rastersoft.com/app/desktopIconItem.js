@@ -130,6 +130,8 @@ var desktopIconItem = class desktopIconItem {
         this._shieldEventBox.add(this._eventBox);
 
         this._label = new Gtk.Label();
+        this._containerAccessibility = this._iconContainer;
+        this._containerAccessibility.set_can_focus(true);
         this._labelContainer = new Gtk.Box({orientation: Gtk.Orientation.VERTICAL, halign: Gtk.Align.CENTER});
         let labelStyleContext = this._label.get_style_context();
         if (this._desktopManager.darkText) {
@@ -455,6 +457,7 @@ var desktopIconItem = class desktopIconItem {
         if (this._isSelected && !this._styleContext.has_class('desktop-icons-selected')) {
             this._styleContext.add_class('desktop-icons-selected');
             this._labelStyleContext.add_class('desktop-icons-selected');
+            this._containerAccessibility.grab_focus();
         }
         if (!this._isSelected && this._styleContext.has_class('desktop-icons-selected')) {
             this._styleContext.remove_class('desktop-icons-selected');

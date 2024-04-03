@@ -66,9 +66,9 @@ export default class Prefs extends ExtensionPreferences {
 
         button.connect('clicked', () => {
             settingsData.FRICTION.set(3.5);
-            settingsData.SPRING_K.set(8.5);
-            settingsData.SPEEDUP_FACTOR.set(16.0);
-            settingsData.MASS.set(50.0);
+            settingsData.SPRING_K.set(3.8);
+            settingsData.SPEEDUP_FACTOR.set(12.0);
+            settingsData.MASS.set(70.0);
             settingsData.X_TILES.set(6.0);
             settingsData.Y_TILES.set(6.0);
             settingsData.MAXIMIZE_EFFECT.set(true);

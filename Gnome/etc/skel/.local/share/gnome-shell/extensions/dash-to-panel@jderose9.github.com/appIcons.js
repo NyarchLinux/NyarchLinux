@@ -45,8 +45,8 @@ import * as Utils from './utils.js';
 import * as PanelSettings from './panelSettings.js';
 import * as Taskbar from './taskbar.js';
 import * as Progress from './progress.js';
-import {DTP_EXTENSION, SETTINGS, DESKTOPSETTINGS, EXTENSION_PATH} from './extension.js';
-import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
+import {DTP_EXTENSION, SETTINGS, DESKTOPSETTINGS, TERMINALSETTINGS, EXTENSION_PATH} from './extension.js';
+import {gettext as _, ngettext} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 //timeout names
 const T2 = 'mouseScrollTimeout';
@@ -62,6 +62,11 @@ const DOUBLE_CLICK_DELAY_MS = 450;
 let LABEL_GAP = 5;
 let MAX_INDICATORS = 4;
 export const DEFAULT_PADDING_SIZE = 4;
+
+let APPICON_STYLE = {
+    NORMAL: "NORMAL",
+    SYMBOLIC: "SYMBOLIC"
+}
 
 let DOT_STYLE = {
     DOTS: "DOTS",
@@ -146,7 +151,7 @@ export const TaskbarAppIcon = GObject.registerClass({
         this._dotsContainer = new St.Widget({ layout_manager: new Clutter.BinLayout() });
         this._dtpIconContainer = new St.Widget({ layout_manager: new Clutter.BinLayout(), style: getIconContainerStyle(panel.checkIfVertical()) });
 
-        this.remove_actor(this._iconContainer);
+        this.remove_child(this._iconContainer);
         
         this._dtpIconContainer.add_child(this._iconContainer);
 
@@ -188,6 +193,7 @@ export const TaskbarAppIcon = GObject.registerClass({
 
         this._onAnimateAppiconHoverChanged();
         this._setAppIconPadding();
+        this._setAppIconStyle();
         this._showDots();
 
         this._focusWindowChangedId = global.display.connect('notify::focus-window', 
@@ -407,7 +413,7 @@ export const TaskbarAppIcon = GObject.registerClass({
             // Workaround to prevent scaled icon from being ugly when it is animated on hover.
             // It increases the "resolution" of the icon without changing the icon size.
             this.icon.createIcon = (iconSize) => this.app.create_icon_texture(2 * iconSize);
-            this._iconIconBinActorAddedId = this.icon._iconBin.connect('actor-added', () => {
+            this._iconIconBinActorAddedId = this.icon._iconBin.connect('child-added', () => {
                 let size = this.icon.iconSize * Utils.getScaleFactor()
                 
                 if (this.icon._iconBin.child.mapped) {
@@ -626,6 +632,15 @@ export const TaskbarAppIcon = GObject.registerClass({
         this._iconContainer.set_style('padding: ' + padding + 'px;');
     }
 
+    _setAppIconStyle() {
+        let symbolic_icon_style_name = 'symbolic-icon-style';
+        if (SETTINGS.get_string('appicon-style') === APPICON_STYLE.SYMBOLIC) {
+            this.add_style_class_name(symbolic_icon_style_name);
+        } else {
+            this.remove_style_class_name(symbolic_icon_style_name);
+        }
+    }
+
     popupMenu() {
         this._removeMenuTimeout();
         this.fake_release();
@@ -649,7 +664,7 @@ export const TaskbarAppIcon = GObject.registerClass({
             // We want to keep the item hovered while the menu is up
             this._menu.blockSourceEvents = true;
 
-            Main.uiGroup.add_actor(this._menu.actor);
+            Main.uiGroup.add_child(this._menu.actor);
             this._menuManager.addMenu(this._menu);
         }
         this._menu.updateQuitText();
@@ -828,7 +843,10 @@ export const TaskbarAppIcon = GObject.registerClass({
             else
                 buttonAction = SETTINGS.get_string('middle-click-action');
         }
-        else if (button && button == 1) {
+        // fixed issue #1676 by checking for button 0 or 1 to also handle touchscreen
+        // input, probably not the proper fix as i'm not aware button 0 should exist
+        // but from using this fix for months it seems to not create any issues
+        else if (button === 0 || button === 1) {
             let now = global.get_current_time()
 
             doubleClick = now - this.lastClick < DOUBLE_CLICK_DELAY_MS
@@ -1107,29 +1125,29 @@ export const TaskbarAppIcon = GObject.registerClass({
         if (type == DOT_STYLE.SOLID || type == DOT_STYLE.METRO) {
             if (type == DOT_STYLE.SOLID || n <= 1) {
                 cr.translate(startX, startY);
-                Clutter.cairo_set_source_color(cr, bodyColor);
+                cr.setSourceColor(bodyColor);
                 cr.newSubPath();
                 cr.rectangle.apply(cr, [0, 0].concat(isHorizontalDots ? [areaSize, size] : [size, areaSize]));
                 cr.fill();
             } else {
                 let blackenedLength = (1 / 48) * areaSize; // need to scale with the SVG for the stacked highlight
                 let darkenedLength = isFocused ? (2 / 48) * areaSize : (10 / 48) * areaSize;
-                let blackenedColor = bodyColor.shade(.3);
-                let darkenedColor = bodyColor.shade(.7);
+                let blackenedColor = new Clutter.Color({ red: bodyColor.red * .3, green: bodyColor.green * .3, blue: bodyColor.blue * .3, alpha: bodyColor.alpha });
+                let darkenedColor = new Clutter.Color({ red: bodyColor.red * .7, green: bodyColor.green * .7, blue: bodyColor.blue * .7, alpha: bodyColor.alpha });
                 let solidDarkLength = areaSize - darkenedLength;
                 let solidLength = solidDarkLength - blackenedLength;
 
                 cr.translate(startX, startY);
 
-                Clutter.cairo_set_source_color(cr, bodyColor);
+                cr.setSourceColor(bodyColor);
                 cr.newSubPath();
                 cr.rectangle.apply(cr, [0, 0].concat(isHorizontalDots ? [solidLength, size] : [size, solidLength]));
                 cr.fill();
-                Clutter.cairo_set_source_color(cr, blackenedColor);
+                cr.setSourceColor(blackenedColor);
                 cr.newSubPath();
                 cr.rectangle.apply(cr, isHorizontalDots ? [solidLength, 0, 1, size] : [0, solidLength, size, 1]);
                 cr.fill();
-                Clutter.cairo_set_source_color(cr, darkenedColor);
+                cr.setSourceColor(darkenedColor);
                 cr.newSubPath();
                 cr.rectangle.apply(cr, isHorizontalDots ? [solidDarkLength, 0, darkenedLength, size] : [0, solidDarkLength, size, darkenedLength]);
                 cr.fill();
@@ -1200,7 +1218,7 @@ export const TaskbarAppIcon = GObject.registerClass({
 
             translate();
 
-            Clutter.cairo_set_source_color(cr, bodyColor);
+            cr.setSourceColor(bodyColor);
             preDraw();
             for (let i = 0; i < n; i++) {
                 cr.newSubPath();
@@ -1476,7 +1494,7 @@ export class TaskbarSecondaryMenu extends AppMenu.AppMenu {
             if (count == 1)
                 quitFromTaskbarMenuText = _("Quit");
             else
-                quitFromTaskbarMenuText = _("Quit") + ' ' + count + ' ' + _("Windows");
+                quitFromTaskbarMenuText = ngettext('Quit %d Window', 'Quit %d Windows', count).format(count);
 
             this._quitItem.label.set_text(quitFromTaskbarMenuText);
         }
@@ -1697,7 +1715,7 @@ export const ShowAppsIconWrapper = class extends EventEmitter {
             // We want to keep the item hovered while the menu is up
             this._menu.blockSourceEvents = true;
 
-            Main.uiGroup.add_actor(this._menu.actor);
+            Main.uiGroup.add_child(this._menu.actor);
             this._menuManager.addMenu(this._menu);
         }
     }
@@ -1785,7 +1803,7 @@ export const MyShowAppsIconMenu = class extends PopupMenu.PopupMenu {
 
         this._appendItem({
             title: _('Terminal'),
-            cmd: ['gnome-terminal']
+            cmd: [TERMINALSETTINGS.get_string('exec')]
         });
 
         this._appendItem({

@@ -11,27 +11,33 @@
 
 'use strict';
 
-const {Clutter, Graphene, GObject, Shell, St, Meta, Gio} = imports.gi;
+import Gio from 'gi://Gio';
+import Meta from 'gi://Meta';
+import Clutter from 'gi://Clutter';
+import Graphene from 'gi://Graphene';
+import GObject from 'gi://GObject';
+import Shell from 'gi://Shell';
+import St from 'gi://St';
 
-const Util           = imports.misc.util;
-const Main           = imports.ui.main;
-const Layout         = imports.ui.layout;
-const WorkspacesView = imports.ui.workspacesView.WorkspacesView;
-const SwipeTracker   = imports.ui.swipeTracker.SwipeTracker;
-const FitMode        = imports.ui.workspacesView.FitMode;
-const WorkspaceAnimationController =
-  imports.ui.workspaceAnimation.WorkspaceAnimationController;
+import * as Util from 'resource:///org/gnome/shell/misc/util.js';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as Config from 'resource:///org/gnome/shell/misc/config.js';
+import {PressureBarrier} from 'resource:///org/gnome/shell/ui/layout.js';
+import {WorkspacesView, FitMode} from 'resource:///org/gnome/shell/ui/workspacesView.js';
+import {SwipeTracker} from 'resource:///org/gnome/shell/ui/swipeTracker.js';
+import {WorkspaceAnimationController} from 'resource:///org/gnome/shell/ui/workspaceAnimation.js';
+import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me             = imports.misc.extensionUtils.getCurrentExtension();
-const utils          = Me.imports.src.utils;
-const DragGesture    = Me.imports.src.DragGesture.DragGesture;
-const Skybox         = Me.imports.src.Skybox.Skybox;
+import * as utils from './src/utils.js';
+import {DragGesture} from './src/DragGesture.js';
+import {Skybox} from './src/Skybox.js';
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // This extensions tweaks the positioning of workspaces in overview mode and while      //
 // switching workspaces in desktop mode to make them look like cube faces.              //
 //////////////////////////////////////////////////////////////////////////////////////////
+
+const [GS_VERSION] = Config.PACKAGE_VERSION.split('.').map(s => Number(s));
 
 // Maximum degrees the cube can be rotated up and down.
 const MAX_VERTICAL_ROTATION = 50;
@@ -39,11 +45,8 @@ const MAX_VERTICAL_ROTATION = 50;
 // Spacing to the screen sides of the vertically rotated cube.
 const PADDING_V_ROTATION = 0.2;
 
-class Extension {
-  // The constructor is called once when the extension is loaded, not enabled.
-  constructor() {
-    this._lastWorkspaceWidth = 0;
-  }
+export default class DesktopCube extends Extension {
+  _lastWorkspaceWidth = 0;
 
   // ------------------------------------------------------------------------ public stuff
 
@@ -52,50 +55,18 @@ class Extension {
   enable() {
 
     // Store a reference to the settings object.
-    this._settings = ExtensionUtils.getSettings();
+    this._settings = this.getSettings();
 
     // We will monkey-patch these methods. Let's store the original ones.
     this._origEndGesture            = SwipeTracker.prototype._endGesture;
     this._origUpdateWorkspacesState = WorkspacesView.prototype._updateWorkspacesState;
     this._origGetSpacing            = WorkspacesView.prototype._getSpacing;
     this._origUpdateVisibility      = WorkspacesView.prototype._updateVisibility;
-    this._origAnimateSwitch = WorkspaceAnimationController.prototype.animateSwitch;
     this._origPrepSwitch = WorkspaceAnimationController.prototype._prepareWorkspaceSwitch;
     this._origFinalSwitch = WorkspaceAnimationController.prototype._finishWorkspaceSwitch;
 
-    // We may also override these animation times.
-    this._origWorkspaceSwitchTime = imports.ui.workspacesView.WORKSPACE_SWITCH_TIME;
-    this._origToOverviewTime      = imports.ui.overview.ANIMATION_TIME;
-    this._origToAppDrawerTime = imports.ui.overviewControls.SIDE_CONTROLS_ANIMATION_TIME;
-
-    // We will use extensionThis to refer to the extension inside the patched methods of
-    // the WorkspacesView.
+    // We will use extensionThis to refer to the extension inside the patched methods.
     const extensionThis = this;
-
-    // Connect the animation times to our settings.
-    const loadAnimationTimes = () => {
-      {
-        const t = this._settings.get_int('overview-transition-time');
-        imports.ui.overview.ANIMATION_TIME = (t > 0 ? t : this._origToOverviewTime);
-      }
-      {
-        const t = this._settings.get_int('appgrid-transition-time');
-        imports.ui.overviewControls.SIDE_CONTROLS_ANIMATION_TIME =
-          (t > 0 ? t : this._origToAppDrawerTime);
-      }
-      {
-        const t = this._settings.get_int('workspace-transition-time');
-        imports.ui.workspacesView.WORKSPACE_SWITCH_TIME =
-          (t > 0 ? t : this._origWorkspaceSwitchTime);
-      }
-    };
-
-    this._settings.connect('changed::overview-transition-time', loadAnimationTimes);
-    this._settings.connect('changed::appgrid-transition-time', loadAnimationTimes);
-    this._settings.connect('changed::workspace-transition-time', loadAnimationTimes);
-
-    loadAnimationTimes();
-
 
     // -----------------------------------------------------------------------------------
     // ------------------------------- cubify the overview -------------------------------
@@ -288,24 +259,6 @@ class Extension {
     // -----------------------------------------------------------------------------------
     // --------------------- cubify workspace-switch in desktop mode ---------------------
     // -----------------------------------------------------------------------------------
-
-    // Here, we extend the WorkspaceAnimationController's animateSwitch method in order to
-    // be able to modify the animation duration for switching workspaces in desktop mode.
-    // We have to do it like this since the time is hard-coded with a constant:
-    // https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/main/js/ui/workspaceAnimation.js#L11
-    WorkspaceAnimationController.prototype.animateSwitch = function(...params) {
-      // Call the original method. This sets up the progress transitions which we tweak
-      // thereafter.
-      extensionThis._origAnimateSwitch.apply(this, params);
-
-      // Now update the transition durations.
-      const duration = extensionThis._settings.get_int('workspace-transition-time');
-      if (duration > 0) {
-        for (const monitorGroup of this._switchData.monitors) {
-          monitorGroup.get_transition('progress').set_duration(duration);
-        }
-      }
-    };
 
     // This override rotates the workspaces during the transition to look like cube
     // faces. The original movement of the workspaces is implemented in the setter of
@@ -613,8 +566,7 @@ class Extension {
     // ignore this parameter. Instead, we check for the correct action mode in the trigger
     // handler.
     this._pressureBarrier =
-      new Layout.PressureBarrier(this._settings.get_int('edge-switch-pressure'),
-                                 Layout.HOT_CORNER_PRESSURE_TIMEOUT, 0);
+      new PressureBarrier(this._settings.get_int('edge-switch-pressure'), 1000, 0);
 
     // Update pressure threshold when the corresponding settings key changes.
     this._settings.connect('changed::edge-switch-pressure', () => {
@@ -672,23 +624,42 @@ class Extension {
         this._rightBarrier.destroy();
       }
 
-      this._leftBarrier = new Meta.Barrier({
-        display: global.display,
-        x1: 0,
-        x2: 0,
-        y1: 1,
-        y2: global.stage.height,
-        directions: Meta.BarrierDirection.POSITIVE_X,
-      });
+      // Since GNOME 46, the display property is not required anymore.
+      if (GS_VERSION <= 45) {
+        this._leftBarrier = new Meta.Barrier({
+          display: global.display,
+          x1: 0,
+          x2: 0,
+          y1: 1,
+          y2: global.stage.height,
+          directions: Meta.BarrierDirection.POSITIVE_X,
+        });
 
-      this._rightBarrier = new Meta.Barrier({
-        display: global.display,
-        x1: global.stage.width,
-        x2: global.stage.width,
-        y1: 1,
-        y2: global.stage.height,
-        directions: Meta.BarrierDirection.NEGATIVE_X,
-      });
+        this._rightBarrier = new Meta.Barrier({
+          display: global.display,
+          x1: global.stage.width,
+          x2: global.stage.width,
+          y1: 1,
+          y2: global.stage.height,
+          directions: Meta.BarrierDirection.NEGATIVE_X,
+        });
+      } else {
+        this._leftBarrier = new Meta.Barrier({
+          x1: 0,
+          x2: 0,
+          y1: 1,
+          y2: global.stage.height,
+          directions: Meta.BarrierDirection.POSITIVE_X,
+        });
+
+        this._rightBarrier = new Meta.Barrier({
+          x1: global.stage.width,
+          x2: global.stage.width,
+          y1: 1,
+          y2: global.stage.height,
+          directions: Meta.BarrierDirection.NEGATIVE_X,
+        });
+      }
 
       this._pressureBarrier.addBarrier(this._leftBarrier);
       this._pressureBarrier.addBarrier(this._rightBarrier);
@@ -776,13 +747,8 @@ class Extension {
     WorkspacesView.prototype._updateWorkspacesState = this._origUpdateWorkspacesState;
     WorkspacesView.prototype._getSpacing            = this._origGetSpacing;
     WorkspacesView.prototype._updateVisibility      = this._origUpdateVisibility;
-    WorkspaceAnimationController.prototype.animateSwitch = this._origAnimateSwitch;
     WorkspaceAnimationController.prototype._prepareWorkspaceSwitch = this._origPrepSwitch;
     WorkspaceAnimationController.prototype._finishWorkspaceSwitch = this._origFinalSwitch;
-
-    imports.ui.workspacesView.WORKSPACE_SWITCH_TIME = this._origWorkspaceSwitchTime;
-    imports.ui.overview.ANIMATION_TIME              = this._origToOverviewTime;
-    imports.ui.overviewControls.SIDE_CONTROLS_ANIMATION_TIME = this._origToAppDrawerTime;
 
     // Remove all drag-to-rotate gestures.
     this._removeDesktopDragGesture();

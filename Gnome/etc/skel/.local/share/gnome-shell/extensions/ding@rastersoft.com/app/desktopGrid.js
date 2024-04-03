@@ -41,7 +41,6 @@ var DesktopGrid = class {
         this._destroying = false;
         this._desktopManager = desktopManager;
         this._desktopName = desktopName;
-        this._asDesktop = asDesktop;
         this._premultiplied = premultiplied;
         this._asDesktop = asDesktop;
         this._desktopDescription = desktopDescription;
@@ -50,6 +49,8 @@ var DesktopGrid = class {
         this.createGrids();
 
         this._window = new Gtk.ApplicationWindow({application: desktopManager.mainApp, 'title': desktopName});
+        this._accessibility = this._window.get_accessible();
+        this._accessibility.set_name(_(`Desktop icons`));
         this._windowContext = this._window.get_style_context();
         if (this._asDesktop) {
             this._window.set_decorated(false);
@@ -130,6 +131,11 @@ var DesktopGrid = class {
 
         this._connectSignal(this._window, 'key-press-event', (actor, event) => {
             this._desktopManager.onKeyPress(event, this);
+        });
+        // key-release-event must be used for the arrow keys to avoid conflicts
+        // with assistive technologies.
+        this._connectSignal(this._window, 'key-release-event', (actor, event) => {
+            this._desktopManager.onKeyRelease(event, this);
         });
         this.updateGridRectangle();
     }

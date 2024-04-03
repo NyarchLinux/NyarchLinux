@@ -99,7 +99,7 @@ export const TrayIndicator = GObject.registerClass(
 			this._icons.push(icon);
 
 			if (this._overflow) {
-				this._menuItem.actor.add(button);
+				this._menuItem.add_child(button);
 			} else {
 				this._indicators.insert_child_at_index(button, 0);
 			}
@@ -117,7 +117,7 @@ export const TrayIndicator = GObject.registerClass(
 			}
 			
 			const actor = icon.get_parent();
-			actor.remove_actor(icon);
+			actor.remove_child(icon);
 			actor.destroy();
 
 			if (!ignoreCheckOverflow) {

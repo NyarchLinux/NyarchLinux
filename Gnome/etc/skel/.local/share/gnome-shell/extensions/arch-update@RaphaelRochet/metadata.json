@@ -5,9 +5,9 @@
   "name": "Arch Linux Updates Indicator",
   "settings-schema": "org.gnome.shell.extensions.arch-update",
   "shell-version": [
-    "45"
+    "46"
   ],
   "url": "https://github.com/RaphaelRochet/arch-update",
   "uuid": "arch-update@RaphaelRochet",
-  "version": 57
+  "version": 60
 }

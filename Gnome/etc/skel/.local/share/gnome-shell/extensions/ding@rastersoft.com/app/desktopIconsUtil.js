@@ -26,6 +26,7 @@ const Gdk = imports.gi.Gdk;
 const Prefs = imports.preferences;
 const Enums = imports.enums;
 const Gettext = imports.gettext.domain('ding');
+const ShowErrorPopup = imports.showErrorPopup;
 
 const _ = Gettext.gettext;
 
@@ -99,14 +100,31 @@ function spawnCommandLine(commandLine, environ = null) {
  * @param command
  */
 function launchTerminal(workdir, command) {
-    let terminalSettings = new Gio.Settings({schema_id: Enums.TERMINAL_SCHEMA});
-    let exec = terminalSettings.get_string(Enums.EXEC_KEY);
-    let argv = [exec, `--working-directory=${workdir}`];
-    if (command) {
-        argv.push('-e');
-        argv.push(command);
+    const settings = new Gio.Settings({schema_id: Enums.TERMINAL_SCHEMA});
+    const settingsExec = settings.get_string(Enums.EXEC_KEY);
+    const terminals = ['xdg-terminal-exec', settingsExec, 'kgx', 'gnome-terminal'];
+    for (const name of terminals) {
+        const exec = GLib.find_program_in_path(name);
+        if (exec !== null) {
+            const argv = [exec];
+            if (command) {
+                argv.push('-e');
+                argv.push(command);
+            }
+            try {
+                trySpawn(workdir, argv, null);
+                return;
+            }
+            catch (err) {
+                print(`Starting ${exec} failed with ${err}`);
+            }
+        }
     }
-    trySpawn(workdir, argv, null);
+    new ShowErrorPopup.ShowErrorPopup(
+        'No Terminal',
+        'Cannot open a terminal, because none is installed or configured properly.',
+        true
+    );
 }
 
 /**

@@ -28,6 +28,16 @@ To install, simply download as zip and unzip contents in ~/.local/share/gnome-sh
 
 ## Changes
 
+### v60
+- Fix menu error when output parsing is disabled
+- Move to GioUnix.InputStream instead of Gio.UnixInputStream
+
+### v59
+- Fix some translations strings missing in v58
+
+### v58
+- Gnome 46
+
 ### v57
 - Fix pacman dir change needing restart
 - Fix notifications not working

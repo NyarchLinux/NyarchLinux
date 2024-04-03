@@ -6,7 +6,6 @@ import { WorkspaceAnimationController } from 'resource:///org/gnome/shell/ui/wor
 const wac_proto = WorkspaceAnimationController.prototype;
 
 const OVERVIEW_COMPONENTS_STYLE = [
-    "",
     "overview-components-light",
     "overview-components-dark",
     "overview-components-transparent"
@@ -161,6 +160,7 @@ export const OverviewBlur = class OverviewBlur {
 
     create_background_actor(monitor, is_transition) {
         let bg_actor = new Meta.BackgroundActor({
+            name: "blur-my-shell_background_actor",
             meta_display: global.display,
             monitor: monitor.index
         });
@@ -185,10 +185,9 @@ export const OverviewBlur = class OverviewBlur {
             brightness: this.settings.overview.CUSTOMIZE
                 ? this.settings.overview.BRIGHTNESS
                 : this.settings.BRIGHTNESS,
-            sigma: this.settings.overview.CUSTOMIZE
+            radius: (this.settings.overview.CUSTOMIZE
                 ? this.settings.overview.SIGMA
-                : this.settings.SIGMA
-                * monitor.geometry_scale,
+                : this.settings.SIGMA) * 2 * monitor.geometry_scale,
             mode: Shell.BlurMode.ACTOR
         });
 
@@ -228,14 +227,15 @@ export const OverviewBlur = class OverviewBlur {
             style => Main.uiGroup.remove_style_class_name(style)
         );
 
-        Main.uiGroup.add_style_class_name(
-            OVERVIEW_COMPONENTS_STYLE[this.settings.overview.STYLE_COMPONENTS]
-        );
+        if (this.settings.overview.STYLE_COMPONENTS > 0)
+            Main.uiGroup.add_style_class_name(
+                OVERVIEW_COMPONENTS_STYLE[this.settings.overview.STYLE_COMPONENTS - 1]
+            );
     }
 
     set_sigma(s) {
         this.effects.forEach(effect => {
-            effect.blur_effect.sigma = s * effect.blur_effect.scale;
+            effect.blur_effect.radius = s * 2 * effect.blur_effect.scale;
         });
     }
 
@@ -264,13 +264,15 @@ export const OverviewBlur = class OverviewBlur {
     }
 
     remove_background_actors() {
-        Main.layoutManager.overviewGroup.get_children().forEach(actor => {
-            if (actor.constructor.name === 'Meta_BackgroundActor') {
-                actor.get_effects().forEach(effect => {
+        Main.layoutManager.overviewGroup.get_children().forEach(child => {
+            if (child instanceof Meta.BackgroundActor
+                && child.get_name() == "blur-my-shell_background_actor"
+            ) {
+                child.get_effects().forEach(effect => {
                     this.effects_manager.remove(effect);
                 });
-                Main.layoutManager.overviewGroup.remove_child(actor);
-                actor.destroy();
+                Main.layoutManager.overviewGroup.remove_child(child);
+                child.destroy();
             }
         });
         this.effects = [];

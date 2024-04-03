@@ -9,19 +9,19 @@
         </key>
 
         <key type="d" name="spring-k">
-            <default>8.5</default>
+            <default>3.8</default>
             <summary>Spring k</summary>
             <description/>
         </key>
 
         <key type="d" name="speedup-factor-divider">
-            <default>16.0</default>
+            <default>12.0</default>
             <summary>Speedup Factor</summary>
             <description/>
         </key>
 
         <key type="d" name="mass">
-            <default>50.0</default>
+            <default>70.0</default>
             <summary>Mass</summary>
             <description/>
         </key>

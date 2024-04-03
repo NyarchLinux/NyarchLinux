@@ -55,24 +55,6 @@ SPDX-License-Identifier: CC0-1.0
       <description>A multiplier for the desktop cube rotation when dragged.</description>
     </key>
 
-    <key name="overview-transition-time" type="i">
-      <default>0</default>
-      <summary>Overview Transition Time</summary>
-      <description>Time for the transition from desktop to overview.</description>
-    </key>
-
-    <key name="appgrid-transition-time" type="i">
-      <default>0</default>
-      <summary>Appgrid Transition Time</summary>
-      <description>Time for the transition from overview to appgrid.</description>
-    </key>
-
-    <key name="workspace-transition-time" type="i">
-      <default>0</default>
-      <summary>Workspace Transition Time</summary>
-      <description>Time for the transition between workpaces.</description>
-    </key>
-
     <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
     <!-- desktop cube settings                                                         -->
     <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->

@@ -1,0 +1,12 @@
+{
+  "name": "Material You Colors",
+  "description": "Applies generated libadwaita theme from wallpaper using Material You. Fork of Material You Color Theming.",
+  "uuid": "material-you-colors@francescocaracciolo.github.io",
+  "gettext-domain": "material-you-colors",
+  "shell-version": [
+    "45",
+    "46"
+  ],
+  "url": "https://github.com/FrancescoCaracciolo/material-you-colors",
+  "version": 23
+}

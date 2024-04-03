@@ -40,7 +40,6 @@ const MIN_UPDATE_MS = 250;
 const T1 = 'checkGrabTimeout';
 const T2 = 'limitUpdateTimeout';
 const T3 = 'postAnimateTimeout';
-const T4 = 'panelBoxClipTimeout';
 
 const SIDE_CONTROLS_ANIMATION_TIME = OverviewControls.SIDE_CONTROLS_ANIMATION_TIME / (OverviewControls.SIDE_CONTROLS_ANIMATION_TIME > 1 ? 1000 : 1);
 
@@ -231,7 +230,9 @@ export const Intellihide = class {
     }
 
     _setRevealMechanism() {
-        if (global.display.supports_extended_barriers() && SETTINGS.get_boolean('intellihide-use-pressure')) {
+        let barriers = Meta.BackendCapabilities.BARRIERS
+
+        if ((global.backend.capabilities & barriers) === barriers && SETTINGS.get_boolean('intellihide-use-pressure')) {
             this._edgeBarrier = this._createBarrier();
             this._pressureBarrier = new Layout.PressureBarrier(
                 SETTINGS.get_int('intellihide-pressure-threshold'), 
@@ -261,7 +262,7 @@ export const Intellihide = class {
 
     _createBarrier() {
         let position = this._dtpPanel.geom.position;
-        let opts = { display: global.display };
+        let opts = { backend: global.backend };
 
         if (this._dtpPanel.checkIfVertical()) {
             opts.y1 = this._monitor.y;

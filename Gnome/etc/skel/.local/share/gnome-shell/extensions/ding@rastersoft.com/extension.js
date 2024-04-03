@@ -567,7 +567,7 @@ class LaunchSubprocess {
                 if (e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED)) {
                     return;
                 }
-                logError(e, `${this._process_id}_Error`);
+                console.error(e, `${this._process_id}_Error`);
             }
 
             this.read_output();

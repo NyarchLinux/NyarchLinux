@@ -5,16 +5,20 @@
     "github": "aunetx",
     "kofi": "aunetx"
   },
-  "gettext-domain": "blur-my-shell",
+  "gettext-domain": "blur-my-shell@aunetx",
   "name": "Blur my Shell",
   "original-authors": [
     "me@aunetx.dev"
   ],
+  "session-modes": [
+    "unlock-dialog",
+    "user"
+  ],
   "settings-schema": "org.gnome.shell.extensions.blur-my-shell",
   "shell-version": [
-    "45"
+    "46"
   ],
-  "url": "https://github.com/aunetx/gnome-shell-extension-blur-my-shell",
+  "url": "https://github.com/aunetx/blur-my-shell",
   "uuid": "blur-my-shell@aunetx",
-  "version": 53
+  "version": 59
 }

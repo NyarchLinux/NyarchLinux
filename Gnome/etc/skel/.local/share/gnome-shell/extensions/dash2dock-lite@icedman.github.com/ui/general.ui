@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <object class="AdwPreferencesPage" id="general">
+    <property name="name">general</property>
+    <property name="title" translatable="yes">General</property>
+    <property name="icon-name">general-symbolic</property>
+    <child>
+      <object class="AdwPreferencesGroup">
+        <property name="title" translatable="yes">Dock</property>
+        <property name="description" translatable="yes"/>
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Preferred Monitor</property>
+            <property name="subtitle" translatable="yes">Show dock on selected monitor.</property>
+            <property name="activatable-widget">preferred-monitor</property>
+            <child>
+              <object class="GtkDropDown" id="preferred-monitor">
+                <property name="valign">center</property>
+                <property name="model">preferred-monitor-model</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow" id="dock-location-row">
+            <property name="visible">true</property>
+            <property name="title" translatable="yes">Preferred Dock Location</property>
+            <property name="subtitle" translatable="yes">Set dock position on the screen.</property>
+            <property name="activatable-widget">dock-location</property>
+            <child>
+              <object class="GtkDropDown" id="dock-location">
+                <property name="valign">center</property>
+                <property name="model">dock-location-model</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow">
+            <property name="visible">true</property>
+            <property name="title" translatable="yes">Multi-Monitor Strategy</property>
+            <property name="subtitle" translatable="yes">Set dock positions on multi-monitor mode.</property>
+            <property name="activatable-widget">multi-monitor-preference</property>
+            <child>
+              <object class="GtkDropDown" id="multi-monitor-preference">
+                <property name="valign">center</property>
+                <property name="model">multi-monitor-preference-model</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="AdwPreferencesGroup">
+        <property name="title" translatable="yes">Animation</property>
+        <property name="description" translatable="yes"/>
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Animate Icons</property>
+            <property name="subtitle" translatable="yes">Animate the dash icons the pointer enters and moves over the dock.</property>
+            <property name="activatable-widget">animate-icons-unmute</property>
+            <child>
+              <object class="GtkSwitch" id="animate-icons-unmute">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow" id="animation-type-row">
+            <property name="visible">true</property>
+            <property name="title" translatable="yes">Opening Animation</property>
+            <property name="subtitle" translatable="yes">Add bounce animation on dash icons when opening new apps.</property>
+            <property name="activatable-widget">open-app-animation</property>
+            <child>
+              <object class="GtkSwitch" id="open-app-animation">
+                <property name="valign">center</property>
+              </object>
+            </child>
+            <!--
+            <child>
+              <object class="GtkDropDown" id="open-app-animation">
+                <property name="valign">center</property>
+                <property name="model">open-app-animation-model</property>
+              </object>
+            </child>
+            -->
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow" id="lamp-app-animation-row">
+            <property name="visible">true</property>
+            <property name="title" translatable="yes">Lamp Animation</property>
+            <property name="subtitle" translatable="yes">Add genie on a lamp animation on minimizing windows. Credit to https://github.com/hermes83/compiz-alike-magic-lamp-effect</property>
+            <property name="activatable-widget">lamp-app-animation</property>
+            <child>
+              <object class="GtkSwitch" id="lamp-app-animation">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="AdwPreferencesGroup">
+        <property name="title" translatable="yes">Autohide</property>
+        <property name="description" translatable="yes"/>
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Autohide Icons</property>
+            <property name="subtitle" translatable="yes">Hide the dock when it overlaps with windows or when at fullscreen mode.</property>
+            <property name="activatable-widget">autohide-dash</property>
+            <child>
+              <object class="GtkSwitch" id="autohide-dash">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Dodge Only</property>
+            <property name="subtitle" translatable="yes">Hide the dock only when it overlaps with windows or when at fullscreen mode.</property>
+            <property name="activatable-widget">autohide-dodge</property>
+            <child>
+              <object class="GtkSwitch" id="autohide-dodge">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Pressure Sense</property>
+            <property name="subtitle" translatable="yes">Move pointer down to force dash visiblity.</property>
+            <property name="activatable-widget">pressure-sense</property>
+            <child>
+              <object class="GtkSwitch" id="pressure-sense">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow" id="peek-hidden-icons-row">
+            <property name="visible">true</property>
+            <property name="title" translatable="yes">Peek Icons</property>
+            <property name="subtitle" translatable="yes">Partially show icons when the dash is not hovered or hidden.</property>
+            <property name="activatable-widget">peek-hidden-icons</property>
+            <child>
+              <object class="GtkSwitch" id="peek-hidden-icons">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="AdwPreferencesGroup">
+        <property name="title" translatable="yes">Debug</property>
+        <property name="description" translatable="yes"/>
+        <!--
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Logs</property>
+            <property name="subtitle" translatable="yes"
+              >Enable verbose debug logging.</property
+            >
+            <property name="activatable-widget">debug-log</property>
+            <child>
+              <object class="GtkSwitch" id="debug-log">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      -->
+        <child>
+          <object class="AdwActionRow" id="experimental-features-row">
+            <property name="visible">false</property>
+            <property name="title" translatable="yes">Experimental Features</property>
+            <property name="subtitle" translatable="yes">Enable settings for experimental features. These features may likely still contain bugs.</property>
+            <property name="activatable-widget">experimental-features</property>
+            <child>
+              <object class="GtkSwitch" id="experimental-features">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Visual Indicators</property>
+            <property name="subtitle" translatable="yes">Show visual indicators when animations are running.</property>
+            <property name="activatable-widget">debug-visual</property>
+            <child>
+              <object class="GtkSwitch" id="debug-visual">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow" id="self-test-row">
+            <property name="visible">true</property>
+            <property name="title" translatable="yes">Test</property>
+            <property name="subtitle" translatable="yes">Run self-test. Messages will be logged at the terminal running journalctl -f. WARNING: This takes a few minutes to finish.</property>
+            <property name="activatable-widget">self-test</property>
+            <child>
+              <object class="GtkButton" id="self-test">
+                <property name="halign">start</property>
+                <property name="valign">center</property>
+                <child>
+                  <object class="GtkBox">
+                    <property name="margin-start">20</property>
+                    <property name="margin-end">20</property>
+                    <property name="margin-top">6</property>
+                    <property name="margin-bottom">6</property>
+                    <child>
+                      <object class="GtkImage">
+                        <property name="margin-end">6</property>
+                        <property name="icon-name">pulse-symbolic</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="label" translatable="yes">Run</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <style>
+                  <class name="circular"/>
+                  <class name="destructive-action"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow" id="reset-row">
+            <property name="visible">true</property>
+            <property name="title" translatable="yes">Reset Settings</property>
+            <property name="subtitle" translatable="yes">WARNING: This will revert all user settings to default values.</property>
+            <property name="activatable-widget">reset</property>
+            <child>
+              <object class="GtkButton" id="reset">
+                <property name="halign">start</property>
+                <property name="valign">center</property>
+                <child>
+                  <object class="GtkBox">
+                    <property name="margin-start">20</property>
+                    <property name="margin-end">20</property>
+                    <property name="margin-top">6</property>
+                    <property name="margin-bottom">6</property>
+                    <!-- <child>
+                      <object class="GtkImage">
+                        <property name="margin-end">6</property>
+                        <property name="icon-name">pulse-symbolic</property>
+                      </object>
+                    </child> -->
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="label" translatable="yes">Reset</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <style>
+                  <class name="circular"/>
+                  <class name="destructive-action"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkStringList" id="preferred-monitor-model">
+    <items>
+      <!--       <item translatable="yes">Primary Monitor</item>
+      <item translatable="yes">Secondary Monitor</item>
+      <item translatable="yes">Monitor 3</item>
+      <item translatable="yes">Monitor 4</item>
+      <item translatable="yes">Monitor 5</item>
+      <item translatable="yes">Monitor 6</item> -->
+    </items>
+  </object>
+  <object class="GtkStringList" id="multi-monitor-preference-model">
+    <items>
+      <item translatable="yes">Show only one dock</item>
+      <item translatable="yes">Show on all monitors</item>
+      <!--
+      <item translatable="yes">Show on left most and right most</item>
+      <item translatable="yes">Show on left most and bottom </item>
+      <item translatable="yes">Show on bottom and right most</item>
+      <item translatable="yes">Show on left most, bottom and right most</item>
+      -->
+    </items>
+  </object>
+  <object class="GtkStringList" id="dock-location-model">
+    <items>
+      <item translatable="yes">Bottom</item>
+      <item translatable="yes">Left</item>
+      <item translatable="yes">Right</item>
+      <item translatable="yes">Top</item>
+    </items>
+  </object>
+  <object class="GtkStringList" id="open-app-animation-model">
+    <items>
+      <item translatable="yes">None</item>
+      <item translatable="yes">Bounce</item>
+    </items>
+  </object>
+</interface>

@@ -50,6 +50,11 @@ var Selection = {
     RELEASE: 5,
 };
 
+var DBusBus = {
+    SYSTEM: true,
+    SESSION: false,
+};
+
 /* From NautilusFileUndoManagerState */
 var UndoStatus = {
     NONE: 0,

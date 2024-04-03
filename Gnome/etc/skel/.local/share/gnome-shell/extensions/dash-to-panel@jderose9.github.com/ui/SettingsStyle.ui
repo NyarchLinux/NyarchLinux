@@ -35,7 +35,7 @@
   </object>
 
   <object class="AdwPreferencesPage" id="style">
-    <property name="title">Style</property>
+    <property name="title" translatable="yes">Style</property>
     <property name="icon_name">applications-graphics-symbolic</property>
 
     <!-- group app icon style -->
@@ -104,6 +104,20 @@
           </object>
         </child>
 
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Icon style</property>
+            <child>
+              <object class="GtkComboBoxText" id="appicon_style_combo">
+                <property name="valign">center</property>
+                <items>
+                  <item id="NORMAL" translatable="yes">Normal</item>
+                  <item id="SYMBOLIC" translatable="yes">Symbolic</item>
+                </items>
+              </object>
+            </child>
+          </object>
+        </child>
       </object>
     </child>
 

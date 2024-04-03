@@ -21,6 +21,7 @@ import Clutter from 'gi://Clutter';
 import St from 'gi://St';
 import GObject from 'gi://GObject';
 import Gio from 'gi://Gio';
+import GioUnix from 'gi://GioUnix';
 import GLib from 'gi://GLib';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
@@ -43,7 +44,6 @@ let BOOT_WAIT          = 15;      // 15s
 let CHECK_INTERVAL     = 60*60;   // 1h
 let NOTIFY             = false;
 let HOWMUCH            = 0;
-let TRANSIENT          = true;
 let UPDATE_CMD         = "gnome-terminal -- /bin/sh -c \"sudo pacman -Syu ; echo Done - Press enter to exit; read _\" ";
 let CHECK_CMD          = "/usr/bin/checkupdates";
 let MANAGER_CMD        = "";
@@ -89,7 +89,7 @@ const ArchUpdateIndicator = GObject.registerClass(
 class ArchUpdateIndicator extends Button {
 
 	_init(ext) {
-		super._init(0);
+		super._init(0.5);
 		this._extension = ext;
 		/* A process builder without i10n for reproducible processing. */
 		this.launcher = new Gio.SubprocessLauncher({
@@ -128,13 +128,13 @@ class ArchUpdateIndicator extends Button {
 			x_expand: true
 		});
 		cancelButton.set_x_align(Clutter.ActorAlign.END);
-		this.checkingMenuItem.actor.add_actor( checkingLabel );
-		this.checkingMenuItem.actor.add_actor( cancelButton  );
+		this.checkingMenuItem.add_child( checkingLabel );
+		this.checkingMenuItem.add_child( cancelButton  );
 
 		// A little trick on "check now" menuitem to keep menu opened
 		this.checkNowMenuItem = new PopupMenu.PopupMenuItem( _('Check now') );
 		this.checkNowMenuContainer = new PopupMenu.PopupMenuSection();
-		this.checkNowMenuContainer.actor.add_actor(this.checkNowMenuItem.actor);
+		this.checkNowMenuContainer.box.add_child(this.checkNowMenuItem);
 
 		// Assemble all menu items into the popup menu
 		this.menu.addMenuItem(this.menuExpander);
@@ -193,7 +193,7 @@ class ArchUpdateIndicator extends Button {
 
 	_positionChanged(){
 		if (this._settings.get_boolean('enable-positioning')) {
-			this.container.get_parent().remove_actor(this.container);
+			this.container.get_parent().remove_child(this.container);
 			let boxes = {
 				0: Main.panel._leftBox,
 				1: Main.panel._centerBox,
@@ -225,7 +225,6 @@ class ArchUpdateIndicator extends Button {
 		CHECK_INTERVAL = 60 * this._settings.get_int('check-interval');
 		NOTIFY = this._settings.get_boolean('notify');
 		HOWMUCH = this._settings.get_int('howmuch');
-		TRANSIENT = this._settings.get_boolean('transient');
 		UPDATE_CMD = this._settings.get_string('update-cmd');
 		CHECK_CMD = this._settings.get_string('check-cmd');
 		DISABLE_PARSING = this._settings.get_boolean('disable-parsing');
@@ -235,7 +234,7 @@ class ArchUpdateIndicator extends Button {
 		STRIP_VERSIONS_N = this._settings.get_boolean('strip-versions-in-notification');
 		AUTO_EXPAND_LIST = this._settings.get_int('auto-expand-list');
 		PACKAGE_INFO_CMD = this._settings.get_string('package-info-cmd');
-		this.managerMenuItem.actor.visible = ( MANAGER_CMD != "" );
+		this.managerMenuItem.visible = ( MANAGER_CMD != "" );
 		this._checkShowHide();
 		this._updateStatus();
 		this._startFolderMonitor();
@@ -335,11 +334,11 @@ class ArchUpdateIndicator extends Button {
 	_showChecking(isChecking) {
 		if (isChecking == true) {
 			this.updateIcon.set_gicon( this._getCustIcon('arch-unknown-symbolic') );
-			this.checkNowMenuContainer.actor.visible = false;
-			this.checkingMenuItem.actor.visible = true;;
+			this.checkNowMenuItem.visible = false;
+			this.checkingMenuItem.visible = true;
 		} else {
-			this.checkNowMenuContainer.actor.visible = true;;
-			this.checkingMenuItem.actor.visible = false;;
+			this.checkNowMenuItem.visible = true;
+			this.checkingMenuItem.visible = false;
 		}
 	}
 
@@ -418,13 +417,13 @@ class ArchUpdateIndicator extends Button {
 		this.menuExpander.menu.box.destroy_all_children();
 		if (label == "") {
 			// No text, hide the menuitem
-			this.menuExpander.actor.visible = false;
+			this.menuExpander.visible = false;
 		} else {
 		// We make our expander look like a regular menu label if disabled
-			this.menuExpander.actor.reactive = enabled;
+			this.menuExpander.reactive = enabled;
 			this.menuExpander._triangle.visible = enabled;
 			this.menuExpander.label.set_text(label);
-			this.menuExpander.actor.visible = true;
+			this.menuExpander.visible = true;
 			if (enabled && this._updateList.length > 0) {
 				this._updateList.forEach( item => {
 					if(DISABLE_PARSING) {
@@ -433,12 +432,12 @@ class ArchUpdateIndicator extends Button {
 							var chunks = menutext.split(" ",2);
 							menutext = chunks[0];
 						}
-						this.menuExpander.menu.box.add( this._createPackageLabel(menutext) );
+						this.menuExpander.menu.box.add_child( this._createPackageLabel(menutext) );
 					} else {
 						let matches = item.match(RE_UpdateLine);
 						if (matches == null) {
 							// Not an update
-							this.menuExpander.menu.box.add( new St.Label({ text: item, style_class: 'arch-updates-update-title' }) );
+							this.menuExpander.menu.box.add_child( new St.Label({ text: item, style_class: 'arch-updates-update-title' }) );
 						} else {
 							let hBox = new St.BoxLayout({ vertical: false });
 							hBox.add_child( this._createPackageLabel(matches[1]) );
@@ -459,13 +458,25 @@ class ArchUpdateIndicator extends Button {
 			}
 		}
 		// 'Update now' visibility is linked so let's save a few lines and set it here
-		this.updateNowMenuItem.actor.reactive = enabled;
+		this.updateNowMenuItem.reactive = enabled;
+		// Seems that's not done anymore by PopupBaseMenuItem after init, so let's update inactive styling
+		if ( this.updateNowMenuItem.reactive ) {
+			this.updateNowMenuItem.remove_style_class_name('popup-inactive-menu-item');
+		} else {
+			this.updateNowMenuItem.add_style_class_name('popup-inactive-menu-item');
+		}
+		if ( this.menuExpander.reactive ) {
+			this.menuExpander.remove_style_class_name('popup-inactive-menu-item');
+		} else {
+			this.menuExpander.add_style_class_name('popup-inactive-menu-item');
+		}
 	}
 
 	_createPackageLabel(name) {
 		if (PACKAGE_INFO_CMD) {
 			let label = new St.Label({
 				text: name,
+				x_expand: true,
 				style_class: 'arch-updates-update-name-link'
 			});
 			let button = new St.Button({
@@ -484,6 +495,7 @@ class ArchUpdateIndicator extends Button {
 	}
 
 	_packageInfo(item) {
+		this.menu.close();
 		let proc = this.launcher.spawnv(['pacman', '-Si', item]);
 		proc.communicate_utf8_async(null, null, (proc, res) => {
 			let repo = "REPO";
@@ -515,7 +527,7 @@ class ArchUpdateIndicator extends Button {
 			let [res, pid, in_fd, out_fd, err_fd]  = GLib.spawn_async_with_pipes(null, argvp, null, GLib.SpawnFlags.DO_NOT_REAP_CHILD, null);
 			// Let's buffer the command's output - that's a input for us !
 			this._updateProcess_stream = new Gio.DataInputStream({
-				base_stream: new Gio.UnixInputStream({fd: out_fd})
+				base_stream: new GioUnix.InputStream({fd: out_fd})
 			});
 			// We will process the output at once when it's done
 			this._updateProcess_sourceId = GLib.child_watch_add(0, pid, () => {this._checkUpdatesRead()} );
@@ -563,29 +575,32 @@ class ArchUpdateIndicator extends Button {
 	}
 
 	_showNotification(title, message) {
+		// Destroy previous notification if still there
+		if (this._notification) {
+			this._notification.destroy(MessageTray.NotificationDestroyedReason.REPLACED);
+		}
+		// Prepare a notification Source with our name and icon
+		// It looks like notification Sources are destroyed when empty so we check every time
 		if (this._notifSource == null) {
 			// We have to prepare this only once
-			this._notifSource = new MessageTray.SystemNotificationSource();
-			let gicon = Gio.icon_new_for_string( this._extension.dir.get_child('icons').get_path() + "/arch-updates-logo.svg" );
-			this._notifSource.createIcon = function() {
-				return new St.Icon({ gicon: gicon });
-			};
-			// Take care of note leaving unneeded sources
+			this._notifSource = new MessageTray.Source({
+				title: this._extension.metadata.name.toString(),
+				icon: this._getCustIcon("arch-lit-symbolic"),
+			});
+			// Take care of not leaving unneeded sources
 			this._notifSource.connect('destroy', ()=>{this._notifSource = null;});
 			Main.messageTray.add(this._notifSource);
 		}
-		let notification = null;
-		// We do not want to have multiple notifications stacked
-		// instead we will update previous
-		if (this._notifSource.notifications.length == 0) {
-			notification = new MessageTray.Notification(this._notifSource, title, message);
-			notification.addAction( _('Update now') , ()=>{this._updateNow();} );
-		} else {
-			notification = this._notifSource.notifications[0];
-			notification.update( title, message, { clear: true });
-		}
-		notification.setTransient(TRANSIENT);
-		this._notifSource.showNotification(notification);
+		// Creates a new notification
+		this._notification = new MessageTray.Notification({
+			source: this._notifSource,
+			title: title,
+			body: message
+		});
+		this._notification.gicon = this._getCustIcon("arch-updates-symbolic");
+		this._notification.addAction( _('Update now') , ()=>{this._updateNow();} );
+		this._notification.connect('destroy', ()=>{this._notification = null;});
+		this._notifSource.addNotification(this._notification);
 	}
 
 });

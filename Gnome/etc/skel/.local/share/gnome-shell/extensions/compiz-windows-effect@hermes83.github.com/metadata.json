@@ -4,9 +4,10 @@
   "name": "Compiz windows effect",
   "settings-schema": "org.gnome.shell.extensions.com.github.hermes83.compiz-windows-effect",
   "shell-version": [
-    "45"
+    "45",
+    "46"
   ],
   "url": "https://github.com/hermes83/compiz-windows-effect",
   "uuid": "compiz-windows-effect@hermes83.github.com",
-  "version": 23
+  "version": 24
 }

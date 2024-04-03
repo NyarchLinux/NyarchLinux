@@ -52,12 +52,6 @@
         <description>0:count, 1:list</description>
     </key>
 
-    <key name="transient" type="b">
-      <default>true</default>
-        <summary>Use transient notifications (auto dismiss)</summary>
-        <description></description>
-    </key>
-
     <key name="check-cmd" type="s">
       <default>"/usr/bin/checkupdates"</default>
       <summary>Command to run to check for updated packages.</summary>

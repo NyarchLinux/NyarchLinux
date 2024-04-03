@@ -199,18 +199,6 @@
 				</child>
 				<child>
 					<object class="AdwActionRow">
-						<property translatable="yes" name="title">Use transient notifications (auto dismiss)</property>
-						<property name="activatable-widget">field_transient</property>
-						<child>
-							<object class="GtkSwitch" id="field_transient">
-								<property name="valign">3</property>
-								<property name="active">true</property>
-							</object>
-						</child>
-					</object>
-				</child>
-				<child>
-					<object class="AdwActionRow">
 						<property translatable="yes" name="title">How much information to show on notifications</property>
 						<property name="activatable-widget">field_howmuch</property>
 						<child>
