@@ -168,9 +168,6 @@ export const DockItemList = GObject.registerClass(
 
       this.connect('button-press-event', (obj, evt) => {
         // this.visible = false;
-        if (!this._box || !this._box.get_children().length) {
-          return Clutter.EVENT_PROPAGATE;
-        }
         this.slideOut();
         return Clutter.EVENT_PROPAGATE;
       });
@@ -418,7 +415,7 @@ export const DockBackground = GObject.registerClass(
         4 +
         iconSize *
           scaleFactor *
-          0.2 *
+          0.15 *
           (dashContainer.extension.dock_padding || 0);
 
       if (!isNaN(p1[0]) && !isNaN(p1[1])) {
@@ -469,7 +466,6 @@ export const DockBackground = GObject.registerClass(
         }
 
         this.opacity = 255;
-        dashContainer.dash.opacity = this.opacity;
       }
     }
   }

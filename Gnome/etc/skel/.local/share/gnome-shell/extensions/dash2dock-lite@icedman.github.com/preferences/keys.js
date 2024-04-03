@@ -6,7 +6,7 @@
 
 import { PrefKeys } from './prefKeys.js';
 
-export const schemaId = 'org.gnome.shell.extensions.dash2dock-lite';
+export let schemaId = 'org.gnome.shell.extensions.dash2dock-lite';
 
 export const SettingsKeys = () => {
   let settingsKeys = new PrefKeys();

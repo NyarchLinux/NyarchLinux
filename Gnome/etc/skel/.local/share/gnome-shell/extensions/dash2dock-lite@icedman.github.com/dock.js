@@ -65,7 +65,7 @@ export let Dock = GObject.registerClass(
       this._alignment = DockAlignment.CENTER;
       this._monitorIndex = Main.layoutManager.primaryIndex;
 
-      this._background = new DockBackground({ name: 'd2daBackground' });
+      this._background = new DockBackground({ name: 'd2dlBackground' });
       this.add_child(this._background);
 
       this.addDash();
@@ -546,7 +546,7 @@ export let Dock = GObject.registerClass(
 
         // icon image quality
         if (this._iconSizeScaledDown) {
-          c._icon.set_icon_size(
+          icon.set_icon_size(
             this._iconSizeScaledDown * this.extension.icon_quality
           );
         }
@@ -610,16 +610,15 @@ export let Dock = GObject.registerClass(
 
           let target = this[f.icon];
 
-          target._onClick = async () => {
+          target._onClick = () => {
             if (this._position != DockPosition.BOTTOM) {
               target.activateNewWindow();
               return;
             }
             if (!this.extension.services._downloadFiles) {
-              await this.extension.services.checkDownloads();
+              this.extension.services.checkDownloads();
             }
-            let files = [...(this.extension.services._downloadFiles || [])];
-            if (!files.length) return;
+            let files = [...this.extension.services._downloadFiles];
             if (files.length < this.extension.services._downloadFilesLength) {
               files = [
                 {
@@ -809,11 +808,11 @@ export let Dock = GObject.registerClass(
       width = this._projectedWidth * scaleFactor;
       height = iconSizeSpaced * 1.5 * scaleFactor;
 
-      this.width = (vertical ? height : width) + iconSize * scaleFactor;
-      this.height = (vertical ? width : height) + iconSize * scaleFactor;
+      this.width = vertical ? height : width;
+      this.height = vertical ? width : height;
 
       if (this.animated) {
-        let adjust = 1.25;
+        let adjust = 3.0;
         this.width *= vertical ? adjust : 1;
         this.height *= !vertical ? adjust : 1;
         this.width += !vertical * iconSizeSpaced * adjust * scaleFactor;
@@ -1136,13 +1135,11 @@ export let Dock = GObject.registerClass(
     _onScrollEvent(obj, evt) {
       this._lastScrollEvent = evt;
       let pointer = global.get_pointer();
-      let target = this._nearestIcon; // this._hoveredIcon;
-      // console.log(`${target == this._hoveredIcon}`);
-      if (target) {
+      if (this._nearestIcon) {
         if (this._scrollCounter < -2 || this._scrollCounter > 2)
           this._scrollCounter = 0;
 
-        let icon = target;
+        let icon = this._nearestIcon;
 
         // add scrollwheel vs touchpad differentiation
         let multiplier = 1;

@@ -48,7 +48,6 @@ export default class Dash2DockLiteExt extends Extension {
   createDock() {
     let d = new Dock({ extension: this });
     d.extension = this;
-    d.opacity = 0; // animate
     d.dock();
     this.dock = d;
     this.docks.push(this.dock);
@@ -248,8 +247,11 @@ export default class Dash2DockLiteExt extends Extension {
       this._updateAnimationFPS();
       this._updateShrink();
       this._updateIconResolution();
+      // this._updateLayout();
+      // this._updateAutohide();
       this._updateWidgetStyle();
       this._updateStyle();
+
       this.animate({ refresh: true });
       this.docks.forEach((dock) => {
         dock._debounceEndAnimation();
@@ -444,7 +446,7 @@ export default class Dash2DockLiteExt extends Extension {
         case 'documents-icon':
         case 'trash-icon': {
           this._updateLayout();
-          this.animate({refresh: true});
+          this.animate();
           break;
         }
       }
@@ -711,7 +713,7 @@ export default class Dash2DockLiteExt extends Extension {
         ss.push(`background: rgba(${rgba});`);
       }
 
-      styles.push(`#d2daBackground { ${ss.join(' ')}}`);
+      styles.push(`#d2dlBackground { ${ss.join(' ')}}`);
     }
 
     // dash label
@@ -871,4 +873,3 @@ export default class Dash2DockLiteExt extends Extension {
     }
   }
 }
-

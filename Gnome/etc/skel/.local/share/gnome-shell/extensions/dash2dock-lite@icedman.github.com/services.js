@@ -284,9 +284,6 @@ export const Services = class {
           if (media && messages) {
             return;
           }
-          if (!c.child._delegate || !c.child._delegate._messageList) {
-            return;
-          }
           media =
             c.child._delegate._messageList._scrollView.last_child.get_children()[0];
           messages =
@@ -303,8 +300,6 @@ export const Services = class {
     }
 
     if (!media || !messages) {
-      this._notifications = [];
-      this._appNotices = [];
       return;
     }
 
@@ -398,8 +393,7 @@ export const Services = class {
   }
 
   async checkDownloads() {
-    // this._trySpawnCommandLine = trySpawnCommandLine;
-    console.log('checking downloads');
+    this._trySpawnCommandLine = trySpawnCommandLine;
     if (!this.extension.downloads_icon) return;
     try {
       let path = this._downloadsDir.get_path();

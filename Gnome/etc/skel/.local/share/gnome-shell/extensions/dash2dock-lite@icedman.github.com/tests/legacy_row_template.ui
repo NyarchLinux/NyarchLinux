@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+<child>
+  <object class="GtkBox">
+    <property name="visible">True</property>
+    <property name="can-focus">False</property>
+    <property name="margin-start">12</property>
+    <property name="margin-end">12</property>
+    <property name="margin-top">12</property>
+    <property name="margin-bottom">12</property>
+    <property name="orientation">vertical</property>
+    <child>
+      <object class="GtkBox">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <property name="spacing">32</property>
+
+        <child>
+          <object class="GtkLabel">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="valign">center</property>
+            <property name="label" translatable="yes">Animate Icons</property>
+            <property name="xalign">0</property>
+            <property name="hexpand">1</property>
+            <attributes>
+              <attribute name="weight" value="PANGO_WEIGHT_BOLD" />
+            </attributes>
+          </object>
+        </child>
+
+        <child>
+          <object class="GtkSwitch">
+            <property name="valign">center</property>
+          </object>
+        </child>
+
+      </object>
+    </child>
+
+    <child>
+      <object class="GtkLabel">
+        <property name="halign">start</property>
+        <property name="valign">center</property>
+        <property name="label" translatable="yes">Animate the dash icons the pointer enters and moves over the dock.</property>
+      </object>
+    </child>
+  </object>
+</child>
+</template>
