@@ -408,6 +408,8 @@ flatpak
 #lib32-vulkan-icd-loader
 
 # Nyarch
+fragments
+lollypop
 python-pywal
 neofetch
 nodejs
