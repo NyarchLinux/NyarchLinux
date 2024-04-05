@@ -124,8 +124,8 @@ navigation: widget
 strings:
     productName:         "Nyarch Linux"
     shortProductName:    nyarch
-    version:             23.11
-    shortVersion:        23.11
+    version:             24.04
+    shortVersion:        24.04
     versionedName:       Nyarch Linux
     shortVersionedName:  Nyarch Linux
     bootloaderEntryName: nyarch
@@ -181,10 +181,10 @@ images:
 # branding component also ships a stylesheet.qss. Then they are
 # the corresponding CSS attributes of #sidebarApp.
 style:
-   SidebarBackground:    "#592C28"
-   SidebarText:          "#FFFFFF"
-   SidebarTextCurrent:    "#171925"
-   SidebarBackgroundCurrent: "#A6382E"
+   SidebarBackground:    "#262830"
+   SidebarText:          "#e0e0e8"
+   SidebarTextCurrent:    "#d2edff"
+   SidebarBackgroundCurrent: "#004397"
 
 ### SLIDESHOW
 #
