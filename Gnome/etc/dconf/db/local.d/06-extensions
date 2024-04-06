@@ -1,5 +1,5 @@
 [org/gnome/shell]
-enabled-extensions=['background-logo@fedorahosted.org', blur-my-shell@aunetx', 'compiz-alike-magic-lamp-effect@hermes83.github.com', 'dash2dock-lite@icedman.github.com', 'gsconnect@andyholmes.github.io', 'material-you-colors@francescocaracciolo.github.io', 'user-theme@gnome-shell-extensions.gcampax.github.com']
+enabled-extensions=['blur-my-shell@aunetx', 'compiz-alike-magic-lamp-effect@hermes83.github.com', 'dash2dock-lite@icedman.github.com', 'gsconnect@andyholmes.github.io', 'material-you-colors@francescocaracciolo.github.io', 'user-theme@gnome-shell-extensions.gcampax.github.com']
 disabled-extensions=['compiz-windows-effect@hermes83.github.com', 'desktop-cube@schneegans.github.com', 'dash-to-panel@jderose9.github.com', 'arcmenu@arcmenu.com', 'trayIconsReloaded@selfmade.pl', 'ding@rastersoft.com']
 disable-extension-version-validation=true
 disable-user-extensions=false
