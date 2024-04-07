@@ -1,9 +1,11 @@
+
 // Named Colors
 $contrast: 'normal';
 // base colors
-$_base_color_dark: desaturate($dark_4, 100%);
+$_base_color_dark: desaturate(#201a19, 100%);
 $_base_color_light: desaturate($light_2, 100%);
 
+$mu_accent_color: #7c2c1b; 
 // colors for destructive elements
 $destructive_bg_color: if($variant == 'light', $red_3, $red_4);
 $destructive_fg_color: $light_1;
@@ -23,11 +25,11 @@ $error_fg_color: $light_1;
 $error_color: $error_bg_color;
 
 // colors for selected or default elements
-$selected_bg_color: if($variant == 'light', $blue_4, $blue_3);
+$selected_bg_color: $mu_accent_color;
 $selected_fg_color: $light_1;
 
 // link colors
-$link_color: if($variant == 'light', $blue_4, $blue_2);
+$link_color: $mu_accent_color;
 $link_visited_color: transparentize($link_color, .6);
 
 // special cased widget definitions

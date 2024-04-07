@@ -408,6 +408,7 @@ flatpak
 #lib32-vulkan-icd-loader
 
 # Nyarch
+shortwave
 fragments
 lollypop
 python-pywal
