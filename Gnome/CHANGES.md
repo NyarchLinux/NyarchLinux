@@ -17,7 +17,7 @@ Here are listed all the main changes done to EzArcher Gnome template, in order t
         - [x] Customi color theming
         - [x] Some patches for better behavoir on Nyarch 
         - [x] Added pywal theming
-    - [x] Nyarcmenu (custom)
+    - [x] ~Nyarcmenu (custom)~ Now we just use ArcMenu
         - [x] SHips a modified version of Raven layout
         - [x] Changes colors with material you extension 
     - [x] Compiz lamp effect
@@ -35,6 +35,7 @@ Here are listed all the main changes done to EzArcher Gnome template, in order t
 - [x] Installed [Nyarch Tour](https://github.com/NyarchLinux/NyarchTour)
 - [x] Installed [Nyarch Customize](https://github.com/NyarchLinux/NyarchCustomize)
 - [x] Installed [Catgirl Downloader](https://github.com/NyarchLinux/CatgirlDownloader)
+- [x] Installed [Waifu Downloader](https://github.com/NyarchLinux/WaifuDownloader)
 - [x] Installed as Flatpak: [Komikku](https://valos.gitlab.io/Komikku/), [Shortwave](https://gitlab.gnome.org/World/Shortwave), [Lollypop](https://wiki.gnome.org/Apps/Lollypop), [Fragments](https://gitlab.gnome.org/World/Fragments)
 - [x] Autostart calamares at live boot, autostart Nyarch Tour on first boot
 - [x] Install Plymouth and add theme
@@ -42,6 +43,8 @@ Here are listed all the main changes done to EzArcher Gnome template, in order t
 - [x] Added theming to Kitty
 - [x] Nyaofetch and Nekofetch changed into commands, that displays png if running from kitty, ascii else
 - [x] Created Nyarch Wizard to suggest some apps to install
+- [ ] Grub theme (?)
 - [x] Installed AURA (package manager and AUR helper)
 - [x] Created an alias of Aura called Nyaura
 - [x] Installed pywal
+- [x] Added insults to sudo
