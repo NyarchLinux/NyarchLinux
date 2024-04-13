@@ -6,14 +6,16 @@
 ![](https://img.shields.io/github/stars/nyarchlinux/nyarchlinux?style=for-the-badge)
 ![](https://img.shields.io/github/license/nyarchlinux/nyarchlinux?color=green&style=for-the-badge)
 [![](https://img.shields.io/badge/Website-nyarchlinux.moe-%23e32b6b?style=for-the-badge&logoColor=C689C6)](https://nyarchlinux.moe)
+[![](https://dcbadge.vercel.app/api/server/xuw6BNXXE7)](https://discord.gg/xuw6BNXXE7)
    <h3><b>Nyarch Linux</b> is a Linux distribution <b>made for weebs</b>, based on ArchLinux and EzArcher.</h3><br />
 
 </div>
 
 ## Is it safe to use?
 It is strongly suggested to <b>do not use this Linux distribution as daily drive</b>, since it is not made by a team of experts and there are way better distros out there. <br />
-If you want a similar configuration to what our distro offers out of the box, you can just see the main changes we have done to a standard Gnome ezarcher install in CHANGES.md, and we will also provide a script that just applies the main changes to almost any Linux distribution with Gnome installed.<br />
-If you want to use it anyways, <b>Nyarch is nothing more than a heavily bloated Arch Linux install script</b>, it relies on Arch Linux standard repositories, so for normal packages you will receive frequent updates that do not depend on us, however, you may encounter issues with Gnome Extensions on Gnome updates, specially with NyarcMenu.
+If you want a similar configuration to what our distro offers out of the box, you can use [Nyarcher](https://github.com/NyarchLinux/Nyarcher), a script to install Nyarch
+customizations on top of any other Linux distro with Gnome pre installed. <br />
+If you want to use it anyways, <b>Nyarch is not much more than a heavily bloated Arch Linux install script</b>, it relies on Arch Linux standard repositories, so for normal packages you will receive frequent updates that do not depend on us.
 
 ## Contributing
 If you want to contribute to the development of this distribution, please take a look at [CONTRIBUTING.md](https://github.com/NyarchLinux/NyarchLinux/blob/main/CONTRIBUTING.md).
@@ -32,5 +34,11 @@ However, there are also some cons:
 - Gnome extensions often get broken after Gnome updates (it is a pretty big issue considering the rolling release nature of the distribution)
 - Non GTK applications don't look coherent at all
 ### Will there be other DEs spins?
-At the moment we have no plans to make other DEs spins, however, we are not at all against it, and <b>we are happy to accept contributions</b>. Please note that we want to make the different spins as coherent as possible, so applications have to follow their desktop philosophy if possible. <br />
+At the moment we have plans to create the following spins:
+- Hyprland
+- KDE Plasma
+
+However in order to make them good, **we need contributions**. If you are interested in helping us, please take a look at [CONTRIBUTING.md](https://github.com/NyarchLinux/NyarchLinux/blob/main/CONTRIBUTING.md).
+<br />
+Please note that we want to make the different spins as coherent as possible, so applications have to follow their desktop philosophy if possible. <br />
 For example, in the Gnome spin Komikku, a GTK application to read mangas, is preinstalled. In a KDE Plasma spin, if there is a similar application written using QT, it should be included.
