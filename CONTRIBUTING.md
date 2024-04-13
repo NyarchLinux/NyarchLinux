@@ -1,6 +1,13 @@
 # Contributing
 
-We are happy to hear that you are interested in contributing to Nyarch Linux. 
+We are happy to hear that you are interested in contributing to Nyarch Linux. <br />
+In general, if you want to help, you can countact us on [Discord](https://discord.gg/xuw6BNXXE7). If you don't like Discord, feel free to contact us anywhere else.
+
+## Memes, funny posts, comments and social media management
+Nyarch Linux has a community-based social management system. 
+If you think about a comment that you find funny or insightful and you want NyarchLinux to post it on any social media platform, please suggest it in our [Discord](https://discord.gg/xuw6BNXXE7).
+You can also suggest general post ideas, as well as media content for YouTube/TikTok/Twitch/Instagram.
+
 
 ## Reporting bugs
 If you encounter a bug in Nyarch Linux, please open an issue describing it. Note that Nyarch Linux is not 
@@ -15,7 +22,6 @@ If your art is here and you don't want to, or if there are no credits to your wo
 ## Adding new features
 ### Our guidelines
 <b>Before making a suggestion or a pull request, check that it follows at least a good part of these guidelines</b>
-- The ISO should not overcome 3.6GB of size, so avoid suggesting features that highly increase its size
 - (not required) Applications must look coherent in the desktop spin, and coherent to its theme if possible.
 - (not strictly required) If a desktop uses a certain toolkit for its applications, the main pre-installed applications must use that toolkit if possible.
 For example, while the Gnome spin provides Komikku (GTK applications to read manga), KDE spin should provide a QT equivalent if there is. 
