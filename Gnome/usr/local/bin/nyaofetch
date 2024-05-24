@@ -1,20 +1,23 @@
 #!/bin/bash
 EMPTY=""
 if [ "$KITTY_WINDOW_ID" != "$EMPTY" ]; then
-        neofetch --backend kitty --source ~/.config/neofetch/logo.png
+        if [ $(tput cols) -gt "105" ]; then
+            fastfetch --config ~/.config/fastfetch/config_extended.jsonc
+        else
+            fastfetch
+        fi
 else
         if [ $(tput cols) -gt "125" ]; then
-                neofetch --ascii ~/.config/neofetch/ascii90 --gap '-880'
+                fastfetch --config ~/.config/fastfetch/config_extended.jsonc --logo ~/.config/fastfetch/ascii90 --logo-type file
         elif [ $(tput cols) -gt "110" ]; then
-                neofetch --ascii ~/.config/neofetch/ascii70 --gap '-808'
+                fastfetch --config ~/.config/fastfetch/config_extended.jsonc --logo ~/.config/fastfetch/ascii70 --logo-type file
         elif [ $(tput cols) -gt "100" ]; then
-                neofetch --ascii ~/.config/neofetch/ascii60 --gap '-730'
+                fastfetch --config ~/.config/fastfetch/config_extended.jsonc --logo ~/.config/fastfetch/ascii60 --logo-type file
         elif [ $(tput cols) -gt "90" ]; then
-                neofetch --ascii ~/.config/neofetch/ascii70 --gap '-808'
+                fastfetch --logo ~/.config/fastfetch/ascii50 --logo-type file
         else
-                neofetch --ascii ~/.config/neofetch/ascii50 --gap '-670'
+                fastfetch --logo ~/.config/fastfetch/ascii50 --logo-type file
         fi
 fi
-
 
 
