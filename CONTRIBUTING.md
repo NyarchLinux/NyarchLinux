@@ -3,6 +3,8 @@
 We are happy to hear that you are interested in contributing to Nyarch Linux. <br />
 In general, if you want to help, you can countact us on [Discord](https://discord.gg/xuw6BNXXE7). If you don't like Discord, feel free to contact us anywhere else.
 
+Also read [Gnome/BUILDING.md](https://github.com/NyarchLinux/NyarchLinux/blob/main/Gnome/BUILDING.md) if you are interested in building Nyarch Gnome.
+
 ## Memes, funny posts, comments and social media management
 Nyarch Linux has a community-based social management system. 
 If you think about a comment that you find funny or insightful and you want NyarchLinux to post it on any social media platform, please suggest it in our [Discord](https://discord.gg/xuw6BNXXE7).
