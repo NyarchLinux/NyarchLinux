@@ -1,2 +1,2 @@
 [org/gnome/login-screen]
-  logo='/etc/dconf/db/gdm.d'
+  logo='/etc/dconf/db/gdm.d/nyarch_logo.png'
