@@ -70,16 +70,18 @@ pacman -S --needed --noconfirm archiso mkinitcpio-archiso
 cpezreleng () {
 cp -r /usr/share/archiso/configs/releng/ ./ezreleng
 rm ./ezreleng/airootfs/etc/motd
-rm -r ./ezreleng/airootfs/etc/pacman.d
-rm -r ./ezreleng/airootfs/etc/xdg
+rm ./ezreleng/airootfs/etc/mkinitcpio.d/linux.preset
+rm ./ezreleng/airootfs/etc/ssh/sshd_config.d/10-archiso.conf
 rm -r ./ezreleng/grub
 rm -r ./ezreleng/efiboot
 rm -r ./ezreleng/syslinux
+rm -r ./ezreleng/airootfs/etc/xdg
+rm -r ./ezreleng/airootfs/etc/mkinitcpio.conf.d
 }
 
 # Copy ezrepo to opt
 cpezrepo () {
-cp -r ./opt/ezrepo /opt/
+cp -r ./opt/ezrepo/ /opt/
 }
 
 # Remove ezrepo from opt
@@ -87,7 +89,7 @@ rmezrepo () {
 rm -r /opt/ezrepo
 }
 
-# Remove auto-login, cloud-init, hyper-v, ied, sshd, & vmware services
+# Remove auto-login, cloud-init, hyper-v, iwd, sshd, & vmware services
 rmunitsd () {
 rm -r ./ezreleng/airootfs/etc/systemd/system/cloud-init.target.wants
 # rm -r ./ezreleng/airootfs/etc/systemd/system/getty@tty1.service.d
@@ -133,12 +135,13 @@ cpmyfiles () {
 cp pacman.conf ./ezreleng/
 cp profiledef.sh ./ezreleng/
 cp packages.x86_64 ./ezreleng/
-cp -r grub ./ezreleng/
-cp -r efiboot ./ezreleng/
-cp -r syslinux ./ezreleng/
-cp -r etc ./ezreleng/airootfs/
-cp -r opt ./ezreleng/airootfs/
-cp -r usr ./ezreleng/airootfs/
+cp -r grub/ ./ezreleng/
+cp -r efiboot/ ./ezreleng/
+cp -r syslinux/ ./ezreleng/
+cp -r etc/ ./ezreleng/airootfs/
+cp -r opt/ ./ezreleng/airootfs/
+cp -r usr/ ./ezreleng/airootfs/
+mkdir -p ./ezreleng/airootfs/etc/skel
 mkdir -p ./ezreleng/airootfs/var/lib/
 cp -r /var/lib/flatpak/ ./ezreleng/airootfs/var/lib/flatpak
 ln -sf /usr/share/ezarcher ./ezreleng/airootfs/etc/skel/ezarcher
@@ -152,7 +155,7 @@ echo "${MYHOSTNM}" > ./ezreleng/airootfs/etc/hostname
 # Create passwd file
 crtpasswd () {
 echo "root:x:0:0:root:/root:/usr/bin/bash
-"${MYUSERNM}":x:1010:1010::/home/"${MYUSERNM}":/bin/bash" > ./ezreleng/airootfs/etc/passwd
+"${MYUSERNM}":x:1010:1010::/home/"${MYUSERNM}":/usr/bin/bash" > ./ezreleng/airootfs/etc/passwd
 }
 
 # Create group file
