@@ -325,7 +325,6 @@ gvfs-google
 loupe
 mutter
 nautilus
-neofetch
 pavucontrol
 polkit-gnome
 rygel
@@ -387,6 +386,7 @@ flatpak
 #lib32-vulkan-icd-loader
 
 # Nyarch
+fastfetch
 shortwave
 fragments
 lollypop
