@@ -65,6 +65,7 @@ mtools
 nano
 nbd
 ndisc6
+neovim
 nfs-utils
 nilfs-utils
 nmap
@@ -90,31 +91,21 @@ rxvt-unicode-terminfo
 screen
 sdparm
 sg3_utils
-smartmontools
-sof-firmware
 squashfs-tools
 sudo
 syslinux
-systemd-resolvconf
-tcpdump
-terminus-font
-testdisk
 tmux
 tpm2-tss
 udftools
 usb_modeswitch
 usbmuxd
 usbutils
-vim
 virtualbox-guest-utils
-vpnc
 wireless-regdb
 wireless_tools
 wpa_supplicant
 wvdial
 xfsprogs
-xl2tpd
-zsh
 
 # System
 archiso
@@ -127,7 +118,6 @@ bluez
 bluez-utils
 cdrtools
 cmake
-cryfs
 devtools
 dkms
 dvd+rw-tools
@@ -145,7 +135,6 @@ hspell
 htop
 hunspell
 hunspell-en_us
-hwdata
 hwdetect
 hwinfo
 libburn
@@ -161,12 +150,6 @@ packagekit
 pacman-contrib
 pacutils
 pahole
-perl
-perl-data-dump
-perl-json
-perl-lwp-protocol-https
-perl-term-readline-gnu
-perl-term-ui
 pkgfile
 plocate
 python-setuptools
@@ -234,7 +217,6 @@ wireplumber
 # pulseaudio-bluetooth
 # pulseaudio-equalizer
 # pulseaudio-jack
-sox
 x265
 x264
 xvidcore
@@ -275,9 +257,7 @@ ttf-liberation
 ttf-bitstream-vera
 ttf-ubuntu-font-family
 cantarell-fonts
-ttf-croscore
 ttf-carlito
-ttf-caladea
 noto-fonts
 opendesktop-fonts
 ttf-opensans
@@ -415,7 +395,6 @@ neofetch
 nodejs
 npm
 geary
-chromium
 kitty
 vte3
 gnome-terminal-transparency
