@@ -639,6 +639,10 @@ const CompressDialog = class {
         this._dialog.show_all();
         this._updateStatus();
         this._extensionDropdown.connect('clicked', () => {
+            this._extensionPopover.connect('closed', ()=>{
+                this._desktopManager.hidePopup();
+            });
+            this._desktopManager.showPopup();
             this._extensionPopoverContainer.show_all();
             this._extensionPopover.popup();
             for (let index in this._compressOptions) {

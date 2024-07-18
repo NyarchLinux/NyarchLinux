@@ -125,5 +125,11 @@
       <description>String template, takes the package, repo and arch as attributes.</description>
     </key>
 
+    <key name="linkify-menu" type="b">
+      <default>true</default>
+      <summary>Underline updates as links</summary>
+      <description></description>
+    </key>
+
   </schema>
 </schemalist>

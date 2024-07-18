@@ -2,40 +2,43 @@
 //
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-'use strict';
+import GIRepository from 'gi://GIRepository';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+
+import Config from '../../config.js';
 
 const Tweener = imports.tweener.tweener;
 
-const GIRepository = imports.gi.GIRepository;
-const GLib = imports.gi.GLib;
-const GObject = imports.gi.GObject;
 
-const Config = imports.config;
+let Gvc = null;
+try {
+    // Add gnome-shell's typelib dir to the search path
+    const typelibDir = GLib.build_filenamev([Config.GNOME_SHELL_LIBDIR, 'gnome-shell']);
+    GIRepository.Repository.prepend_search_path(typelibDir);
+    GIRepository.Repository.prepend_library_path(typelibDir);
 
-
-// Add gnome-shell's typelib dir to the search path
-const typelibDir = GLib.build_filenamev([Config.GNOME_SHELL_LIBDIR, 'gnome-shell']);
-GIRepository.Repository.prepend_search_path(typelibDir);
-GIRepository.Repository.prepend_library_path(typelibDir);
-
-const Gvc = imports.gi.Gvc;
+    Gvc = (await import('gi://Gvc')).default;
+} catch (e) {}
 
 
 /**
  * Extend Gvc.MixerStream with a property for returning a user-visible name
  */
-Object.defineProperty(Gvc.MixerStream.prototype, 'display_name', {
-    get: function () {
-        try {
-            if (!this.get_ports().length)
-                return this.description;
+if (Gvc) {
+    Object.defineProperty(Gvc.MixerStream.prototype, 'display_name', {
+        get: function () {
+            try {
+                if (!this.get_ports().length)
+                    return this.description;
 
-            return `${this.get_port().human_port} (${this.description})`;
-        } catch (e) {
-            return this.description;
-        }
-    },
-});
+                return `${this.get_port().human_port} (${this.description})`;
+            } catch (e) {
+                return this.description;
+            }
+        },
+    });
+}
 
 
 /**
@@ -110,7 +113,7 @@ class Stream {
  * The Mixer class uses GNOME Shell's Gvc library to control the system volume
  * and offers a few convenience functions.
  */
-const Mixer = GObject.registerClass({
+const Mixer = !Gvc ? null : GObject.registerClass({
     GTypeName: 'GSConnectAudioMixer',
 }, class Mixer extends Gvc.MixerControl {
     _init(params) {
@@ -190,7 +193,7 @@ const Mixer = GObject.registerClass({
      */
     lowerVolume(duration = 1) {
         try {
-            if (this.output.volume > 0.15) {
+            if (this.output && this.output.volume > 0.15) {
                 this._previousVolume = Number(this.output.volume);
                 this.output.fade(0.15, duration);
             }
@@ -204,7 +207,7 @@ const Mixer = GObject.registerClass({
      */
     muteVolume() {
         try {
-            if (this.output.muted)
+            if (!this.output || this.output.muted)
                 return;
 
             this.output.muted = true;
@@ -219,7 +222,7 @@ const Mixer = GObject.registerClass({
      */
     muteMicrophone() {
         try {
-            if (this.input.muted)
+            if (!this.input || this.input.muted)
                 return;
 
             this.input.muted = true;
@@ -265,5 +268,4 @@ const Mixer = GObject.registerClass({
 /**
  * The service class for this component
  */
-var Component = Mixer;
-
+export default Mixer;

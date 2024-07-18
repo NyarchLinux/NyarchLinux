@@ -69,6 +69,7 @@ var DesktopManager = class {
             }
         }
         this._selectedFiles = null;
+        this._popupCounter = 0;
 
         this._premultiplied = false;
         try {
@@ -779,7 +780,20 @@ var DesktopManager = class {
         DBusUtils.RemoteFileOperations.RedoRemote();
     }
 
+    showPopup() {
+        this._popupCounter++;
+    }
+
+    hidePopup() {
+        if (this._popupCounter > 0)
+            this._popupCounter--;
+        else
+            console.log("Mismatched hidePopup() and showPopup() calls");
+    }
+
     onKeyRelease(event, grid) {
+        if (this._popupCounter != 0)
+            return false;
         let symbol = event.get_keyval()[1];
         let selection = this.getCurrentSelection(false);
         if ((symbol == Gdk.KEY_Left) || (symbol == Gdk.KEY_Right) ||
@@ -846,9 +860,12 @@ var DesktopManager = class {
             newItem.setSelected();
             return false;
         }
+        return false;
     }
 
     onKeyPress(event, grid) {
+        if (this._popupCounter != 0)
+            return false;
         let symbol = event.get_keyval()[1];
         let isCtrl = (event.get_state()[1] & Gdk.ModifierType.CONTROL_MASK) != 0;
         let isShift = (event.get_state()[1] & Gdk.ModifierType.SHIFT_MASK) != 0;
@@ -1717,7 +1734,7 @@ var DesktopManager = class {
         this.unselectAll();
         if (!this._renameWindow) {
             this._renamingFile = fileItem.fileName;
-            this._renameWindow = new AskRenamePopup.AskRenamePopup(fileItem, allowReturnOnSameName, () => {
+            this._renameWindow = new AskRenamePopup.AskRenamePopup(this, fileItem, allowReturnOnSameName, () => {
                 this._renameWindow = null;
                 this.newFolderDoRename = null;
                 this._renamingFile = null;

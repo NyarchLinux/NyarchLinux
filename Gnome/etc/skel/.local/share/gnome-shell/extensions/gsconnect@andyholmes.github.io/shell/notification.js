@@ -9,6 +9,7 @@ import St from 'gi://St';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
+import * as Calendar from 'resource:///org/gnome/shell/ui/calendar.js';
 import * as NotificationDaemon from 'resource:///org/gnome/shell/ui/notificationDaemon.js';
 
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
@@ -44,11 +45,10 @@ const GtkNotificationDaemon = Main.notificationDaemon._gtkNotificationDaemon.con
  */
 const NotificationBanner = GObject.registerClass({
     GTypeName: 'GSConnectNotificationBanner',
-}, class NotificationBanner extends MessageTray.NotificationBanner {
+}, class NotificationBanner extends Calendar.NotificationMessage {
 
-    _init(notification) {
-        super._init(notification);
-
+    constructor(notification) {
+        super(notification);
         if (notification.requestReplyId !== undefined)
             this._addReplyAction();
     }
@@ -56,7 +56,7 @@ const NotificationBanner = GObject.registerClass({
     _addReplyAction() {
         if (!this._buttonBox) {
             this._buttonBox = new St.BoxLayout({
-                style_class: 'notification-actions',
+                style_class: 'notification-buttons-bin',
                 x_expand: true,
             });
             this.setActionArea(this._buttonBox);
@@ -207,13 +207,10 @@ const Source = GObject.registerClass({
     }
 
     /*
-     * Override to control notification spawning
+     * Parse the id to determine if it's a repliable notification, device
+     * notification or a regular local notification
      */
-    addNotification(notificationId, notificationParams, showBanner) {
-        this._notificationPending = true;
-
-        // Parse the id to determine if it's a repliable notification, device
-        // notification or a regular local notification
+    _parseNotificationId(notificationId) {
         let idMatch, deviceId, requestReplyId, remoteId, localId;
 
         if ((idMatch = REPLY_REGEX.exec(notificationId))) {
@@ -227,42 +224,39 @@ const Source = GObject.registerClass({
         } else {
             localId = notificationId;
         }
+        return [idMatch, deviceId, requestReplyId, remoteId, localId];
+    }
 
-        // Fix themed icons
-        if (notificationParams.icon) {
-            let gicon = Gio.Icon.deserialize(notificationParams.icon);
-
-            if (gicon instanceof Gio.ThemedIcon) {
-                gicon = getIcon(gicon.names[0]);
-                notificationParams.icon = gicon.serialize();
-            }
-        }
-
-        let notification = this._notifications[localId];
+    /*
+     * Add notification to source or update existing notification with extra
+     * GsConnect information
+     */
+    _createNotification(notification) {
+        const [idMatch, deviceId, requestReplyId, remoteId, localId] = this._parseNotificationId(notification.id);
+        const cachedNotification = this._notifications[localId];
 
         // Check if this is a repeat
-        if (notification) {
-            notification.requestReplyId = requestReplyId;
+        if (cachedNotification) {
+            cachedNotification.requestReplyId = requestReplyId;
 
             // Bail early If @notificationParams represents an exact repeat
-            const title = notificationParams.title.unpack();
-            const body = notificationParams.body
-                ? notificationParams.body.unpack()
+            const title = notification.title;
+            const body = notification.body
+                ? notification.body
                 : null;
 
-            if (notification.title === title &&
-                notification.bannerBodyText === body) {
-                this._notificationPending = false;
-                return;
-            }
+            if (cachedNotification.title === title &&
+                cachedNotification.body === body)
+                return cachedNotification;
 
-            notification.title = title;
-            notification.bannerBodyText = body;
+            cachedNotification.title = title;
+            cachedNotification.body = body;
+
+            return cachedNotification;
+        }
 
         // Device Notification
-        } else if (idMatch) {
-            notification = this._createNotification(notificationParams);
-
+        if (idMatch) {
             notification.deviceId = deviceId;
             notification.remoteId = remoteId;
             notification.requestReplyId = requestReplyId;
@@ -272,41 +266,66 @@ const Source = GObject.registerClass({
                 delete this._notifications[localId];
             });
 
-            this._notifications[localId] = notification;
-
         // Service Notification
         } else {
-            notification = this._createNotification(notificationParams);
             notification.connect('destroy', (notification, reason) => {
                 delete this._notifications[localId];
             });
-            this._notifications[localId] = notification;
         }
 
-        if (showBanner)
-            this.showNotification(notification);
-        else
-            this.pushNotification(notification);
+        this._notifications[localId] = notification;
+        return notification;
+    }
+
+    /*
+     * Override to control notification spawning
+     */
+    addNotification(notification) {
+        this._notificationPending = true;
+
+        // Fix themed icons
+        if (notification.icon) {
+            let gicon = notification.icon;
+
+            if (gicon instanceof Gio.ThemedIcon) {
+                gicon = getIcon(gicon.names[0]);
+                notification.icon = gicon.serialize();
+            }
+        }
+
+        const createdNotification = this._createNotification(notification);
+        this._addNotificationToMessageTray(createdNotification);
 
         this._notificationPending = false;
     }
 
     /*
-     * Override to raise the usual notification limit (3)
+     * Reimplementation of MessageTray.addNotification to raise the usual
+     * notification limit (3)
      */
-    pushNotification(notification) {
-        if (this.notifications.includes(notification))
+    _addNotificationToMessageTray(notification) {
+        if (this.notifications.includes(notification)) {
+            notification.acknowledged = false;
             return;
+        }
 
-        while (this.notifications.length >= 10)
-            this.notifications.shift().destroy(MessageTray.NotificationDestroyedReason.EXPIRED);
+        while (this.notifications.length >= 10) {
+            const [oldest] = this.notifications;
+            oldest.destroy(MessageTray.NotificationDestroyedReason.EXPIRED);
+        }
 
         notification.connect('destroy', this._onNotificationDestroy.bind(this));
-        notification.connect('notify::acknowledged', this.countUpdated.bind(this));
-        this.notifications.push(notification);
-        this.emit('notification-added', notification);
+        notification.connect('notify::acknowledged', () => {
+            this.countUpdated();
 
-        this.countUpdated();
+            // If acknowledged was set to false try to show the notification again
+            if (!notification.acknowledged)
+                this.emit('notification-request-banner', notification);
+        });
+        this.notifications.push(notification);
+
+        this.emit('notification-added', notification);
+        this.emit('notification-request-banner', notification);
     }
 
     createBanner(notification) {
@@ -325,8 +344,10 @@ export function patchGSConnectNotificationSource() {
     if (source !== undefined) {
         // Patch in the subclassed methods
         source._closeGSConnectNotification = Source.prototype._closeGSConnectNotification;
+        source._parseNotificationId = Source.prototype._parseNotificationId;
+        source._createNotification = Source.prototype._createNotification;
         source.addNotification = Source.prototype.addNotification;
-        source.pushNotification = Source.prototype.pushNotification;
+        source._addNotificationToMessageTray = Source.prototype._addNotificationToMessageTray;
         source.createBanner = Source.prototype.createBanner;
 
         // Connect to existing notifications
@@ -353,8 +374,10 @@ const _ensureAppSource = function (appId) {
 
     if (source._appId === APP_ID) {
         source._closeGSConnectNotification = Source.prototype._closeGSConnectNotification;
+        source._parseNotificationId = Source.prototype._parseNotificationId;
+        source._createNotification = Source.prototype._createNotification;
         source.addNotification = Source.prototype.addNotification;
-        source.pushNotification = Source.prototype.pushNotification;
+        source._addNotificationToMessageTray = Source.prototype._addNotificationToMessageTray;
         source.createBanner = Source.prototype.createBanner;
     }
 
@@ -378,29 +401,6 @@ export function unpatchGtkNotificationDaemon() {
 const _addNotification = NotificationDaemon.GtkNotificationDaemonAppSource.prototype.addNotification;
 
 export function patchGtkNotificationSources() {
-    // This should diverge as little as possible from the original
-    // eslint-disable-next-line func-style
-    const addNotification = function (notificationId, notificationParams, showBanner) {
-        this._notificationPending = true;
-
-        if (this._notifications[notificationId])
-            this._notifications[notificationId].destroy(MessageTray.NotificationDestroyedReason.REPLACED);
-
-        const notification = this._createNotification(notificationParams);
-        notification.connect('destroy', (notification, reason) => {
-            this._withdrawGSConnectNotification(notification, reason);
-            delete this._notifications[notificationId];
-        });
-        this._notifications[notificationId] = notification;
-
-        if (showBanner)
-            this.showNotification(notification);
-        else
-            this.pushNotification(notification);
-
-        this._notificationPending = false;
-    };
-
     // eslint-disable-next-line func-style
     const _withdrawGSConnectNotification = function (id, notification, reason) {
         if (reason !== MessageTray.NotificationDestroyedReason.DISMISSED)
@@ -442,7 +442,6 @@ export function patchGtkNotificationSources() {
         );
     };
 
-    NotificationDaemon.GtkNotificationDaemonAppSource.prototype.addNotification = addNotification;
     NotificationDaemon.GtkNotificationDaemonAppSource.prototype._withdrawGSConnectNotification = _withdrawGSConnectNotification;
 }
 

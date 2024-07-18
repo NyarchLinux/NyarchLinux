@@ -316,6 +316,18 @@
 					</property>
 				</object>
 			</child>
+			<child>
+				<object class="AdwActionRow">
+					<property name="title" translatable="yes">Display package names as links (underlined)</property>
+					<property name="activatable-widget">field_linkifymenu</property>
+					<child type="prefix">
+						<object class="GtkSwitch" id="field_linkifymenu">
+							<property name="valign">3</property>
+							<property name="active">true</property>
+						</object>
+					</child>
+				</object>
+			</child>
 		</object>
 	</child>
 

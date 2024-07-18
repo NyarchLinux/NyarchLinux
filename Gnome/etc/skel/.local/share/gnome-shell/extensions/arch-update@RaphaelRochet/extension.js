@@ -53,6 +53,7 @@ let STRIP_VERSIONS_N   = true;
 let AUTO_EXPAND_LIST   = 0;
 let DISABLE_PARSING    = false;
 let PACKAGE_INFO_CMD   = "xdg-open https://www.archlinux.org/packages/%2$s/%3$s/%1$s";
+let LINKIFY_MENU       = true;
 
 /* Variables we want to keep when extension is disabled (eg during screen lock) */
 let FIRST_BOOT         = 1;
@@ -112,7 +113,6 @@ class ArchUpdateIndicator extends Button {
 		// Prepare the special menu : a submenu for updates list that will look like a regular menu item when disabled
 		// Scrollability will also be taken care of by the popupmenu
 		this.menuExpander = new PopupMenu.PopupSubMenuMenuItem('');
-		this.menuExpander.menu.box.style_class = 'arch-updates-list';
 
 		// Other standard menu items
 		let settingsMenuItem = new PopupMenu.PopupMenuItem(_('Settings'));
@@ -234,6 +234,7 @@ class ArchUpdateIndicator extends Button {
 		STRIP_VERSIONS_N = this._settings.get_boolean('strip-versions-in-notification');
 		AUTO_EXPAND_LIST = this._settings.get_int('auto-expand-list');
 		PACKAGE_INFO_CMD = this._settings.get_string('package-info-cmd');
+		LINKIFY_MENU = this._settings.get_boolean('linkify-menu');
 		this.managerMenuItem.visible = ( MANAGER_CMD != "" );
 		this._checkShowHide();
 		this._updateStatus();
@@ -439,7 +440,7 @@ class ArchUpdateIndicator extends Button {
 							// Not an update
 							this.menuExpander.menu.box.add_child( new St.Label({ text: item, style_class: 'arch-updates-update-title' }) );
 						} else {
-							let hBox = new St.BoxLayout({ vertical: false });
+							let hBox = new St.BoxLayout({ vertical: false, style_class: 'arch-updates-update-line' });
 							hBox.add_child( this._createPackageLabel(matches[1]) );
 							if (!STRIP_VERSIONS) {
 								hBox.add_child( new St.Label({
@@ -477,7 +478,7 @@ class ArchUpdateIndicator extends Button {
 			let label = new St.Label({
 				text: name,
 				x_expand: true,
-				style_class: 'arch-updates-update-name-link'
+				style_class: LINKIFY_MENU ? 'arch-updates-update-name-link': 'arch-updates-update-name'
 			});
 			let button = new St.Button({
 				child: label,

@@ -145,14 +145,13 @@ export function canHibernateOrSleep(callName, asyncCallback) {
 export const SettingsConnectionsHandler = class ArcMenuSettingsConnectionsHandler {
     constructor(settings) {
         this._connections = new Map();
-        this._eventPrefix = 'changed::';
         this._settings = settings;
     }
 
     connect(...args) {
         const callback = args.pop();
         for (const event of args)
-            this._connections.set(this._settings.connect(this._eventPrefix + event, callback), this._settings);
+            this._connections.set(this._settings.connect(`changed::${event}`, callback), this._settings);
     }
 
     destroy() {
@@ -406,7 +405,8 @@ export function ensureActorVisibleInScrollView(actor, axis = Clutter.Orientation
     }
 
     const isVertical = axis === Clutter.Orientation.VERTICAL;
-    const {adjustment} = isVertical ? parent.vscroll : parent.hscroll;
+    const {hadjustment, vadjustment} = getScrollViewAdjustments(parent);
+    const adjustment = isVertical ? vadjustment : hadjustment;
     const [startPoint, endPoint] = isVertical ? [y1, y2] : [x1, x2];
     const [value, lower_, upper, stepIncrement_, pageIncrement_, pageSize] = adjustment.get_values();
 
@@ -521,3 +521,19 @@ export const ExtensionState = {
     ACTIVE: 1,
     INACTIVE: 2,
 };
+
+/**
+ *
+ * @param {St.ScrollView} scrollView
+ * @description ScrollView.(hv)scroll was deprecated in GNOME 46.\
+ *              Check which ScrollView property to use to maintain compatibility with GNOME 45 and 46.
+ */
+export function getScrollViewAdjustments(scrollView) {
+    const hadjustment = scrollView.hadjustment ?? scrollView.hscroll.adjustment;
+    const vadjustment = scrollView.vadjustment ?? scrollView.vscroll.adjustment;
+
+    return {
+        hadjustment,
+        vadjustment,
+    };
+}

@@ -107,7 +107,7 @@ export const LocationAppInfo = GObject.registerClass({
             Gio.Icon.$gtype),
         'cancellable': GObject.ParamSpec.object(
             'cancellable', 'cancellable', 'cancellable',
-            GObject.ParamFlags.READWRITE | GObject.ParamFlags.CONSTRUCT_ONLY,
+            GObject.ParamFlags.READWRITE,
             Gio.Cancellable.$gtype),
     },
 }, class LocationAppInfo extends Gio.DesktopAppInfo {
@@ -274,7 +274,8 @@ export const LocationAppInfo = GObject.registerClass({
                 iconsQuery.join(','),
                 Gio.FileQueryInfoFlags.NONE,
                 GLib.PRIORITY_LOW, cancellable);
-            icons.standard = info.get_icon();
+            if (info.has_attribute(Gio.FILE_ATTRIBUTE_STANDARD_ICON))
+                icons.standard = info.get_icon();
         } catch (e) {
             if (e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND) ||
                 e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_MOUNTED))
@@ -1095,7 +1096,7 @@ function makeLocationApp(params) {
                 return window.get_gtk_application_id() === null;
 
             return true;
-        } catch (e) {
+        } catch {
             return false;
         }
     });
@@ -1410,6 +1411,8 @@ export class Removables {
             appInfo.volume === volume);
         if (volumeIndex !== -1) {
             const [volumeApp] = this._volumeApps.splice(volumeIndex, 1);
+            // We don't care about cancelling the ongoing operations from now on.
+            volumeApp.appInfo.cancellable = null;
             volumeApp.destroy();
             this.emit('changed');
         }

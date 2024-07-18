@@ -98,7 +98,7 @@ class MenuButtonWidget extends St.BoxLayout {
 
 export const MenuButton = GObject.registerClass(
 class ArcMenuMenuButton extends PanelMenu.Button {
-    _init(panelInfo, index) {
+    _init(panelInfo, monitorIndex) {
         super._init(0.5, null, true);
 
         this.set({
@@ -111,11 +111,12 @@ class ArcMenuMenuButton extends PanelMenu.Button {
         this._settings = ArcMenuManager.settings;
 
         // Link search providers to this menu
-        this.searchProviderDisplayId = `ArcMenu_${index}`;
+        this.searchProviderDisplayId = `ArcMenu_${monitorIndex}`;
 
         this._panel = panelInfo.panel;
         this._panelBox = panelInfo.panelBox;
         this._panelParent = panelInfo.panelParent;
+        this._monitorIndex = monitorIndex;
 
         this.menu.destroy();
         this.menu = null;
@@ -181,13 +182,11 @@ class ArcMenuMenuButton extends PanelMenu.Button {
         const dtp = Extension.lookupByUUID(Constants.DASH_TO_PANEL_UUID);
         this._dtpSettings = dtp.getSettings('org.gnome.shell.extensions.dash-to-panel');
 
-        const monitorIndex = Main.layoutManager.findIndexForActor(this);
-        const side = Utils.getDashToPanelPosition(this._dtpSettings, monitorIndex);
+        const side = Utils.getDashToPanelPosition(this._dtpSettings, this._monitorIndex);
         this.updateArrowSide(side);
 
         this.dtpPostionChangedID = this._dtpSettings.connect('changed::panel-positions', () => {
-            const newMonitorIndex = Main.layoutManager.findIndexForActor(this);
-            const newSide = Utils.getDashToPanelPosition(this._dtpSettings, newMonitorIndex);
+            const newSide = Utils.getDashToPanelPosition(this._dtpSettings, this._monitorIndex);
             this.updateArrowSide(newSide);
         });
     }
@@ -234,8 +233,7 @@ class ArcMenuMenuButton extends PanelMenu.Button {
                 this.arcMenuContextMenu._boxPointer.setSourceAlignment(.5);
                 this.arcMenu._boxPointer.setSourceAlignment(.5);
             } else if (this._dtp?.state === Utils.ExtensionState.ACTIVE) {
-                const monitorIndex = Main.layoutManager.findIndexForActor(this);
-                const side = Utils.getDashToPanelPosition(this._dtpSettings, monitorIndex);
+                const side = Utils.getDashToPanelPosition(this._dtpSettings, this._monitorIndex);
                 this.updateArrowSide(side, false);
             } else {
                 this.updateArrowSide(St.Side.TOP, false);
@@ -300,8 +298,7 @@ class ArcMenuMenuButton extends PanelMenu.Button {
             return;
 
         this.updateArrowSide(St.Side.TOP);
-        const monitorIndex = Main.layoutManager.findIndexForActor(this);
-        const rect = Main.layoutManager.getWorkAreaForMonitor(monitorIndex);
+        const rect = Main.layoutManager.getWorkAreaForMonitor(this._monitorIndex);
         const positionX = Math.round(rect.x + (rect.width / 2));
         let positionY;
 
@@ -317,14 +314,26 @@ class ArcMenuMenuButton extends PanelMenu.Button {
 
     vfunc_event(event) {
         if (event.type() === Clutter.EventType.BUTTON_PRESS) {
-            if (event.get_button() === Clutter.BUTTON_PRIMARY || event.get_button() === Clutter.BUTTON_MIDDLE)
+            const clickAction = this._getClickActionForButton(event.get_button());
+            if (clickAction === Constants.MenuButtonClickAction.ARCMENU)
                 this.toggleMenu();
-            else if (event.get_button() === Clutter.BUTTON_SECONDARY)
+            else if (clickAction === Constants.MenuButtonClickAction.CONTEXT_MENU)
                 this.arcMenuContextMenu.toggle();
         } else if (event.type() === Clutter.EventType.TOUCH_BEGIN) {
             this.toggleMenu();
         }
         return Clutter.EVENT_PROPAGATE;
+    }
+
+    _getClickActionForButton(button) {
+        if (button === Clutter.BUTTON_PRIMARY)
+            return this._settings.get_enum('menu-button-left-click-action');
+        else if (button === Clutter.BUTTON_SECONDARY)
+            return this._settings.get_enum('menu-button-right-click-action');
+        else if (button === Clutter.BUTTON_MIDDLE)
+            return this._settings.get_enum('menu-button-middle-click-action');
+        else
+            return -1;
     }
 
     closeOtherMenus() {

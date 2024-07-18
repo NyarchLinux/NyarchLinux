@@ -105,6 +105,30 @@ export default class ArcMenu extends Extension {
         return false;
     }
 
+    /**
+     *
+     * @param {*} panel Dash to Panel's 'panel'
+     * @param {boolean} panelExtensionEnabled is Dash to Panel enabled
+     * @returns {boolean}
+     * @description Returns true if `panel` isPrimary and isStandalone\
+     *              and ArcMenu setting 'dash-to-panel-standalone' is enabled.
+     */
+    _isPrimaryStandalonePanel(panel, panelExtensionEnabled) {
+        const standalone = this.settings.get_boolean('dash-to-panel-standalone');
+        if (!standalone)
+            return false;
+
+        const dtpEnabled = global.dashToPanel && panelExtensionEnabled;
+        if (!dtpEnabled)
+            return false;
+
+        const isPrimaryStandalone = panel.isPrimary && panel.isStandalone;
+        if (isPrimaryStandalone)
+            return true;
+
+        return false;
+    }
+
     _connectExtensionSignals() {
         const dtpActive = this._isExtensionActive(Constants.DASH_TO_PANEL_UUID);
         if (dtpActive && global.dashToPanel)
@@ -157,29 +181,33 @@ export default class ArcMenu extends Extension {
                 continue;
             }
 
-            // Dash to Panel and AzTaskbar don't store the actual 'panel' in their global 'panels' object
-            let panel = panels[i].panel ?? panels[i];
-            const panelParent = panels[i].panel ? panels[i] : Main.panel;
-
-            let panelBox;
-            if (panels[i].panelBox) // case Dash To Panel
-                panelBox = panels[i].panelBox;
-            else if (panels[i].panel) // case AzTaskbar
-                panelBox = panels[i];
-            else
+            let panel, panelBox, panelParent;
+            if (panelExtensionEnabled) {
+                panel = panels[i].panel;
+                panelBox = dtpActive ? panels[i].panelBox : panels[i];
+                panelParent = panels[i];
+            } else {
+                panel = panels[i];
                 panelBox = Main.layoutManager.panelBox;
+                panelParent = Main.panel;
+            }
 
-            // Place ArcMenu in main top panel when
-            // Dash to Panel setting "Keep original gnome-shell top panel" is on
-            const isStandalone = this.settings.get_boolean('dash-to-panel-standalone') &&
-                                 global.dashToPanel && panelExtensionEnabled;
-            if (isStandalone && ('isPrimary' in panelParent && panelParent.isPrimary) && panelParent.isStandalone)
+            const isPrimaryStandalone = this._isPrimaryStandalonePanel(panelParent, panelExtensionEnabled);
+            if (isPrimaryStandalone)
                 panel = Main.panel;
 
-            const panelInfo = {panel, panelBox, panelParent};
-            const settingsController = new MenuSettingsController(panelInfo, i);
+            const primaryPanelIndex = Main.layoutManager.primaryMonitor?.index;
 
-            settingsController.monitorIndex = panelParent.monitor?.index ?? 0;
+            let monitorIndex = 0;
+            if (panelParent.monitor) // App Icons Taskbar 'panelParent' may be Main.panel, which doesnt have a 'monitor' property.
+                monitorIndex = panelParent.monitor.index;
+            else if (panel === Main.panel)
+                monitorIndex = primaryPanelIndex ?? 0;
+
+            const isPrimaryPanel = monitorIndex === primaryPanelIndex;
+            const panelInfo = {panel, panelBox, panelParent, isPrimaryPanel};
+
+            const settingsController = new MenuSettingsController(panelInfo, monitorIndex);
 
             if (panelExtensionEnabled)
                 panel._amDestroyId = panel.connect('destroy', () => this._disableButton(settingsController));

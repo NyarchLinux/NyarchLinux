@@ -1147,6 +1147,13 @@ export class ViewAllAppsButton extends BaseMenuItem {
     }
 
     activate(event) {
+        const showAppsAction = this._settings.get_enum('all-apps-button-action');
+        if (showAppsAction === Constants.AllAppsButtonAction.ALL_PROGRAMS) {
+            this._menuLayout.displayAllApps();
+            super.activate(event);
+            return;
+        }
+
         const defaultMenuView = this._settings.get_enum('default-menu-view');
         if (defaultMenuView === Constants.DefaultMenuView.PINNED_APPS ||
             defaultMenuView === Constants.DefaultMenuView.FREQUENT_APPS)
@@ -1844,10 +1851,10 @@ export class PinnedAppsFolderMenuItem extends DraggableMenuItem {
         this._subMenuPopup.box.insert_child_at_index(this._entryBox, 0);
 
         // Empty actor to center the title
-        let ghostButton = new Clutter.Actor();
+        const ghostButton = new Clutter.Actor();
         this._entryBox.add_child(ghostButton);
 
-        let stack = new Shell.Stack({
+        const stack = new Shell.Stack({
             x_expand: true,
             x_align: Clutter.ActorAlign.CENTER,
         });
@@ -1953,15 +1960,15 @@ export class PinnedAppsFolderMenuItem extends DraggableMenuItem {
     }
 
     _maybeUpdateFolderName() {
-        let folderName = this._name;
-        let newFolderName = this._entry.text.trim();
+        const folderName = this._name;
+        const newFolderName = this._entry.text.trim();
 
         if (newFolderName.length === 0 || newFolderName === folderName)
             return;
 
         const pinnedAppsList = this._settings.get_value('pinned-apps').deepUnpack();
         const parent = this.get_parent();
-        let index = parent.getItemPosition(this);
+        const index = parent.getItemPosition(this);
         pinnedAppsList[index].name = newFolderName;
         this._settings.set_value('pinned-apps', new GLib.Variant('aa{ss}', pinnedAppsList));
     }
@@ -1990,7 +1997,7 @@ export class PinnedAppsFolderMenuItem extends DraggableMenuItem {
         if (this._folderAppList.length === 0) {
             if (this._subMenuPopup.isOpen)
                 this._subMenuPopup.toggle();
-            let keys = this.folderSettings.settings_schema.list_keys();
+            const keys = this.folderSettings.settings_schema.list_keys();
             for (const key of keys)
                 this.folderSettings.reset(key);
 
@@ -2122,7 +2129,7 @@ export class PinnedAppsFolderMenuItem extends DraggableMenuItem {
         const layoutManager = parent.layout_manager;
         const pinnedAppsList = this._settings.get_value('pinned-apps').deepUnpack();
 
-        let index = layoutManager.getItemPosition(source);
+        const index = layoutManager.getItemPosition(source);
         pinnedAppsList.splice(index, 1);
         this._settings.set_value('pinned-apps', new GLib.Variant('aa{ss}', pinnedAppsList));
 
@@ -2289,7 +2296,7 @@ export class PinnedAppsMenuItem extends DraggableMenuItem {
         if (!acceptDrop)
             return false;
 
-        let folderId = GLib.uuid_string_random();
+        const folderId = GLib.uuid_string_random();
         // Create the new folder
         let folderSettings;
         try {

@@ -1,10 +1,11 @@
 import St from 'gi://St';
-import Shell from 'gi://Shell';
 import Meta from 'gi://Meta';
-import Mtk from 'gi://Mtk';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-import { PaintSignals } from '../effects/paint_signals.js';
+import { PaintSignals } from '../conveniences/paint_signals.js';
+
+import { Pipeline } from '../conveniences/pipeline.js';
+import { DummyPipeline } from '../conveniences/dummy_pipeline.js';
 
 const DASH_TO_PANEL_UUID = 'dash-to-panel@jderose9.github.com';
 const PANEL_STYLES = [
@@ -56,26 +57,9 @@ export const PanelBlur = class PanelBlur {
         // update the classname if the panel to have or have not light text
         this.update_light_text_classname();
 
-        // connect to every background change (even without changing image)
-        // FIXME this signal is fired very often, so we should find another one
-        //       fired only when necessary (but that still catches all cases)
-        this.connections.connect(
-            Main.layoutManager._backgroundGroup,
-            'notify',
-            _ => this.actors_list.forEach(actors =>
-                this.update_wallpaper(actors)
-            )
-        );
-
         // connect to monitors change
-        this.connections.connect(
-            Main.layoutManager,
-            'monitors-changed',
-            _ => {
-                if (Main.screenShield && !Main.screenShield.locked) {
-                    this.reset();
-                }
-            }
+        this.connections.connect(Main.layoutManager, 'monitors-changed',
+            _ => this.reset()
         );
 
         this.enabled = true;
@@ -131,9 +115,6 @@ export const PanelBlur = class PanelBlur {
         if (!actors)
             // if the actors is not blurred, blur it
             this.blur_panel(panel);
-        else
-            // if it is blurred, update the blur anyway
-            this.change_blur_type(actors);
     }
 
     /// Blur a panel
@@ -145,71 +126,74 @@ export const PanelBlur = class PanelBlur {
             panel_box = panel_box.get_parent();
         }
 
-        let monitor = this.find_monitor_for(panel);
+        let monitor = Main.layoutManager.findMonitorForActor(panel);
         if (!monitor)
             return;
 
-        let background_parent = new St.Widget({
-            name: 'topbar-blurred-background-parent',
-            x: 0, y: 0, width: 0, height: 0
-        });
+        let background_group = new Meta.BackgroundGroup(
+            { name: 'bms-panel-backgroundgroup', width: 0, height: 0 }
+        );
 
-        let background = this.settings.panel.STATIC_BLUR
-            ? new Meta.BackgroundActor({
-                meta_display: global.display,
-                monitor: monitor.index
-            })
-            : new St.Widget;
+        let background, bg_manager;
+        let static_blur = this.settings.panel.STATIC_BLUR;
+        if (static_blur) {
+            let bg_manager_list = [];
+            const pipeline = new Pipeline(
+                this.effects_manager,
+                global.blur_my_shell._pipelines_manager,
+                this.settings.panel.PIPELINE
+            );
+            background = pipeline.create_background_with_effects(
+                monitor.index, bg_manager_list,
+                background_group, 'bms-panel-blurred-widget'
+            );
+            bg_manager = bg_manager_list[0];
+        }
+        else {
+            const pipeline = new DummyPipeline(this.effects_manager, this.settings.panel);
+            [background, bg_manager] = pipeline.create_background_with_effect(
+                background_group, 'bms-panel-blurred-widget'
+            );
 
-        background_parent.add_child(background);
+            let paint_signals = new PaintSignals(this.connections);
 
-        // insert background parent
-        panel_box.insert_child_at_index(background_parent, 0);
+            // HACK
+            //
+            //`Shell.BlurEffect` does not repaint when shadows are under it. [1]
+            //
+            // This does not entirely fix this bug (shadows caused by windows
+            // still cause artifacts), but it prevents the shadows of the panel
+            // buttons to cause artifacts on the panel itself
+            //
+            // [1]: https://gitlab.gnome.org/GNOME/gnome-shell/-/issues/2857
 
-        let blur = new Shell.BlurEffect({
-            brightness: this.settings.panel.CUSTOMIZE
-                ? this.settings.panel.BRIGHTNESS
-                : this.settings.BRIGHTNESS,
-            radius: (this.settings.panel.CUSTOMIZE
-                ? this.settings.panel.SIGMA
-                : this.settings.SIGMA) * 2 * monitor.geometry_scale,
-            mode: this.settings.panel.STATIC_BLUR
-                ? Shell.BlurMode.ACTOR
-                : Shell.BlurMode.BACKGROUND
-        });
+            {
+                if (this.settings.HACKS_LEVEL === 1) {
+                    this._log("panel hack level 1");
 
-        // store the scale in the effect in order to retrieve it in set_sigma
-        blur.scale = monitor.geometry_scale;
+                    paint_signals.disconnect_all();
+                    paint_signals.connect(background, pipeline.effect);
+                } else {
+                    paint_signals.disconnect_all();
+                }
+            }
+        }
 
-        let color = this.effects_manager.new_color_effect({
-            color: this.settings.panel.CUSTOMIZE
-                ? this.settings.panel.COLOR
-                : this.settings.COLOR
-        }, this.settings);
+        // insert the background group to the panel box
+        panel_box.insert_child_at_index(background_group, 0);
 
-        let noise = this.effects_manager.new_noise_effect({
-            noise: this.settings.panel.CUSTOMIZE
-                ? this.settings.panel.NOISE_AMOUNT
-                : this.settings.NOISE_AMOUNT,
-            lightness: this.settings.panel.CUSTOMIZE
-                ? this.settings.panel.NOISE_LIGHTNESS
-                : this.settings.NOISE_LIGHTNESS
-        }, this.settings);
-
-        let paint_signals = new PaintSignals(this.connections);
-
+        // the object that is used to remembering each elements that is linked to the blur effect
         let actors = {
-            widgets: { panel, panel_box, background, background_parent },
-            effects: { blur, color, noise },
-            paint_signals,
+            widgets: { panel, panel_box, background, background_group },
+            static_blur,
             monitor,
+            bg_manager,
             is_dtp_panel
         };
-
         this.actors_list.push(actors);
 
-        // perform updates
-        this.change_blur_type(actors);
+        // update the size of the actor
+        this.update_size(actors);
 
         // connect to panel, panel_box and its parent position or size change
         // this should fire update_size every time one of its params change
@@ -228,120 +212,27 @@ export const PanelBlur = class PanelBlur {
             'notify::position',
             _ => this.update_size(actors)
         );
-    }
 
-    update_all_blur_type() {
-        this.actors_list.forEach(actors => this.change_blur_type(actors));
-    }
-
-    change_blur_type(actors) {
-        let is_static = this.settings.panel.STATIC_BLUR;
-
-        // reset widgets to right state
-        actors.widgets.background_parent.remove_child(actors.widgets.background);
-        this.effects_manager.remove(actors.effects.blur);
-        this.effects_manager.remove(actors.effects.color);
-        this.effects_manager.remove(actors.effects.noise);
-
-        // create new background actor
-        actors.widgets.background = is_static
-            ? new Meta.BackgroundActor({
-                meta_display: global.display,
-                monitor: this.find_monitor_for(actors.widgets.panel).index
-            })
-            : new St.Widget;
-
-        // change blur mode
-        actors.effects.blur.set_mode(is_static ? 0 : 1);
-
-        // disable other effects if the blur is dynamic, as they makes it opaque
-        actors.effects.color._static = is_static;
-        actors.effects.noise._static = is_static;
-        actors.effects.color.update_enabled();
-        actors.effects.noise.update_enabled();
-
-        // add the effects in order
-        actors.widgets.background.add_effect(actors.effects.color);
-        actors.widgets.background.add_effect(actors.effects.noise);
-        actors.widgets.background.add_effect(actors.effects.blur);
-
-        // add the background actor behing the panel
-        actors.widgets.background_parent.add_child(actors.widgets.background);
-
-        // perform updates
-        this.update_wallpaper(actors);
-        this.update_size(actors);
-
-
-        // HACK
-        //
-        //`Shell.BlurEffect` does not repaint when shadows are under it. [1]
-        //
-        // This does not entirely fix this bug (shadows caused by windows
-        // still cause artifacts), but it prevents the shadows of the panel
-        // buttons to cause artifacts on the panel itself
-        //
-        // [1]: https://gitlab.gnome.org/GNOME/gnome-shell/-/issues/2857
-
-        if (!is_static) {
-            if (this.settings.HACKS_LEVEL === 1) {
-                this._log("panel hack level 1");
-                actors.paint_signals.disconnect_all();
-
-                let rp = () => { actors.effects.blur.queue_repaint(); };
-
-                this.connections.connect(actors.widgets.panel, [
-                    'enter-event', 'leave-event', 'button-press-event'
-                ], rp);
-
-                actors.widgets.panel.get_children().forEach(child => {
-                    this.connections.connect(child, [
-                        'enter-event', 'leave-event', 'button-press-event'
-                    ], rp);
-                });
-            } else if (this.settings.HACKS_LEVEL === 2) {
-                this._log("panel hack level 2");
-                actors.paint_signals.disconnect_all();
-
-                actors.paint_signals.connect(
-                    actors.widgets.background, actors.effects.blur
-                );
-            } else {
-                actors.paint_signals.disconnect_all();
-            }
-        }
-    }
-
-    update_wallpaper(actors) {
-        // if static blur, get right wallpaper and update blur with it
-        if (this.settings.panel.STATIC_BLUR) {
-            let bg = Main.layoutManager._backgroundGroup.get_child_at_index(
-                Main.layoutManager.monitors.length
-                - this.find_monitor_for(actors.widgets.panel).index - 1
-            );
-            if (bg && bg.get_content())
-                actors.widgets.background.content.set({
-                    background: bg.get_content().background
-                });
-            else
-                this._warn("could not get background for panel");
-        }
+        // connect to the panel getting destroyed
+        this.connections.connect(
+            panel,
+            'destroy',
+            _ => this.destroy_blur(actors, true)
+        );
     }
 
     update_size(actors) {
         let panel = actors.widgets.panel;
         let panel_box = actors.widgets.panel_box;
         let background = actors.widgets.background;
-        let monitor = this.find_monitor_for(panel);
+        let monitor = Main.layoutManager.findMonitorForActor(panel);
         if (!monitor)
             return;
 
         let [width, height] = panel_box.get_size();
-        background.width = width;
-        background.height = height;
 
         // if static blur, need to clip the background
-        if (this.settings.panel.STATIC_BLUR) {
+        if (actors.static_blur) {
             // an alternative to panel.get_transformed_position, because it
             // sometimes yields NaN (probably when the actor is not fully
             // positionned yet)
@@ -353,32 +244,15 @@ export const PanelBlur = class PanelBlur {
             background.set_clip(x, y, width, height);
             background.x = -x;
             background.y = -y;
-
-            // fixes a bug where the blur is washed away when changing the sigma
-            this.invalidate_blur(actors);
         } else {
             background.x = panel.x;
             background.y = panel.y;
+            background.width = width;
+            background.height = height;
         }
 
         // update the monitor panel is on
-        actors.monitor = this.find_monitor_for(panel);
-    }
-
-    /// An helper function to find the monitor in which an actor is situated,
-    /// there might be a pre-existing function in GLib already
-    find_monitor_for(actor) {
-        let extents = actor.get_transformed_extents();
-        let rect = new Mtk.Rectangle({
-            x: extents.get_x(),
-            y: extents.get_y(),
-            width: extents.get_width(),
-            height: extents.get_height(),
-        });
-
-        let index = global.display.get_monitor_index_for_rect(rect);
-
-        return Main.layoutManager.monitors[index];
+        actors.monitor = Main.layoutManager.findMonitorForActor(panel);
     }
 
     /// Connect when overview if opened/closed to hide/show the blur accordingly
@@ -396,22 +270,22 @@ export const PanelBlur = class PanelBlur {
         ) {
             if (!this.settings.hidetopbar.COMPATIBILITY) {
                 this.connections.connect(
-                    Main.overview, 'showing', this.hide.bind(this)
+                    Main.overview, 'showing', _ => this.hide()
                 );
                 this.connections.connect(
-                    Main.overview, 'hidden', this.show.bind(this)
+                    Main.overview, 'hidden', _ => this.show()
                 );
             } else {
                 let appDisplay = Main.overview._overview._controls._appDisplay;
 
                 this.connections.connect(
-                    appDisplay, 'show', this.hide.bind(this)
+                    appDisplay, 'show', _ => this.hide()
                 );
                 this.connections.connect(
-                    appDisplay, 'hide', this.show.bind(this)
+                    appDisplay, 'hide', _ => this.show()
                 );
                 this.connections.connect(
-                    Main.overview, 'hidden', this.show.bind(this)
+                    Main.overview, 'hidden', _ => this.show()
                 );
             }
 
@@ -425,12 +299,12 @@ export const PanelBlur = class PanelBlur {
         ) {
             // connect to overview opening/closing
             this.connections.connect(Main.overview, ['showing', 'hiding'],
-                this.update_visibility.bind(this)
+                _ => this.update_visibility()
             );
 
             // connect to session mode update
             this.connections.connect(Main.sessionMode, 'updated',
-                this.update_visibility.bind(this)
+                _ => this.update_visibility()
             );
 
             // manage already-existing windows
@@ -450,7 +324,7 @@ export const PanelBlur = class PanelBlur {
 
             // connect to a workspace change
             this.connections.connect(global.window_manager, 'switch-workspace',
-                this.update_visibility.bind(this)
+                _ => this.update_visibility()
             );
 
             // perform early update
@@ -600,75 +474,45 @@ export const PanelBlur = class PanelBlur {
             );
     }
 
-    /// Fixes a bug where the blur is washed away when changing the sigma, or
-    /// enabling/disabling other effects.
-    invalidate_blur(actors) {
-        if (this.settings.panel.STATIC_BLUR && actors.widgets.background)
-            actors.widgets.background.get_content()?.invalidate();
-    }
-
-    invalidate_all_blur() {
-        this.actors_list.forEach(actors => this.invalidate_blur(actors));
-    }
-
-    set_sigma(s) {
-        this.actors_list.forEach(actors => {
-            actors.effects.blur.radius = s * 2 * actors.effects.blur.scale;
-            this.invalidate_blur(actors);
-        });
-    }
-
-    set_brightness(b) {
-        this.actors_list.forEach(actors => {
-            actors.effects.blur.brightness = b;
-        });
-    }
-
-    set_color(c) {
-        this.actors_list.forEach(actors => {
-            actors.effects.color.color = c;
-        });
-    }
-
-    set_noise_amount(n) {
-        this.actors_list.forEach(actors => {
-            actors.effects.noise.noise = n;
-        });
-    }
-
-    set_noise_lightness(l) {
-        this.actors_list.forEach(actors => {
-            actors.effects.noise.lightness = l;
-        });
+    update_pipeline() {
+        this.actors_list.forEach(actors =>
+            actors.bg_manager._bms_pipeline.change_pipeline_to(
+                this.settings.panel.PIPELINE
+            )
+        );
     }
 
     show() {
         this.actors_list.forEach(actors => {
-            actors.widgets.background_parent.show();
+            actors.widgets.background.show();
         });
     }
 
     hide() {
         this.actors_list.forEach(actors => {
-            actors.widgets.background_parent.hide();
+            actors.widgets.background.hide();
         });
     }
 
-    // destroy every blurred background left, necessary after sleep
-    destroy_blur_effects() {
-        Main.panel?.get_parent()?.get_children().forEach(
-            child => {
-                if (child.name === 'topbar-blurred-background-parent') {
-                    child.get_children().forEach(meta_background_actor => {
-                        meta_background_actor.get_effects().forEach(effect => {
-                            this.effects_manager.remove(effect);
-                        });
-                    });
-                    child.destroy_all_children();
-                    child.destroy();
-                }
-            }
-        );
+    // IMPORTANT: do never call this in a mutable `this.actors_list.forEach`
+    destroy_blur(actors, panel_already_destroyed) {
+        this.set_should_override_panel(actors, false);
+
+        actors.bg_manager._bms_pipeline.destroy();
+
+        if (panel_already_destroyed)
+            actors.bg_manager.backgroundActor = null;
+        actors.bg_manager.destroy();
+
+        if (!panel_already_destroyed) {
+            actors.widgets.panel_box.remove_child(actors.widgets.background_group);
+            actors.widgets.background_group.destroy_all_children();
+            actors.widgets.background_group.destroy();
+        }
+
+        let index = this.actors_list.indexOf(actors);
+        if (index >= 0)
+            this.actors_list.splice(index, 1);
     }
 
     disable() {
@@ -678,21 +522,8 @@ export const PanelBlur = class PanelBlur {
 
         this.update_light_text_classname(true);
 
-        this.actors_list.forEach(actors => {
-            this.set_should_override_panel(actors, false);
-            this.effects_manager.remove(actors.effects.noise);
-            this.effects_manager.remove(actors.effects.color);
-            this.effects_manager.remove(actors.effects.blur);
-            try {
-                actors.widgets.panel_box.remove_child(
-                    actors.widgets.background_parent
-                );
-            } catch (e) { }
-            actors.widgets.background_parent?.destroy();
-        });
-
-        this.destroy_blur_effects();
-
+        const immutable_actors_list = [...this.actors_list];
+        immutable_actors_list.forEach(actors => this.destroy_blur(actors, false));
         this.actors_list = [];
 
         this.connections.disconnect_all();

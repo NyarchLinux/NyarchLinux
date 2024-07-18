@@ -16,10 +16,11 @@ import {StandaloneRunner} from './standaloneRunner.js';
 import * as Utils from './utils.js';
 
 export const MenuSettingsController = class {
-    constructor(panelInfo, index) {
+    constructor(panelInfo, monitorIndex) {
+        this.panelInfo = panelInfo;
         this.panel = panelInfo.panel;
-        this.currentMonitorIndex = 0;
-        this.isPrimaryPanel = index === 0;
+        this.monitorIndex = monitorIndex;
+        this.isPrimaryPanel = panelInfo.isPrimaryPanel;
 
         this._extension = ArcMenuManager.extension;
         this._settingsControllers = ArcMenuManager.settingsControllers;
@@ -35,7 +36,7 @@ export const MenuSettingsController = class {
         }
 
         this._settingsConnections = new Utils.SettingsConnectionsHandler(this._settings);
-        this._menuButton = new MenuButton(panelInfo, index);
+        this._menuButton = new MenuButton(panelInfo, this.monitorIndex);
 
         if (this.isPrimaryPanel) {
             this._overrideOverlayKey = new Keybinder.OverrideOverlayKey();
@@ -258,19 +259,22 @@ export const MenuSettingsController = class {
     }
 
     _toggleMenuOnMonitor(monitor) {
+        let currentMonitorIndex = 0;
         for (let i = 0; i < this._settingsControllers.length; i++) {
             const menuButton = this._settingsControllers[i]._menuButton;
             const {monitorIndex} = this._settingsControllers[i];
+
             if (monitor.index === monitorIndex) {
-                this.currentMonitorIndex = i;
+                currentMonitorIndex = i;
             } else {
                 if (menuButton.arcMenu.isOpen)
                     menuButton.toggleMenu();
                 menuButton.closeContextMenu();
             }
         }
+
         // open the current monitors menu
-        this._settingsControllers[this.currentMonitorIndex]._menuButton.toggleMenu();
+        this._settingsControllers[currentMonitorIndex]._menuButton.toggleMenu();
     }
 
     _closeAllArcMenus() {
@@ -295,37 +299,38 @@ export const MenuSettingsController = class {
     }
 
     _updateHotKeyBinder() {
-        if (this.isPrimaryPanel) {
-            const [runnerHotkey] = this._settings.get_strv('runner-hotkey');
-            const [menuHotkey] = this._settings.get_strv('arcmenu-hotkey');
+        if (!this.isPrimaryPanel)
+            return;
 
-            this._customKeybinding.unbind('ToggleArcMenu');
-            this._customKeybinding.unbind('ToggleRunnerMenu');
+        const [runnerHotkey] = this._settings.get_strv('runner-hotkey');
+        const [menuHotkey] = this._settings.get_strv('arcmenu-hotkey');
+
+        this._customKeybinding.unbind('ToggleArcMenu');
+        this._customKeybinding.unbind('ToggleRunnerMenu');
+        this._overrideOverlayKey.disable();
+
+        if (runnerHotkey) {
+            if (!this.runnerMenu) {
+                this.runnerMenu = new StandaloneRunner();
+                this.runnerMenu.initiate();
+            }
+            if (runnerHotkey === Constants.SUPER_L) {
+                this._overrideOverlayKey.enable(() => this.toggleStandaloneRunner());
+            } else {
+                this._customKeybinding.bind('ToggleRunnerMenu', 'runner-hotkey',
+                    () => this.toggleStandaloneRunner());
+            }
+        } else if (this.runnerMenu) {
+            this.runnerMenu.destroy();
+            this.runnerMenu = null;
+        }
+
+        if (menuHotkey === Constants.SUPER_L) {
             this._overrideOverlayKey.disable();
-
-            if (runnerHotkey) {
-                if (!this.runnerMenu) {
-                    this.runnerMenu = new StandaloneRunner();
-                    this.runnerMenu.initiate();
-                }
-                if (runnerHotkey === Constants.SUPER_L) {
-                    this._overrideOverlayKey.enable(() => this.toggleStandaloneRunner());
-                } else {
-                    this._customKeybinding.bind('ToggleRunnerMenu', 'runner-hotkey',
-                        () => this.toggleStandaloneRunner());
-                }
-            } else if (this.runnerMenu) {
-                this.runnerMenu.destroy();
-                this.runnerMenu = null;
-            }
-
-            if (menuHotkey === Constants.SUPER_L) {
-                this._overrideOverlayKey.disable();
-                this._overrideOverlayKey.enable(() => this.toggleMenus());
-            } else if (menuHotkey) {
-                this._customKeybinding.bind('ToggleArcMenu', 'arcmenu-hotkey',
-                    () => this.toggleMenus());
-            }
+            this._overrideOverlayKey.enable(() => this.toggleMenus());
+        } else if (menuHotkey) {
+            this._customKeybinding.bind('ToggleArcMenu', 'arcmenu-hotkey',
+                () => this.toggleMenus());
         }
     }
 

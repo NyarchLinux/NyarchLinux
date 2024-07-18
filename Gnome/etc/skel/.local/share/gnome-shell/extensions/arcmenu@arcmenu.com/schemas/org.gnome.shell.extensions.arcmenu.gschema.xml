@@ -34,6 +34,11 @@
         <value value="1" nick="Center"/>
         <value value="2" nick="Right"/>
     </enum>
+    <enum id='org.gnome.shell.extensions.arcmenu.menu-button-click-action'>
+        <value value="0" nick="ArcMenu"/>
+        <value value="1" nick="ContextMenu"/>
+        <value value="2" nick="None"/>
+    </enum>
     <enum id='org.gnome.shell.extensions.arcmenu.raven-position'>
         <value value="0" nick="Left"/>
         <value value="1" nick="Right"/>
@@ -60,7 +65,11 @@
         <value value="2" nick="Frequent_Apps"/>
         <value value="3" nick="All_Programs"/>
     </enum>
-        <enum id='org.gnome.shell.extensions.arcmenu.default-menu-view-tognee'>
+    <enum id='org.gnome.shell.extensions.arcmenu.all-apps-button-action'>
+        <value value="0" nick="Categories_List"/>
+        <value value="1" nick="All_Programs"/>
+    </enum>
+    <enum id='org.gnome.shell.extensions.arcmenu.default-menu-view-tognee'>
         <value value="0" nick="Categories_List"/>
         <value value="1" nick="All_Programs"/>
     </enum>
@@ -233,14 +242,6 @@
       <default>'Off'</default>
       <summary>Force the menu to a specific location</summary>
     </key>
-    <key type="b" name="hotkey-open-primary-monitor">
-      <default>false</default>
-      <summary>show ArcMenu on primary monitor when using hotkey</summary>
-    </key>
-    <key type="b" name="runner-hotkey-open-primary-monitor">
-      <default>false</default>
-      <summary>show standalone Runner menu on primary monitor when using hotkey</summary>
-    </key>
     <key type="i" name="settings-width">
       <default>750</default>
       <summary>ArcMenu Settings Width</summary>
@@ -345,6 +346,18 @@
       <default>'Pinned_Apps'</default>
       <summary>Set ArcMenu Layout Default View</summary>
     </key>
+    <key enum="org.gnome.shell.extensions.arcmenu.menu-button-click-action" name="menu-button-left-click-action">
+      <default>'ArcMenu'</default>
+      <summary>Left Click Action on the Menu Button</summary>
+    </key>
+    <key enum="org.gnome.shell.extensions.arcmenu.menu-button-click-action" name="menu-button-right-click-action">
+      <default>'ContextMenu'</default>
+      <summary>Right Click Action on the Menu Button</summary>
+    </key>
+    <key enum="org.gnome.shell.extensions.arcmenu.menu-button-click-action" name="menu-button-middle-click-action">
+      <default>'ArcMenu'</default>
+      <summary>Middle Click Action on the Menu Button</summary>
+    </key>
     <key enum="org.gnome.shell.extensions.arcmenu.default-menu-view-tognee" name="default-menu-view-tognee">
       <default>'Categories_List'</default>
       <summary>Set Tognee Layout Default View</summary>
@@ -376,6 +389,10 @@
     <key type="b" name="enable-horizontal-flip">
       <default>false</default>
       <summary>Flip menu horizontally</summary>
+    </key>
+    <key enum="org.gnome.shell.extensions.arcmenu.all-apps-button-action" name="all-apps-button-action">
+      <default>'Categories_List'</default>
+      <summary>ArcMenu layout - 'All Apps' button action</summary>
     </key>
     <key type="b" name="windows-disable-frequent-apps">
       <default>false</default>
@@ -464,6 +481,14 @@
     <key name="runner-hotkey" type="as">
       <default>[]</default>
       <summary>Keybind to open standalone runner menu. Setting a keybind enables the standalone runner menu.</summary>
+    </key>
+    <key type="b" name="hotkey-open-primary-monitor">
+      <default>false</default>
+      <summary>Show ArcMenu on primary monitor when using hotkey</summary>
+    </key>
+    <key type="b" name="runner-hotkey-open-primary-monitor">
+      <default>false</default>
+      <summary>Show standalone Runner menu on primary monitor when using hotkey</summary>
     </key>
     <key name="position-in-panel" enum="org.gnome.shell.extensions.arcmenu.menu-position">
       <default>'Left'</default>

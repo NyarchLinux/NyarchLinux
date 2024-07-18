@@ -34,6 +34,6 @@ export default class DingPreferences extends ExtensionPreferences {
         const page = new Adw.PreferencesPage();
 
         window.add(page);
-        window.connect_after('show', ()=>{window.destroy();});
+        window.connect_after('show', ()=>{window.close();});
     }
 }

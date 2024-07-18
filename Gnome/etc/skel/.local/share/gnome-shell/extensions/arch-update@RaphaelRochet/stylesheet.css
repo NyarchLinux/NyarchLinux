@@ -17,9 +17,8 @@
     Copyright 2016-2022 Raphaël Rochet
 */
 
-.arch-updates-list {
-	margin: 10px;
-	padding-left: 20px;
+.arch-updates-update-line {
+	padding: 0px 1em 0px 1em;
 }
 
 .arch-updates-menubutton {

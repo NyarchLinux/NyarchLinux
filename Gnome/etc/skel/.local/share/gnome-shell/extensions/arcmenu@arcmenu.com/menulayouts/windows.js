@@ -10,6 +10,7 @@ import {BaseMenuLayout} from './baseMenuLayout.js';
 import * as Constants from '../constants.js';
 import * as MW from '../menuWidgets.js';
 import * as PlaceDisplay from '../placeDisplay.js';
+import * as Utils from '../utils.js';
 
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
@@ -290,8 +291,8 @@ export const Layout = class WindowsLayout extends BaseMenuLayout {
     }
 
     toggleExtrasMenu() {
-        const appsScrollBoxAdj = this.computerScrollBox.get_vscroll_bar().get_adjustment();
-        appsScrollBoxAdj.set_value(0);
+        const {vadjustment} = Utils.getScrollViewAdjustments(this.computerScrollBox);
+        vadjustment.set_value(0);
 
         const themeNode = this.arcMenu.actor.get_theme_node();
 
@@ -322,8 +323,8 @@ export const Layout = class WindowsLayout extends BaseMenuLayout {
         if (!this._settings.get_boolean('windows-disable-pinned-apps'))
             this.displayPinnedApps();
 
-        const appsScrollBoxAdj = this.pinnedAppsScrollBox.get_vscroll_bar().get_adjustment();
-        appsScrollBoxAdj.set_value(0);
+        const {vadjustment} = Utils.getScrollViewAdjustments(this.pinnedAppsScrollBox);
+        vadjustment.set_value(0);
     }
 
     displayFrequentApps() {

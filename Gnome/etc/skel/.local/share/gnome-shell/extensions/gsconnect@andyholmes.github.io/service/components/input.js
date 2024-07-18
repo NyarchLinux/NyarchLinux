@@ -2,12 +2,12 @@
 //
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-'use strict';
+import Gdk from 'gi://Gdk';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
 
-const Gdk = imports.gi.Gdk;
-const Gio = imports.gi.Gio;
-const GLib = imports.gi.GLib;
-const GObject = imports.gi.GObject;
+import AtspiController from './atspi.js';
 
 
 const SESSION_TIMEOUT = 15;
@@ -147,18 +147,7 @@ const RemoteSession = GObject.registerClass({
     }
 
     scrollPointer(dx, dy) {
-        // NOTE: NotifyPointerAxis only seems to work on Wayland, but maybe
-        //       NotifyPointerAxisDiscrete is the better choice anyways
-        if (HAVE_WAYLAND) {
-            this._call(
-                'NotifyPointerAxis',
-                GLib.Variant.new('(ddu)', [dx, dy, 0])
-            );
-            this._call(
-                'NotifyPointerAxis',
-                GLib.Variant.new('(ddu)', [0, 0, 1])
-            );
-        } else if (dy > 0) {
+        if (dy > 0) {
             this._call(
                 'NotifyPointerAxisDiscrete',
                 GLib.Variant.new('(ui)', [Gdk.ScrollDirection.UP, 1])
@@ -240,7 +229,7 @@ const RemoteSession = GObject.registerClass({
 });
 
 
-class Controller {
+export default class Controller {
     constructor() {
         this._nameAppearedId = 0;
         this._session = null;
@@ -264,50 +253,6 @@ class Controller {
             this._connection = null;
 
         return this._connection;
-    }
-
-    /**
-     * Check if this is a Wayland session, specifically for distributions that
-     * don't ship pipewire support (eg. Debian/Ubuntu).
-     *
-     * FIXME: this is a super ugly hack that should go away
-     *
-     * @return {boolean} %true if wayland is not supported
-     */
-    _checkWayland() {
-        if (HAVE_WAYLAND) {
-            // eslint-disable-next-line no-global-assign
-            HAVE_REMOTEINPUT = false;
-            const service = Gio.Application.get_default();
-
-            if (service === null)
-                return true;
-
-            // First we're going to disabled the affected plugins on all devices
-            for (const device of service.manager.devices.values()) {
-                const supported = device.settings.get_strv('supported-plugins');
-                let index;
-
-                if ((index = supported.indexOf('mousepad')) > -1)
-                    supported.splice(index, 1);
-
-                if ((index = supported.indexOf('presenter')) > -1)
-                    supported.splice(index, 1);
-
-                device.settings.set_strv('supported-plugins', supported);
-            }
-
-            // Second we need each backend to rebuild its identity packet and
-            // broadcast the amended capabilities to the network
-            for (const backend of service.manager.backends.values())
-                backend.buildIdentity();
-
-            service.manager.identify();
-
-            return true;
-        }
-
-        return false;
     }
 
     _onNameAppeared(connection, name, name_owner) {
@@ -394,12 +339,7 @@ class Controller {
             if (this.connection === null) {
                 debug('Falling back to Atspi');
 
-                // If we got here in Wayland, we need to re-adjust and bail
-                if (this._checkWayland())
-                    return;
-
-                const fallback = imports.service.components.atspi;
-                this._session = new fallback.Controller();
+                this._session = new AtspiController();
 
             // Mutter is available and there isn't another session starting
             } else if (this._sessionStarting === false) {
@@ -572,9 +512,3 @@ class Controller {
         }
     }
 }
-
-
-/**
- * The service class for this component
- */
-var Component = Controller;

@@ -28,6 +28,10 @@ To install, simply download as zip and unzip contents in ~/.local/share/gnome-sh
 
 ## Changes
 
+### v61
+- Make underlining package names an option
+- Fix visual bug when scrolling updates list
+
 ### v60
 - Fix menu error when output parsing is disabled
 - Move to GioUnix.InputStream instead of Gio.UnixInputStream

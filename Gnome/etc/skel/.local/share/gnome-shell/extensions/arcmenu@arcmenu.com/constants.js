@@ -66,6 +66,11 @@ export const DefaultMenuViewTognee = {
     ALL_PROGRAMS: 1,
 };
 
+export const AllAppsButtonAction = {
+    CATEGORIES_LIST: 0,
+    ALL_PROGRAMS: 1,
+};
+
 export const DefaultMenuViewRedmond = {
     ALL_PROGRAMS: 0,
     PINNED_APPS: 1,
@@ -218,6 +223,12 @@ export const MenuButtonAppearance = {
     NONE: 4,
 };
 
+export const MenuButtonClickAction = {
+    ARCMENU: 0,
+    CONTEXT_MENU: 1,
+    NONE: 2,
+};
+
 export const PowerType = {
     LOGOUT: 0,
     LOCK: 1,
@@ -357,6 +368,7 @@ export const DistroIcons = [
     {PATH: 'distro-pardus-symbolic', NAME: 'Pardus'},
     {PATH: 'distro-cachyos-symbolic', NAME: 'CachyOS'},
     {PATH: 'distro-nixos-symbolic', NAME: 'NixOS'},
+    {PATH: 'distro-oreon-symbolic', NAME: 'Oreon OS'},
 ];
 
 export const MenuLayout = {

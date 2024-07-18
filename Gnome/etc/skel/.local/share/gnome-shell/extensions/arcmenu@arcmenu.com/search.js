@@ -782,16 +782,17 @@ export class ArcSearchProviderInfo extends BaseMenuItem {
         super(menuLayout);
         this.provider = provider;
         this._menuLayout = menuLayout;
+        this._appInfo = provider.appInfo;
         this.style = 'padding-top: 6px; padding-bottom: 6px;';
         this.x_expand = false;
         this.x_align = Clutter.ActorAlign.START;
 
-        this.description = this.provider.appInfo.get_description();
+        this.description = this._appInfo.get_description ? this._appInfo.get_description() : null;
         if (this.description)
             this.description = this.description.split('\n')[0];
 
         this.label = new St.Label({
-            text: provider.appInfo.get_name(),
+            text: this._appInfo.get_name(),
             x_align: Clutter.ActorAlign.START,
             y_align: Clutter.ActorAlign.CENTER,
             style: 'font-weight: bold;',

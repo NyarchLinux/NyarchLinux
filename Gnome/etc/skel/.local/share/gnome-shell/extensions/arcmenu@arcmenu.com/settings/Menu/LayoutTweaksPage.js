@@ -831,6 +831,21 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         });
         tweaksGroup.add(defaultViewRow);
 
+
+        const allAppsButtonActionsList = new Gtk.StringList();
+        allAppsButtonActionsList.append(_('Categories List'));
+        allAppsButtonActionsList.append(_('All Programs'));
+
+        const allAppsButtonActionRow = new Adw.ComboRow({
+            title: _("'All Apps' Button Action"),
+            model: allAppsButtonActionsList,
+            selected: this._settings.get_enum('all-apps-button-action'),
+        });
+        allAppsButtonActionRow.connect('notify::selected', widget => {
+            this._settings.set_enum('all-apps-button-action', widget.selected);
+        });
+        tweaksGroup.add(allAppsButtonActionRow);
+
         const searchBarBottomDefault = true;
         tweaksGroup.add(this._createAvatarShapeRow());
         tweaksGroup.add(this._createSearchBarLocationRow(searchBarBottomDefault));

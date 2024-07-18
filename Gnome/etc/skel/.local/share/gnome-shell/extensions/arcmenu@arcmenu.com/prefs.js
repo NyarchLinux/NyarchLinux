@@ -20,7 +20,7 @@ export default class ArcMenuPrefs extends ExtensionPreferences {
             iconTheme.add_search_path(iconPath);
 
         window.set_search_enabled(true);
-        window.set_size_request(settings.get_int('settings-width'), settings.get_int('settings-height'));
+        window.set_default_size(settings.get_int('settings-width'), settings.get_int('settings-height'));
         window.set_title(_('ArcMenu Settings'));
 
         let pageChangedId = settings.connect('changed::prefs-visible-page', () => {

@@ -2,20 +2,18 @@
 //
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-'use strict';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
 
-const Gio = imports.gi.Gio;
-const GLib = imports.gi.GLib;
-const GObject = imports.gi.GObject;
-
-const Components = imports.service.components;
-const Config = imports.config;
-const DBus = imports.service.utils.dbus;
-const MPRIS = imports.service.components.mpris;
-const PluginBase = imports.service.plugin;
+import * as Components from '../components/index.js';
+import Config from '../../config.js';
+import * as DBus from '../utils/dbus.js';
+import  {Player} from '../components/mpris.js';
+import Plugin from '../plugin.js';
 
 
-var Metadata = {
+export const Metadata = {
     label: _('MPRIS'),
     description: _('Bidirectional remote media playback control'),
     id: 'org.gnome.Shell.Extensions.GSConnect.Plugin.MPRIS',
@@ -33,9 +31,9 @@ var Metadata = {
  *     https://specifications.freedesktop.org/mpris-spec/latest/
  *     https://github.com/GNOME/gnome-shell/blob/master/js/ui/mpris.js
  */
-var Plugin = GObject.registerClass({
+const MPRISPlugin = GObject.registerClass({
     GTypeName: 'GSConnectMPRISPlugin',
-}, class Plugin extends PluginBase.Plugin {
+}, class MPRISPlugin extends Plugin {
 
     _init(device) {
         super._init(device, 'mpris');
@@ -242,11 +240,22 @@ var Plugin = GObject.registerClass({
                 player.Volume = packet.body.setVolume / 100;
 
             if (packet.body.hasOwnProperty('Seek'))
-                await player.Seek(packet.body.Seek * 1000);
+                await player.Seek(packet.body.Seek);
 
             if (packet.body.hasOwnProperty('SetPosition')) {
-                const offset = (packet.body.SetPosition * 1000) - player.Position;
-                await player.Seek(offset);
+                // We want to avoid implementing this as a seek operation,
+                // because some players seek a fixed amount for every
+                // seek request, only respecting the sign of the parameter.
+                // (Chrome, for example, will only seek ±5 seconds, regardless
+                // what value is passed to Seek().)
+                const position = packet.body.SetPosition;
+                const metadata = player.Metadata;
+                if (metadata.hasOwnProperty('mpris:trackid')) {
+                    const trackId = metadata['mpris:trackid'];
+                    await player.SetPosition(trackId, position * 1000);
+                } else {
+                    await player.Seek(position * 1000 - player.Position);
+                }
             }
 
             // Information Request
@@ -448,7 +457,7 @@ var Plugin = GObject.registerClass({
  */
 const PlayerRemote = GObject.registerClass({
     GTypeName: 'GSConnectMPRISPlayerRemote',
-}, class PlayerRemote extends MPRIS.Player {
+}, class PlayerRemote extends Player {
 
     _init(device, identity) {
         super._init();
@@ -904,3 +913,5 @@ const PlayerRemote = GObject.registerClass({
         }
     }
 });
+
+export default MPRISPlugin;

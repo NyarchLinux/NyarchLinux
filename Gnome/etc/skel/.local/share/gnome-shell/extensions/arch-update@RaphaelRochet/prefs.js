@@ -58,6 +58,7 @@ export default class ArchUpdatePreferences extends ExtensionPreferences {
 		settings.bind('position' , buildable.get_object('field_position') , 'active' , Gio.SettingsBindFlags.DEFAULT);
 		settings.bind('position-number' , buildable.get_object('field_positionnumber') , 'value' , Gio.SettingsBindFlags.DEFAULT);
 		settings.bind('package-info-cmd' , buildable.get_object('field_packageinfocmd') , 'text' , Gio.SettingsBindFlags.DEFAULT);
+		settings.bind('linkify-menu' , buildable.get_object('field_linkifymenu') , 'active' , Gio.SettingsBindFlags.DEFAULT);
 
 		// Pref window layout
 		window.search_enabled = true;

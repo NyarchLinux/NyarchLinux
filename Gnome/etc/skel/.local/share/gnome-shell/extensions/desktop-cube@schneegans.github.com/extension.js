@@ -575,7 +575,7 @@ export default class DesktopCube extends Extension {
 
     // This is an exact copy of the original _onBarrierHit, with only one line disabled to
     // ignore the given ActionMode.
-    // https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/main/js/ui/layout.js#L1366
+    // https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/main/js/ui/layout.js#L1411
     this._pressureBarrier._onBarrierHit = function(barrier, event) {
       barrier._isHit = true;
 
@@ -645,6 +645,7 @@ export default class DesktopCube extends Extension {
         });
       } else {
         this._leftBarrier = new Meta.Barrier({
+          backend: global.backend,
           x1: 0,
           x2: 0,
           y1: 1,
@@ -653,6 +654,7 @@ export default class DesktopCube extends Extension {
         });
 
         this._rightBarrier = new Meta.Barrier({
+          backend: global.backend,
           x1: global.stage.width,
           x2: global.stage.width,
           y1: 1,

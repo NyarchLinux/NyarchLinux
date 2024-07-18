@@ -10,6 +10,7 @@ import {BaseMenuLayout} from './baseMenuLayout.js';
 import * as Constants from '../constants.js';
 import {IconGrid} from '../iconGrid.js';
 import * as MW from '../menuWidgets.js';
+import * as Utils from '../utils.js';
 
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
@@ -265,8 +266,8 @@ export const Layout = class UnityLayout extends BaseMenuLayout {
     }
 
     toggleCategoriesMenu() {
-        const appsScrollBoxAdj = this.categoriesScrollBox.get_vscroll_bar().get_adjustment();
-        appsScrollBoxAdj.set_value(0);
+        const {vadjustment} = Utils.getScrollViewAdjustments(this.categoriesScrollBox);
+        vadjustment.set_value(0);
 
         this.categoriesMenu.toggle();
     }

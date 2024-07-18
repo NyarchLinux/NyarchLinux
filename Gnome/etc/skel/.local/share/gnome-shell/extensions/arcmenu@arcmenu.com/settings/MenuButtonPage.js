@@ -51,7 +51,7 @@ class ArcMenuMenuButtonPage extends Adw.PreferencesPage {
         });
 
         const menuButtonAppearanceFrame = new Adw.PreferencesGroup({
-            title: _('Menu Button Appearance'),
+            title: _('Appearance'),
             header_suffix: restoreDefaultsButton,
         });
 
@@ -152,7 +152,7 @@ class ArcMenuMenuButtonPage extends Adw.PreferencesPage {
         this.add(menuButtonAppearanceFrame);
 
         const menuButtonIconFrame = new Adw.PreferencesGroup({
-            title: _('Menu Button Icon'),
+            title: _('Icon'),
         });
         const menuButtonIconButton = new Gtk.Button({
             label: _('Browse...'),
@@ -166,7 +166,7 @@ class ArcMenuMenuButtonPage extends Adw.PreferencesPage {
             });
         });
         const menuButtonIconRow = new Adw.ActionRow({
-            title: _('Choose a new icon'),
+            title: _('Choose a New Icon'),
             activatable_widget: menuButtonIconButton,
         });
         menuButtonIconRow.add_suffix(menuButtonIconButton);
@@ -199,40 +199,84 @@ class ArcMenuMenuButtonPage extends Adw.PreferencesPage {
 
         this.add(menuButtonIconFrame);
 
-        const menuButtonGroup = new Adw.PreferencesGroup({
-            title: _('Menu Button Styling'),
+        // Click Options -----------
+
+        const clickOptionsGroup = new Adw.PreferencesGroup({
+            title: _('Click Options'),
+        });
+        this.add(clickOptionsGroup);
+
+        const clickOptionsList = new Gtk.StringList();
+        clickOptionsList.append(_('ArcMenu'));
+        clickOptionsList.append(_('Context Menu'));
+        clickOptionsList.append(_('None'));
+
+        const leftClickRow = new Adw.ComboRow({
+            title: _('Left Click'),
+            model: clickOptionsList,
+            selected: this._settings.get_enum('menu-button-left-click-action'),
+        });
+        leftClickRow.connect('notify::selected', widget => {
+            this._settings.set_enum('menu-button-left-click-action', widget.selected);
+        });
+        clickOptionsGroup.add(leftClickRow);
+
+        const rightClickRow = new Adw.ComboRow({
+            title: _('Right Click'),
+            model: clickOptionsList,
+            selected: this._settings.get_enum('menu-button-right-click-action'),
+        });
+        rightClickRow.connect('notify::selected', widget => {
+            this._settings.set_enum('menu-button-right-click-action', widget.selected);
+        });
+        clickOptionsGroup.add(rightClickRow);
+
+        const middleClickRow = new Adw.ComboRow({
+            title: _('Middle Click'),
+            model: clickOptionsList,
+            selected: this._settings.get_enum('menu-button-middle-click-action'),
+        });
+        middleClickRow.connect('notify::selected', widget => {
+            this._settings.set_enum('menu-button-middle-click-action', widget.selected);
+        });
+        clickOptionsGroup.add(middleClickRow);
+
+        // -----------
+
+        const stylingGroup = new Adw.PreferencesGroup({
+            title: _('Styling'),
             description: _('Results may vary with third party themes'),
         });
-        this.add(menuButtonGroup);
+        this.add(stylingGroup);
 
         const buttonFGColorRow = this._createButtonColorRow(_('Foreground Color'), 'menu-button-fg-color');
-        menuButtonGroup.add(buttonFGColorRow);
+        stylingGroup.add(buttonFGColorRow);
 
         const buttonBGColorRow = this._createButtonColorRow(_('Background Color'), 'menu-button-bg-color');
-        menuButtonGroup.add(buttonBGColorRow);
+        stylingGroup.add(buttonBGColorRow);
 
         const buttonHoverBGColorRow = this._createButtonColorRow(`${_('Hover')} ${_('Background Color')}`, 'menu-button-hover-bg-color');
-        menuButtonGroup.add(buttonHoverBGColorRow);
+        stylingGroup.add(buttonHoverBGColorRow);
 
         const buttonHoverFGColorRow = this._createButtonColorRow(`${_('Hover')} ${_('Foreground Color')}`, 'menu-button-hover-fg-color');
-        menuButtonGroup.add(buttonHoverFGColorRow);
+        stylingGroup.add(buttonHoverFGColorRow);
 
         const buttonActiveBGColorRow = this._createButtonColorRow(`${_('Active')} ${_('Background Color')}`, 'menu-button-active-bg-color');
-        menuButtonGroup.add(buttonActiveBGColorRow);
+        stylingGroup.add(buttonActiveBGColorRow);
 
         const buttonActiveFGColorRow = this._createButtonColorRow(`${_('Active')} ${_('Foreground Color')}`, 'menu-button-active-fg-color');
-        menuButtonGroup.add(buttonActiveFGColorRow);
+        stylingGroup.add(buttonActiveFGColorRow);
 
         const buttonBorderRadiusRow = this._createSpinButtonToggleRow(_('Border Radius'),
             'menu-button-border-radius', 0, 25);
-        menuButtonGroup.add(buttonBorderRadiusRow);
+        stylingGroup.add(buttonBorderRadiusRow);
 
         const buttonBorderWidthRow = this._createSpinButtonToggleRow(_('Border Width'),
             'menu-button-border-width', 0, 5, _('Background colors required if set to 0'));
-        menuButtonGroup.add(buttonBorderWidthRow);
+        stylingGroup.add(buttonBorderWidthRow);
 
         const buttonBorderColorRow = this._createButtonColorRow(_('Border Color'), 'menu-button-border-color');
-        menuButtonGroup.add(buttonBorderColorRow);
+        stylingGroup.add(buttonBorderColorRow);
 
         this.restoreDefaults = () => {
             menuButtonAppearanceRow.selected = 0;

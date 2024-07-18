@@ -224,10 +224,12 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
     }
 
     resetScrollBarPosition() {
-        this.applicationsScrollBox?.vscroll.adjustment.set_value(0);
-        this.categoriesScrollBox?.vscroll.adjustment.set_value(0);
-        this.shortcutsScrollBox?.vscroll.adjustment.set_value(0);
-        this.actionsScrollBox?.vscroll.adjustment.set_value(0);
+        const scrollViews = [this.applicationsScrollBox, this.categoriesScrollBox, this.shortcutsScrollBox, this.actionsScrollBox];
+
+        scrollViews.forEach(scrollView => {
+            if (scrollView)
+                Utils.getScrollViewAdjustments(scrollView).vadjustment.set_value(0);
+        });
     }
 
     _disconnectReloadApps() {
@@ -751,14 +753,14 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
             this.activeCategoryType = Constants.CategoryType.PINNED_APPS;
         }
 
-        let oldPinnedApps = this.pinnedAppsArray;
-        let oldPinnedAppIds = this.pinnedAppsArray.map(item => item.pinnedAppData.id);
+        const oldPinnedApps = this.pinnedAppsArray;
+        const oldPinnedAppIds = this.pinnedAppsArray.map(item => item.pinnedAppData.id);
 
-        let newPinnedApps = this._loadPinnedApps();
-        let newPinnedAppIds = newPinnedApps.map(item => item.pinnedAppData.id);
+        const newPinnedApps = this._loadPinnedApps();
+        const newPinnedAppIds = newPinnedApps.map(item => item.pinnedAppData.id);
 
-        let addedPinnedApps = newPinnedApps.filter(item => !oldPinnedAppIds.includes(item.pinnedAppData.id));
-        let removedPinnedApps = oldPinnedApps.filter(item => !newPinnedAppIds.includes(item.pinnedAppData.id));
+        const addedPinnedApps = newPinnedApps.filter(item => !oldPinnedAppIds.includes(item.pinnedAppData.id));
+        const removedPinnedApps = oldPinnedApps.filter(item => !newPinnedAppIds.includes(item.pinnedAppData.id));
 
         // Remove old app icons
         removedPinnedApps.forEach(item => {
@@ -866,7 +868,7 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
         }
         const parent = box.get_parent();
         if (parent && parent instanceof St.ScrollView)
-            parent.vscroll.adjustment.set_value(0);
+            Utils.getScrollViewAdjustments(parent).vadjustment.set_value(0);
         const actors = box.get_children();
         for (let i = 0; i < actors.length; i++) {
             const actor = actors[i];
@@ -968,7 +970,7 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
             if (this.activeCategoryItem)
                 this.setActiveCategory(null, false);
 
-            this.applicationsScrollBox.vscroll.adjustment.set_value(0);
+            Utils.getScrollViewAdjustments(this.applicationsScrollBox).vadjustment.set_value(0);
 
             if (!this.applicationsBox.contains(this.searchResults)) {
                 this._clearActorsFromBox();
@@ -1192,7 +1194,7 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
             overlay_scrollbars: true,
         });
 
-        scrollBox.vscroll.z_position = 1;
+        scrollBox.get_vscroll_bar().z_position = 1;
 
         const panAction = new Clutter.PanAction({interpolate: true});
         panAction.connect('pan', action => this._onPan(action, scrollBox));
@@ -1210,8 +1212,8 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
             this._menuButton.tooltip.hide(true);
 
         const [dist_, dx_, dy] = action.get_motion_delta(0);
-        const {adjustment} = scrollBox.vscroll;
-        adjustment.value -=  dy;
+        const {vadjustment} = Utils.getScrollViewAdjustments(scrollBox);
+        vadjustment.value -=  dy;
         return false;
     }
 
