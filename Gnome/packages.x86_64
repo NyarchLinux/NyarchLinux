@@ -341,35 +341,7 @@ yelp
 gdm
 
 # Calamares dependencies (not listed elsewhere)
-calamares
-ckbcomp
-boost
-boost-libs
-extra-cmake-modules
-gtk-update-icon-cache
-icu
-kconfig5
-kcoreaddons5
-kdbusaddons5
-kiconthemes5
-ki18n5
-kio5
-kparts5
-kpmcore
-kservice5
-kwidgetsaddons5
-libpwquality
-plasma-framework5
-polkit-qt5
-qt5-location
-qt5-svg
-qt5-tools
-qt5-translations
-qt5-webengine
-qt5-xmlpatterns
-qt5ct
-solid5
-yaml-cpp
+alci-calamares
 
 # AUR
 trizen
