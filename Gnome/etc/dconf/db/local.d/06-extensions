@@ -1,5 +1,5 @@
 [org/gnome/shell]
-enabled-extensions=['arch-update@RaphaelRochet', 'blur-my-shell@aunetx', 'compiz-alike-magic-lamp-effect@hermes83.github.com', 'dash-to-dock@micxgx.gmail.com', 'gsconnect@andyholmes.github.io', 'material-you-colors@francescocaracciolo.github.io', 'user-theme@gnome-shell-extensions.gcampax.github.com']
+enabled-extensions=['arch-update@RaphaelRochet', 'blur-my-shell@aunetx', 'dash-to-dock@micxgx.gmail.com', 'gsconnect@andyholmes.github.io', 'material-you-colors@francescocaracciolo.github.io', 'user-theme@gnome-shell-extensions.gcampax.github.com']
 disabled-extensions=['compiz-windows-effect@hermes83.github.com', 'desktop-cube@schneegans.github.com', 'dash-to-panel@jderose9.github.com', 'arcmenu@arcmenu.com', 'trayIconsReloaded@selfmade.pl', 'ding@rastersoft.com']
 disable-extension-version-validation=true
 disable-user-extensions=false
@@ -75,6 +75,7 @@ extra-command='bash ~/.config/nyarch/after_wp_change.sh &'
 resize-height=200
 resize-width=200
 scheme='Default'
+python-backend=true
 
 [org/fedorahosted/background-logo-extension]
 logo-always-visible=true
