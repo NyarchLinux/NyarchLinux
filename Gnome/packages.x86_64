@@ -337,7 +337,7 @@ libdrm
 pango
 btop
 aura-bin
-
+python-numpy
 # Webapp Manager
 python-beautifulsoup4
 python-configobj
