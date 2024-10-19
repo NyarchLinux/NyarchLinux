@@ -183,7 +183,6 @@ wireplumber
 x265
 x264
 xvidcore
-yt-dlp
 
 # XORG
 mesa
