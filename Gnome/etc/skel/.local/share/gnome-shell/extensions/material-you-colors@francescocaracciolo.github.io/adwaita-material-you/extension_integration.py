@@ -43,7 +43,7 @@ COLORS = {"#643f00": 0xffbc9769, "#005142": 0xffdafaef, "#722b65": 0xffdcabcc, "
 
 
 def generate_pywal(background, image, is_dark):
-    subprocess.Popen(["nice -n 10 wal", "-b", background, "-i", image, "-nqe" if is_dark else "-nqel"])
+    subprocess.Popen(["wal", "-b", background, "-i", image, "-nqe" if is_dark else "-nqel"])
 
 def execute_command(command):
     try:
@@ -82,7 +82,7 @@ def modify_colors(scss_path, output_path, vars):
     open(output_path, "w").write(colors_template)
 
 def compile_sass(scss_path, output_path):
-    execute_command("nice -n 10 sass " + scss_path + " " + output_path)
+    execute_command("sass " + scss_path + " " + output_path)
 
 
 def change_arcmenu_theme(vars):
