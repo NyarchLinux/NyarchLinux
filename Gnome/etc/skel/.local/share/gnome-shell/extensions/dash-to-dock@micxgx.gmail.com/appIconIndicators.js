@@ -1,5 +1,6 @@
 import {
     Clutter,
+    Cogl,
     GdkPixbuf,
     Gio,
     GObject,
@@ -26,13 +27,14 @@ const RunningIndicatorStyle = Object.freeze({
     CILIORA: 6,
     METRO: 7,
     BINARY: 8,
+    DOT: 9,
 });
 
 const MAX_WINDOWS_CLASSES = 4;
 
 
 /*
- * This is the main indicator class to be used. The desired bahviour is
+ * This is the main indicator class to be used. The desired behavior is
  * obtained by composing the desired classes below based on the settings.
  *
  */
@@ -88,8 +90,13 @@ export class AppIconIndicator {
         case RunningIndicatorStyle.METRO:
             runningIndicator = new RunningIndicatorMetro(source);
             break;
+
         case RunningIndicatorStyle.BINARY:
             runningIndicator = new RunningIndicatorBinary(source);
+            break;
+
+        case RunningIndicatorStyle.DOT:
+            runningIndicator = new RunningIndicatorDot(source);
             break;
 
         default:
@@ -134,7 +141,7 @@ class IndicatorBase {
 }
 
 /*
- * A base indicator class for running style, from which all other EunningIndicators should derive,
+ * A base indicator class for running style, from which all other RunningIndicators should derive,
  * providing some basic methods, variables definitions and their update,  css style classes handling.
  *
  */
@@ -224,7 +231,7 @@ class RunningIndicatorBase extends IndicatorBase {
     }
 }
 
-// We add a css class so third parties themes can limit their indicaor customization
+// We add a css class so third parties themes can limit their indicator customization
 // to the case we do nothing
 class RunningIndicatorDefault extends RunningIndicatorBase {
     constructor(source) {
@@ -266,7 +273,7 @@ class RunningIndicatorDots extends RunningIndicatorBase {
         });
 
         // We draw for the bottom case and rotate the canvas for other placements
-        // set center of rotatoins to the center
+        // set center of rotations to the center
         this._area.set_pivot_point(0.5, 0.5);
 
         switch (this._side) {
@@ -307,7 +314,7 @@ class RunningIndicatorDots extends RunningIndicatorBase {
         }, this);
 
         // Apply glossy background
-        // TODO: move to enable/disableBacklit to apply itonly to the running apps?
+        // TODO: move to enable/disableBacklit to apply it only to the running apps?
         // TODO: move to css class for theming support
         const {extension} = Docking.DockManager;
         this._glossyBackgroundStyle = `background-image: url('${extension.path}/media/glossy.svg');` +
@@ -342,7 +349,7 @@ class RunningIndicatorDots extends RunningIndicatorBase {
         this._width = height;
         this._height = width;
 
-        // By defaut re-use the style - background color, and border width and color -
+        // By default re-use the style - background color, and border width and color -
         // of the default dot
         const themeNode = this._source._dot.get_theme_node();
         this._borderColor = themeNode.get_border_color(this._side);
@@ -352,6 +359,8 @@ class RunningIndicatorDots extends RunningIndicatorBase {
         const {settings} = Docking.DockManager;
         if (!settings.applyCustomTheme) {
             // Adjust for the backlit case
+            const Color = Clutter.Color ?? Cogl.Color;
+
             if (settings.unityBacklitItems) {
                 // Use dominant color for dots too if the backlit is enables
                 const colorPalette = this._dominantColorExtractor._getColorPalette();
@@ -360,12 +369,12 @@ class RunningIndicatorDots extends RunningIndicatorBase {
                 this._borderWidth = 2;
 
                 if (colorPalette) {
-                    [, this._borderColor] = Clutter.color_from_string(colorPalette.lighter);
-                    [, this._bodyColor] = Clutter.color_from_string(colorPalette.darker);
+                    [, this._borderColor] = Color.from_string(colorPalette.lighter);
+                    [, this._bodyColor] = Color.from_string(colorPalette.darker);
                 } else {
                     // Fallback
-                    [, this._borderColor] = Clutter.color_from_string('white');
-                    [, this._bodyColor] = Clutter.color_from_string('gray');
+                    [, this._borderColor] = Color.from_string('white');
+                    [, this._bodyColor] = Color.from_string('gray');
                 }
             }
 
@@ -373,17 +382,17 @@ class RunningIndicatorDots extends RunningIndicatorBase {
             if (settings.runningIndicatorDominantColor) {
                 const colorPalette = this._dominantColorExtractor._getColorPalette();
                 if (colorPalette)
-                    [, this._bodyColor] = Clutter.color_from_string(colorPalette.original);
+                    [, this._bodyColor] = Color.from_string(colorPalette.original);
                 else
                     // Fallback
-                    [, this._bodyColor] = Clutter.color_from_string(settings.customThemeRunningDotsColor);
+                    [, this._bodyColor] = Color.from_string(settings.customThemeRunningDotsColor);
             }
 
             // Finally, use customize style if requested
             if (settings.customThemeCustomizeRunningDots) {
-                [, this._borderColor] = Clutter.color_from_string(settings.customThemeRunningDotsBorderColor);
+                [, this._borderColor] = Color.from_string(settings.customThemeRunningDotsBorderColor);
                 this._borderWidth = settings.customThemeRunningDotsBorderWidth;
-                [, this._bodyColor] =  Clutter.color_from_string(settings.customThemeRunningDotsColor);
+                [, this._bodyColor] =  Color.from_string(settings.customThemeRunningDotsColor);
             }
         }
 
@@ -673,10 +682,39 @@ class RunningIndicatorBinary extends RunningIndicatorDots {
     }
 }
 
+class RunningIndicatorDot extends RunningIndicatorDots {
+    _computeStyle() {
+        super._computeStyle();
+
+        this._radius = Math.max(this._width / 26, this._borderWidth / 2);
+    }
+
+    _drawIndicator(cr) {
+        if (!this._source.running)
+            return;
+
+        cr.setLineWidth(this._borderWidth);
+        Utils.cairoSetSourceColor(cr, this._borderColor);
+
+        // draw from the bottom case:
+        cr.translate(
+            (this._width - 2 * this._radius) / 2,
+            this._height - this._padding);
+        cr.newSubPath();
+        cr.arc(this._radius,
+            -this._radius - this._borderWidth / 2,
+            this._radius, 0, 2 * Math.PI);
+
+        cr.strokePreserve();
+        Utils.cairoSetSourceColor(cr, this._bodyColor);
+        cr.fill();
+    }
+}
+
 /*
  * Unity like notification and progress indicators
  */
-class UnityIndicator extends IndicatorBase {
+export class UnityIndicator extends IndicatorBase {
     static defaultProgressBar = {
         // default values for the progress bar itself
         background: {
@@ -705,22 +743,10 @@ class UnityIndicator extends IndicatorBase {
         },
     };
 
+    static notificationBadgeSignals = Symbol('notification-badge-signals');
+
     constructor(source) {
         super(source);
-
-        this._notificationBadgeLabel = new St.Label();
-        this._notificationBadgeBin = new St.Bin({
-            child: this._notificationBadgeLabel,
-            x_align: Clutter.ActorAlign.END,
-            y_align: Clutter.ActorAlign.START,
-            x_expand: true, y_expand: true,
-        });
-        this._notificationBadgeLabel.add_style_class_name('notification-badge');
-        this._notificationBadgeLabel.clutter_text.ellipsize = Pango.EllipsizeMode.MIDDLE;
-        this._notificationBadgeBin.hide();
-
-        this._source._iconContainer.add_child(this._notificationBadgeBin);
-        this.updateNotificationBadgeStyle();
 
         const {remoteModel, notificationsMonitor} = Docking.DockManager.getDefault();
         const remoteEntry = remoteModel.lookupById(this._source.app.id);
@@ -740,31 +766,38 @@ class UnityIndicator extends IndicatorBase {
             'urgent-changed',
             (sender, {urgent}) => this.setUrgent(urgent),
         ], [
+            remoteEntry,
+            'updating-changed',
+            (sender, {updating}) => this.setUpdating(updating),
+        ], [
             notificationsMonitor,
             'changed',
             () => this._updateNotificationsCount(),
         ], [
-            St.ThemeContext.get_for_stage(global.stage),
-            'changed',
-            this.updateNotificationBadgeStyle.bind(this),
-        ], [
-            this._source._iconContainer,
-            'notify::size',
-            this.updateNotificationBadgeStyle.bind(this),
+            this._source,
+            'style-changed',
+            () => this._updateIconStyle(),
         ]);
+
+        this._updateNotificationsCount();
+        this.setProgress(this._remoteEntry.progress_visible
+            ? this._remoteEntry.progress : -1);
+        this.setUrgent(this._remoteEntry.urgent);
+        this.setUpdating(this._remoteEntry.updating);
     }
 
     destroy() {
-        this._notificationBadgeBin.destroy();
+        this._notificationBadgeBin?.destroy();
         this._notificationBadgeBin = null;
         this._hideProgressOverlay();
         this.setUrgent(false);
+        this.setUpdating(false);
         this._remoteEntry = null;
 
         super.destroy();
     }
 
-    updateNotificationBadgeStyle() {
+    _updateNotificationBadgeStyle() {
         const themeContext = St.ThemeContext.get_for_stage(global.stage);
         const fontDesc = themeContext.get_font();
         const defaultFontSize = fontDesc.get_size() / 1024;
@@ -774,7 +807,7 @@ class UnityIndicator extends IndicatorBase {
             'dash-max-icon-size').unpack();
 
         if (!fontDesc.get_size_is_absolute()) {
-            // fontSize was exprimed in points, so convert to pixel
+            // fontSize was expressed in points, so convert to pixel
             fontSize /= 0.75;
         }
 
@@ -789,7 +822,7 @@ class UnityIndicator extends IndicatorBase {
         fontSize = Math.round(sizeMultiplier * fontSize);
         const leftMargin = Math.round(sizeMultiplier * 3);
 
-        this._notificationBadgeLabel.set_style(
+        this._notificationBadgeBin.child.set_style(
             `font-size: ${fontSize}px;` +
             `margin-left: ${leftMargin}px`
         );
@@ -833,13 +866,52 @@ class UnityIndicator extends IndicatorBase {
         this.setNotificationCount(remoteCount + notificationsCount);
     }
 
+    _updateNotificationsBadge(text) {
+        if (this._notificationBadgeBin) {
+            this._notificationBadgeBin.child.text = text;
+            return;
+        }
+
+        this._notificationBadgeBin = new St.Bin({
+            child: new St.Label({
+                styleClass: 'notification-badge',
+                text,
+            }),
+            xAlign: Clutter.ActorAlign.END,
+            yAlign: Clutter.ActorAlign.START,
+            xExpand: true,
+            yExpand: true,
+        });
+        this._notificationBadgeBin.child.clutterText.ellipsize =
+            Pango.EllipsizeMode.MIDDLE;
+
+        this._source._iconContainer.add_child(this._notificationBadgeBin);
+        this._updateNotificationBadgeStyle();
+
+        const themeContext = St.ThemeContext.get_for_stage(global.stage);
+        this._signalsHandler.addWithLabel(UnityIndicator.notificationBadgeSignals, [
+            themeContext,
+            'changed',
+            () => this._updateNotificationBadgeStyle(),
+        ], [
+            themeContext,
+            'notify::scale-factor',
+            () => this._updateNotificationBadgeStyle(),
+        ], [
+            this._source._iconContainer,
+            'notify::size',
+            () => this._updateNotificationBadgeStyle(),
+        ]);
+    }
+
     setNotificationCount(count) {
         if (count > 0) {
             const text = this._notificationBadgeCountToText(count);
-            this._notificationBadgeLabel.set_text(text);
-            this._notificationBadgeBin.show();
-        } else {
-            this._notificationBadgeBin.hide();
+            this._updateNotificationsBadge(text);
+        } else if (this._notificationBadgeBin) {
+            this._signalsHandler.removeWithLabel(UnityIndicator.notificationBadgeSignals);
+            this._notificationBadgeBin.destroy();
+            this._notificationBadgeBin = null;
         }
     }
 
@@ -889,9 +961,9 @@ class UnityIndicator extends IndicatorBase {
             }
         }
 
-        const [hasOffsetStart, offsetStartvalue] = node.lookup_color(`${elementName}-offset-start`, false);
+        const [hasOffsetStart, offsetStartValue] = node.lookup_color(`${elementName}-offset-start`, false);
         if (hasOffsetStart)
-            output.offsetStart = offsetStartvalue;
+            output.offsetStart = offsetStartValue;
 
         const [hasOffsetEnd, offsetEndValue] = node.lookup_color(`${elementName}-offset-end`, false);
         if (hasOffsetEnd)
@@ -900,14 +972,17 @@ class UnityIndicator extends IndicatorBase {
         return output;
     }
 
-    _readElementData(node, elementName, defaultValues) {
-        const defaultLineWidth = defaultValues.lineWidth ?? 1.0;
-        const [hasValue, lineWidth] = node.lookup_double(`${elementName}-line-width`, false);
+    _readThemeDoubleValue(node, elementName, defaultValue) {
+        const [hasValue, value] = node.lookup_double(elementName, false);
+        return hasValue ? value : defaultValue;
+    }
 
+    _readElementData(node, elementName, defaultValues) {
         return {
             background: this._readGradientData(node, `${elementName}-background`, defaultValues.background),
             border: this._readGradientData(node, `${elementName}-border`, defaultValues.border),
-            lineWidth: hasValue ? lineWidth : defaultLineWidth,
+            lineWidth: this._readThemeDoubleValue(node, `${elementName}-line-width`,
+                defaultValues.lineWidth ?? 1.0),
         };
     }
 
@@ -938,20 +1013,31 @@ class UnityIndicator extends IndicatorBase {
         const {scaleFactor} = St.ThemeContext.get_for_stage(global.stage);
         const [surfaceWidth, surfaceHeight] = area.get_surface_size();
         const cr = area.get_context();
-
+        const node = this._progressOverlayArea.get_theme_node();
         const iconSize = this._source.icon.iconSize * scaleFactor;
 
         let x = Math.floor((surfaceWidth - iconSize) / 2);
         let y = Math.floor((surfaceHeight - iconSize) / 2);
 
-        const baseLineWidth = Math.floor(Number(scaleFactor));
-        const padding = Math.floor(iconSize * 0.05);
-        let width = iconSize - 2.0 * padding;
-        let height = Math.floor(Math.min(18.0 * scaleFactor, 0.20 * iconSize));
-        x += padding;
-        y += iconSize - height - padding;
+        const readThemeValue = element =>
+            this._readThemeDoubleValue(node, `-progress-bar-${element}`);
 
-        const node = this._progressOverlayArea.get_theme_node();
+        y = readThemeValue('top-offset') ?? y;
+
+        const baseLineWidth = Math.floor(Number(scaleFactor));
+        const horizontalPadding = iconSize *
+            Utils.clampDouble(readThemeValue('horizontal-padding') ?? 0.05);
+        const verticalPadding = iconSize *
+            Utils.clampDouble(readThemeValue('vertical-padding') ?? 0.05);
+        const heightFactor =
+            Utils.clampDouble(readThemeValue('height-factor') ?? 0.20);
+
+        let width = iconSize - 2.0 * horizontalPadding;
+        let height = Math.floor(Math.min(18.0 * scaleFactor, heightFactor * iconSize));
+        x += horizontalPadding;
+
+        const valign = Utils.clampDouble(readThemeValue('valign') ?? 1);
+        y += (iconSize - height - verticalPadding) * valign;
 
         const progressBarTrack = this._readElementData(node,
             '-progress-bar-track',
@@ -1018,6 +1104,16 @@ class UnityIndicator extends IndicatorBase {
         else
             delete this._isUrgent;
     }
+
+    setUpdating(updating) {
+        this._source.updating = updating;
+    }
+
+    _updateIconStyle() {
+        const opacity = this._readThemeDoubleValue(this._source.get_theme_node(),
+            'opacity') ?? (this._source.updating ? 0.5 : 1);
+        this._source.icon.set_opacity(255 * opacity);
+    }
 }
 
 
@@ -1032,7 +1128,7 @@ const  BATCH_SIZE_TO_DELETE = 50;
 // The icon size used to extract the dominant color
 const DOMINANT_COLOR_ICON_SIZE = 64;
 
-// Compute dominant color frim the app icon.
+// Compute dominant color from the app icon.
 // The color is cached for efficiency.
 class DominantColorExtractor {
     constructor(app) {
@@ -1109,8 +1205,8 @@ class DominantColorExtractor {
         // We resample icons larger than twice the desired size, as the resampling
         // to a size s
         // DOMINANT_COLOR_ICON_SIZE < s < 2*DOMINANT_COLOR_ICON_SIZE,
-        // most of the case exactly DOMINANT_COLOR_ICON_SIZE as the icon size is tipycally
-        // a multiple of it.
+        // most of the case exactly DOMINANT_COLOR_ICON_SIZE as the icon size is
+        // typically a multiple of it.
         const width = pixBuf.get_width();
         const height = pixBuf.get_height();
 
@@ -1180,7 +1276,7 @@ class DominantColorExtractor {
     }
 
     /**
-     * Downsample large icons before scanning for the backlight color to
+     * Downscale large icons before scanning for the backlight color to
      * improve performance.
      *
      * @param pixBuf

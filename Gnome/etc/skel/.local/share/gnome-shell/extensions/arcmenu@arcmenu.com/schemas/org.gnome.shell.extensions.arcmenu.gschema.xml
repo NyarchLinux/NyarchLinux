@@ -28,6 +28,7 @@
         <value value='0' nick='Off'/>
         <value value='1' nick='TopCentered'/>
         <value value='2' nick='BottomCentered'/>
+        <value value='3' nick='MonitorCentered'/>
     </enum>
     <enum id='org.gnome.shell.extensions.arcmenu.menu-position'>
         <value value="0" nick="Left"/>

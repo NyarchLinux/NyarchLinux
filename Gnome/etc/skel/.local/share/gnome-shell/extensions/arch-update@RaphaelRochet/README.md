@@ -1,7 +1,7 @@
 # arch-update
 Update indicator for Arch Linux and GNOME Shell
 
-## Warning for Gnome 42
+## Warning for Gnome 42+
 Default update command tries to run "gnome-terminal".
 You need to either install gnome-terminal or edit update command in advanced options to run Console. See wiki for examples.
 
@@ -27,6 +27,17 @@ https://aur.archlinux.org/packages/gnome-shell-extension-arch-update/
 To install, simply download as zip and unzip contents in ~/.local/share/gnome-shell/extensions/arch-update@RaphaelRochet
 
 ## Changes
+
+### v63
+- Update translation : Brazilian Portugues
+- Fix errors after extension being disabled
+
+### v62
+- Better timer handling
+- Spacing tweaks in menu
+- Added last check time in menu (can be disabled)
+- Updated translation : Slovak
+- Added Gnome 47
 
 ### v61
 - Make underlining package names an option

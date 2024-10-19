@@ -160,6 +160,7 @@ const launcherEntryDefaults = Object.freeze({
     count: 0,
     progress: 0,
     urgent: false,
+    updating: false,
     quicklist: null,
     'count-visible': false,
     'progress-visible': false,
@@ -223,7 +224,7 @@ const LauncherEntry = class DashToDockLauncherEntry {
 };
 
 for (const [name, defaultValue] of Object.entries(launcherEntryDefaults)) {
-    const jsName = name.replace(/-/g, '_');
+    const jsName = name.replaceAll('-', '_');
     LauncherEntry.prototype[jsName] = defaultValue;
     if (jsName !== name) {
         Object.defineProperty(LauncherEntry.prototype, name, {

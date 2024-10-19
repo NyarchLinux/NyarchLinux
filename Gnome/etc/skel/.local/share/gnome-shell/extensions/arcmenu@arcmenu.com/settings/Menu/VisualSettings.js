@@ -111,6 +111,7 @@ class ArcMenuVisualSettingsPage extends SubPage {
         menuLocations.append(_('Off'));
         menuLocations.append(_('Top Centered'));
         menuLocations.append(_('Bottom Centered'));
+        menuLocations.append(_('Monitor Centered'));
         const menuLocationRow = new Adw.ComboRow({
             title: _('Override Menu Location'),
             model: menuLocations,
@@ -136,8 +137,8 @@ class ArcMenuVisualSettingsPage extends SubPage {
         });
         const menuArrowRiseSpinButton = new Gtk.SpinButton({
             adjustment: new Gtk.Adjustment({
-                lower: 0,
-                upper: 25,
+                lower: -50,
+                upper: 50,
                 step_increment: 1,
             }),
             climb_rate: 1,

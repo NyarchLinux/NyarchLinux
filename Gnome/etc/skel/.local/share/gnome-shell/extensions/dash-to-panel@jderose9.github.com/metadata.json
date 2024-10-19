@@ -8,9 +8,10 @@
   "gettext-domain": "dash-to-panel",
   "name": "Dash to Panel",
   "shell-version": [
-    "46"
+    "46",
+    "47"
   ],
   "url": "https://github.com/home-sweet-gnome/dash-to-panel",
   "uuid": "dash-to-panel@jderose9.github.com",
-  "version": 62
+  "version": 64
 }

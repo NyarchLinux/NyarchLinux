@@ -134,8 +134,11 @@ export const Panel = GObject.registerClass({
             ['activities', systemMenuInfo.name, 'dateMenu'].forEach(b => {
                 let container = this.statusArea[b].container;
                 let parent = container.get_parent();
+                let siblings = parent.get_children();
+                let index = siblings.indexOf(container);
 
                 container._dtpOriginalParent = parent;
+                container._dtpOriginalIndex = index && index == siblings.length - 1 ? -1: index;
                 parent ? parent.remove_child(container) : null;
                 this.panel.add_child(container);
             });
@@ -360,13 +363,19 @@ export const Panel = GObject.registerClass({
             ['vertical', 'horizontal', 'dashtopanelMainPanel'].forEach(c => this.panel.remove_style_class_name(c));
 
             if (!Main.sessionMode.isLocked) {
-                [['activities', 0], [systemMenuName, -1], ['dateMenu', 0]].forEach(b => {
-                    let container = this.statusArea[b[0]].container;
+                ['activities', systemMenuName, 'dateMenu'].forEach(b => {
+                    let container = this.statusArea[b].container;
                     let originalParent = container._dtpOriginalParent;
     
                     this.panel.remove_child(container);
-                    originalParent ? originalParent.insert_child_at_index(container, b[1]) : null;
+
+                    originalParent && originalParent.insert_child_at_index(
+                        container, 
+                        Math.min(container._dtpOriginalIndex, originalParent.get_children().length - 1)
+                    );
+                    
                     delete container._dtpOriginalParent;
+                    delete container._dtpOriginalIndex;
                 });
             }
 
@@ -384,18 +393,6 @@ export const Panel = GObject.registerClass({
         }
 
         Main.ctrlAltTabManager.removeGroup(this);
-    }
-
-    handleDragOver(source, actor, x, y, time) {
-        if (source == Main.xdndHandler) {
-            
-            // open overview so they can choose a window for focusing
-            // and ultimately dropping dragged item onto
-            if(Main.overview.shouldToggleByCornerOrButton())
-                Main.overview.show();
-        }
-        
-        return DND.DragMotionResult.CONTINUE;
     }
 
     getPosition() {
@@ -957,7 +954,10 @@ export const Panel = GObject.registerClass({
 
             if (actor instanceof St.BoxLayout) {
                 actor.vertical = isVertical;
-            } else if ((actor._delegate || actor) instanceof PanelMenu.ButtonBox && actor != this.statusArea.appMenu) {
+            } else if (
+                actor != this.statusArea.appMenu &&
+                ((actor._delegate || actor) instanceof PanelMenu.ButtonBox || actor == this.statusArea.quickSettings) 
+            ) {
                 let child = actor.get_first_child();
 
                 if (isVertical && !actor.visible && !actor._dtpVisibleId) {

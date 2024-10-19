@@ -1,6 +1,7 @@
 import AccountsService from 'gi://AccountsService';
 import Atk from 'gi://Atk';
 import Clutter from 'gi://Clutter';
+import Cogl from 'gi://Cogl';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import GMenu from 'gi://GMenu';
@@ -1190,7 +1191,7 @@ export class ShortcutMenuItem extends BaseMenuItem {
             this._command = Utils.findSoftwareManager();
 
         if (!this._app)
-            this._app = Shell.AppSystem.get_default().lookup_app(this._command);
+            this._app = this._menuLayout.appSys.lookup_app(this._command);
 
         if (this._app && !this.iconName) {
             const appIcon = this._app.create_icon_texture(Constants.MEDIUM_ICON_SIZE);
@@ -2213,7 +2214,10 @@ export class PinnedAppsMenuItem extends DraggableMenuItem {
         this._command = pinnedAppData.id ?? '';
         this._iconString = this._icon;
 
-        this._app = Shell.AppSystem.get_default().lookup_app(this._command);
+        this._app = this._menuLayout.appSys.lookup_app(this._command);
+
+        // Allows dragging the pinned app into the overview workspace thumbnail.
+        this.app = this._app;
 
         if (this._iconString === Constants.ShortcutCommands.ARCMENU_ICON || this._iconString === `${this._extension.path}/icons/arcmenu-logo-symbolic.svg`)
             this._iconString = `${this._extension.path}/${Constants.ArcMenuLogoSymbolic}`;
@@ -2515,7 +2519,7 @@ export class ApplicationMenuItem extends BaseMenuItem {
             if (metaInfo.clipboardText)
                 St.Clipboard.get_default().set_text(St.ClipboardType.CLIPBOARD, metaInfo.clipboardText);
         } else if (metaInfo.id.endsWith('.desktop')) {
-            const app = Shell.AppSystem.get_default().lookup_app(metaInfo.id);
+            const app = this._menuLayout.appSys.lookup_app(metaInfo.id);
             if (app.can_open_new_window())
                 app.open_new_window(-1);
             else
@@ -2668,7 +2672,13 @@ export class FolderDialog extends PopupMenu.PopupMenu {
         const POPUP_ANIMATION_TIME = 400;
 
         const val = 127 * (1 + (dim ? 1 : 0) * DIM_BRIGHTNESS);
-        const color = Clutter.Color.new(val, val, val, 255);
+        const colorValues = {
+            red: val,
+            green: val,
+            blue: val,
+            alpha: 255,
+        };
+        const color = Clutter.Color ? new Clutter.Color(colorValues) : new Cogl.Color(colorValues);
 
         this._arcMenu._boxPointer.ease_property('@effects.dim.brightness', color, {
             mode: Clutter.AnimationMode.LINEAR,
@@ -2774,7 +2784,7 @@ export class SubCategoryMenuItem extends BaseMenuItem {
             iconSize = Utils.getIconSize(iconSizeEnum, defaultIconSize);
         }
 
-        const [name, gicon, fallbackIcon] = Utils.getCategoryDetails(this._category);
+        const [name, gicon, fallbackIcon] = Utils.getCategoryDetails(this._menuLayout.iconTheme, this._category);
         this._name = `${this._parentDirectory.get_name()} - ${name}`;
         this.label.text = `${name}`;
         this._headerLabel.text = `${this._parentDirectory.get_name()}\n${name}`;
@@ -2915,7 +2925,7 @@ export class CategoryMenuItem extends BaseMenuItem {
             }
         }
 
-        const [name, gicon, fallbackIcon] = Utils.getCategoryDetails(this._category);
+        const [name, gicon, fallbackIcon] = Utils.getCategoryDetails(this._menuLayout.iconTheme, this._category);
         this._name = _(name);
         this.label.text = _(name);
 

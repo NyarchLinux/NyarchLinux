@@ -1,5 +1,4 @@
 import Adw from 'gi://Adw';
-import GdkPixbuf from 'gi://GdkPixbuf';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
@@ -197,11 +196,11 @@ class ArcMenuManageThemesDialog extends PW.DialogWindow {
         const menuThemes = this._settings.get_value('menu-themes').deep_unpack();
         for (let i = 0; i < menuThemes.length; i++) {
             const theme = menuThemes[i];
-            const xpm = SettingsUtils.createXpmImage(theme[1], theme[2], theme[3], theme[8]);
+            const pixbuf = SettingsUtils.createThemePreviewPixbuf(theme[1], theme[2], theme[3], theme[8]);
 
             const row = new PW.DragRow({
                 title: theme[0],
-                xpm_pixbuf: GdkPixbuf.Pixbuf.new_from_xpm_data(xpm),
+                pixbuf,
                 icon_pixel_size: 42,
             });
             this.pageGroup.add(row);
@@ -348,8 +347,7 @@ var SaveLoadThemesPage = GObject.registerClass({
     _loadThemeRows() {
         for (let i = 0; i < this._themesArray.length; i++) {
             const theme = this._themesArray[i];
-            const xpm = SettingsUtils.createXpmImage(theme[1], theme[2], theme[3], theme[8]);
-
+            const pixbuf = SettingsUtils.createThemePreviewPixbuf(theme[1], theme[2], theme[3], theme[8]);
             const row = new Adw.ActionRow({
                 title: theme[0],
             });
@@ -357,7 +355,7 @@ var SaveLoadThemesPage = GObject.registerClass({
             const icon = new Gtk.Image({
                 pixel_size: 42,
             });
-            icon.set_from_pixbuf(GdkPixbuf.Pixbuf.new_from_xpm_data(xpm));
+            icon.set_from_pixbuf(pixbuf);
             row.add_prefix(icon);
 
             this.addButtonAction(row, theme);

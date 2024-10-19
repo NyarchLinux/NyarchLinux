@@ -37,5 +37,9 @@
             <default>false</default>
             <summary>Also theme ArcMenu extension</summary>
         </key>
+        <key name="python-backend" type="b">
+            <default>false</default>
+            <summary>Use the python backend</summary>
+        </key>
     </schema>
 </schemalist>

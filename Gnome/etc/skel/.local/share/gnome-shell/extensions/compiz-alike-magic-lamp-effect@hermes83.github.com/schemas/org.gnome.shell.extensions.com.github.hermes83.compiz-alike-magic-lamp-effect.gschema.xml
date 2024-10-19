@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+	<schema id="org.gnome.shell.extensions.com.github.hermes83.compiz-alike-magic-lamp-effect" path="/org/gnome/shell/extensions/ncom/github/hermes83/compiz-alike-magic-lamp-effect/">
+
+        <key type="s" name="effect">
+			<default>"default"</default>
+			<summary>Effect</summary>
+			<description/>
+		</key>
+
+		<key type="d" name="duration">
+			<default>400</default>
+			<summary>Duration</summary>
+			<description/>
+		</key>
+
+		<key type="d" name="x-tiles">
+			<default>10.0</default>
+			<summary>X Tiles</summary>
+			<description/>
+		</key>
+
+		<key type="d" name="y-tiles">
+			<default>10.0</default>
+			<summary>Y Tiles</summary>
+			<description/>
+		</key>
+	</schema>
+</schemalist>

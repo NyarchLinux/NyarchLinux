@@ -474,13 +474,13 @@ class ArcMenuHotkeyDialog extends Adw.Window {
     }
 
     generateKeycomboMap(settings) {
-        let map = {};
-        for (let name of settings.list_keys()) {
-            let value = settings.get_value(name);
+        const map = {};
+        for (const name of settings.list_keys()) {
+            const value = settings.get_value(name);
             if (value.get_type_string() !== 'as')
                 continue;
 
-            for (let combo of value.deep_unpack()) {
+            for (const combo of value.deep_unpack()) {
                 if (combo === '0|0')
                     continue;
                 if (map[combo])
@@ -500,9 +500,9 @@ class ArcMenuHotkeyDialog extends Adw.Window {
         const newHotkeyMap = {};
         newHotkeyMap[newHotkey] = ['New Hotkey'];
 
-        for (let settings of schemas) {
+        for (const settings of schemas) {
             const against = this.generateKeycomboMap(settings);
-            for (let combo in newHotkeyMap) {
+            for (const combo in newHotkeyMap) {
                 if (against[combo]) {
                     conflicts = {
                         conflict: against[combo],
@@ -519,7 +519,7 @@ class ArcMenuHotkeyDialog extends Adw.Window {
         arcMenuHotkeys[menuHotkey] = [_('ArcMenu')];
         arcMenuHotkeys[runnerHotkey] = [_('Standlone Runner')];
 
-        for (let combo in newHotkeyMap) {
+        for (const combo in newHotkeyMap) {
             if (arcMenuHotkeys[combo]) {
                 conflicts = {
                     conflict: arcMenuHotkeys[combo],

@@ -110,6 +110,16 @@ const BasicHandler = class DashToDockBasicHandler {
         (this._storage[label] || []).forEach(item => this._unblock(item));
     }
 
+    _removeByItem(item) {
+        Object.getOwnPropertySymbols(this._storage).forEach(label =>
+            (this._storage[label] = this._storage[label].filter(it => {
+                if (!this._itemsEqual(it, item))
+                    return true;
+                this._remove(item);
+                return false;
+            })));
+    }
+
     // Virtual methods to be implemented by subclass
 
     /**
@@ -149,6 +159,16 @@ const BasicHandler = class DashToDockBasicHandler {
     _unblock(_item) {
         throw new GObject.NotImplementedError(`_unblock in ${this.constructor.name}`);
     }
+
+    _itemsEqual(itemA, itemB) {
+        if (itemA === itemB)
+            return true;
+
+        if (itemA.length !== itemB.length)
+            return false;
+
+        return itemA.every((_, idx) => itemA[idx] === itemB[idx]);
+    }
 };
 
 /**
@@ -168,15 +188,27 @@ export class GlobalSignalsHandler extends BasicHandler {
                 `found in ${object.constructor.name}`);
         }
 
-        const id = connector.call(object, event, callback);
+        const item = [object];
+        const isDestroy = event === 'destroy';
+        const isParentObject = object === this._parentObject;
 
-        if (event === 'destroy' && object === this._parentObject) {
+        if (isDestroy && !isParentObject) {
+            const originalCallback = callback;
+            callback = () => {
+                this._removeByItem(item);
+                originalCallback();
+            };
+        }
+        const id = connector.call(object, event, callback);
+        item.push(id);
+
+        if (isDestroy && isParentObject) {
             this._parentObject.disconnect(this._destroyId);
             this._destroyId =
                 this._parentObject.connect('destroy', () => this.destroy());
         }
 
-        return [object, id];
+        return item;
     }
 
     _remove(item) {
@@ -320,7 +352,7 @@ export class InjectionsHandler extends BasicHandler {
         const original = object[name];
 
         if (!(original instanceof Function))
-            throw new Error(`Virtual function ${name}() is not available for ${object}`);
+            throw new Error(`Function ${name}() is not available for ${object}`);
 
         object[name] = function (...args) {
             return injectedFunction.call(this, original, ...args);
@@ -380,8 +412,13 @@ export class VFuncInjectionsHandler extends BasicHandler {
  * and restored
  */
 export class PropertyInjectionsHandler extends BasicHandler {
+    constructor(parentObject, params) {
+        super(parentObject);
+        this._params = params;
+    }
+
     _create(instance, name, injectedPropertyDescriptor) {
-        if (!(name in instance))
+        if (!this._params?.allowNewProperty && !(name in instance))
             throw new Error(`Object ${instance} has no '${name}' property`);
 
         const {prototype} = instance.constructor;
@@ -693,3 +730,6 @@ export function addActor(element, actor) {
     else
         element.add_child(actor);
 }
+
+export const clamp = (v, m, M) => Math.min(Math.max(v, m), M);
+export const clampDouble = v => clamp(v, 0, 1);

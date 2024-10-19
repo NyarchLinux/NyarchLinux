@@ -64,7 +64,7 @@ class ArcMenuMenuButtonPage extends Adw.PreferencesPage {
         const menuButtonAppearanceRow = new Adw.ComboRow({
             title: _('Display Style'),
             model: menuButtonAppearances,
-            selected: -1,
+            selected: Gtk.INVALID_LIST_POSITION,
         });
         menuButtonAppearanceRow.connect('notify::selected', widget => {
             if (widget.selected === Constants.MenuButtonAppearance.NONE) {
@@ -142,6 +142,7 @@ class ArcMenuMenuButtonPage extends Adw.PreferencesPage {
         const menuButtonCustomTextBoxRow = new Adw.ActionRow({
             title: _('Text'),
             activatable_widget: menuButtonCustomTextEntry,
+            visible: false,
         });
         menuButtonCustomTextBoxRow.add_suffix(menuButtonCustomTextEntry);
 

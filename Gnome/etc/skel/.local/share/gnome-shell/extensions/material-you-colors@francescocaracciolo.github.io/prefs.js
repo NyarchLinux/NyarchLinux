@@ -16,6 +16,7 @@ import * as ext_utils from './utils/ext_utils.js';
 const PREFS_SCHEMA = "org.gnome.shell.extensions.material-you-colors";
 const COLORS = {"#643f00": 0xffbc9769, "#005142": 0xffdafaef, "#722b65": 0xffdcabcc, "#00497e": 0xffd1e1f8, "#225104": 0xff7d916e, "#004397": 0xff4285f4, "#7c2c1b": 0xffb18c84, "#00504e": 0xff7ca7a5, "#403c8e": 0xffb7b4cf, "#3d4c00": 0xffb0b78e, "#64307c ": 0xff8e7596, "#005137 ": 0xff9bb8a8, "#4e4800": 0xfff0eab7};
 
+
 // Todo: Add custom css
 class ColorSchemeRow extends Adw.ActionRow {
     static {
@@ -140,6 +141,35 @@ class PywalInstallRow extends Adw.ActionRow {
     }
 }
 
+
+class PybackendInstallRow extends Adw.ActionRow {
+    static {
+        GObject.registerClass(this);
+    }
+
+    constructor(name, title, subtitle) {
+        const button = new Gtk.Button({
+            label: "Install",
+            valign: Gtk.Align.CENTER,
+        });
+
+        button.connect('clicked', () => {
+            const extensiondir =  GLib.get_home_dir() + '/.local/share/gnome-shell/extensions/material-you-colors@francescocaracciolo.github.io';
+
+            install_pybackend(extensiondir);
+            button.set_label("Installed");
+            // npm_utils.install_npm_deps();
+        });
+
+        super({
+            title: title,
+            subtitle: subtitle,
+            activatable_widget: button,
+        });
+        this.add_suffix(button);
+    }
+}
+
 class PywalGroup extends Adw.PreferencesGroup {
     static {
         GObject.registerClass(this);
@@ -159,6 +189,34 @@ class PywalGroup extends Adw.PreferencesGroup {
 
     _addPywalInstall(name, title, subtitle) {
         const row = new PywalInstallRow(name, title, subtitle);
+        this.add(row);
+    }
+
+    _addToggle(name, settings, title) {
+        const row = new MiscToggleRow(name, settings, title);
+        this.add(row);
+    }
+}
+
+class PybackendGroup extends Adw.PreferencesGroup {
+    static {
+        GObject.registerClass(this);
+    }
+
+    constructor(settings) {
+        super({ title: "Enable Python backend" });
+
+        this._settings = settings;
+
+        this.connect("destroy", () => this._settings.run_dispose());
+        if (!ext_utils.check_pyback(GLib.get_home_dir() + '/.local/share/gnome-shell/extensions/material-you-colors@francescocaracciolo.github.io')) {
+          this._addPywalInstall("request-install", "Install Python backend", "Requires git, python3 already installed");
+        }
+        this._addToggle("python-backend", this._settings, "Enable Python Backend, faster");
+    }
+
+    _addPywalInstall(name, title, subtitle) {
+        const row = new PybackendInstallRow(name, title, subtitle);
         this.add(row);
     }
 
@@ -299,6 +357,8 @@ export default class MaterialYouPrefs extends ExtensionPreferences {
         const misc_settings_group = new MiscGroup(settings);
         const pywal_group = new PywalGroup(settings);
         page.add(pywal_group);
+        const python_group = new PybackendGroup(settings);
+        page.add(python_group);
         page.add(misc_settings_group);
 
         window.add(page);
@@ -383,6 +443,19 @@ function install_npm_deps(extensiondir) {
         logError(e);
     }
 }
+
+function install_pybackend(extensiondir) {
+    try {
+        let command = "touch /home/francesco/kids; cd " + extensiondir + "; git clone https://github.com/FrancescoCaracciolo/adwaita-material-you.git; cd adwaita-material-you; bash local-install.sh";
+        const proc = Gio.Subprocess.new(
+              ["bash", "-c", command],
+              Gio.SubprocessFlags.NONE
+          )
+    } catch (e) {
+        logError(e);
+    }
+}
+
 
 function install_pywal() {
     try {

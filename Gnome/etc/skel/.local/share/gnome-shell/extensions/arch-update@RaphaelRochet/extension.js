@@ -54,11 +54,13 @@ let AUTO_EXPAND_LIST   = 0;
 let DISABLE_PARSING    = false;
 let PACKAGE_INFO_CMD   = "xdg-open https://www.archlinux.org/packages/%2$s/%3$s/%1$s";
 let LINKIFY_MENU       = true;
+let SHOW_TIMECHECKED   = true;
 
 /* Variables we want to keep when extension is disabled (eg during screen lock) */
 let FIRST_BOOT         = 1;
 let UPDATES_PENDING    = -1;
 let UPDATES_LIST       = [];
+let LAST_CHECK         = undefined;
 
 export default class ArchUpdateIndicatorExtension extends Extension {
 	constructor(metadata) {
@@ -90,6 +92,7 @@ const ArchUpdateIndicator = GObject.registerClass(
 class ArchUpdateIndicator extends Button {
 
 	_init(ext) {
+		console.log(`Arch-update : loading`);
 		super._init(0.5);
 		this._extension = ext;
 		/* A process builder without i10n for reproducible processing. */
@@ -113,6 +116,8 @@ class ArchUpdateIndicator extends Button {
 		// Prepare the special menu : a submenu for updates list that will look like a regular menu item when disabled
 		// Scrollability will also be taken care of by the popupmenu
 		this.menuExpander = new PopupMenu.PopupSubMenuMenuItem('');
+		this.menuExpanderContainer = new St.BoxLayout({ vertical: true, style_class: 'arch-updates-updates-list' });
+		this.menuExpander.menu.box.add_child( this.menuExpanderContainer );
 
 		// Other standard menu items
 		let settingsMenuItem = new PopupMenu.PopupMenuItem(_('Settings'));
@@ -136,13 +141,18 @@ class ArchUpdateIndicator extends Button {
 		this.checkNowMenuContainer = new PopupMenu.PopupMenuSection();
 		this.checkNowMenuContainer.box.add_child(this.checkNowMenuItem);
 
+		// A placeholder to show the last check time
+		this.timeCheckedMenu = new PopupMenu.PopupMenuItem( "-", {reactive:false} );
+
 		// Assemble all menu items into the popup menu
 		this.menu.addMenuItem(this.menuExpander);
+		this.menu.addMenuItem(this.timeCheckedMenu);
 		this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 		this.menu.addMenuItem(this.updateNowMenuItem);
 		this.menu.addMenuItem(this.checkingMenuItem);
 		this.menu.addMenuItem(this.checkNowMenuContainer);
 		this.menu.addMenuItem(this.managerMenuItem);
+		this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 		this.menu.addMenuItem(settingsMenuItem);
 
 		// Bind some events
@@ -156,6 +166,7 @@ class ArchUpdateIndicator extends Button {
 		// Some initial status display
 		this._showChecking(false);
 		this._updateMenuExpander(false, _('Waiting first check'));
+		if (LAST_CHECK) this._updateLastCheckMenu();
 
 		// Restore previous updates list if any
 		this._updateList = UPDATES_LIST;
@@ -169,10 +180,9 @@ class ArchUpdateIndicator extends Button {
 		if (FIRST_BOOT) {
 			// Schedule first check only if this is the first extension load
 			// This won't be run again if extension is disabled/enabled (like when screen is locked)
-			let that = this;
-			this._FirstTimeoutId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, BOOT_WAIT, function () {
-				that._checkUpdates();
-				that._FirstTimeoutId = null;
+			this._FirstTimeoutId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, BOOT_WAIT, ()=>{
+				this._FirstTimeoutId = null;
+				this._checkUpdates();
 				FIRST_BOOT = 0;
 				return false; // Run once
 			});
@@ -235,19 +245,37 @@ class ArchUpdateIndicator extends Button {
 		AUTO_EXPAND_LIST = this._settings.get_int('auto-expand-list');
 		PACKAGE_INFO_CMD = this._settings.get_string('package-info-cmd');
 		LINKIFY_MENU = this._settings.get_boolean('linkify-menu');
+		SHOW_TIMECHECKED = this._settings.get_boolean('show-timechecked');
 		this.managerMenuItem.visible = ( MANAGER_CMD != "" );
+		this.timeCheckedMenu.visible = SHOW_TIMECHECKED;
 		this._checkShowHide();
 		this._updateStatus();
 		this._startFolderMonitor();
-		let that = this;
+		this._scheduleCheck();
+	}
+
+	_scheduleCheck() {
+		// Remove previous schedule if any
 		if (this._TimeoutId) GLib.source_remove(this._TimeoutId);
-		this._TimeoutId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, CHECK_INTERVAL, function () {
-			that._checkUpdates();
-			return true;
+		let delay = CHECK_INTERVAL; // seconds before next check
+		if (LAST_CHECK) {
+			// Adjust the delay so that locking screen or changing settings does not reset
+			// the countdown to next check
+			// Remove how many seconds already passed since last check
+			delay -= ((new Date()) - LAST_CHECK) / 1000;
+			// Do not go under "First check delay" setting
+			if (delay < BOOT_WAIT) delay = BOOT_WAIT;
+		}
+		console.log(`Arch-update : next update check scheduled in (seconds) ` + delay.toString());
+		this._TimeoutId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, delay, ()=>{
+			this._TimeoutId = null;
+			this._checkUpdates();
+			return false;
 		});
 	}
 
 	destroy() {
+		console.log(`Arch-update : unloading`);
 		this._settings.disconnect( this._settingsChangedId );
 		if (this._notifSource) {
 			// Delete the notification source, which lay still have a notification shown
@@ -323,11 +351,12 @@ class ArchUpdateIndicator extends Button {
 
 	_onFolderChanged() {
 		// Folder have changed ! Let's schedule a check in a few seconds
-		let that = this;
+		// This will replace the first check if not done yet, we don't want to do double checking
 		if (this._FirstTimeoutId) GLib.source_remove(this._FirstTimeoutId);
-		this._FirstTimeoutId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 5, function () {
-			that._checkUpdates();
-			that._FirstTimeoutId = null;
+		this._FirstTimeoutId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 5, ()=>{
+			this._FirstTimeoutId = null;
+			this._checkUpdates();
+			FIRST_BOOT = 0;
 			return false;
 		});
 	}
@@ -341,6 +370,11 @@ class ArchUpdateIndicator extends Button {
 			this.checkNowMenuItem.visible = true;
 			this.checkingMenuItem.visible = false;
 		}
+	}
+
+	_updateLastCheckMenu() {
+		this.timeCheckedMenu.label.set_text( _("Last checked") + "  " + LAST_CHECK.toLocaleString() );
+		this.timeCheckedMenu.visible = SHOW_TIMECHECKED;
 	}
 
 	_updateStatus(updatesCount) {
@@ -415,7 +449,6 @@ class ArchUpdateIndicator extends Button {
 	}
 
 	_updateMenuExpander(enabled, label) {
-		this.menuExpander.menu.box.destroy_all_children();
 		if (label == "") {
 			// No text, hide the menuitem
 			this.menuExpander.visible = false;
@@ -426,6 +459,7 @@ class ArchUpdateIndicator extends Button {
 			this.menuExpander.label.set_text(label);
 			this.menuExpander.visible = true;
 			if (enabled && this._updateList.length > 0) {
+				this.menuExpanderContainer.destroy_all_children();
 				this._updateList.forEach( item => {
 					if(DISABLE_PARSING) {
 						var menutext = item;
@@ -433,12 +467,12 @@ class ArchUpdateIndicator extends Button {
 							var chunks = menutext.split(" ",2);
 							menutext = chunks[0];
 						}
-						this.menuExpander.menu.box.add_child( this._createPackageLabel(menutext) );
+						this.menuExpanderContainer.add_child( this._createPackageLabel(menutext) );
 					} else {
 						let matches = item.match(RE_UpdateLine);
 						if (matches == null) {
 							// Not an update
-							this.menuExpander.menu.box.add_child( new St.Label({ text: item, style_class: 'arch-updates-update-title' }) );
+							this.menuExpanderContainer.add_child( new St.Label({ text: item, style_class: 'arch-updates-update-title' }) );
 						} else {
 							let hBox = new St.BoxLayout({ vertical: false, style_class: 'arch-updates-update-line' });
 							hBox.add_child( this._createPackageLabel(matches[1]) );
@@ -452,7 +486,7 @@ class ArchUpdateIndicator extends Button {
 									text: matches[3],
 									style_class: 'arch-updates-update-version-to' }) );
 							}
-							this.menuExpander.menu.box.add_child( hBox );
+							this.menuExpanderContainer.add_child( hBox );
 						}
 					}
 				} );
@@ -515,6 +549,8 @@ class ArchUpdateIndicator extends Button {
 	}
 
 	_checkUpdates() {
+		// Remove timer if any (in case the trigger was menu or external)
+		if (this._TimeoutId) { GLib.source_remove(this._TimeoutId) ; this._TimeoutId = null }
 		if(this._updateProcess_sourceId) {
 			// A check is already running ! Maybe we should kill it and run another one ?
 			return;
@@ -538,6 +574,12 @@ class ArchUpdateIndicator extends Button {
 			this.lastUnknowErrorString = err.message.toString();
 			this._updateStatus(-2);
 		}
+		// Update last check (start) time and schedule next check even if the current one is not done yet
+		// doing so makes sure it will be scheduled even if failed or canceled, and we don't end in
+		// a looping test
+		LAST_CHECK = new Date();
+		this._updateLastCheckMenu();
+		this._scheduleCheck();
 	}
 
 	_cancelCheck() {

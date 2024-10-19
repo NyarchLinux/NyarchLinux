@@ -50,7 +50,7 @@ export class NotificationsMonitor {
 
     destroy() {
         this.emit('destroy');
-        this._signalsHandler.destroy();
+        this._signalsHandler?.destroy();
         this._signalsHandler = null;
         this._appNotifications = null;
         this._settings = null;
@@ -92,8 +92,9 @@ export class NotificationsMonitor {
 
                 source.notifications.forEach(notification => {
                     const app = notification.source?.app ?? notification.source?._app;
+                    const appId = app?.id ?? app?._appId;
 
-                    if (app?.id) {
+                    if (appId) {
                         if (notification.resident) {
                             if (notification.acknowledged)
                                 return;
@@ -106,8 +107,8 @@ export class NotificationsMonitor {
                         this._signalsHandler.addWithLabel(Labels.NOTIFICATIONS,
                             notification, 'destroy', () => this._checkNotifications());
 
-                        this._appNotifications[app.id] =
-                            (this._appNotifications[app.id] ?? 0) + 1;
+                        this._appNotifications[appId] =
+                            (this._appNotifications[appId] ?? 0) + 1;
                     }
                 });
             });

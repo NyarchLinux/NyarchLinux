@@ -1,4 +1,5 @@
 import Clutter from 'gi://Clutter';
+import Cogl from 'gi://Cogl';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import St from 'gi://St';
@@ -280,8 +281,17 @@ export async function updateStylesheet() {
  * @returns a string in rbga() format representing the new modified color
  */
 function modifyColorLuminance(colorString, luminanceAdjustment, overrideAlpha = null) {
-    const color = Clutter.color_from_string(colorString)[1];
-    const [hue, luminance, saturation] = color.to_hls();
+    let color, hue, saturation, luminance;
+
+    // GNOME 47 merged ClutterColor into CoglColor
+    if (Clutter.Color) {
+        color = Clutter.color_from_string(colorString)[1];
+        [hue, luminance, saturation] = color.to_hls();
+    } else {
+        color = Cogl.color_from_string(colorString)[1];
+        [hue, saturation, luminance] = color.to_hsl();
+    }
+
     let modifiedLuminance;
 
     if ((luminance >= .85 && luminanceAdjustment > 0) || (luminance <= .15 && luminanceAdjustment < 0))
@@ -293,7 +303,13 @@ function modifyColorLuminance(colorString, luminanceAdjustment, overrideAlpha = 
     if (overrideAlpha)
         alpha = overrideAlpha;
 
-    const modifiedColor = Clutter.color_from_hls(hue, modifiedLuminance, saturation);
+    let modifiedColor;
+
+    // GNOME 47 merged ClutterColor into CoglColor
+    if (Clutter.Color)
+        modifiedColor = Clutter.color_from_hls(hue, modifiedLuminance, saturation);
+    else
+        modifiedColor = Cogl.color_init_from_hsl(hue, saturation, modifiedLuminance);
 
     return `rgba(${modifiedColor.red}, ${modifiedColor.green}, ${modifiedColor.blue}, ${alpha})`;
 }

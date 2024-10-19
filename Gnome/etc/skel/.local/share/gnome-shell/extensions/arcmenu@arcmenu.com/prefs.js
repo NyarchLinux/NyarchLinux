@@ -11,13 +11,17 @@ import {MenuPage} from './settings/MenuPage.js';
 import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 export default class ArcMenuPrefs extends ExtensionPreferences {
-    fillPreferencesWindow(window) {
-        const settings = this.getSettings();
-        const iconPath = `${this.path}/icons`;
+    constructor(metadata) {
+        super(metadata);
 
+        const iconPath = `${this.path}/icons`;
         const iconTheme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default());
         if (!iconTheme.get_search_path().includes(iconPath))
             iconTheme.add_search_path(iconPath);
+    }
+
+    fillPreferencesWindow(window) {
+        const settings = this.getSettings();
 
         window.set_search_enabled(true);
         window.set_default_size(settings.get_int('settings-width'), settings.get_int('settings-height'));
@@ -56,6 +60,7 @@ export default class ArcMenuPrefs extends ExtensionPreferences {
                 pinnedAppsChangedId = null;
             }
         });
+
 
         this._populateWindow(window, settings);
     }

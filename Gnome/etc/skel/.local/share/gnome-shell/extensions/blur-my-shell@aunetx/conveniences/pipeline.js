@@ -29,20 +29,24 @@ export const Pipeline = class Pipeline {
     /// Create a background linked to the monitor with index `monitor_index`, with a
     /// `BackgroundManager` that is appended to the list `background_managers`. The background actor
     /// will be given the name `widget_name` and inserted into the given `background_group`.
+    /// If `use_absolute_position` is false, then the position used is at (0,0); useful when the
+    /// positioning is relative.
     /// Note: exposed to public API.
     create_background_with_effects(
         monitor_index,
         background_managers,
         background_group,
-        widget_name
+        widget_name,
+        use_absolute_position = true
     ) {
         let monitor = Main.layoutManager.monitors[monitor_index];
 
         // create the new actor
         this.actor = new St.Widget({
             name: widget_name,
-            x: monitor.x,
-            y: monitor.y,
+            x: use_absolute_position ? monitor.x : 0,
+            y: .5 + (use_absolute_position ? monitor.y : 0), // add 1 to correct z-position
+            z_position: 1, // seems to fix the multi-monitor glitch
             width: monitor.width,
             height: monitor.height
         });
@@ -101,9 +105,12 @@ export const Pipeline = class Pipeline {
     /// Attach a Pipeline object with `pipeline_id` already set to an actor.
     attach_pipeline_to_actor(actor) {
         // set the actor
-        this.actor = actor;
-        if (!actor)
+        if (actor)
+            this.actor = actor;
+        else {
+            this.remove_pipeline_from_actor();
             return;
+        }
 
         // attach the pipeline
         let pipeline = this.pipelines_manager.pipelines[this.pipeline_id];
@@ -117,8 +124,20 @@ export const Pipeline = class Pipeline {
                 return;
         }
 
+        this.actor_destroy_id = this.actor.connect(
+            "destroy", () => this.remove_pipeline_from_actor()
+        );
+
         // update the effects
         this.update_effects_from_pipeline(pipeline);
+    }
+
+    remove_pipeline_from_actor() {
+        this.remove_all_effects();
+        if (this.actor && this.actor_destroy_id)
+            this.actor.disconnect(this.actor_destroy_id);
+        this.actor_destroy_id = null;
+        this.actor = null;
     }
 
     /// Update the effects from the given pipeline object, the hard way.
@@ -194,7 +213,7 @@ export const Pipeline = class Pipeline {
     destroy() {
         this.remove_all_effects();
         this.remove_connections();
-        this.actor = null;
+        this.remove_pipeline_from_actor();
         this.pipeline_id = null;
     }
 

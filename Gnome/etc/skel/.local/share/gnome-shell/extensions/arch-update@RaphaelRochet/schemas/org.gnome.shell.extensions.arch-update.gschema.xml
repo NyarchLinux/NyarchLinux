@@ -13,7 +13,7 @@
         <default>60</default>
         <summary>Interval between updates check (minutes)</summary>
         <description>Time to wait between two automatic checks</description>
-        <range min="30" max="2000"/>
+        <range min="5" max="2000"/>
     </key>
 
     <key name="always-visible" type="b">
@@ -129,6 +129,14 @@
       <default>true</default>
       <summary>Underline updates as links</summary>
       <description></description>
+    </key>
+
+    <key name="show-timechecked" type="b">
+      <default>true</default>
+        <summary>Show last check date and time</summary>
+        <description>
+            If true, date/time of last check is added in the menu
+        </description>
     </key>
 
   </schema>

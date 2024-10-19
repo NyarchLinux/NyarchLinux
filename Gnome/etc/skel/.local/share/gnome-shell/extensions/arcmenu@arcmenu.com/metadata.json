@@ -9,10 +9,11 @@
   "settings-schema": "org.gnome.shell.extensions.arcmenu",
   "shell-version": [
     "45",
-    "46"
+    "46",
+    "47"
   ],
   "url": "https://gitlab.com/arcmenu/ArcMenu",
   "uuid": "arcmenu@arcmenu.com",
-  "version": 57,
-  "version-name": "57"
+  "version": 61,
+  "version-name": "61"
 }

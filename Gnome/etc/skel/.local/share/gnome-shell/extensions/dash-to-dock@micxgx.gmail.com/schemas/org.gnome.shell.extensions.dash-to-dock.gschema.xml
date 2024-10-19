@@ -48,6 +48,7 @@
     <value value='6' nick='CILIORA'/>
     <value value='7' nick='METRO'/>
     <value value='8' nick='BINARY'/>
+    <value value='9' nick='DOT'/>
   </enum>
   <schema path="/org/gnome/shell/extensions/dash-to-dock/" id="org.gnome.shell.extensions.dash-to-dock">
     <key name="dock-position" enum="org.gnome.shell.extensions.dash-to-dock.position">
@@ -298,11 +299,6 @@
     <key type="b" name="show-apps-always-in-the-edge">
       <default>true</default>
       <summary>Show application button on the edge when using centered panel mode</summary>
-    </key>
-    <key type="b" name="animate-show-apps">
-      <default>true</default>
-      <summary>Animate Show Applications from the desktop</summary>
-      <description>Animate Show Applications from the desktop</description>
     </key>
     <key type="b" name="bolt-support">
       <default>true</default>

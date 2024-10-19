@@ -42,6 +42,33 @@ import * as ext_utils from './utils/ext_utils.js';
 import {base_presets} from './base_presets.js';
 import {color_mappings} from './color_mappings.js';
 
+export const COLOR_TO_ACCENT = {
+  0xffbc9769: "orange",
+  0xffdafaef: "green",
+  0xffdcabcc: "pink",
+  0xffd1e1f8: "teal",
+  0xff7d916e: "green",
+  0xff4285f4: "blue",
+  0xffb18c84: "red",
+  0xff7ca7a5: "green",
+  0xffb7b4cf: "purple",
+  0xffb0b78e: "green",
+  0xff8e7596: "pink",
+  0xff9bb8a8: "green",
+  0xfff0eab7: "yellow",
+}
+export const ACCENT_TO_COLOR = {
+  "orange": "#643f00",
+  "green": "#005142",
+  "pink": "#722b65",
+  "teal": "#00497e",
+  "blue": "#004397",
+  "red": "#7c2c1b",
+  "purple": "#403c8e",
+  "yellow": "#4e4800",
+};
+const COLORS = {"#643f00": 0xffbc9769, "#005142": 0xffdafaef, "#722b65": 0xffdcabcc, "#00497e": 0xffd1e1f8, "#225104": 0xff7d916e, "#004397": 0xff4285f4, "#7c2c1b": 0xffb18c84, "#00504e": 0xff7ca7a5, "#403c8e": 0xffb7b4cf, "#3d4c00": 0xffb0b78e, "#64307c ": 0xff8e7596, "#005137 ": 0xff9bb8a8, "#4e4800": 0xfff0eab7};
+
 
 export default class MaterialYou extends Extension {
     constructor(uuid) {
@@ -55,6 +82,9 @@ export default class MaterialYou extends Extension {
         this._interfaceSettings = this.getSettings(INTERFACE_SCHEMA);
         this._interfaceSettings.connect('changed::color-scheme', () => {
             this.apply_theme(base_presets, color_mappings, true);
+        });
+        this._interfaceSettings.connect('changed::accent-color', () => {
+            this.apply_theme(base_presets, color_mappings, true, true);
         });
         this._wallpaperSettings = this.getSettings(WALLPAPER_SCHEMA);
         this._wallpaperSettings.connect('changed::picture-uri', () => {
@@ -113,7 +143,7 @@ export default class MaterialYou extends Extension {
         return new Extension(meta.uuid);
     }
     
-    apply_theme(base_presets, color_mappings, notify=false) {
+    apply_theme(base_presets, color_mappings, notify=false, accent_color_changed=false) {
         // Get prefs
         const settings = this.getSettings(PREFS_SCHEMA);
         let shell_settings = null;
@@ -126,20 +156,29 @@ export default class MaterialYou extends Extension {
         }
         const color_scheme = settings.get_string("scheme");
         const accent_color_enabled = settings.get_boolean("enable-accent-colors");
-        const accent_color = settings.get_string("accent-color");
+        var accent_color = settings.get_string("accent-color");
         const show_notifications = settings.get_boolean("show-notifications");
         const extra_command = settings.get_string("extra-command");
         const height = settings.get_int("resize-height");
         const width = settings.get_int("resize-width");
         const enable_pywal_theming = settings.get_boolean("enable-pywal-theming");
         const enable_arcmenu_theming = settings.get_boolean("arcmenu-theming");
+        const python_backend_enabled = settings.get_boolean("python-backend")
+        
+        let interface_settings = new Gio.Settings({ schema: INTERFACE_SCHEMA });
+        if (accent_color_changed) {
+          log("Accent color changed");
+          let accent = interface_settings.get_string("accent-color");
+          accent_color = COLORS[ACCENT_TO_COLOR[accent]];
+          settings.set_string("accent-color", accent_color.toString(10));
+        }
 
+        // Get theme
         let size = {height: height, width: width};
         let color_mappings_sel = color_mappings[color_scheme.toLowerCase()];
     
         // Checking dark theme preference
         let is_dark = false;
-        let interface_settings = new Gio.Settings({ schema: INTERFACE_SCHEMA });
         let dark_pref = interface_settings.get_string('color-scheme');
         if (dark_pref === "prefer-dark") {
             is_dark = true;
@@ -159,6 +198,9 @@ export default class MaterialYou extends Extension {
         let theme;
         if (accent_color_enabled) {
             theme = theme_utils.themeFromSourceColor(parseInt(accent_color), []);
+            if (accent_color in COLOR_TO_ACCENT && !accent_color_changed) {
+              this._interfaceSettings.set_string("accent-color", COLOR_TO_ACCENT[accent_color]);
+            }
         } else {
             theme = theme_utils.themeFromImage(pix_buf);
         }
@@ -175,8 +217,13 @@ export default class MaterialYou extends Extension {
             color_mapping = color_mappings_sel.dark;
             theme_str = _("Dark");
         }
-    
-    
+     
+        if (python_backend_enabled && ext_utils.check_pyback(this.extensiondir)) {
+          this.run_command("cd " + this.extensiondir + "; cd adwaita-material-you; bash run_integration.sh");
+          this.theme_notification(notify, show_notifications, false, color_scheme, theme_str)
+          return;
+        }
+   
         // Overwriting keys in base_preset with material colors
     
         base_preset = this.map_colors(color_mapping, base_preset, scheme);
@@ -250,8 +297,21 @@ export default class MaterialYou extends Extension {
                     "Some apps may require re-logging in to update");
             }
         }
+        this.theme_notification(notify, show_notifications, warn_shell_theme, color_scheme, theme_str)
+      }
+   
+    theme_notification(notify, show_notifications, warn_shell_theme, color_scheme, theme_str) {
+        // Notifying user on theme change
+        if (notify && show_notifications) {
+            if (warn_shell_theme) {
+                Main.notify("Applied Material You " + color_scheme + " " + theme_str + " Theme",
+                    "WARNING! Shell theme could not be applied automatically, Some apps may require re-logging in to update");
+            } else {
+                Main.notify("Applied Material You " + color_scheme + " " + theme_str + " Theme",
+                    "Some apps may require re-logging in to update");
+            }
+        }
     }
-    
     remove_theme() {
         // Undoing changes to theme when disabling extension
         this.delete_file(GLib.get_home_dir() + "/.config/gtk-4.0/gtk.css");

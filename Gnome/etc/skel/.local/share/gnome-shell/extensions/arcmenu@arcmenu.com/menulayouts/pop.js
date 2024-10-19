@@ -152,7 +152,7 @@ export const Layout = class PopLayout extends BaseMenuLayout {
         this._folderSettings.connectObject('changed::folder-children', () => Main.queueDeferredWork(this._redisplayWorkId), this);
         this._parentalControlsManager = ParentalControlsManager.getDefault();
         this._parentalControlsManager.connectObject('app-filter-changed', () => Main.queueDeferredWork(this._redisplayWorkId), this);
-        Shell.AppSystem.get_default().connect('installed-changed', () => Main.queueDeferredWork(this._redisplayWorkId));
+        Shell.AppSystem.get_default().connectObject('installed-changed', () => Main.queueDeferredWork(this._redisplayWorkId), this);
 
         this.updateWidth();
         this._redisplay();

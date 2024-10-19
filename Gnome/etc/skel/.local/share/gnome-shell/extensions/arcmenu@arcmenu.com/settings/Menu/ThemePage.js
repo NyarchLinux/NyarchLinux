@@ -1,5 +1,6 @@
 import Adw from 'gi://Adw';
-import GdkPixbuf from 'gi://GdkPixbuf';
+import Gdk from 'gi://Gdk';
+import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk';
@@ -47,25 +48,53 @@ class ArcMenuThemePage extends SubPage {
         });
         this.add(menuThemesGroup);
 
-        // Theme Combo Box Section----------
-        const themeList = new Gtk.ListStore();
-        themeList.set_column_types([GdkPixbuf.Pixbuf, GObject.TYPE_STRING]);
+        // Theme Drop Down Section----------
+        const themeList = new Gio.ListStore();
         this.createIconList(themeList);
 
-        const themeComboBox = new Gtk.ComboBox({
+        const factory = new Gtk.SignalListItemFactory();
+        factory.connect('setup', (factory_, listItem) => {
+            const box = new Gtk.Grid({
+                column_spacing: 8,
+                valign: Gtk.Align.CENTER,
+            });
+
+            const image = new Gtk.Picture({
+                content_fit: Gtk.ContentFit.SCALE_DOWN,
+                valign: Gtk.Align.CENTER,
+            });
+            image.set_size_request(42, 14);
+            const label = new Gtk.Label({
+                valign: Gtk.Align.CENTER,
+            });
+            box.attach(image, 0, 0, 1, 1);
+            box.attach(label, 1, 0, 1, 1);
+
+            listItem.set_child(box);
+        });
+
+        factory.connect('bind', (factory_, listItem) => {
+            const item = listItem.get_item();
+            const box = listItem.get_child();
+            const image = box.get_child_at(0, 0);
+            const label = box.get_child_at(1, 0);
+
+            const pixbuf = item.pixbuf;
+            const texture = Gdk.Texture.new_for_pixbuf(pixbuf);
+
+            label.set_label(item.name);
+            image.set_paintable(texture);
+        });
+
+        const themeDropDown = new Gtk.DropDown({
+            factory,
             model: themeList,
             valign: Gtk.Align.CENTER,
         });
-        let renderer = new Gtk.CellRendererPixbuf({xpad: 5});
-        themeComboBox.pack_start(renderer, false);
-        themeComboBox.add_attribute(renderer, 'pixbuf', 0);
-        renderer = new Gtk.CellRendererText();
-        themeComboBox.pack_start(renderer, true);
-        themeComboBox.add_attribute(renderer, 'text', 1);
 
-        themeComboBox.connect('changed', widget => {
-            const index = widget.get_active();
-            if (index < 0)
+        themeDropDown.connect('notify::selected-item', widget => {
+            const index = widget.get_selected();
+            if (index < 0 || index === Gtk.INVALID_LIST_POSITION)
                 return;
 
             const menuThemes = this._settings.get_value('menu-themes').deep_unpack();
@@ -88,7 +117,7 @@ class ArcMenuThemePage extends SubPage {
         });
         const menuThemesRow = new Adw.ActionRow({
             title: _('Current Theme'),
-            activatable_widget: themeComboBox,
+            activatable_widget: themeDropDown,
         });
         menuThemesGroup.add(menuThemesRow);
         // ---------------------------------
@@ -103,14 +132,14 @@ class ArcMenuThemePage extends SubPage {
             manageThemesDialog.show();
             manageThemesDialog.connect('response', (_w, response) => {
                 if (response === Gtk.ResponseType.APPLY) {
-                    themeList.clear();
+                    themeList.remove_all();
                     this.createIconList(themeList);
                     this.checkIfThemeMatch();
                 }
             });
         });
         menuThemesRow.add_suffix(manageThemesButton);
-        menuThemesRow.add_suffix(themeComboBox);
+        menuThemesRow.add_suffix(themeDropDown);
         // ---------------------------------
 
         // Save Theme Section---------------
@@ -134,7 +163,7 @@ class ArcMenuThemePage extends SubPage {
                     menuThemes.push(currentSettingsArray);
                     this._settings.set_value('menu-themes', new GLib.Variant('aas', menuThemes));
 
-                    themeList.clear();
+                    themeList.remove_all();
                     this.createIconList(themeList);
                     this.checkIfThemeMatch();
 
@@ -216,7 +245,7 @@ class ArcMenuThemePage extends SubPage {
                 }
 
                 if (matchFound) {
-                    themeComboBox.set_active(index);
+                    themeDropDown.set_selected(index);
                     menuThemeSaveButton.set_sensitive(false);
                     break;
                 }
@@ -224,7 +253,7 @@ class ArcMenuThemePage extends SubPage {
             }
             if (!matchFound) {
                 menuThemeSaveButton.set_sensitive(true);
-                themeComboBox.set_active(-1);
+                themeDropDown.set_selected(Gtk.INVALID_LIST_POSITION);
             }
         };
 
@@ -234,10 +263,14 @@ class ArcMenuThemePage extends SubPage {
     createIconList(store) {
         const menuThemes = this._settings.get_value('menu-themes').deep_unpack();
         for (const theme of menuThemes) {
-            const xpm = SettingsUtils.createXpmImage(theme[1], theme[2], theme[3], theme[8]);
-            const pixbuf = GdkPixbuf.Pixbuf.new_from_xpm_data(xpm);
+            const pixbuf = SettingsUtils.createThemePreviewPixbuf(theme[1], theme[2], theme[3], theme[8]);
 
-            store.set(store.append(), [0, 1], [pixbuf, theme[0]]);
+            const themeListItem = new ThemeListItem({
+                name: theme[0],
+            });
+            themeListItem.pixbuf = pixbuf;
+
+            store.append(themeListItem);
         }
     }
 
@@ -298,3 +331,9 @@ class ArcMenuThemePage extends SubPage {
         return spinRow;
     }
 });
+
+const ThemeListItem = GObject.registerClass({
+    Properties: {
+        'name': GObject.ParamSpec.string('name', 'Name', 'Name of the item', GObject.ParamFlags.READWRITE, ''),
+    },
+}, class Item extends GObject.Object {});

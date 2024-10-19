@@ -15,18 +15,17 @@ export const NativeDynamicBlurEffect = utils.IS_IN_PREFERENCES ?
         GTypeName: "NativeDynamicBlurEffect"
     }, class NativeDynamicBlurEffect extends Shell.BlurEffect {
         constructor(params) {
-            const { unscaled_radius, ...parent_params } = params;
+            const { unscaled_radius, brightness, ...parent_params } = params;
             super({ ...parent_params, mode: Shell.BlurMode.BACKGROUND });
 
             this._theme_context = St.ThemeContext.get_for_stage(global.stage);
-
-            this.unscaled_radius = 'unscaled_radius' in params ? unscaled_radius : this.constructor.default_params.unscaled_radius;
-
             this._theme_context.connectObject(
                 'notify::scale-factor',
                 _ => this.radius = this.unscaled_radius * this._theme_context.scale_factor,
                 this
             );
+
+            utils.setup_params(this, params);
         }
 
         static get default_params() {
@@ -41,4 +40,4 @@ export const NativeDynamicBlurEffect = utils.IS_IN_PREFERENCES ?
             this._unscaled_radius = value;
             this.radius = value * this._theme_context.scale_factor;
         }
-    }); 
+    });

@@ -15,6 +15,7 @@ import * as MW from './menuWidgets.js';
 
 export const StandaloneRunner = class ArcMenuStandaloneRunner {
     constructor() {
+        this._destroyed = false;
         this._settings = ArcMenuManager.settings;
         this._extension = ArcMenuManager.extension;
 
@@ -46,6 +47,8 @@ export const StandaloneRunner = class ArcMenuStandaloneRunner {
         // Sub Menu Manager - Control all other popup menus
         this.subMenuManager = new PopupMenu.PopupMenuManager(this.arcMenu);
         this.subMenuManager._changeMenu = () => {};
+
+        this.createMenuLayout();
     }
 
     get extension() {
@@ -56,20 +59,7 @@ export const StandaloneRunner = class ArcMenuStandaloneRunner {
         return this._settings;
     }
 
-    initiate() {
-        this.createMenuLayoutTimeout();
-    }
-
-    _clearMenuLayoutTimeouts() {
-        if (this._createMenuLayoutTimeoutID) {
-            GLib.source_remove(this._createMenuLayoutTimeoutID);
-            this._createMenuLayoutTimeoutID = null;
-        }
-    }
-
-    createMenuLayoutTimeout() {
-        this._clearMenuLayoutTimeouts();
-
+    async createMenuLayout() {
         this._clearTooltipShowingId();
         this._clearTooltip();
 
@@ -77,14 +67,21 @@ export const StandaloneRunner = class ArcMenuStandaloneRunner {
 
         this._destroyMenuLayout();
 
-        this._createMenuLayoutTimeoutID = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 200, () => {
-            const standaloneRunner = true;
-            this._menuLayout = LayoutHandler.createMenuLayout(this, Constants.MenuLayout.RUNNER, standaloneRunner);
-            this.arcMenu.box.add_child(this._menuLayout);
+        if (this._destroyed)
+            return;
 
-            this._createMenuLayoutTimeoutID = null;
-            return GLib.SOURCE_REMOVE;
-        });
+        const standaloneRunner = true;
+        this._menuLayout = await LayoutHandler.createMenuLayout(this, Constants.MenuLayout.RUNNER, standaloneRunner);
+
+        // StandaloneRunner may be destroyed while createMenuLayout() is running
+        if (this._destroyed && this._menuLayout) {
+            this._menuLayout.destroy();
+            this._menuLayout = null;
+            return;
+        }
+
+        if (this._menuLayout)
+            this.arcMenu.box.add_child(this._menuLayout);
     }
 
     closeOtherMenus() {
@@ -129,8 +126,7 @@ export const StandaloneRunner = class ArcMenuStandaloneRunner {
     }
 
     destroy() {
-        this._clearMenuLayoutTimeouts();
-
+        this._destroyed = true;
         this._clearTooltipShowingId();
         this._clearTooltip();
         this._destroyMenuLayout();
@@ -139,6 +135,7 @@ export const StandaloneRunner = class ArcMenuStandaloneRunner {
         this.tooltip = null;
 
         this.arcMenu?.destroy();
+        this.arcMenu = null;
     }
 
     updateLocation() {

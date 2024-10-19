@@ -137,15 +137,4 @@ export const ColorEffect = utils.IS_IN_PREFERENCES ?
         set(params) {
             this.color = params.color;
         }
-
-        vfunc_paint_target(paint_node = null, paint_context = null) {
-            this.set_uniform_value("tex", 0);
-
-            if (paint_node && paint_context)
-                super.vfunc_paint_target(paint_node, paint_context);
-            else if (paint_node)
-                super.vfunc_paint_target(paint_node);
-            else
-                super.vfunc_paint_target();
-        }
     });

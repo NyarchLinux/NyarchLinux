@@ -66,8 +66,8 @@ export const DragRow = GObject.registerClass({
             'gicon', 'gicon', 'gicon',
             GObject.ParamFlags.READWRITE,
             Gio.Icon.$gtype),
-        'xpm-pixbuf': GObject.ParamSpec.object(
-            'xpm-pixbuf', 'xpm-pixbuf', 'xpm-pixbuf',
+        'pixbuf': GObject.ParamSpec.object(
+            'pixbuf', 'pixbuf', 'pixbuf',
             GObject.ParamFlags.READWRITE,
             GdkPixbuf.Pixbuf.$gtype),
         'icon-pixel-size': GObject.ParamSpec.int(
@@ -100,8 +100,8 @@ export const DragRow = GObject.registerClass({
         });
         this.add_prefix(this.icon);
 
-        if (this.xpm_pixbuf)
-            this.icon.set_from_pixbuf(this.xpm_pixbuf);
+        if (this.pixbuf)
+            this.icon.set_from_pixbuf(this.pixbuf);
 
         this.connect('notify::gicon', () => (this.icon.gicon = this.gicon));
 
@@ -209,8 +209,8 @@ export const DragRow = GObject.registerClass({
         dragRow.css_classes = this.css_classes;
         dragRow.icon.gicon = this.gicon;
 
-        if (this.xpm_pixbuf)
-            dragRow.icon.set_from_pixbuf(this.xpm_pixbuf);
+        if (this.pixbuf)
+            dragRow.icon.set_from_pixbuf(this.pixbuf);
 
         const editButton = new Gtk.Button({
             icon_name: 'view-more-symbolic',

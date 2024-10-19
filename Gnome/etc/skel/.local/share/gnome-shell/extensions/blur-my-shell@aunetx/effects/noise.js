@@ -36,11 +36,7 @@ export const NoiseEffect = utils.IS_IN_PREFERENCES ?
         constructor(params) {
             super(params);
 
-            this._noise = null;
-            this._lightness = null;
-
-            this.noise = 'noise' in params ? params.noise : this.constructor.default_params.noise;
-            this.lightness = 'lightness' in params ? params.lightness : this.constructor.default_params.lightness;
+            utils.setup_params(this, params);
 
             // set shader source
             this._source = utils.get_shader_source(Shell, SHADER_FILENAME, import.meta.url);
@@ -76,16 +72,5 @@ export const NoiseEffect = utils.IS_IN_PREFERENCES ?
                 this.set_uniform_value('lightness', parseFloat(this._lightness - 1e-6));
                 this.set_enabled(this.noise > 0. && this.lightness != 1);
             }
-        }
-
-        vfunc_paint_target(paint_node = null, paint_context = null) {
-            this.set_uniform_value("tex", 0);
-
-            if (paint_node && paint_context)
-                super.vfunc_paint_target(paint_node, paint_context);
-            else if (paint_node)
-                super.vfunc_paint_target(paint_node);
-            else
-                super.vfunc_paint_target();
         }
     });

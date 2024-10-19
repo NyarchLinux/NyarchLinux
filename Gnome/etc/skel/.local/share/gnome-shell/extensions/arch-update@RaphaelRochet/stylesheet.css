@@ -17,10 +17,6 @@
     Copyright 2016-2022 Raphaël Rochet
 */
 
-.arch-updates-update-line {
-	padding: 0px 1em 0px 1em;
-}
-
 .arch-updates-menubutton {
 	/* Meant to be used as an override to display a small system-menu-action */
 	border-radius: 10px;
@@ -33,9 +29,15 @@
 .arch-updates-menubutton > StIcon {
 	icon-size: 16px;
 }
+
+.arch-updates-updates-list {
+	padding: .8em;
+}
+
 .arch-updates-update-title {
 	font-weight: bold;
 }
+
 .arch-updates-update-name {
 	padding-right: 1em;
 }

@@ -267,7 +267,7 @@ export function getGridIconSize(iconSizeEnum, defaultIconSize) {
     return {width, height, iconSize};
 }
 
-export function getCategoryDetails(currentCategory) {
+export function getCategoryDetails(iconTheme, currentCategory) {
     const extensionPath = ArcMenuManager.extension.path;
 
     let name = null, gicon = null, fallbackIcon = null;
@@ -300,7 +300,6 @@ export function getCategoryDetails(currentCategory) {
 
         const categoryIconType = ArcMenuManager.settings.get_enum('category-icon-type');
         if (categoryIconType === Constants.CategoryIconType.SYMBOLIC) {
-            const iconTheme = new St.IconTheme();
             const icon = iconTheme.lookup_icon(symbolicName, 26, St.IconLookupFlags.FORCE_SYMBOLIC);
             if (icon) {
                 gicon = Gio.icon_new_for_string(symbolicName);

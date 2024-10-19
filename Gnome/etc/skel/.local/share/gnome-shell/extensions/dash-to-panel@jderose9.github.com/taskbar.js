@@ -46,8 +46,8 @@ import {SETTINGS} from './extension.js';
 
 const SearchController = Main.overview.searchController;
 
-export const DASH_ANIMATION_TIME = Dash.DASH_ANIMATION_TIME / (Dash.DASH_ANIMATION_TIME > 1 ? 1000 : 1);
-const DASH_ITEM_HOVER_TIMEOUT = Dash.DASH_ITEM_HOVER_TIMEOUT;
+export const DASH_ANIMATION_TIME = .2; // Dash.DASH_ANIMATION_TIME is now private
+const DASH_ITEM_HOVER_TIMEOUT = .3; // Dash.DASH_ITEM_HOVER_TIMEOUT is now private
 export const MIN_ICON_SIZE = 4;
 
 const T1 = 'ensureAppIconVisibilityTimeout'
@@ -1408,7 +1408,7 @@ export const TaskbarItemContainer = GObject.registerClass({
 
         // The clone follows its source when the taskbar is scrolled.
         let taskbarScrollView = this.get_parent().get_parent();
-        let adjustment = this._dtpPanel.checkIfVertical() ? taskbarScrollView.vscroll.get_adjustment() : taskbarScrollView.hscroll.get_adjustment();
+        let adjustment = this._dtpPanel.checkIfVertical() ? taskbarScrollView.get_vadjustment() : taskbarScrollView.get_hadjustment();
         let adjustmentChangedId = adjustment.connect('notify::value', () => this._updateCloneContainerPosition(cloneContainer));
 
         // Update clone position when an item is added to / removed from the taskbar.

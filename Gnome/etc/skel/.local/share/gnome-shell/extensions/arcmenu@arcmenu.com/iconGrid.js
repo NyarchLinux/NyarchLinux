@@ -122,7 +122,7 @@ export const IconGridLayout = GObject.registerClass({
         const columnSpacing = this.columnSpacing * (nColumns - 1);
 
         const emptyHSpace = width - usedWidth - columnSpacing;
-        let leftEmptySpace = Math.floor(emptyHSpace / 2);
+        const leftEmptySpace = Math.floor(emptyHSpace / 2);
 
         return leftEmptySpace;
     }
@@ -234,7 +234,7 @@ export const IconGridLayout = GObject.registerClass({
             if (xFill)
                 naturalWidth = this._width / this.columns;
 
-            let x = xOffset + column * (naturalWidth + this.columnSpacing);
+            const x = xOffset + column * (naturalWidth + this.columnSpacing);
 
             // The first item in a row will determine the row height
             if (newRow) {
@@ -330,7 +330,7 @@ export const IconGridLayout = GObject.registerClass({
         const inRightEmptySpace = x > emptySpace + gridWidth;
         const inBottomEmptySpace = y > emptySpace + gridHeight;
 
-        if (inTopEmptySpace || inBottomEmptySpace)
+        if (inTopEmptySpace || inBottomEmptySpace || inRightEmptySpace || inLeftEmptySpace)
             return [0, DragLocation.INVALID];
 
         const halfHSpacing = this.rowSpacing / 2;
@@ -488,7 +488,7 @@ class IconGrid extends St.Widget {
         // remove app from folder pinned app list
         const parent = source.get_parent();
         const layoutManager = parent.layout_manager;
-        let index = layoutManager.getItemPosition(source);
+        const index = layoutManager.getItemPosition(source);
 
         const folderSettings = source.folderSettings;
 

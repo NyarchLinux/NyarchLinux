@@ -130,6 +130,7 @@ export const ForcedMenuLocation = {
     OFF: 0,
     TOP_CENTERED: 1,
     BOTTOM_CENTERED: 2,
+    MONITOR_CENTERED: 3,
 };
 
 export const IconSize = {

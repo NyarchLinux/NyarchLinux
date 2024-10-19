@@ -7,6 +7,7 @@ import Shell from 'gi://Shell';
 import St from 'gi://St';
 
 import * as AppFavorites from 'resource:///org/gnome/shell/ui/appFavorites.js';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import {ArcMenuManager} from '../arcmenuManager.js';
 import * as Constants from '../constants.js';
@@ -107,6 +108,9 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
         this.subMenuManager = menuButton.subMenuManager;
         this.arcMenu = menuButton.arcMenu;
 
+        if (this.arcMenu === null)
+            throw new Error('ArcMenu null');
+
         this._focusChild = null;
         this.hasPinnedApps = false;
         this.activeCategoryType = -1;
@@ -114,8 +118,11 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
 
         this.connect('key-press-event', this._onMainBoxKeyPress.bind(this));
 
+        this.iconTheme = new St.IconTheme();
+        this.appSys = Shell.AppSystem.get_default();
         this._tree = new GMenu.Tree({menu_basename: 'applications.menu'});
-        this._tree.connectObject('changed', () => this.reloadApplications(), this);
+        this._reloadApplicationsWorkId = Main.initializeDeferredWork(this, () => this.reloadApplications());
+        this._tree.connectObject('changed', () => Main.queueDeferredWork(this._reloadApplicationsWorkId), this);
 
         AppFavorites.getAppFavorites().connectObject('changed', () => {
             if (this.categoryDirectories) {
@@ -356,7 +363,7 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
                     continue;
                 }
 
-                let app = Shell.AppSystem.get_default().lookup_app(id);
+                let app = this.appSys.lookup_app(id);
                 if (!app)
                     app = new Shell.App({app_info: entry.get_app_info()});
 
@@ -551,12 +558,12 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
 
         // Guard against undefined 'id' in itemData
         if (id)
-            app = Shell.AppSystem.get_default().lookup_app(id);
+            app = this.appSys.lookup_app(id);
 
         // Ubunutu 22.04 uses old version of GNOME settings
         if (id === 'org.gnome.Settings.desktop' && !app) {
             id = 'gnome-control-center.desktop';
-            app = Shell.AppSystem.get_default().lookup_app(id);
+            app = this.appSys.lookup_app(id);
         }
 
         if (app)
