@@ -143,8 +143,9 @@ cp -r opt/ ./ezreleng/airootfs/
 cp -r usr/ ./ezreleng/airootfs/
 mkdir -p ./ezreleng/airootfs/etc/skel
 mkdir -p ./ezreleng/airootfs/var/lib/
-cp -r /var/lib/flatpak/ ./ezreleng/airootfs/var/lib/flatpak
+#cp -r /var/lib/flatpak/ ./ezreleng/airootfs/var/lib/flatpak
 ln -sf /usr/share/ezarcher ./ezreleng/airootfs/etc/skel/ezarcher
+cp customize_airootfs.sh ./ezreleng/airootfs/root/customize_airootfs.sh
 }
 
 # Set hostname
