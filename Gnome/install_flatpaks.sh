@@ -8,6 +8,7 @@ flatpak install flathub com.github.tchx84.Flatseal
 #flatpak install flathub de.haeckerfelix.Shortwave
 flatpak install org.gtk.Gtk3theme.adw-gtk3 org.gtk.Gtk3theme.adw-gtk3-dark
 flatpak install flathub com.mattjakeman.ExtensionManager
+flatpak install flathub it.mijorus.gearlever
 
 cd flatpaks
 rm -rf nyarchtour.flatpak
