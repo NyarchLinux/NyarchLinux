@@ -1,9 +1,11 @@
 #!/bin/bash
+sudo pacman -Syy
+pacman-key --init
 flatpak mask "org.freedesktop.Platform.GL.nvidia*"
 yay -S komikku --noconfirm
 yay -S shortwave --noconfirm
-yay -S extension-manager --no-confirm
-yay -S gearlever --no-confirm
+yay -S extension-manager --noconfirm
+yay -S gearlever --noconfirm
 
 flatpak install -y flathub com.github.tchx84.Flatseal
 flatpak install -y org.gtk.Gtk3theme.adw-gtk3 org.gtk.Gtk3theme.adw-gtk3-dark
