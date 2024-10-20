@@ -334,3 +334,11 @@ libdrm
 pango
 python-numpy
 gearlever
+
+# Chaotic
+chaotic-mirrorlist
+chaotic-keyring
+
+# From chaotic
+extension-manager
+shortwave

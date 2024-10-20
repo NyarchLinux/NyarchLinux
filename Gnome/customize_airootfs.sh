@@ -2,7 +2,6 @@
 sudo pacman -Syy
 pacman-key --init
 flatpak mask "org.freedesktop.Platform.GL.nvidia*"
-sudo -u live yay -S extension-manager --noconfirm
 
 flatpak install -y flathub info.febvre.Komikku
 flatpak install -y flathub com.github.tchx84.Flatseal
