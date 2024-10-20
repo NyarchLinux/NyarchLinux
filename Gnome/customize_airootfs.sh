@@ -2,11 +2,9 @@
 sudo pacman -Syy
 pacman-key --init
 flatpak mask "org.freedesktop.Platform.GL.nvidia*"
-yay -S komikku --noconfirm
-yay -S shortwave --noconfirm
-yay -S extension-manager --noconfirm
-yay -S gearlever --noconfirm
+sudo -u live yay -S extension-manager --noconfirm
 
+flatpak install -y flathub info.febvre.Komikku
 flatpak install -y flathub com.github.tchx84.Flatseal
 flatpak install -y org.gtk.Gtk3theme.adw-gtk3 org.gtk.Gtk3theme.adw-gtk3-dark
 
