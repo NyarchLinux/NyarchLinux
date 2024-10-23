@@ -183,7 +183,6 @@ wireplumber
 x265
 x264
 xvidcore
-yt-dlp
 
 # XORG
 mesa
@@ -306,8 +305,7 @@ gdm
 alci-calamares
 
 # AUR
-trizen
-
+yay-bin
 # Flatpak
 flatpak
 
@@ -321,7 +319,6 @@ flatpak
 
 # Nyarch
 fastfetch
-shortwave
 fragments
 lollypop
 python-pywal
@@ -335,16 +332,13 @@ gnome-terminal-transparency
 plymouth
 libdrm
 pango
-btop
-aura-bin
+python-numpy
+gearlever
 
-# Webapp Manager
-python-beautifulsoup4
-python-configobj
-python-gobject
-python-pillow
-python-setproctitle
-python-tldextract
-dconf
-xapp
-webapp-manager
+# Chaotic
+chaotic-mirrorlist
+chaotic-keyring
+
+# From chaotic
+extension-manager
+shortwave
