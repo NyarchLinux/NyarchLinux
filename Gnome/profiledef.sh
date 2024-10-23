@@ -36,4 +36,5 @@ file_permissions=(
   ["/usr/local/bin/nekofetch"]="0:0:755"
   ["/usr/local/bin/nyaofetch"]="0:0:755"
   ["/usr/local/bin/nyaura"]="0:0:755"
+  ["/usr/local/bin/nyay"]="0:0:755"
 )
