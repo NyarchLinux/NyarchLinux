@@ -322,7 +322,6 @@ fastfetch
 fragments
 lollypop
 python-pywal
-neofetch
 nodejs
 npm
 geary
@@ -340,5 +339,6 @@ chaotic-mirrorlist
 chaotic-keyring
 
 # From chaotic
+webapp-manager
 extension-manager
 shortwave
