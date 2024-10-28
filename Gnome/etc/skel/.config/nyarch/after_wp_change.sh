@@ -11,6 +11,7 @@ execute_change () {
 	#gsettings set org.gnome.desktop.interface icon-theme "Adwaita"
 	gsettings set org.gnome.desktop.interface icon-theme "Tela-circle-MaterialYou-$COLOR"
   	#gtk-update-icon-cache
+  	sleep 10
   	find ~/.local/share/icons -type d -name "Tela-circle-MaterialYou-*" ! -name "Tela-circle-MaterialYou-$COLOR" -exec rm -rf "{}" +
 }
 
