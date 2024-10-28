@@ -17,6 +17,7 @@ wget https://github.com/nyarchlinux/nyarchscript/releases/latest/download/nyarch
 wget https://github.com/nyarchlinux/nyarchcustomize/releases/latest/download/nyarchcustomize.flatpak
 wget https://github.com/nyarchlinux/waifudownloader/releases/latest/download/waifudownloader.flatpak
 wget https://github.com/nyarchlinux/nyarchassistant/releases/latest/download/nyarchassistant.flatpak
+wget https://github.com/nyarchlinux/nyarchupdater/releases/latest/download/nyarchupdater.flatpak
 
 flatpak install -y nyarchtour.flatpak
 flatpak install -y catgirldownloader.flatpak
@@ -25,6 +26,7 @@ flatpak install -y wizard.flatpak
 flatpak install -y nyarchscript.flatpak
 flatpak install -y waifudownloader.flatpak
 flatpak install -y nyarchassistant.flatpak
+flatpak install -y nyarchupdater.flatpak
 
 rm -rf nyarchtour.flatpak
 rm -rf catgirldownloader.flatpak
@@ -34,5 +36,6 @@ rm -rf wizard.flatpak
 rm -rf nyarchscript.flatpak
 rm -rf waifudownloader.flatpak
 rm -rf nyarchassistant.flatpak
+rm -rf nyarchupdater.flatpak
 
 flatpak --remove mask "org.freedesktop.Platform.GL.nvidia*"
