@@ -1,8 +1,11 @@
+from color_utils import ColorUtils
 from material_color_utilities_python import *
 import json, os
 import map_colors
 import argparse
+from materialyoucolor.scheme import Scheme
 
+MU_BACKEND = True
 def main():
     parser = argparse.ArgumentParser()
     print(os.getcwd())
@@ -20,15 +23,22 @@ def main():
     scheme = parser.parse_args()
     if args.color:
         color = args.color
-        argb = argbFromHex(color)
+        argb = argbFromHex(color) 
     elif args.wallpaper:
         img = Image.open(args.wallpaper)
         argb = sourceColorFromImage(img)
     else:
         print("Error: at least one argument between color and wallpaper must be specified")
         exit(-1)
-        
-    theme = themeFromSourceColor(argb)
+    
+    if MU_BACKEND:
+        sch = Scheme.dark(argb).__dict__["props"]
+        generated = {}
+        for key, color in sch.items():
+            generated[key] = ColorUtils.argb_from_argb_arr(color[0], color[1], color[2], color[3])
+        theme = generated
+    else:
+        theme = themeFromSourceColor(argb)
     scheme = args.scheme
     variant = args.variant if args.variant else "default"
 

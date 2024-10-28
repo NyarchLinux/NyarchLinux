@@ -56,7 +56,7 @@
     border-style: solid;
 
     &:focus {
-      border-color: transparentize($selected_bg_color, 0.4);
+      border-color: st-transparentize(-st-accent-color, 0.4);
     }
   }
 }
@@ -64,21 +64,19 @@
 // message bubbles
 .message {
   @extend %card;
-  padding: 0;
+  padding: $base_padding;
   margin: 0;
   border-radius: $modal_radius;
 
-  // subtract side padding to accommodate the close button's border
-  &:ltr { padding-right:-2px; };
-  &:rtl { padding-left:-2px; };
-
   // message header
   .message-header {
-    padding: 0 $scaled_padding;
-    margin: $base_padding;
-    margin-bottom: 0;
     spacing: $base_padding;
     color: $insensitive_fg_color;
+    padding:0 $base_padding;
+
+    // remove side padding to accommodate the close button
+    &:ltr { padding-right: 0; }
+    &:rtl { padding-left: 0; }
 
     // header source icon
     .message-source-icon {
@@ -104,8 +102,8 @@
         // Add bottom padding to align the app name with the time horizontally
         padding-bottom: to_em(1px);
 
-        &:ltr { text-align: right };
-        &:rtl { text-align: left };
+        &:ltr { text-align: right; }
+        &:rtl { text-align: left; }
       }
     }
 
@@ -113,26 +111,26 @@
     .message-expand-button,
     .message-close-button {
       @extend .icon-button;
+      @extend %notification_button;
+      border-radius: $forced_circular_radius; // make circular
       color: $fg_color;
-      background-color: transparentize($fg_color, .9);
-      padding: 4px;
-      &:hover { background-color: transparentize($fg_color, .81);}
-      &:active,
-      &:active:hover { background-color: transparentize($fg_color, .76);}
-      &:insensitive { background-color: transparentize($fg_color, .93);}
     }
 
+    // increase padding to expand button to make it larger
     .message-expand-button {
-      padding: 6px;
-      &:ltr { margin-right: $base_padding; }
-      &:rtl { margin-left: $base_padding; }
+      padding: $base_padding;
+    }
+
+    // add margin to close button to balance it with the expand button
+    .message-close-button {
+      margin: $base_padding * 0.5;
+      padding: 4px;
     }
   }
 
   // container for message contents
   .message-box {
     padding: $base_padding;
-    margin: $base_padding;
     margin-top: 0;
     spacing: $base_padding;
 
@@ -143,12 +141,12 @@
 
       // icon size and color
       icon-size: $base_icon_size * 3; // 48px
-      -st-icon-style: symbolic;
 
+      // a small symbolic icon on a circle background
       &.message-themed-icon {
-        border-radius: $forced_circular_radius; // is circular
-        background-color: transparentize($fg_color, 0.8);
-        icon-size: $base_icon_size;
+        border-radius: $forced_circular_radius;
+        background-color: transparentize($fg_color, .93);
+        icon-size: $scalable_icon_size;
         min-width: $base_icon_size * 3;
         min-height: $base_icon_size * 3;
       }
@@ -166,6 +164,26 @@
       // message title
       .message-title {
         font-weight: bold;
+      }
+    }
+  }
+
+  // container for message buttons
+  .message-action-bin {
+    padding: $base_margin;
+    spacing: $base_padding;
+
+    // set margin on children
+    * {
+      margin: 0 $base_margin;
+      // remove margins
+      &:first-child {
+        &:ltr { margin-left:0;}
+        &:rtl { margin-right:0;}
+      }
+      &:last-child {
+        &:ltr { margin-right:0;}
+        &:rtl { margin-left:0;}
       }
     }
   }

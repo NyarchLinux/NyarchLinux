@@ -11,16 +11,23 @@ class ColorUtils:
     def blue_from_argb(argb: int) -> int:
         return argb & 0xFF
 
+    @staticmethod
     def rgba_arr_from_argb(argb: int) -> list[int]:
         return [
-            (argb >> 16) & 0xFF,  # Rosso
-            (argb >> 8) & 0xFF,  # Verde
-            argb & 0xFF,         # Blu
-            (argb >> 24) & 0xFF,  # Alpha
+            (argb >> 16) & 0xFF,  
+            (argb >> 8) & 0xFF,  
+            argb & 0xFF,         
+            (argb >> 24) & 0xFF,
         ]
+
     @staticmethod
     def argb_from_rgb(red: int, green: int, blue: int) -> int:
         return (0xFF << 24) | (red << 16) | (green << 8) | blue
+
+    @staticmethod
+    def argb_from_argb_arr(red: int, green: int, blue: int, alpha: int) -> int:
+        return (alpha << 24) | (red << 16) | (green << 8) | blue
+
 
     @staticmethod
     def blend_argb(base: int, added: int) -> int:

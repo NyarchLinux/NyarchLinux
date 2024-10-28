@@ -5,3 +5,4 @@ material
 pydantic
 regex
 numpy
+materialyoucolor

@@ -1,6 +1,9 @@
 #!/bin/bash
 sudo pacman -Syy
+sudo pip install 
 pacman-key --init
+pip install materialyoucolor --break-system-packages
+
 flatpak mask "org.freedesktop.Platform.GL.nvidia*"
 
 flatpak install -y flathub info.febvre.Komikku

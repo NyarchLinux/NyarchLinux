@@ -257,36 +257,53 @@ export default class MaterialYou extends Extension {
          
         if (ext_utils.check_npm(this.extensiondir)) {
             const version = Config.PACKAGE_VERSION.substring(0, 2);
-    
-          this.modify_colors(
-            this.extensiondir + "/shell/" + version + "/gnome-shell-sass/_colors.txt",
-            this.extensiondir + "/shell/" + version + "/gnome-shell-sass/_colors.scss",
-            this.map_colors(
-                color_mappings_sel.dark,
-                base_presets.dark,
-                theme.schemes.dark.props
-            ).variables
-          );
-            if (version >= 46) {
-                this.modify_colors(
-                    this.extensiondir + "/shell/" + version + "/gnome-shell-sass/_default-colors.txt",
-                    this.extensiondir + "/shell/" + version + "/gnome-shell-sass/_default-colors.scss",
-                    this.map_colors(
-                        color_mappings_sel.dark,
-                        base_presets.dark,
-                        theme.schemes.dark.props
-                    ).variables
-                  );``
-            }
-            this.create_dir_sync(GLib.get_home_dir() + "/.local/share/themes/MaterialYou");
+
+            this.create_dir_sync(GLib.get_home_dir() + "/.local/share/themes/MaterialYou"); 
             this.create_dir_sync(GLib.get_home_dir() + "/.local/share/themes/MaterialYou/gnome-shell");
-            this.compile_sass(
-                this.extensiondir + "/shell/" + version + "/gnome-shell.scss",
-                GLib.get_home_dir() + "/.local/share/themes/MaterialYou/gnome-shell/gnome-shell.css",
-                shell_settings
-            );
-        }
-    
+            if (version < 47) { 
+              this.modify_colors(
+                this.extensiondir + "/shell/" + version + "/gnome-shell-sass/_colors.txt",
+                this.extensiondir + "/shell/" + version + "/gnome-shell-sass/_colors.scss",
+                this.map_colors(
+                    color_mappings_sel.dark,
+                    base_presets.dark,
+                    theme.schemes.dark.props
+                ).variables
+              );
+                if (version >= 46) {
+                    this.modify_colors(
+                        this.extensiondir + "/shell/" + version + "/gnome-shell-sass/_default-colors.txt",
+                        this.extensiondir + "/shell/" + version + "/gnome-shell-sass/_default-colors.scss",
+                        this.map_colors(
+                            color_mappings_sel.dark,
+                            base_presets.dark,
+                            theme.schemes.dark.props
+                        ).variables
+                      );
+                }
+              } else {
+                 
+                if (is_dark) {
+                  this.replace_colors(
+                    this.extensiondir + "/shell/" + version + "/compiled_shell_dark.scss",
+                    GLib.get_home_dir() + "/.local/share/themes/MaterialYou/gnome-shell/gnome-shell.css",
+                    base_preset.variables
+                  )
+                  this.replace_colors(this.extensiondir + "/shell/" + version + "/compiled_shell_dark.scss.map", 
+                    GLib.get_home_dir() + "/.local/share/themes/MaterialYou/gnome-shell/gnome-shell.css.map", base_preset.variables)
+                } else {
+                  this.replace_colors(
+                    this.extensiondir + "/shell/" + version + "/compiled_shell_light.scss",
+                    GLib.get_home_dir() + "/.local/share/themes/MaterialYou/gnome-shell/gnome-shell.css",
+                    base_preset.variables
+                  )
+                  this.replace_colors(this.extensiondir + "/shell/" + version + "/compiled_shell_light.scss.map", 
+                    GLib.get_home_dir() + "/.local/share/themes/MaterialYou/gnome-shell/gnome-shell.css.map", base_preset.variables)
+                }
+                shell_settings.set_string("name", "reset");
+            }
+
+        }     
         // Notifying user on theme change
         if (notify && show_notifications) {
             if (warn_shell_theme) {
@@ -422,6 +439,11 @@ export default class MaterialYou extends Extension {
         for (const key in vars) {
             colors_template = colors_template.replace("{{" + key + "}}", vars[key]);
         }
+        this.write_str_sync(colors_template, output_path);
+    }
+    replace_colors(scss_path, output_path, vars) {
+        let colors_template = this.read_file(scss_path);
+        colors_template = colors_template.split("-st-accent-color").join(vars["accent_bg_color"]).split("-st-accent-fg-color").join(vars["accent_fg_color"])
         this.write_str_sync(colors_template, output_path);
     }
     
