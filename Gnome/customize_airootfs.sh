@@ -41,4 +41,4 @@ rm -rf nyarchupdater.flatpak
 
 flatpak --remove mask "org.freedesktop.Platform.GL.nvidia*"
 
-cd /etc/skel/.config/nyarch && git clone https://github.com/NyarchLinux/Tela-circle-icon-theme.git
+cd /etc/skel/.config/nyarch && git clone https://github.com/NyarchLinux/Tela-circle-icon-theme.git && cp -a Tela-circle-icon-theme /home/live/.config/nyarch/Tela-circle-icon-theme

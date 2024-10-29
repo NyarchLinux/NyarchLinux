@@ -14,7 +14,7 @@ execute_change () {
   echo $COLOR;
 	# Generate and install tela icons
 	chmod +x ~/.config/nyarch/Tela-circle-icon-theme-custom-color/install.sh 
-	~/.config/nyarch/Tela-circle-icon-theme-custom-color/install.sh -n Tela-circle-MaterialYou "$COLOR"
+	~/.config/nyarch/Tela-circle-icon-theme/install.sh -n Tela-circle-MaterialYou "$COLOR"
 	#gsettings set org.gnome.desktop.interface icon-theme "Adwaita"
 	gsettings set org.gnome.desktop.interface icon-theme "Tela-circle-MaterialYou-$COLOR"
   #gtk-update-icon-cache
