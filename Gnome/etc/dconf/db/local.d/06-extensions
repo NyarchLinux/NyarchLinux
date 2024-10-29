@@ -91,6 +91,7 @@ logo-size=10.485232067510548
 
 [org/gnome/shell/extensions/arch-update]
 always-visible=false
+package-manager='flatpak run moe.nyarchlinux.updater'
 
 [org/gnome/shell/extensions/dash-to-dock]
 background-color='rgb(198,70,0)'
