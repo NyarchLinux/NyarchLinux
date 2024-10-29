@@ -10,11 +10,6 @@ import * as Theming from './theming.js';
 import * as Utils from './utils.js';
 
 export default class ArcMenu extends Extension {
-    constructor(metaData) {
-        super(metaData);
-        this._realHasOverview = Main.sessionMode.hasOverview;
-    }
-
     enable() {
         this._arcmenuManager = new ArcMenuManager(this);
         this.settings = this.getSettings();
@@ -24,13 +19,11 @@ export default class ArcMenu extends Extension {
 
         const hideOverviewOnStartup = this.settings.get_boolean('hide-overview-on-startup');
         if (hideOverviewOnStartup && Main.layoutManager._startingUp) {
+            const hadOverview = Main.sessionMode.hasOverview;
             Main.sessionMode.hasOverview = false;
             Main.layoutManager.connectObject('startup-complete', () => {
-                Main.sessionMode.hasOverview = this._realHasOverview;
+                Main.sessionMode.hasOverview = hadOverview;
             }, this);
-            // handle Ubuntu's method
-            if (Main.layoutManager.startInOverview)
-                Main.layoutManager.startInOverview = false;
         }
 
         this.settings.connectObject('changed::multi-monitor', () => this._reload(), this);
@@ -62,8 +55,6 @@ export default class ArcMenu extends Extension {
     disable() {
         this.searchProviderEmitter.destroy();
         delete this.searchProviderEmitter;
-
-        Main.sessionMode.hasOverview = this._realHasOverview;
 
         Theming.deleteStylesheet();
 

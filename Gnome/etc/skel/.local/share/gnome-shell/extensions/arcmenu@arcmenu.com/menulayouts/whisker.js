@@ -41,12 +41,12 @@ export const Layout = class WhiskerLayout extends BaseMenuLayout {
         });
         this.add_child(this.actionsBox);
 
-        const userMenuItem = new MW.UserMenuItem(this, Constants.DisplayType.LIST);
-        userMenuItem.set({
+        const avatarMenuItem = new MW.AvatarMenuItem(this, Constants.DisplayType.LIST);
+        avatarMenuItem.set({
             x_expand: true,
             x_align: Clutter.ActorAlign.FILL,
         });
-        this.actionsBox.add_child(userMenuItem);
+        this.actionsBox.add_child(avatarMenuItem);
 
         const settingsButton = this.createMenuItem({'id': 'org.gnome.Settings.desktop'},
             Constants.DisplayType.BUTTON, false);

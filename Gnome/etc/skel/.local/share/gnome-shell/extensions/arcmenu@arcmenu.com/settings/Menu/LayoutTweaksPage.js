@@ -765,6 +765,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         const tweaksGroup = new Adw.PreferencesGroup();
         tweaksGroup.add(this._createVertSeparatorRow());
         tweaksGroup.add(this._createAvatarShapeRow());
+        tweaksGroup.add(this._disableAvatarRow());
         this.add(tweaksGroup);
 
         const extraShortcutsGroup = new Adw.PreferencesGroup();

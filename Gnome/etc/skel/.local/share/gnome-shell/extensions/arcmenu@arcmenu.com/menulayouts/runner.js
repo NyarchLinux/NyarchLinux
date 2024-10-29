@@ -205,9 +205,12 @@ export const Layout = class RunnerLayout extends BaseMenuLayout {
     }
 
     _onDestroy() {
-        this.arcMenu.sourceActor = this.oldSourceActor;
-        this.arcMenu.focusActor = this.oldFocusActor;
-        this.arcMenu._boxPointer.setPosition(this.oldSourceActor, this.oldArrowAlignment);
+        if (this.arcMenu) {
+            this.arcMenu.sourceActor = this.oldSourceActor;
+            this.arcMenu.focusActor = this.oldFocusActor;
+            this.arcMenu._boxPointer.setPosition(this.oldSourceActor, this.oldArrowAlignment);
+        }
+
         super._onDestroy();
     }
 };

@@ -403,7 +403,8 @@ export const Layout = class UnityLayout extends BaseMenuLayout {
         if (this._weatherItem)
             this._weatherItem.destroy();
 
-        this.arcMenu.box.style = null;
+        if (this.arcMenu)
+            this.arcMenu.box.style = null;
 
         super._onDestroy();
     }

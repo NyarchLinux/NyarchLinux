@@ -329,13 +329,15 @@ export const Layout = class RavenLayout extends BaseMenuLayout {
         if (this._weatherItem)
             this._weatherItem.destroy();
 
-        this.arcMenu.actor.style = null;
-        this.arcMenu.box.style = null;
-        this.arcMenu.sourceActor = this.oldSourceActor;
-        this.arcMenu.focusActor = this.oldFocusActor;
-        this.arcMenu._boxPointer.setPosition(this.oldSourceActor, this.oldArrowAlignment);
-        this.arcMenu.close();
-        this.arcMenu._boxPointer.hide();
+        if (this.arcMenu) {
+            this.arcMenu.actor.style = null;
+            this.arcMenu.box.style = null;
+            this.arcMenu.sourceActor = this.oldSourceActor;
+            this.arcMenu.focusActor = this.oldFocusActor;
+            this.arcMenu._boxPointer.setPosition(this.oldSourceActor, this.oldArrowAlignment);
+            this.arcMenu.close();
+            this.arcMenu._boxPointer.hide();
+        }
 
         super._onDestroy();
     }

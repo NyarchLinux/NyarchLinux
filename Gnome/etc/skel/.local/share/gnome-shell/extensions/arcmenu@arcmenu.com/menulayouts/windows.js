@@ -369,7 +369,9 @@ export const Layout = class WindowsLayout extends BaseMenuLayout {
             appList.push(key);
         });
         appList.sort((a, b) => {
-            return a.get_name().toLowerCase() > b.get_name().toLowerCase();
+            const nameA = a.get_name();
+            const nameB = b.get_name();
+            return nameA.localeCompare(nameB);
         });
         this.display_type = Constants.DisplayType.LIST;
         this._displayAppList(appList, Constants.CategoryType.ALL_PROGRAMS, this.applicationsGrid);

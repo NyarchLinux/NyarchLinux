@@ -112,14 +112,14 @@ export const Layout = class RedmondLayout extends BaseMenuLayout {
             vertical: true,
             style: 'padding-bottom: 16px; spacing: 4px;',
         });
-        const userMenuIcon = new MW.UserMenuIcon(this, 75, true);
-        userMenuIcon.label.set({
+        const avatarMenuIcon = new MW.AvatarMenuIcon(this, 75, true);
+        avatarMenuIcon.label.set({
             x_align: Clutter.ActorAlign.CENTER,
             y_align: Clutter.ActorAlign.CENTER,
             style: 'font-size: large;',
         });
-        userMenuBox.add_child(userMenuIcon);
-        userMenuBox.add_child(userMenuIcon.label);
+        userMenuBox.add_child(avatarMenuIcon);
+        userMenuBox.add_child(avatarMenuIcon.label);
         this.rightBox.add_child(userMenuBox);
 
         this.shortcutsBox = new St.BoxLayout({
@@ -277,7 +277,8 @@ export const Layout = class RedmondLayout extends BaseMenuLayout {
     }
 
     _onDestroy() {
-        this.arcMenu.box.style = null;
+        if (this.arcMenu)
+            this.arcMenu.box.style = null;
         super._onDestroy();
     }
 };

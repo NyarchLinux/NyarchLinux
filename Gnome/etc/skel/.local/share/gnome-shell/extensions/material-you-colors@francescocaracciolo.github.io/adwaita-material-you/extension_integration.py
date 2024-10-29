@@ -151,7 +151,6 @@ def theme_from_image_2(image, w, h, isdark):
 def apply_gnome_theme(base_preset, isdark = True):
 
     theme_path = expanduser("~/.local/share/themes/MaterialYou")
-    root_theme_path = theme_path
     if not os.path.exists(theme_path):
         os.mkdir(theme_path)
         os.mkdir(theme_path + "/gnome-shell")
@@ -167,12 +166,7 @@ def apply_gnome_theme(base_preset, isdark = True):
     f = open(theme_path, "w+")
     f.write(content)
     f.close()
-    # Create another folder to switch theme
-    theme_name = root_theme_path + "-" + base_preset["variables"]["accent_bg_color"]
-    subprocess.check_output(["cp", "-r", root_theme_path, theme_name])
-    set_setting("name", theme_name.split("/")[-1], "org.gnome.shell.extensions.user-theme")
-    # Remove old themes
-    subprocess.Popen(["bash", "-c", 'find ~/.local/share/themes -type d -name "MaterialYou-*" ! -name "MaterialYou-'+base_preset["variables"]["accent_bg_color"]+'" -exec rm -rf "{}" +'])
+    set_setting("name", "reset", "org.gnome.shell.extensions.user-theme")
 
 def apply_theme(accent_color_applied = False):
     # Get extension settings

@@ -52,12 +52,12 @@ function CreateThumbnail() {
     }
 
     // now, generate the file
-    let thumbnailPixbuf = thumbnailFactoryLarge.generate_thumbnail(fileUri, fileInfo.get_content_type());
+    let thumbnailPixbuf = thumbnailFactoryLarge.generate_thumbnail(fileUri, fileInfo.get_content_type(), null);
     if (thumbnailPixbuf == null) {
-        thumbnailFactoryLarge.create_failed_thumbnail(fileUri, modifiedTime);
+        thumbnailFactoryLarge.create_failed_thumbnail(fileUri, modifiedTime, null);
         return 2;
     } else {
-        thumbnailFactoryLarge.save_thumbnail(thumbnailPixbuf, fileUri, modifiedTime);
+        thumbnailFactoryLarge.save_thumbnail(thumbnailPixbuf, fileUri, modifiedTime, null);
         return 0;
     }
 }

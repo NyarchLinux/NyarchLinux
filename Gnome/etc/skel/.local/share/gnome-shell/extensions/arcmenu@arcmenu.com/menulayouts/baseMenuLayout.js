@@ -290,6 +290,19 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
         this.setDefaultMenuView();
     }
 
+    _createSortedAppsList() {
+        const appList = [];
+        this.applicationsMap.forEach((value, key, _map) => {
+            appList.push(key);
+        });
+        appList.sort((a, b) => {
+            const nameA = a.get_name();
+            const nameB = b.get_name();
+            return nameA.localeCompare(nameB);
+        });
+        return appList;
+    }
+
     loadCategories(displayType = Constants.DisplayType.LIST) {
         this.applicationsMap = new Map();
         this._tree.load_sync();
@@ -310,19 +323,17 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
             this._loadCategory(categoryMenuItem, dir);
         }
 
+        this._sortedAppsList = this._createSortedAppsList();
+
         let categoryMenuItem = this.categoryDirectories.get(Constants.CategoryType.ALL_PROGRAMS);
         if (categoryMenuItem) {
-            const appList = [];
-            this.applicationsMap.forEach((value, key, _map) => {
-                appList.push(key);
+            this.applicationsMap.forEach((value, _key, _map) => {
                 // Show Recently Installed Indicator on All Programs category
                 if (value.isRecentlyInstalled && !categoryMenuItem.isRecentlyInstalled)
                     categoryMenuItem.setNewAppIndicator(true);
             });
-            appList.sort((a, b) => {
-                return a.get_name().toLowerCase() > b.get_name().toLowerCase();
-            });
-            categoryMenuItem.appList = appList;
+
+            categoryMenuItem.appList = this._sortedAppsList;
         }
 
         categoryMenuItem = this.categoryDirectories.get(Constants.CategoryType.FAVORITES);
@@ -410,8 +421,15 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
                 }
             }
         }
-        if (categoryMenuItem instanceof MW.SubCategoryMenuItem)
+        if (categoryMenuItem instanceof MW.SubCategoryMenuItem) {
             categoryMenuItem.populateMenu();
+        } else {
+            categoryMenuItem.appList.sort((a, b) => {
+                const nameA = a.get_name();
+                const nameB = b.get_name();
+                return nameA.localeCompare(nameB);
+            });
+        }
     }
 
     setNewAppIndicator() {
@@ -945,15 +963,8 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
     }
 
     displayAllApps() {
-        const appList = [];
-        this.applicationsMap.forEach((value, key, _map) => {
-            appList.push(key);
-        });
-        appList.sort((a, b) => {
-            return a.get_name().toLowerCase() > b.get_name().toLowerCase();
-        });
         this._clearActorsFromBox();
-        this._displayAppList(appList, Constants.CategoryType.ALL_PROGRAMS, this.applicationsGrid);
+        this._displayAppList(this._sortedAppsList, Constants.CategoryType.ALL_PROGRAMS, this.applicationsGrid);
     }
 
     get activeMenuItem() {
@@ -969,6 +980,9 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
 
     _onSearchEntryChanged(searchEntry, searchString) {
         if (searchEntry.isEmpty()) {
+            // Enable Category Mouse Hover activation while search results are inactive.
+            this._setCategoriesBoxInactive(false);
+
             if (this.applicationsBox.contains(this.searchResults))
                 this.applicationsBox.remove_child(this.searchResults);
 
@@ -994,6 +1008,9 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
                 // Used to prevent the top search result from instantly changing
                 // if users mouse is over a differnt menu item.
                 this.blockHoverState = true;
+
+                // Prevent Category Mouse Hover activation while search results are active.
+                this._setCategoriesBoxInactive(true);
 
                 this.searchResults.setTerms(searchString.split(/\s+/));
             }
@@ -1050,6 +1067,9 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
     _onMainBoxKeyPress(actor, event) {
         // Prevent a mouse hover event from setting a new active menu item, until next mouse move event.
         this.blockHoverState = true;
+
+        // Prevent Category Mouse Hover activation while search results are active.
+        this._setCategoriesBoxInactive(true);
 
         const symbol = event.get_key_symbol();
         const unicode = Clutter.keysym_to_unicode(symbol);
@@ -1190,6 +1210,23 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
             });
             this.categoryDirectories = null;
         }
+    }
+
+    _setCategoriesBoxInactive(inactive) {
+        const activateOnHover = this._settings.get_boolean('activate-on-hover');
+        if (!activateOnHover)
+            return;
+        if (!this.categoriesBox && !this.supports_category_hover_activation)
+            return;
+
+        this.blockCategoryHoverActivation = inactive;
+        const ANIMATION_TIME = 200;
+
+        this.categoriesBox.ease({
+            mode: Clutter.AnimationMode.LINEAR,
+            duration: ANIMATION_TIME,
+            opacity: inactive ? 96 : 255,
+        });
     }
 
     _createScrollBox(params) {

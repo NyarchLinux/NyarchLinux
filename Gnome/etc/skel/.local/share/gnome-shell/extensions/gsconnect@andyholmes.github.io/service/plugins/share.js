@@ -196,6 +196,9 @@ const SharePlugin = GObject.registerClass({
                 ];
                 iconName = 'document-save-symbolic';
 
+                const gtk_recent_manager = Gtk.RecentManager.get_default();
+                gtk_recent_manager.add_item(file.get_uri());
+
                 if (packet.body.open) {
                     const uri = file.get_uri();
                     Gio.AppInfo.launch_default_for_uri_async(uri, null, null, null);
@@ -449,10 +452,11 @@ const FileChooserDialog = GObject.registerClass({
     _onUriButtonToggled(button) {
         const header = this.get_header_bar();
 
-        // Show the URL entry
+        // Show and focus the URL entry
         if (button.active) {
             this.extra_widget.sensitive = false;
             header.set_custom_title(this._uriEntry);
+            this._uriEntry.grab_focus();
             this.set_response_sensitive(Gtk.ResponseType.OK, true);
 
         // Hide the URL entry

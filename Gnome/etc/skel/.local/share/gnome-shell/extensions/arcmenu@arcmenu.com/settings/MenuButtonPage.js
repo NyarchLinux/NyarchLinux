@@ -647,7 +647,7 @@ class ArcMenuIconChooserDialog extends PW.DialogWindow {
         });
         const iconNames = iconTheme.get_icon_names();
 
-        iconNames.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+        iconNames.sort((a, b) => a.localeCompare(b));
 
         const listStore = new Gtk.StringList({strings: iconNames});
         const filter = new Gtk.CustomFilter();

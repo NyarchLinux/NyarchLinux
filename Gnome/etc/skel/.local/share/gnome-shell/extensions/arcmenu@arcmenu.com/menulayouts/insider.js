@@ -58,25 +58,28 @@ export const Layout = class InsiderLayout extends BaseMenuLayout {
         });
         this.add_child(this._mainBox);
 
-        const userMenuBox = new St.BoxLayout({
-            x_expand: true,
-            y_expand: true,
-            x_align: Clutter.ActorAlign.CENTER,
-            y_align: Clutter.ActorAlign.START,
-            vertical: true,
-            style: 'padding-top: 9px;',
-        });
-        const userMenuIcon = new MW.UserMenuIcon(this, 75, true);
-        userMenuIcon.label.set({
-            x_align: Clutter.ActorAlign.CENTER,
-            y_align: Clutter.ActorAlign.CENTER,
-            style: 'font-size: large;',
-        });
-        userMenuBox.add_child(userMenuIcon);
-        userMenuBox.add_child(userMenuIcon.label);
-        this._mainBox.add_child(userMenuBox);
+        const userAvatar = this._settings.get_boolean('disable-user-avatar');
+        if (!userAvatar) {
+            const userMenuBox = new St.BoxLayout({
+                x_expand: true,
+                y_expand: true,
+                x_align: Clutter.ActorAlign.CENTER,
+                y_align: Clutter.ActorAlign.START,
+                vertical: true,
+                style: 'padding-bottom: 6px;',
+            });
+            const avatarMenuIcon = new MW.AvatarMenuIcon(this, 75, true);
+            avatarMenuIcon.label.set({
+                x_align: Clutter.ActorAlign.CENTER,
+                y_align: Clutter.ActorAlign.CENTER,
+                style: 'font-size: large;',
+            });
+            userMenuBox.add_child(avatarMenuIcon);
+            userMenuBox.add_child(avatarMenuIcon.label);
+            this._mainBox.add_child(userMenuBox);
+        }
 
-        this.searchEntry.style = 'margin: 10px;';
+        this.searchEntry.style = 'margin: 0px 10px 10px 10px;';
         this._mainBox.add_child(this.searchEntry);
 
         this.applicationsBox = new St.BoxLayout({vertical: true});
@@ -222,7 +225,7 @@ export const Layout = class InsiderLayout extends BaseMenuLayout {
         Main.layoutManager.setDummyCursorGeometry(x, y, 0, 0);
 
         const height = this._settings.get_int('menu-height');
-        this.pinnedAppsMenu.box.style = `height: ${height}px;`;
+        this.pinnedAppsMenu.box.style = `height: ${height}px; min-width: 250px;`;
 
         this.pinnedAppsMenu.toggle();
         if (this.pinnedAppsMenu.isOpen) {

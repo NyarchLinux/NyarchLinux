@@ -61,22 +61,22 @@ export const Layout = class PlasmaLayout extends BaseMenuLayout {
             style: 'padding: 0px; margin: 0px; spacing: 0px;',
         });
 
-        const userMenuIcon = new MW.UserMenuIcon(this, 55, true);
-        userMenuIcon.set({
+        const avatarMenuIcon = new MW.AvatarMenuIcon(this, 55, true);
+        avatarMenuIcon.set({
             x_expand: false,
             y_expand: true,
             x_align: Clutter.ActorAlign.CENTER,
             y_align: Clutter.ActorAlign.CENTER,
         });
-        userMenuIcon.label.set({
+        avatarMenuIcon.label.set({
             style: 'padding-left: 0.4em; margin: 0px 10px 0px 15px; font-weight: bold;',
             y_expand: false,
             x_expand: true,
             x_align: Clutter.ActorAlign.START,
         });
 
-        this.leftTopBox.add_child(userMenuIcon);
-        this.rightTopBox.add_child(userMenuIcon.label);
+        this.leftTopBox.add_child(avatarMenuIcon);
+        this.rightTopBox.add_child(avatarMenuIcon.label);
         this.rightTopBox.add_child(this.searchEntry);
         this.topBox.add_child(this.leftTopBox);
         this.topBox.add_child(this.rightTopBox);

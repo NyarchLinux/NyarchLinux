@@ -305,8 +305,13 @@ var FileItem = class extends desktopIconItem.desktopIconItem {
         this._fileType = fileInfo.get_file_type();
         this._isDirectory = this._fileType == Gio.FileType.DIRECTORY;
         this._isSpecial = this._fileExtra != Enums.FileType.NONE;
-        this._isHidden = fileInfo.get_is_hidden() | fileInfo.get_is_backup();
-        this._isSymlink = fileInfo.get_is_symlink();
+        if (this._fileExtra == Enums.FileType.USER_DIRECTORY_TRASH) {
+            this._isHidden = false;
+            this._isSymlink = false;
+        } else {
+            this._isHidden = fileInfo.get_is_hidden() | fileInfo.get_is_backup();
+            this._isSymlink = fileInfo.get_is_symlink();
+        }
         this._modifiedTime = fileInfo.get_attribute_uint64('time::modified');
         /*
          * This is a glib trick to detect broken symlinks. If a file is a symlink, the filetype

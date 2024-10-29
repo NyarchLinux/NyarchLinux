@@ -112,8 +112,8 @@ export const Layout = class RedmondLayout extends BaseMenuLayout {
 
         const userAvatar = this._settings.get_boolean('disable-user-avatar');
         if (!userAvatar) {
-            const userMenuItem = new MW.UserMenuItem(this, Constants.DisplayType.LIST);
-            this.rightBox.add_child(userMenuItem);
+            const avatarMenuItem = new MW.AvatarMenuItem(this, Constants.DisplayType.LIST);
+            this.rightBox.add_child(avatarMenuItem);
             const separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.SHORT,
                 Constants.SeparatorAlignment.HORIZONTAL);
             this.rightBox.add_child(separator);

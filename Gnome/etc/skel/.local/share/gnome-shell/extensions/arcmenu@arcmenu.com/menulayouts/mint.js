@@ -50,13 +50,13 @@ export const Layout = class MintLayout extends BaseMenuLayout {
         this.add_child(this.actionsScrollBox);
 
         // contains searchbar, rightBox, leftBox
-        this.rightPanelParentBox = new St.BoxLayout({
+        this._parentBox = new St.BoxLayout({
             x_expand: true,
             y_expand: true,
             y_align: Clutter.ActorAlign.FILL,
             vertical: true,
         });
-        this.add_child(this.rightPanelParentBox);
+        this.add_child(this._parentBox);
 
         this._mainBox = new St.BoxLayout({
             vertical: false,
@@ -64,7 +64,7 @@ export const Layout = class MintLayout extends BaseMenuLayout {
             y_expand: true,
             y_align: Clutter.ActorAlign.FILL,
         });
-        this.rightPanelParentBox.add_child(this._mainBox);
+        this._parentBox.add_child(this._mainBox);
 
         this.rightBox = new St.BoxLayout({
             x_expand: true,
@@ -112,15 +112,15 @@ export const Layout = class MintLayout extends BaseMenuLayout {
             const separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MAX,
                 Constants.SeparatorAlignment.HORIZONTAL);
 
-            this.rightPanelParentBox.insert_child_at_index(this.searchEntry, 0);
-            this.rightPanelParentBox.insert_child_at_index(separator, 1);
+            this._parentBox.insert_child_at_index(this.searchEntry, 0);
+            this._parentBox.insert_child_at_index(separator, 1);
         } else if (searchBarLocation === Constants.SearchbarLocation.BOTTOM) {
             this.searchEntry.add_style_class_name('arcmenu-search-bottom');
             const separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MAX,
                 Constants.SeparatorAlignment.HORIZONTAL);
 
-            this.rightPanelParentBox.add_child(separator);
-            this.rightPanelParentBox.add_child(this.searchEntry);
+            this._parentBox.add_child(separator);
+            this._parentBox.add_child(this.searchEntry);
         }
 
         this._settings.connectObject('changed::mint-layout-extra-shortcuts', () => this._createExtraButtons(), this);

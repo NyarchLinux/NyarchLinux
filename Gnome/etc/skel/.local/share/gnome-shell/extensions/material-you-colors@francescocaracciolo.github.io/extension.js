@@ -183,7 +183,13 @@ export default class MaterialYou extends Extension {
         if (dark_pref === "prefer-dark") {
             is_dark = true;
         }
-    
+        if (python_backend_enabled) {
+          this.run_command("cd " + this.extensiondir + "; cd adwaita-material-you; bash run_integration.sh");
+          let theme_str = is_dark ? "Dark" : "Light";
+          this.theme_notification(notify, show_notifications, false, color_scheme, theme_str)
+          return;
+        }
+  
         // Getting Material theme from img
         let desktop_settings = new Gio.Settings({ schema: WALLPAPER_SCHEMA });
         let wall_uri_type = "";
@@ -194,7 +200,6 @@ export default class MaterialYou extends Extension {
         if (wall_path.includes("file://")) {
             wall_path = Gio.File.new_for_uri(wall_path).get_path();
         }
-        let pix_buf = GdkPixbuf.Pixbuf.new_from_file_at_size(wall_path, size.width, size.height);
         let theme;
         if (accent_color_enabled) {
             theme = theme_utils.themeFromSourceColor(parseInt(accent_color), []);
@@ -202,6 +207,7 @@ export default class MaterialYou extends Extension {
               this._interfaceSettings.set_string("accent-color", COLOR_TO_ACCENT[accent_color]);
             }
         } else {
+            let pix_buf = GdkPixbuf.Pixbuf.new_from_file_at_size(wall_path, size.width, size.height);
             theme = theme_utils.themeFromImage(pix_buf);
         }
 
@@ -217,13 +223,7 @@ export default class MaterialYou extends Extension {
             color_mapping = color_mappings_sel.dark;
             theme_str = _("Dark");
         }
-     
-        if (python_backend_enabled && ext_utils.check_pyback(this.extensiondir)) {
-          this.run_command("cd " + this.extensiondir + "; cd adwaita-material-you; bash run_integration.sh");
-          this.theme_notification(notify, show_notifications, false, color_scheme, theme_str)
-          return;
-        }
-   
+       
         // Overwriting keys in base_preset with material colors
     
         base_preset = this.map_colors(color_mapping, base_preset, scheme);
@@ -569,6 +569,4 @@ export default class MaterialYou extends Extension {
     set_arcmenu_setting(setting, value) {
         this.run_command("gsettings --schemadir ~/.local/share/gnome-shell/extensions/arcmenu@arcmenu.com/schemas set org.gnome.shell.extensions.arcmenu " + setting + " " + value);
     }
-   
-    
 }

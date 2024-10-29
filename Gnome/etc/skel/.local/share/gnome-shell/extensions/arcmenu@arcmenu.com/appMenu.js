@@ -42,14 +42,6 @@ export const AppContextMenu = class ArcMenuAppContextMenu extends AppMenu {
 
         this._pinnedAppData = this.sourceActor.pinnedAppData;
 
-        this._scrollBox = new St.ScrollView({
-            clip_to_allocation: true,
-            hscrollbar_policy: St.PolicyType.NEVER,
-            vscrollbar_policy: St.PolicyType.AUTOMATIC,
-        });
-        this._boxPointer.bin.set_child(this._scrollBox);
-        Utils.addChildToParent(this._scrollBox, this.box);
-
         Main.uiGroup.add_child(this.actor);
         this._menuLayout.contextMenuManager.addMenu(this);
 
@@ -141,51 +133,8 @@ export const AppContextMenu = class ArcMenuAppContextMenu extends AppMenu {
             this._menuButton.tooltipShowing = false;
         }
 
-        // clear the max height style for next recalculation
-        this._scrollBox.style = null;
-
-        const {needsScrollbar, maxHeight} = this._needsScrollbar();
-        this._scrollBox.style = `max-height: ${maxHeight}px;`;
-
-        this._scrollBox.vscrollbar_policy =
-            needsScrollbar ? St.PolicyType.AUTOMATIC : St.PolicyType.NEVER;
-
-        if (needsScrollbar)
-            this.actor.add_style_pseudo_class('scrolled');
-        else
-            this.actor.remove_style_pseudo_class('scrolled');
-
         super.open(animate);
         this.sourceActor.add_style_pseudo_class('active');
-    }
-
-    _needsScrollbar() {
-        const monitorIndex = Main.layoutManager.findIndexForActor(this.sourceActor);
-
-        this._sourceExtents = this.sourceActor.get_transformed_extents();
-        this._workArea = Main.layoutManager.getWorkAreaForMonitor(monitorIndex);
-
-        const sourceTopLeft = this._sourceExtents.get_top_left();
-        const sourceBottomRight = this._sourceExtents.get_bottom_right();
-        const [, , , boxHeight] = this._scrollBox.get_preferred_size();
-        const workarea = this._workArea;
-
-        switch (this._arrowSide) {
-        case St.Side.TOP: {
-            const maxHeight = (workarea.y + workarea.height) - sourceBottomRight.y - 16;
-            if (sourceBottomRight.y + boxHeight > workarea.y + workarea.height)
-                return {needsScrollbar: true, maxHeight};
-            return {needsScrollbar: false, maxHeight};
-        }
-        case St.Side.BOTTOM: {
-            const maxHeight = sourceTopLeft.y - workarea.y - 16;
-            if (sourceTopLeft.y - boxHeight < workarea.y)
-                return {needsScrollbar: true, maxHeight};
-            return {needsScrollbar: false, maxHeight};
-        }
-        default:
-            return {needsScrollbar: false, maxHeight: 0};
-        }
     }
 
     _onDestroy() {
@@ -302,7 +251,7 @@ export const AppContextMenu = class ArcMenuAppContextMenu extends AppMenu {
 
             // Unpinned the folder, reset all folder settings keys
             if (folder) {
-                let keys = folder.settings_schema.list_keys();
+                const keys = folder.settings_schema.list_keys();
                 for (const key of keys)
                     folder.reset(key);
 

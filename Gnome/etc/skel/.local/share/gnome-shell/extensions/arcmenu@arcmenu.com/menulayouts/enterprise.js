@@ -47,12 +47,12 @@ export const Layout = class EnterpriseLayout extends BaseMenuLayout {
             vertical: false,
             x_expand: true,
         });
-        this.userMenuIcon = new MW.UserMenuIcon(this, 36, true);
-        this.userMenuIcon.set({
+        this.avatarMenuIcon = new MW.AvatarMenuIcon(this, 36, true);
+        this.avatarMenuIcon.set({
             x_expand: false,
             x_align: Clutter.ActorAlign.START,
         });
-        this.userMenuIcon.label.set({
+        this.avatarMenuIcon.label.set({
             x_align: Clutter.ActorAlign.CENTER,
             y_align: Clutter.ActorAlign.CENTER,
             style: 'font-weight: bold;',
@@ -102,9 +102,9 @@ export const Layout = class EnterpriseLayout extends BaseMenuLayout {
         this._mainBox.add_child(horizontalFlip ? this.leftBox : this.rightBox);
         this.topBox.add_child(horizontalFlip ? this.searchEntry : this.userMenuBox);
         this.topBox.add_child(horizontalFlip ? this.userMenuBox : this.searchEntry);
-        this.userMenuBox.add_child(horizontalFlip ? this.userMenuIcon.label : this.userMenuIcon);
-        this.userMenuBox.add_child(horizontalFlip ? this.userMenuIcon : this.userMenuIcon.label);
-        this.userMenuIcon.label.style += horizontalFlip ? 'padding-right: 14px;' : 'padding-left: 14px;';
+        this.userMenuBox.add_child(horizontalFlip ? this.avatarMenuIcon.label : this.avatarMenuIcon);
+        this.userMenuBox.add_child(horizontalFlip ? this.avatarMenuIcon : this.avatarMenuIcon.label);
+        this.avatarMenuIcon.label.style += horizontalFlip ? 'padding-right: 14px;' : 'padding-left: 14px;';
         this.userMenuBox.x_align = horizontalFlip ? Clutter.ActorAlign.END : Clutter.ActorAlign.START;
 
         this.categoriesScrollBox = this._createScrollBox({

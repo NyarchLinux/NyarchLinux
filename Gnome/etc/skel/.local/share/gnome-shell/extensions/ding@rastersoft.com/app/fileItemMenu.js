@@ -165,20 +165,18 @@ var FileItemMenu = class {
                 this._addSeparator();
             }
 
-            if (!fileItem.isDirectory) {
-                this._addElementToMenu(
-                    selectedItemsNum > 1 ? _('Open All With Other Application...') : _('Open With Other Application'),
-                    this._doOpenWith.bind(this)
-                ).set_sensitive(selectedItemsNum > 0);
+            this._addElementToMenu(
+                selectedItemsNum > 1 ? _('Open All With Other Application...') : _('Open With Other Application'),
+                this._doOpenWith.bind(this)
+            ).set_sensitive(selectedItemsNum > 0);
 
-                if (DBusUtils.discreteGpuAvailable && fileItem.trustedDesktopFile && (selectedItemsNum == 1)) {
-                    this._addElementToMenu(
-                        _('Launch using Dedicated Graphics Card'),
-                        () => {
-                            this._currentFileItem.doDiscreteGpu();
-                        }
-                    );
-                }
+            if (DBusUtils.discreteGpuAvailable && fileItem.trustedDesktopFile && (selectedItemsNum == 1)) {
+                this._addElementToMenu(
+                    _('Launch using Dedicated Graphics Card'),
+                    () => {
+                        this._currentFileItem.doDiscreteGpu();
+                    }
+                );
             }
 
             this._addSeparator();
@@ -405,6 +403,9 @@ var FileItemMenu = class {
             const context = Gdk.Display.get_default().get_app_launch_context();
             context.set_timestamp(Gtk.get_current_event_time());
             let mimetype = Gio.content_type_guess(fileItems[0].fileName, null)[0];
+            if (fileItems[0].isDirectory) {
+                mimetype = 'inode/directory';
+            }
             let chooser = Gtk.AppChooserDialog.new_for_content_type(null,
                 Gtk.DialogFlags.MODAL + Gtk.DialogFlags.USE_HEADER_BAR,
                 mimetype);

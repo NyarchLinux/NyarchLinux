@@ -298,7 +298,9 @@ export const Layout = class PopLayout extends BaseMenuLayout {
                 remainingApps.push(app);
         });
         remainingApps.sort((a, b) => {
-            return a.get_name().toLowerCase() > b.get_name().toLowerCase();
+            const nameA = a.get_name();
+            const nameB = b.get_name();
+            return nameA.localeCompare(nameB);
         });
         homeFolder.appsList = remainingApps.map(app => app.id);
 
