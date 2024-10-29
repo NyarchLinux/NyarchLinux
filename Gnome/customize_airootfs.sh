@@ -1,9 +1,10 @@
 #!/bin/bash
 sudo pacman -Syy
-sudo pip install 
 pacman-key --init
+# Install material you library
 pip install materialyoucolor --break-system-packages
 
+# Install Faltpaks
 flatpak mask "org.freedesktop.Platform.GL.nvidia*"
 
 flatpak install -y flathub info.febvre.Komikku
@@ -39,3 +40,5 @@ rm -rf nyarchassistant.flatpak
 rm -rf nyarchupdater.flatpak
 
 flatpak --remove mask "org.freedesktop.Platform.GL.nvidia*"
+
+cd /etc/skel/.config/nyarch && git clone https://github.com/NyarchLinux/Tela-circle-icon-theme.git
