@@ -2,6 +2,7 @@
 
 ## Requisites and development environment
 - First of all, to build this distribution you need an Arch Linux installation, or a derivate that ships archiso. We strongly suggest you to use [Ezarcher](https://sourceforge.net/projects/ezarch/).
+- You have to install Chaotic-AUR packages. You can do this by just running the install_chaotic.sh file 
 - It is strongly suggested to run a full system update before building
 ```bash
 sudo pacman -Syu
