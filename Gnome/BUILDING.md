@@ -10,13 +10,6 @@ sudo pacman -Syu
 ```bash
 sudo pacman -S archiso
 ```
-- If you want to ship pre-installed flatpak, install flatpak and run install_flatpaks.sh
-```bash
-sudo pacman -S flatpak
-sudo ./install_flatpaks.sh
-```
-**If you have pre-installed flatpaks on your system, they will be added to the ISO**
-
 ## Running the script
 - To build the ISO just run 
 ```bash
@@ -42,3 +35,5 @@ replacing `file.tar.zst` with the file name.
 - You may also like to add some of the package's configurations to ./etc
 ## Editing default desktop configuration
 Any file in `./etc/skel/` will be put in user's home. There you can store dotfiles related to a specific desktop configuration.
+## Running commands in the airootfs
+You can run commands in the airootfs before the ISO is built editingh the `customize_airootfs.sh` file.
