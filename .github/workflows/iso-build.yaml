@@ -1,11 +1,9 @@
-# This workflow will build an Arch Linux ISO file with the commit on it
-
-name: Build Arch ISO with ArchInstall Commit
+name: Build Nyarch ISO on commit
 
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     paths-ignore:
       - 'docs/**'
@@ -36,4 +34,4 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: Nyarch Linux Live ISO
-          path: /tmp/archlive/out/*.iso
+          path: /__w/NyarchLinux/NyarchLinux/Gnome/out/*.iso
