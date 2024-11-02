@@ -1,0 +1,38 @@
+# This workflow will build an Arch Linux ISO file with the commit on it
+
+name: Build Arch ISO with ArchInstall Commit
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '**.editorconfig'
+      - '**.gitignore'
+      - '**.md'
+      - 'LICENSE'
+      - 'PKGBUILD'
+  release:
+    types:
+      - created
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux/archlinux:latest
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - run: pwd
+      - run: find .
+      - run: cat /etc/os-release
+      - run: pacman-key --init
+      - run: pacman --noconfirm -Sy archlinux-keyring
+      - run: cd Gnome && bash steps.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Nyarch Linux Live ISO
+          path: /tmp/archlive/out/*.iso
