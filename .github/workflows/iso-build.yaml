@@ -30,7 +30,8 @@ jobs:
       - run: find .
       - run: cat /etc/os-release
       - run: pacman-key --init
-      - run: pacman --noconfirm -Sy archlinux-keyring
+      - run: pacman --noconfirm -Sy archlinux-keyring grub
+      - run: bash Gnome/install_chaotic.sh
       - run: cd Gnome && bash steps.sh
       - uses: actions/upload-artifact@v4
         with:
