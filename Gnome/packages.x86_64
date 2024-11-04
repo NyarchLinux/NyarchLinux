@@ -64,6 +64,7 @@ qemu-guest-agent
 reflector
 rsync
 screen
+sof-firmware
 sg3_utils
 squashfs-tools
 sudo
