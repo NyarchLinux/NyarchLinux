@@ -3,6 +3,7 @@ sudo pacman -Syy
 pacman-key --init
 # Install material you library
 pip install materialyoucolor --break-system-packages
+systemctl enable bluetooth
 
 # Install Faltpaks
 flatpak mask "org.freedesktop.Platform.GL.nvidia*"
@@ -42,7 +43,6 @@ rm -rf nyarchupdater.flatpak
 flatpak --remove mask "org.freedesktop.Platform.GL.nvidia*"
 
 # Apply Nyarch Copy
-
 wget https://nyarchlinux.moe/NyarchCopy.tar.gz && tar -xvf NyarchCopy.tar.gz && cd NyarchCopy && bash ./apply_airoot.sh && rm -rf NyarchCopy*
 cd /etc/skel/.config/nyarch && git clone https://github.com/NyarchLinux/Tela-circle-icon-theme.git && cp -a Tela-circle-icon-theme /home/live/.config/nyarch/Tela-circle-icon-theme
 
