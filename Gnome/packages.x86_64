@@ -311,12 +311,11 @@ yay-bin
 flatpak
 
 # Closed Source nvidia drivers
-#nvidia-dkms
-#nvidia-utils
-#lib32-nvidia-utils
-#nvidia-settings
-#vulkan-icd-loader
-#lib32-vulkan-icd-loader
+nvidia
+nvidia-utils
+lib32-nvidia-utils
+# Install nvidia-settings from chaotic 
+nvidia-settings
 
 # Nyarch
 fastfetch
