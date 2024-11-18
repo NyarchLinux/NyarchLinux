@@ -1,0 +1,38 @@
+<schemalist gettext-domain="gnome-shell-extensions">
+  <schema id="org.gnome.shell.extensions.GPU_profile_selector"
+      path="/org/gnome/shell/extensions/GPU_profile_selector/">
+
+    <key name="force-topbar-view" type="b">
+      <default>false</default>
+        <summary>Enable Force To Topbar View?</summary>
+        <description>
+            If true, the extension view will be placed in topbar in any case.
+        </description>
+    </key>
+
+    <key name="rtd3" type="b">
+      <default>true</default>
+        <summary>Enable RTD3 Power Management?</summary>
+        <description>
+            If true, envycontrol set the RTD3 Power Management flag enabled
+        </description>
+    </key>
+
+    <key name="force-composition-pipeline" type="b">
+      <default>true</default>
+        <summary>Enable ForceCompositionPipeline?</summary>
+        <description>
+            If true, envycontrol set the ForceCompositionPipeline flag enabled
+        </description>
+    </key>
+
+    <key name="coolbits" type="b">
+      <default>true</default>
+        <summary>Enable Coolbits?</summary>
+        <description>
+            If true, envycontrol set the Coolbits flag enabled
+        </description>
+    </key>
+
+  </schema>
+</schemalist>
