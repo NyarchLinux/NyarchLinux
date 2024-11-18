@@ -314,8 +314,9 @@ flatpak
 nvidia
 nvidia-utils
 lib32-nvidia-utils
-# Install nvidia-settings from chaotic 
+# Install nvidia-settings and envycontrol from chaotic 
 nvidia-settings
+envycontrol
 
 # Nyarch
 fastfetch
