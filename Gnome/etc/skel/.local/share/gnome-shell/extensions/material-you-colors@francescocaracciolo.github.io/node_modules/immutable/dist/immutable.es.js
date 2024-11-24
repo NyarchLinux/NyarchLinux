@@ -1,4 +1,5 @@
 /**
+ * @license
  * MIT License
  * 
  * Copyright (c) 2014-present, Lee Byron and other contributors.
@@ -21,6 +22,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+// Used for setting prototype methods that IE8 chokes on.
 var DELETE = 'delete';
 
 // Constants describing the size of trie nodes.
@@ -112,6 +114,7 @@ function isNeg(value) {
   return value < 0 || (value === 0 && 1 / value === -Infinity);
 }
 
+// Note: value is unchanged to not break immutable-devtools.
 var IS_COLLECTION_SYMBOL = '@@__IMMUTABLE_ITERABLE__@@';
 
 function isCollection(maybeCollection) {
@@ -1937,6 +1940,7 @@ function defaultComparator(a, b) {
   return a > b ? 1 : a < b ? -1 : 0;
 }
 
+// http://jsperf.com/copy-array-inline
 function arrCopy(arr, offset) {
   offset = offset || 0;
   var len = Math.max(0, arr.length - offset);
@@ -2008,6 +2012,9 @@ function isDataStructure(value) {
   );
 }
 
+/**
+ * Converts a value to a string, adding quotes if a string was provided.
+ */
 function quoteString(value) {
   try {
     return typeof value === 'string' ? JSON.stringify(value) : String(value);
@@ -2399,20 +2406,6 @@ var Map = /*@__PURE__*/(function (KeyedCollection) {
   if ( KeyedCollection ) Map.__proto__ = KeyedCollection;
   Map.prototype = Object.create( KeyedCollection && KeyedCollection.prototype );
   Map.prototype.constructor = Map;
-
-  Map.of = function of () {
-    var keyValues = [], len = arguments.length;
-    while ( len-- ) keyValues[ len ] = arguments[ len ];
-
-    return emptyMap().withMutations(function (map) {
-      for (var i = 0; i < keyValues.length; i += 2) {
-        if (i + 1 >= keyValues.length) {
-          throw new Error('Missing value for key: ' + keyValues[i]);
-        }
-        map.set(keyValues[i], keyValues[i + 1]);
-      }
-    });
-  };
 
   Map.prototype.toString = function toString () {
     return this.__toString('Map {', '}');
@@ -2903,7 +2896,7 @@ BitmapIndexedNode.prototype.iterate = HashArrayMapNode.prototype.iterate =
     }
   };
 
-// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 ValueNode.prototype.iterate = function (fn, reverse) {
   return fn(this.entry);
 };
@@ -3425,7 +3418,10 @@ var VNode = function VNode(array, ownerID) {
 // TODO: seems like these methods are very similar
 
 VNode.prototype.removeBefore = function removeBefore (ownerID, level, index) {
-  if (index === level ? 1 << level : this.array.length === 0) {
+  if (
+    (index & ((1 << (level + SHIFT)) - 1)) === 0 ||
+    this.array.length === 0
+  ) {
     return this;
   }
   var originIndex = (index >>> level) & MASK;
@@ -3458,7 +3454,10 @@ VNode.prototype.removeBefore = function removeBefore (ownerID, level, index) {
 };
 
 VNode.prototype.removeAfter = function removeAfter (ownerID, level, index) {
-  if (index === (level ? 1 << level : 0) || this.array.length === 0) {
+  if (
+    index === (level ? 1 << (level + SHIFT) : SIZE) ||
+    this.array.length === 0
+  ) {
     return this;
   }
   var sizeIndex = ((index - 1) >>> level) & MASK;
@@ -3561,9 +3560,8 @@ function makeList(origin, capacity, level, root, tail, ownerID, hash) {
   return list;
 }
 
-var EMPTY_LIST;
 function emptyList() {
-  return EMPTY_LIST || (EMPTY_LIST = makeList(0, 0, SHIFT));
+  return makeList(0, 0, SHIFT);
 }
 
 function updateList(list, index, value) {
@@ -4299,6 +4297,9 @@ function deepEqual(a, b) {
   return allEqual && a.size === bSize;
 }
 
+/**
+ * Contributes additional methods to a constructor
+ */
 function mixin(ctor, methods) {
   var keyCopier = function (key) {
     ctor.prototype[key] = methods[key];
@@ -4582,16 +4583,23 @@ function emptySet() {
  */
 var Range = /*@__PURE__*/(function (IndexedSeq) {
   function Range(start, end, step) {
+    if ( step === void 0 ) step = 1;
+
     if (!(this instanceof Range)) {
       // eslint-disable-next-line no-constructor-return
       return new Range(start, end, step);
     }
     invariant(step !== 0, 'Cannot step a Range by 0');
-    start = start || 0;
-    if (end === undefined) {
-      end = Infinity;
-    }
-    step = step === undefined ? 1 : Math.abs(step);
+    invariant(
+      start !== undefined,
+      'You must define a start value when using Range'
+    );
+    invariant(
+      end !== undefined,
+      'You must define an end value when using Range'
+    );
+
+    step = Math.abs(step);
     if (end < start) {
       step = -step;
     }
@@ -4604,6 +4612,7 @@ var Range = /*@__PURE__*/(function (IndexedSeq) {
         // eslint-disable-next-line no-constructor-return
         return EMPTY_RANGE;
       }
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
       EMPTY_RANGE = this;
     }
   }
@@ -4746,13 +4755,6 @@ function toObject() {
   });
   return object;
 }
-
-// Note: all of these methods are deprecated.
-Collection.isIterable = isCollection;
-Collection.isKeyed = isKeyed;
-Collection.isIndexed = isIndexed;
-Collection.isAssociative = isAssociative;
-Collection.isOrdered = isOrdered;
 
 Collection.Iterator = Iterator;
 
@@ -4988,6 +4990,7 @@ mixin(Collection, {
   },
 
   entrySeq: function entrySeq() {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     var collection = this;
     if (collection._cache) {
       // We cache as an entries array, so we can just return the cache!
@@ -5438,7 +5441,8 @@ function hashCollection(collection) {
   var ordered = isOrdered(collection);
   var keyed = isKeyed(collection);
   var h = ordered ? 1 : 0;
-  var size = collection.__iterate(
+
+  collection.__iterate(
     keyed
       ? ordered
         ? function (v, k) {
@@ -5455,7 +5459,8 @@ function hashCollection(collection) {
           h = (h + hash(v)) | 0;
         }
   );
-  return murmurHashOfSize(size, h);
+
+  return murmurHashOfSize(collection.size, h);
 }
 
 function murmurHashOfSize(size, h) {
@@ -5797,6 +5802,7 @@ var Repeat = /*@__PURE__*/(function (IndexedSeq) {
         // eslint-disable-next-line no-constructor-return
         return EMPTY_REPEAT;
       }
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
       EMPTY_REPEAT = this;
     }
   }
@@ -5922,67 +5928,9 @@ function defaultConverter(k, v) {
   return isIndexed(v) ? v.toList() : isKeyed(v) ? v.toMap() : v.toSet();
 }
 
-var version = "4.3.7";
-
-var Immutable = {
-  version: version,
-
-  Collection: Collection,
-  // Note: Iterable is deprecated
-  Iterable: Collection,
-
-  Seq: Seq,
-  Map: Map,
-  OrderedMap: OrderedMap,
-  List: List,
-  Stack: Stack,
-  Set: Set,
-  OrderedSet: OrderedSet,
-  PairSorting: PairSorting,
-
-  Record: Record,
-  Range: Range,
-  Repeat: Repeat,
-
-  is: is,
-  fromJS: fromJS,
-  hash: hash,
-
-  isImmutable: isImmutable,
-  isCollection: isCollection,
-  isKeyed: isKeyed,
-  isIndexed: isIndexed,
-  isAssociative: isAssociative,
-  isOrdered: isOrdered,
-  isValueObject: isValueObject,
-  isPlainObject: isPlainObject,
-  isSeq: isSeq,
-  isList: isList,
-  isMap: isMap,
-  isOrderedMap: isOrderedMap,
-  isStack: isStack,
-  isSet: isSet,
-  isOrderedSet: isOrderedSet,
-  isRecord: isRecord,
-
-  get: get,
-  getIn: getIn$1,
-  has: has,
-  hasIn: hasIn$1,
-  merge: merge,
-  mergeDeep: mergeDeep$1,
-  mergeWith: mergeWith,
-  mergeDeepWith: mergeDeepWith$1,
-  remove: remove,
-  removeIn: removeIn,
-  set: set,
-  setIn: setIn$1,
-  update: update$1,
-  updateIn: updateIn$1,
-};
+var version = "5.0.3";
 
 // Note: Iterable is deprecated
 var Iterable = Collection;
 
-export default Immutable;
 export { Collection, Iterable, List, Map, OrderedMap, OrderedSet, PairSorting, Range, Record, Repeat, Seq, Set, Stack, fromJS, get, getIn$1 as getIn, has, hasIn$1 as hasIn, hash, is, isAssociative, isCollection, isImmutable, isIndexed, isKeyed, isList, isMap, isOrdered, isOrderedMap, isOrderedSet, isPlainObject, isRecord, isSeq, isSet, isStack, isValueObject, merge, mergeDeep$1 as mergeDeep, mergeDeepWith$1 as mergeDeepWith, mergeWith, remove, removeIn, set, setIn$1 as setIn, update$1 as update, updateIn$1 as updateIn, version };

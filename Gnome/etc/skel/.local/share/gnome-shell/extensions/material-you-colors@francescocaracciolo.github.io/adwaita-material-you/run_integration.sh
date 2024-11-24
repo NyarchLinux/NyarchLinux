@@ -1,2 +1,2 @@
 #!/bin/bash
-python3 extension_integration.py
+python3 extension_integration.py $@

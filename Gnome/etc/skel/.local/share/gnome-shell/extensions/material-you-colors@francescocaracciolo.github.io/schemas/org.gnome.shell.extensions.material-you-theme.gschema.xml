@@ -41,5 +41,9 @@
             <default>false</default>
             <summary>Use the python backend</summary>
         </key>
+        <key name="accent-color-lock" type="b">
+            <default>false</default>
+            <summary>Lock accent colors</summary>
+        </key>
     </schema>
 </schemalist>
