@@ -79,6 +79,7 @@ def get_setting(key, schema, uuid = None):
     return result.replace("\n", "").replace("'", "")
 
 def set_setting(key, value, schema, uuid = None):
+    value = str(value)
     if uuid is not None:
         command  = "gsettings --schemadir ~/.local/share/gnome-shell/extensions/" + uuid + "/schemas set " + schema + " " + key + " " + value
     else:
@@ -189,10 +190,12 @@ def apply_theme(accent_color_applied = False):
     if accent_color_applied:
         accent = get_setting("accent-color", "org.gnome.desktop.interface")
         accent_color = COLORS[ACCENT_TO_COLOR[accent]]
+        if accent_color_enabled:
+            set_setting("accent-color-lock", "true", EXTENSION_SCHEMA, uuid=EXTENSION_UUID)
         set_setting("accent-color", accent_color, EXTENSION_SCHEMA, uuid=EXTENSION_UUID)
 
     # Generate theme
-    if accent_color_enabled:
+    if accent_color_enabled or accent_color_applied:
         if MU_BACKEND:
             theme = theme_from_color_2(accent_color, is_dark)
         else:
