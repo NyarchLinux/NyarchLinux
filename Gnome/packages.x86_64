@@ -26,6 +26,7 @@ gpm
 gptfdisk
 grml-zsh-config
 grub
+grub-btrfs
 hyperv
 intel-ucode
 iw
@@ -267,7 +268,6 @@ gnome-keyring
 gnome-logs
 gnome-maps
 gnome-menus
-gnome-packagekit
 gnome-remote-desktop
 gnome-screenshot
 gnome-session
@@ -275,7 +275,7 @@ gnome-settings-daemon
 gnome-shell
 gnome-shell-extensions
 gnome-software
-gnome-system-monitor
+#gnome-system-monitor
 # gnome-terminal
 gnome-text-editor
 gnome-tour
@@ -291,6 +291,7 @@ pavucontrol
 polkit-gnome
 dart-sass
 sushi
+resources
 tldr
 totem
 tmux
@@ -334,6 +335,7 @@ libdrm
 pango
 python-numpy
 gearlever
+timeshift
 
 # Chaotic
 chaotic-mirrorlist
@@ -343,3 +345,5 @@ chaotic-keyring
 webapp-manager
 extension-manager
 shortwave
+pamac
+komikku
