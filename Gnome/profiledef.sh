@@ -2,7 +2,7 @@
 # shellcheck disable=SC2034
 
 iso_name="nyarch-gnome"
-iso_label="NYARCH-GNOME_$(date +%y%m%d)"
+iso_label="NYARCH-Nvidia-GNOME_$(date +%y%m%d)"
 iso_publisher="Nyarch Linux <https://nyarchlinux.moe>"
 iso_application="Nyarchlinux DVD"
 iso_version="$(date +%y%m%d)"
