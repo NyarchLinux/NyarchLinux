@@ -336,6 +336,7 @@ pango
 python-numpy
 gearlever
 timeshift
+timeshift-autosnap
 
 # Chaotic
 chaotic-mirrorlist
