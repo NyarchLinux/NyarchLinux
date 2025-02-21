@@ -1,14 +1,15 @@
 #!/bin/bash
+# Enable services
+systemctl enable bluetooth
+systemctl enable grub-btrfsd
+
 sudo pacman -Syy
 pacman-key --init
 # Install material you library
 pip install materialyoucolor --break-system-packages
-systemctl enable bluetooth
-
 # Install Faltpaks
 flatpak mask "org.freedesktop.Platform.GL.nvidia*"
 
-flatpak install -y flathub info.febvre.Komikku
 flatpak install -y flathub com.github.tchx84.Flatseal
 flatpak install -y org.gtk.Gtk3theme.adw-gtk3 org.gtk.Gtk3theme.adw-gtk3-dark
 
