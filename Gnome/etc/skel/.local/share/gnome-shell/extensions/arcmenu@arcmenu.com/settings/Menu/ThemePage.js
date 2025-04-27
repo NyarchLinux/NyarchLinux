@@ -124,7 +124,7 @@ class ArcMenuThemePage extends SubPage {
 
         // Manage Themes Section------------
         const manageThemesButton = new Gtk.Button({
-            icon_name: 'emblem-system-symbolic',
+            icon_name: 'applications-system-symbolic',
             valign: Gtk.Align.CENTER,
         });
         manageThemesButton.connect('clicked', () => {

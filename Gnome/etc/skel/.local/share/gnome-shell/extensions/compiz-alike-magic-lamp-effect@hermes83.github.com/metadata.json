@@ -6,9 +6,10 @@
   "shell-version": [
     "45",
     "46",
-    "47"
+    "47",
+    "48"
   ],
   "url": "https://github.com/hermes83/compiz-alike-magic-lamp-effect",
   "uuid": "compiz-alike-magic-lamp-effect@hermes83.github.com",
-  "version": 20
+  "version": 21
 }

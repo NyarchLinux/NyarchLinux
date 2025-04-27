@@ -12,7 +12,8 @@ class ArcMenuFineTunePage extends SubPage {
         super._init(settings, params);
 
         this.disableFadeEffect = this._settings.get_boolean('disable-scrollview-fade-effect');
-        this.alphabetizeAllPrograms = this._settings.get_boolean('alphabetize-all-programs');
+        this.alphabeticalGroupingList = this._settings.get_boolean('group-apps-alphabetically-list-layouts');
+        this.alphabeticalGroupingGrid = this._settings.get_boolean('group-apps-alphabetically-grid-layouts');
         this.multiLinedLabels = this._settings.get_boolean('multi-lined-labels');
         this.disableTooltips = this._settings.get_boolean('disable-tooltips');
         this.disableRecentApps = this._settings.get_boolean('disable-recently-installed-apps');
@@ -77,19 +78,35 @@ class ArcMenuFineTunePage extends SubPage {
         tooltipRow.add_suffix(tooltipSwitch);
         miscGroup.add(tooltipRow);
 
-        const alphabetizeAllProgramsSwitch = new Gtk.Switch({
+        const alphabeticalGroupingListSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER,
+            active: this.alphabeticalGroupingList,
         });
-        alphabetizeAllProgramsSwitch.set_active(this._settings.get_boolean('alphabetize-all-programs'));
-        alphabetizeAllProgramsSwitch.connect('notify::active', widget => {
-            this._settings.set_boolean('alphabetize-all-programs', widget.get_active());
+        alphabeticalGroupingListSwitch.connect('notify::active', widget => {
+            this._settings.set_boolean('group-apps-alphabetically-list-layouts', widget.get_active());
         });
-        const alphabetizeAllProgramsRow = new Adw.ActionRow({
-            title: _("Alphabetize 'All Programs' Category"),
-            activatable_widget: alphabetizeAllProgramsSwitch,
+        const alphabeticalGroupingListRow = new Adw.ActionRow({
+            title: _('Group Apps Alphabetically on List Views'),
+            subtitle: _('For All Apps sections'),
+            activatable_widget: alphabeticalGroupingListSwitch,
         });
-        alphabetizeAllProgramsRow.add_suffix(alphabetizeAllProgramsSwitch);
-        miscGroup.add(alphabetizeAllProgramsRow);
+        alphabeticalGroupingListRow.add_suffix(alphabeticalGroupingListSwitch);
+        miscGroup.add(alphabeticalGroupingListRow);
+
+        const alphabeticalGroupingGridSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER,
+            active: this.alphabeticalGroupingGrid,
+        });
+        alphabeticalGroupingGridSwitch.connect('notify::active', widget => {
+            this._settings.set_boolean('group-apps-alphabetically-grid-layouts', widget.get_active());
+        });
+        const alphabeticalGroupingGridRow = new Adw.ActionRow({
+            title: _('Group Apps Alphabetically on Grid Views'),
+            subtitle: _('For All Apps sections'),
+            activatable_widget: alphabeticalGroupingGridSwitch,
+        });
+        alphabeticalGroupingGridRow.add_suffix(alphabeticalGroupingGridSwitch);
+        miscGroup.add(alphabeticalGroupingGridRow);
 
         const hiddenFilesSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER,
@@ -189,13 +206,15 @@ class ArcMenuFineTunePage extends SubPage {
         recentAppsSwitch.set_active(this._settings.get_boolean('disable-recently-installed-apps'));
 
         this.restoreDefaults = () => {
-            this.alphabetizeAllPrograms = this._settings.get_default_value('alphabetize-all-programs').unpack();
+            this.alphabeticalGroupingList = this._settings.get_default_value('group-apps-alphabetically-list-layouts').unpack();
+            this.alphabeticalGroupingGrid = this._settings.get_default_value('group-apps-alphabetically-grid-layouts').unpack();
             this.multiLinedLabels = this._settings.get_default_value('multi-lined-labels').unpack();
             this.disableTooltips = this._settings.get_default_value('disable-tooltips').unpack();
             this.disableFadeEffect = this._settings.get_default_value('disable-scrollview-fade-effect').unpack();
             this.disableRecentApps = this._settings.get_default_value('disable-recently-installed-apps').unpack();
             this.showHiddenRecentFiles = this._settings.get_default_value('show-hidden-recent-files').unpack();
-            alphabetizeAllProgramsSwitch.set_active(this.alphabetizeAllPrograms);
+            alphabeticalGroupingListSwitch.set_active(this.alphabeticalGroupingList);
+            alphabeticalGroupingGridSwitch.set_active(this.alphabeticalGroupingGrid);
             multiLinedLabelSwitch.set_active(this.multiLinedLabels);
             tooltipSwitch.set_active(this.disableTooltips);
             fadeEffectSwitch.set_active(this.disableFadeEffect);

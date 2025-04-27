@@ -35,5 +35,6 @@ export class SearchProviderEmitter extends EventEmitter {
     destroy() {
         this._injectionManager.restoreMethod(SearchController.prototype, 'addProvider');
         this._injectionManager.restoreMethod(SearchController.prototype, 'removeProvider');
+        this._injectionManager = null;
     }
 }

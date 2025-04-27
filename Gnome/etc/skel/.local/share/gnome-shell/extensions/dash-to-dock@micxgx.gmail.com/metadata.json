@@ -7,9 +7,10 @@
   "shell-version": [
     "45",
     "46",
-    "47"
+    "47",
+    "48"
   ],
   "url": "https://micheleg.github.io/dash-to-dock/",
   "uuid": "dash-to-dock@micxgx.gmail.com",
-  "version": 99
+  "version": 100
 }

@@ -274,7 +274,7 @@ class ArcMenuManageThemesDialog extends PW.DialogWindow {
                 try {
                     acceptHandler(dialog.get_file().get_path());
                 } catch (e) {
-                    log(`ArcMenu - Filechooser error: ${e}`);
+                    console.log(`ArcMenu - Filechooser error: ${e}`);
                 }
             }
             dialog.destroy();

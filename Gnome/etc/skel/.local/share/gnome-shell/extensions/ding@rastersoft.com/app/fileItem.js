@@ -59,12 +59,12 @@ var FileItem = class extends desktopIconItem.desktopIconItem {
             default:
                 if (this._isDirectory) {
                     /** TRANSLATORS: when using a screen reader, this is the text read when a folder is
-                        selected. Example: if a folder named "things" is selected, it will say "Folder things" */
-                    accessible.set_name(_("Folder ${VisibleName}").replace("${VisibleName}", this._getVisibleName()));
+                        selected. Example: if a folder named "things" is selected, it will say "things Folder" */
+                    accessible.set_name(_("${VisibleName} Folder").replace("${VisibleName}", this._getVisibleName()));
                 } else {
                     /** TRANSLATORS: when using a screen reader, this is the text read when a normal file is
-                        selected. Example: if a file named "my_picture.jpg" is selected, it will say "File my_picture.jpg" */
-                    accessible.set_name(_("File ${VisibleName}").replace("${VisibleName}", this._getVisibleName()));
+                        selected. Example: if a file named "my_picture.jpg" is selected, it will say "my_picture.jpg File" */
+                    accessible.set_name(_("${VisibleName} File").replace("${VisibleName}", this._getVisibleName()));
                 }
                 break;
             case  Enums.FileType.USER_DIRECTORY_HOME:
@@ -77,13 +77,13 @@ var FileItem = class extends desktopIconItem.desktopIconItem {
                 break;
             case Enums.FileType.EXTERNAL_DRIVE:
                 /** TRANSLATORS: when using a screen reader, this is the text read when an external drive is
-                    selected. Example: if a USB stick named "my_portable" is selected, it will say "Drive my_portable" */
-                accessible.set_name(_("Drive ${VisibleName}").replace("${VisibleName}", this._getVisibleName()));
+                    selected. Example: if a USB stick named "my_portable" is selected, it will say "my_portable Drive" */
+                accessible.set_name(_("${VisibleName} Drive").replace("${VisibleName}", this._getVisibleName()));
                 break;
             case Enums.FileType.STACK_TOP:
                 /** TRANSLATORS: when using a screen reader, this is the text read when a stack is
-                    selected. Example: if a stack named "pictures" is selected, it will say "Stack pictures" */
-                accessible.set_name(_("Stack ${VisibleName}").replace("${VisibleName}", this._getVisibleName()));
+                    selected. Example: if a stack named "pictures" is selected, it will say "pictures Stack" */
+                accessible.set_name(_("${VisibleName} Stack").replace("${VisibleName}", this._getVisibleName()));
                 break;
         }
 
@@ -102,7 +102,7 @@ var FileItem = class extends desktopIconItem.desktopIconItem {
             this._queryTrashInfoCancellable = null;
             this._scheduleTrashRefreshId = 0;
             this._monitorTrashDir = this._file.monitor_directory(Gio.FileMonitorFlags.WATCH_MOVES, null);
-            this._monitorTrashId = this._monitorTrashDir.connect('changed', (obj, file, otherFile, eventType) => {
+            this.connectSignal(this._monitorTrashDir, 'changed', (obj, file, otherFile, eventType) => {
                 switch (eventType) {
                     case Gio.FileMonitorEvent.DELETED:
                     case Gio.FileMonitorEvent.MOVED_OUT:
@@ -131,7 +131,9 @@ var FileItem = class extends desktopIconItem.desktopIconItem {
                         }
                         break;
                 }
-            });
+            }, {destroyCb: () => {
+                this._monitorTrashDir.cancel();
+            }});
         } else {
             this._monitorTrashId = 0;
         }
@@ -157,14 +159,9 @@ var FileItem = class extends desktopIconItem.desktopIconItem {
      ***********************/
 
     _destroy() {
-        /* Trash */
-        if (this._monitorTrashId) {
-            this._monitorTrashDir.disconnect(this._monitorTrashId);
-            this._monitorTrashDir.cancel();
-            this._monitorTrashId = 0;
-        }
         if (this._queryTrashInfoCancellable) {
             this._queryTrashInfoCancellable.cancel();
+            this._queryFileInfoCancellable = null;
         }
         if (this._scheduleTrashRefreshId) {
             GLib.source_remove(this._scheduleTrashRefreshId);
@@ -173,6 +170,7 @@ var FileItem = class extends desktopIconItem.desktopIconItem {
         /* Metadata */
         if (this._setMetadataTrustedCancellable) {
             this._setMetadataTrustedCancellable.cancel();
+            this._setMetadataTrustedCancellable = null;
         }
         if (this._realizeId && this.container) {
             this.container.disconnect(this._realizeId);
@@ -468,7 +466,7 @@ var FileItem = class extends desktopIconItem.desktopIconItem {
             targets.add(Gdk.atom_intern('text/uri-list', false), 0, 2);
             dropDestination.drag_dest_set_target_list(targets);
             targets = undefined;
-            this._connectSignal(dropDestination, 'drag-data-received', (widget, context, x, y, selection, info, time) => {
+            this.connectSignal(dropDestination, 'drag-data-received', (widget, context, x, y, selection, info, time) => {
                 const forceCopy = context.get_selected_action() === Gdk.DragAction.COPY;
                 if (info === Enums.DndTargetInfo.GNOME_ICON_LIST ||
                     info === Enums.DndTargetInfo.URI_LIST) {

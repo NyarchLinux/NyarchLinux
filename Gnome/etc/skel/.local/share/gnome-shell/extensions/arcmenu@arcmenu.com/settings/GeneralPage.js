@@ -202,7 +202,7 @@ class ArcMenuGeneralPage extends Adw.PreferencesPage {
         });
 
         const customizeButton = new Gtk.Button({
-            icon_name: 'emblem-system-symbolic',
+            icon_name: 'applications-system-symbolic',
             css_classes: ['flat'],
             valign: Gtk.Align.CENTER,
             visible: isMenuHotkey ? this._settings.get_boolean('multi-monitor') : true,
@@ -296,7 +296,7 @@ class ArcMenuHotkeyDialog extends Adw.Window {
         this.set_content(sidebarToolBarView);
 
         const headerBar = new Adw.HeaderBar({
-            show_end_title_buttons: false,
+            show_end_title_buttons: true,
             show_start_title_buttons: false,
         });
         sidebarToolBarView.add_top_bar(headerBar);

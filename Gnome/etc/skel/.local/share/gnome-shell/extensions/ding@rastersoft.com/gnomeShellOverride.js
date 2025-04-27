@@ -75,6 +75,9 @@ export class GnomeShellOverride {
      */
 
     replaceMethod(className, methodName, functionToCall, classId) {
+        if (className.prototype[methodName] === functionToCall) {
+            return;
+        }
         if (classId) {
             replaceData[`old_${classId}_${methodName}`] = [className.prototype[methodName], className, methodName, classId];
         } else {

@@ -8,7 +8,8 @@
   background-color: rgba(238, 238, 238, 0.2); }
 
 .dash-item-container .overview-tile .app-grid-running-dot {
-  margin-bottom: 8px; }
+  margin-bottom: 8px;
+  offset-y: 2px; }
 
 #dashtodockContainer.bottom #dash {
   margin: 0px;

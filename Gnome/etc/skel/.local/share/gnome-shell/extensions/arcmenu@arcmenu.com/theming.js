@@ -20,7 +20,7 @@ export function createStylesheet() {
         ArcMenuManager.customStylesheet = file;
         updateStylesheet();
     } catch (e) {
-        log(`ArcMenu - Error creating custom stylesheet: ${e}`);
+        console.log(`ArcMenu - Error creating custom stylesheet: ${e}`);
     }
 }
 
@@ -41,7 +41,6 @@ function unloadStylesheet() {
 export async function deleteStylesheet() {
     unloadStylesheet();
 
-    const {extension} = ArcMenuManager;
     const stylesheet = ArcMenuManager.customStylesheet;
 
     try {
@@ -49,9 +48,7 @@ export async function deleteStylesheet() {
             await stylesheet.delete_async(GLib.PRIORITY_DEFAULT, null);
     } catch (e) {
         if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND))
-            log(`ArcMenu - Error deleting custom stylesheet: ${e}`);
-    } finally {
-        delete extension.customStylesheet;
+            console.log(`ArcMenu - Error deleting custom stylesheet: ${e}`);
     }
 }
 
@@ -63,7 +60,7 @@ export async function updateStylesheet() {
     const stylesheet = ArcMenuManager.customStylesheet;
 
     if (!stylesheet) {
-        log('ArcMenu - Warning: Custom stylesheet not found! Unable to set contents of custom stylesheet.');
+        console.log('ArcMenu - Warning: Custom stylesheet not found! Unable to set contents of custom stylesheet.');
         return;
     }
 
@@ -259,7 +256,7 @@ export async function updateStylesheet() {
             Gio.FileCreateFlags.REPLACE_DESTINATION, null);
 
         if (!success) {
-            log('ArcMenu - Failed to replace contents of custom stylesheet.');
+            console.log('ArcMenu - Failed to replace contents of custom stylesheet.');
             return;
         }
 
@@ -267,7 +264,7 @@ export async function updateStylesheet() {
         const theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
         theme.load_stylesheet(ArcMenuManager.customStylesheet);
     } catch (e) {
-        log(`ArcMenu - Error replacing contents of custom stylesheet: ${e}`);
+        console.log(`ArcMenu - Error replacing contents of custom stylesheet: ${e}`);
     }
 }
 

@@ -1,5 +1,3 @@
-/* eslint-disable jsdoc/require-jsdoc */
-
 import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
@@ -16,6 +14,7 @@ import * as ParentalControlsManager from 'resource:///org/gnome/shell/misc/paren
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 import {AppContextMenu} from '../appMenu.js';
+import {ArcMenuManager} from '../arcmenuManager.js';
 import {BaseMenuLayout} from './baseMenuLayout.js';
 import * as Constants from '../constants.js';
 import {IconGrid} from '../iconGrid.js';
@@ -24,7 +23,13 @@ import * as Utils from '../utils.js';
 
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-function _getFolderName(folder) {
+/**
+ * Retrieves the folder's name, optionally translating it if the folder has a 'translate' flag.
+ *
+ * @param {object} folder - The folder object containing properties.
+ * @returns {string} The folder name, translated if applicable.
+ */
+function getFolderName(folder) {
     const name = folder.get_string('name');
 
     if (folder.get_boolean('translate')) {
@@ -36,7 +41,14 @@ function _getFolderName(folder) {
     return name;
 }
 
-function _listsIntersect(a, b) {
+/**
+ * Checks whether two arrays have at least one common element.
+ *
+ * @param {Array} a - The first array to check for intersection.
+ * @param {Array} b - The second array to check for intersection.
+ * @returns {boolean} Returns `true` if the two arrays have at least one common element; otherwise, `false`.
+ */
+function listsIntersect(a, b) {
     for (const itemA of a) {
         if (b.includes(itemA))
             return true;
@@ -44,21 +56,20 @@ function _listsIntersect(a, b) {
     return false;
 }
 
-export const Layout = class PopLayout extends BaseMenuLayout {
+export class Layout extends BaseMenuLayout {
     static {
         GObject.registerClass(this);
     }
 
     constructor(menuButton) {
         super(menuButton, {
-            has_search: true,
             display_type: Constants.DisplayType.GRID,
             search_display_type: Constants.DisplayType.GRID,
             search_results_spacing: 4,
             column_spacing: 12,
             row_spacing: 12,
             default_menu_width: 1050,
-            vertical: true,
+            ...Utils.getOrientationProp(true),
             icon_grid_size: Constants.GridIconSize.EXTRA_LARGE,
             category_icon_size: Constants.MEDIUM_ICON_SIZE,
             apps_icon_size: Constants.EXTRA_LARGE_ICON_SIZE,
@@ -67,8 +78,6 @@ export const Layout = class PopLayout extends BaseMenuLayout {
             pinned_apps_icon_size: Constants.MEDIUM_ICON_SIZE,
         });
 
-        this._tree.disconnectObject(this);
-
         this._folders = new Map();
         this._orderedItems = [];
 
@@ -76,7 +85,7 @@ export const Layout = class PopLayout extends BaseMenuLayout {
         this.topBox = new St.BoxLayout({
             x_expand: true,
             y_expand: false,
-            vertical: false,
+            ...Utils.getOrientationProp(false),
             x_align: Clutter.ActorAlign.FILL,
             y_align: Clutter.ActorAlign.START,
         });
@@ -90,14 +99,14 @@ export const Layout = class PopLayout extends BaseMenuLayout {
             style_class: this._disableFadeEffect ? '' : 'small-vfade',
         });
         this.applicationsBox = new St.BoxLayout({
-            vertical: true,
+            ...Utils.getOrientationProp(true),
             y_expand: true,
             y_align: Clutter.ActorAlign.START,
         });
         this._addChildToParent(this.applicationsScrollBox, this.applicationsBox);
 
         this.foldersContainer = new St.BoxLayout({
-            vertical: true,
+            ...Utils.getOrientationProp(true),
             x_expand: true,
             x_align: Clutter.ActorAlign.FILL,
             y_expand: true,
@@ -116,7 +125,7 @@ export const Layout = class PopLayout extends BaseMenuLayout {
         this.placeHolderFolderItem = new GroupFolderMenuItem(this, 'New Folder', null);
         this._addItem(this.placeHolderFolderItem);
 
-        const searchBarLocation = this._settings.get_enum('searchbar-default-top-location');
+        const searchBarLocation = ArcMenuManager.settings.get_enum('searchbar-default-top-location');
         if (searchBarLocation === Constants.SearchbarLocation.BOTTOM) {
             this.searchEntry.style = 'margin: 10px 220px;';
             this.topBox.style = 'padding-top: 0.5em;';
@@ -159,21 +168,25 @@ export const Layout = class PopLayout extends BaseMenuLayout {
         this.setDefaultMenuView();
         this._setGridColumns(this.applicationsGrid);
 
-        this._settings.connectObject('changed::pop-default-view', () => this.setDefaultMenuView(), this);
+        ArcMenuManager.settings.connectObject('changed::pop-default-view', () => this.setDefaultMenuView(), this);
+        this._connectAppChangedEvents();
+
+        // We don't use GMenu tree for Pop layout
+        this._tree.disconnectObject(this);
     }
 
     reloadApplications() {
     }
 
     _redisplay() {
-        let oldFolders = this._orderedItems.slice();
-        let oldFoldersIds = oldFolders.map(icon => icon.folder_id);
+        const oldFolders = this._orderedItems.slice();
+        const oldFoldersIds = oldFolders.map(icon => icon.folder_id);
 
-        let newFolders = this._loadFolders();
-        let newFoldersIds = newFolders.map(icon => icon.folder_id);
+        const newFolders = this._loadFolders();
+        const newFoldersIds = newFolders.map(icon => icon.folder_id);
 
-        let addedFolders = newFolders.filter(icon => !oldFoldersIds.includes(icon.folder_id));
-        let removedFolders = oldFolders.filter(icon => !newFoldersIds.includes(icon.folder_id));
+        const addedFolders = newFolders.filter(icon => !oldFoldersIds.includes(icon.folder_id));
+        const removedFolders = oldFolders.filter(icon => !newFoldersIds.includes(icon.folder_id));
 
         // Remove old app icons
         removedFolders.forEach(item => {
@@ -226,7 +239,7 @@ export const Layout = class PopLayout extends BaseMenuLayout {
     }
 
     updateWidth(setDefaultMenuView) {
-        const widthAdjustment = this._settings.get_int('menu-width-adjustment');
+        const widthAdjustment = ArcMenuManager.settings.get_int('menu-width-adjustment');
         let menuWidth = this.default_menu_width + widthAdjustment;
         // Set a 300px minimum limit for the menu width
         menuWidth = Math.max(300, menuWidth);
@@ -256,9 +269,9 @@ export const Layout = class PopLayout extends BaseMenuLayout {
             return this._parentalControlsManager.shouldShowApp(appInfo);
         });
 
-        let apps = this._appInfoList.map(app => app.get_id());
+        const apps = this._appInfoList.map(app => app.get_id());
 
-        let appSys = Shell.AppSystem.get_default();
+        const appSys = Shell.AppSystem.get_default();
 
         const appsInsideFolders = new Set();
 
@@ -286,7 +299,7 @@ export const Layout = class PopLayout extends BaseMenuLayout {
         });
 
         // Store the id and name of each folder in 'pop-folders-data'
-        this._settings.set_value('pop-folders-data', new GLib.Variant('a{ss}', foldersData));
+        ArcMenuManager.settings.set_value('pop-folders-data', new GLib.Variant('a{ss}', foldersData));
 
         // Find any remaining apps not contained within a folder.
         const remainingApps = [];
@@ -332,7 +345,7 @@ export const Layout = class PopLayout extends BaseMenuLayout {
                 path: newFolderPath,
             });
         } catch (e) {
-            log('Error creating new folder');
+            console.log('Error creating new folder');
             return;
         }
 
@@ -390,7 +403,7 @@ export const Layout = class PopLayout extends BaseMenuLayout {
 
     setDefaultMenuView() {
         super.setDefaultMenuView();
-        const defaultView = this._settings.get_string('pop-default-view');
+        const defaultView = ArcMenuManager.settings.get_string('pop-default-view');
         let category = this._folders.get(defaultView);
 
         if (!category)
@@ -407,6 +420,7 @@ export const Layout = class PopLayout extends BaseMenuLayout {
     }
 
     _onDestroy() {
+        this._folderSettings.disconnectObject(this);
         if (this._folders) {
             this._folders.forEach((value, _key, _map) => {
                 value.destroy();
@@ -416,9 +430,10 @@ export const Layout = class PopLayout extends BaseMenuLayout {
 
         this._orderedItems = null;
         this._appInfoList = null;
+        this._folderSettings = null;
         super._onDestroy();
     }
-};
+}
 
 class HomeFolderMenuItem extends MW.DraggableMenuItem {
     static [GObject.properties] = {
@@ -461,7 +476,7 @@ class HomeFolderMenuItem extends MW.DraggableMenuItem {
         this._updateIcon();
 
         this.set({
-            vertical: true,
+            ...Utils.getOrientationProp(true),
             x_expand: false,
             tooltipLocation: Constants.TooltipLocation.BOTTOM_CENTERED,
             style: `width: ${110}px; height: ${72}px;`,
@@ -516,12 +531,24 @@ class HomeFolderMenuItem extends MW.DraggableMenuItem {
         this._menuLayout.searchEntry?.clearWithoutSearchChangeEvent();
         this._grid.removeAllItems();
         this._menuLayout._setGridColumns(this._grid);
+        const groupAllAppsGridView = ArcMenuManager.settings.get_boolean('group-apps-alphabetically-grid-layouts');
+        let currentCharacter;
 
         for (let i = 0; i < this._orderedItems.length; i++) {
             const item = this._orderedItems[i];
             const parent = item.get_parent();
             if (parent)
                 parent.remove_child(item);
+
+            if (groupAllAppsGridView) {
+                const appNameFirstChar = item._app.get_name().charAt(0).toLowerCase();
+                if (currentCharacter !== appNameFirstChar) {
+                    currentCharacter = appNameFirstChar;
+
+                    const label = this._menuLayout._createLabelWithSeparator(currentCharacter.toUpperCase());
+                    this._grid.appendItem(label);
+                }
+            }
 
             this._grid.appendItem(item);
         }
@@ -552,7 +579,7 @@ class HomeFolderMenuItem extends MW.DraggableMenuItem {
 
         this.appsList.forEach(addAppId);
 
-        let items = [];
+        const items = [];
         this._apps.forEach(app => {
             let icon = this._items.get(app.get_id());
             if (!icon) {
@@ -571,14 +598,14 @@ class HomeFolderMenuItem extends MW.DraggableMenuItem {
     }
 
     _redisplay() {
-        let oldApps = this._orderedItems.slice();
-        let oldAppIds = oldApps.map(icon => icon._app.id);
+        const oldApps = this._orderedItems.slice();
+        const oldAppIds = oldApps.map(icon => icon._app.id);
 
-        let newApps = this._loadApps();
-        let newAppIds = newApps.map(icon => icon._app.id);
+        const newApps = this._loadApps();
+        const newAppIds = newApps.map(icon => icon._app.id);
 
-        let addedApps = newApps.filter(icon => !oldAppIds.includes(icon._app.id));
-        let removedApps = oldApps.filter(icon => !newAppIds.includes(icon._app.id));
+        const addedApps = newApps.filter(icon => !oldAppIds.includes(icon._app.id));
+        const removedApps = oldApps.filter(icon => !newAppIds.includes(icon._app.id));
 
         // Remove old app icons
         removedApps.forEach(item => {
@@ -671,7 +698,7 @@ class GroupFolderMenuItem extends MW.DraggableMenuItem {
 
         this.add_style_class_name('ArcMenuIconGrid ArcMenuGroupFolder');
         this.set({
-            vertical: true,
+            ...Utils.getOrientationProp(true),
             x_expand: false,
             tooltipLocation: Constants.TooltipLocation.BOTTOM_CENTERED,
             style: `width: ${110}px; height: ${72}px;`,
@@ -699,7 +726,7 @@ class GroupFolderMenuItem extends MW.DraggableMenuItem {
             return;
         }
 
-        let name = _getFolderName(this._folder);
+        const name = getFolderName(this._folder);
         if (this.folder_name === name)
             return;
 
@@ -724,39 +751,43 @@ class GroupFolderMenuItem extends MW.DraggableMenuItem {
         folderApps.push(app.id);
         this._folder.set_strv('apps', folderApps);
 
-        let excludedApps = this._folder.get_strv('excluded-apps');
-        let index = excludedApps.indexOf(app.id);
+        const excludedApps = this._folder.get_strv('excluded-apps');
+        const index = excludedApps.indexOf(app.id);
         if (index >= 0) {
             excludedApps.splice(index, 1);
             this._folder.set_strv('excluded-apps', excludedApps);
         }
     }
 
+    _removeFolder() {
+        this._deletingFolder = true;
+
+        // Resetting all keys deletes the relocatable schema
+        const keys = this._folder.settings_schema.list_keys();
+        for (const key of keys)
+            this._folder.reset(key);
+
+        const settings = new Gio.Settings({schema_id: 'org.gnome.desktop.app-folders'});
+        const folders = settings.get_strv('folder-children');
+        folders.splice(folders.indexOf(this.folder_id), 1);
+        settings.set_strv('folder-children', folders);
+
+        // if the folder is now deleted, activate the library home folder
+        this._menuLayout.activateHomeFolder();
+
+        this._deletingFolder = false;
+    }
+
     removeApp(app) {
-        let folderApps = this._folder.get_strv('apps');
-        let index = folderApps.indexOf(app.id);
+        const folderApps = this._folder.get_strv('apps');
+        const index = folderApps.indexOf(app.id);
         if (index >= 0)
             folderApps.splice(index, 1);
 
         // Remove the folder if this is the last app icon; otherwise,
         // just remove the icon
         if (folderApps.length === 0) {
-            this._deletingFolder = true;
-
-            // Resetting all keys deletes the relocatable schema
-            let keys = this._folder.settings_schema.list_keys();
-            for (const key of keys)
-                this._folder.reset(key);
-
-            let settings = new Gio.Settings({schema_id: 'org.gnome.desktop.app-folders'});
-            let folders = settings.get_strv('folder-children');
-            folders.splice(folders.indexOf(this.folder_id), 1);
-            settings.set_strv('folder-children', folders);
-
-            // if the folder is now deleted, activate the library home folder
-            this._menuLayout.activateHomeFolder();
-
-            this._deletingFolder = false;
+            this._removeFolder();
         } else {
             // If this is a categories-based folder, also add it to
             // the list of excluded apps
@@ -815,7 +846,7 @@ class GroupFolderMenuItem extends MW.DraggableMenuItem {
         dialog.addButton({
             label: _('Yes'),
             action: () => {
-                this._menuLayout.removeFolder(this);
+                this._removeFolder(this);
                 dialog.close();
             },
             default: false,
@@ -853,8 +884,8 @@ class GroupFolderMenuItem extends MW.DraggableMenuItem {
                 return;
             }
 
-            this.folderSettings.set_string('name', newFolderName);
-            this.folderSettings.set_boolean('translate', false);
+            this._folder.set_string('name', newFolderName);
+            this._folder.set_boolean('translate', false);
             dialog.close();
         };
 
@@ -1032,14 +1063,14 @@ class GroupFolderMenuItem extends MW.DraggableMenuItem {
         const folderCategories = this._folder.get_strv('categories');
         const appInfos = this._menuLayout.getAppInfos();
         appInfos.forEach(appInfo => {
-            let appCategories = Utils.getCategories(appInfo);
-            if (!_listsIntersect(folderCategories, appCategories))
+            const appCategories = Utils.getCategories(appInfo);
+            if (!listsIntersect(folderCategories, appCategories))
                 return;
 
             addAppId(appInfo.get_id());
         });
 
-        let items = [];
+        const items = [];
         this._apps.forEach(app => {
             let icon = this._items.get(app.get_id());
             if (!icon) {
@@ -1060,14 +1091,14 @@ class GroupFolderMenuItem extends MW.DraggableMenuItem {
     _redisplay() {
         if (this.new_folder)
             return;
-        let oldApps = this._orderedItems.slice();
-        let oldAppIds = oldApps.map(icon => icon._app.id);
+        const oldApps = this._orderedItems.slice();
+        const oldAppIds = oldApps.map(icon => icon._app.id);
 
-        let newApps = this._loadApps();
-        let newAppIds = newApps.map(icon => icon._app.id);
+        const newApps = this._loadApps();
+        const newAppIds = newApps.map(icon => icon._app.id);
 
-        let addedApps = newApps.filter(icon => !oldAppIds.includes(icon._app.id));
-        let removedApps = oldApps.filter(icon => !newAppIds.includes(icon._app.id));
+        const addedApps = newApps.filter(icon => !oldAppIds.includes(icon._app.id));
+        const removedApps = oldApps.filter(icon => !newAppIds.includes(icon._app.id));
 
         // Remove old app icons
         removedApps.forEach(item => {
@@ -1136,9 +1167,9 @@ export class ApplicationMenuItem extends MW.DraggableMenuItem {
 
         this.hasContextMenu = !!this._app;
 
-        const disableRecentAppsIndicator = this._settings.get_boolean('disable-recently-installed-apps');
+        const disableRecentAppsIndicator = ArcMenuManager.settings.get_boolean('disable-recently-installed-apps');
         if (!disableRecentAppsIndicator) {
-            const recentApps = this._settings.get_strv('recently-installed-apps');
+            const recentApps = ArcMenuManager.settings.get_strv('recently-installed-apps');
             this.isRecentlyInstalled = recentApps.some(appIter => appIter === this._app.get_id());
         }
 
@@ -1154,7 +1185,7 @@ export class ApplicationMenuItem extends MW.DraggableMenuItem {
                 text: _('New'),
                 style_class: 'arcmenu-text-indicator',
                 x_expand: true,
-                x_align: Clutter.ActorAlign.END,
+                x_align: Clutter.ActorAlign.CENTER,
                 y_align: Clutter.ActorAlign.CENTER,
             });
             this.add_child(this._indicator);
@@ -1162,6 +1193,12 @@ export class ApplicationMenuItem extends MW.DraggableMenuItem {
 
         this.connect('notify::hover', () => this.removeIndicator());
         this.connect('key-focus-in', () => this.removeIndicator());
+    }
+
+    _onDestroy() {
+        this._indicator?.destroy();
+        this._indicator = null;
+        super._onDestroy();
     }
 
     setFolderGroup(folderMenuItem) {
@@ -1224,7 +1261,7 @@ export class ApplicationMenuItem extends MW.DraggableMenuItem {
     createIcon() {
         this._iconBin.x_align = Clutter.ActorAlign.CENTER;
 
-        const iconSizeEnum = this._settings.get_enum('menu-item-grid-icon-size');
+        const iconSizeEnum = ArcMenuManager.settings.get_enum('menu-item-grid-icon-size');
         const defaultIconSize = this._menuLayout.icon_grid_size;
         const {iconSize} = Utils.getGridIconSize(iconSizeEnum, defaultIconSize);
 
@@ -1241,12 +1278,12 @@ export class ApplicationMenuItem extends MW.DraggableMenuItem {
     removeIndicator() {
         if (this.isRecentlyInstalled) {
             this.isRecentlyInstalled = false;
-            const recentApps = this._settings.get_strv('recently-installed-apps');
+            const recentApps = ArcMenuManager.settings.get_strv('recently-installed-apps');
             const index = recentApps.indexOf(this._app.get_id());
             if (index > -1)
                 recentApps.splice(index, 1);
 
-            this._settings.set_strv('recently-installed-apps', recentApps);
+            ArcMenuManager.settings.set_strv('recently-installed-apps', recentApps);
 
             this._indicator.hide();
             this._menuLayout.setNewAppIndicator();

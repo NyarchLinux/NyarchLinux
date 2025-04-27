@@ -7,7 +7,6 @@ import Shell from 'gi://Shell';
 import St from 'gi://St';
 
 import * as AppFavorites from 'resource:///org/gnome/shell/ui/appFavorites.js';
-import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import {ArcMenuManager} from '../arcmenuManager.js';
 import * as Constants from '../constants.js';
@@ -25,11 +24,8 @@ const MAX_RECENT_FILES = 25;
 
 // This class handles the core functionality of all the menu layouts.
 // Each menu layout extends this class.
-export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
+export class BaseMenuLayout extends St.BoxLayout {
     static [GObject.properties] = {
-        'has-search': GObject.ParamSpec.boolean(
-            'has-search', 'has-search', 'has-search',
-            GObject.ParamFlags.READWRITE, true),
         'display-type': GObject.ParamSpec.uint(
             'display-type', 'display-type', 'display-type',
             GObject.ParamFlags.READWRITE, 0, GLib.MAXINT32, 0),
@@ -101,9 +97,6 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
         this._delegate = this;
 
         this._menuButton = menuButton;
-        this._settings = ArcMenuManager.settings;
-        this._extension = ArcMenuManager.extension;
-
         this.contextMenuManager = menuButton.contextMenuManager;
         this.subMenuManager = menuButton.subMenuManager;
         this.arcMenu = menuButton.arcMenu;
@@ -111,33 +104,15 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
         if (this.arcMenu === null)
             throw new Error('ArcMenu null');
 
-        this._focusChild = null;
         this.hasPinnedApps = false;
         this.activeCategoryType = -1;
-        this._disableFadeEffect = this._settings.get_boolean('disable-scrollview-fade-effect');
-
-        this.connect('key-press-event', this._onMainBoxKeyPress.bind(this));
-
+        this._disableFadeEffect = ArcMenuManager.settings.get_boolean('disable-scrollview-fade-effect');
         this.iconTheme = new St.IconTheme();
         this.appSys = Shell.AppSystem.get_default();
         this._tree = new GMenu.Tree({menu_basename: 'applications.menu'});
-        this._reloadApplicationsWorkId = Main.initializeDeferredWork(this, () => this.reloadApplications());
-        this._tree.connectObject('changed', () => Main.queueDeferredWork(this._reloadApplicationsWorkId), this);
 
-        AppFavorites.getAppFavorites().connectObject('changed', () => {
-            if (this.categoryDirectories) {
-                const categoryMenuItem = this.categoryDirectories.get(Constants.CategoryType.FAVORITES);
-                if (categoryMenuItem)
-                    this._loadGnomeFavorites(categoryMenuItem);
-            }
-        }, this);
-
-        if (this.has_search) {
-            this.searchResults = new SearchResults(this);
-            this.searchEntry = new MW.SearchEntry(this);
-            this.searchEntry.connectObject('search-changed', this._onSearchEntryChanged.bind(this), this);
-            this.searchEntry.connectObject('entry-key-press', this._onSearchEntryKeyPress.bind(this), this);
-        }
+        this.searchResults = new SearchResults(this);
+        this.searchEntry = new MW.SearchEntry(this);
 
         this.applicationsGrid = new IconGrid({
             halign: this.display_type === Constants.DisplayType.LIST ? Clutter.ActorAlign.FILL
@@ -155,15 +130,22 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
             accept_drop: true,
         });
 
+        this.connect('key-press-event', this._onMainBoxKeyPress.bind(this));
         this.connect('destroy', () => this._onDestroy());
+        this.searchEntry.connectObject('search-changed', this._onSearchEntryChanged.bind(this), this);
+        this.searchEntry.connectObject('entry-key-press', this._onSearchEntryKeyPress.bind(this), this);
     }
 
-    get settings() {
-        return this._settings;
-    }
-
-    get extension() {
-        return this._extension;
+    _connectAppChangedEvents() {
+        this._tree.connectObject('changed', () => this.reloadApplications(), this);
+        ArcMenuManager.settings.connectObject('changed::recently-installed-apps', () => this.reloadApplications(), this);
+        AppFavorites.getAppFavorites().connectObject('changed', () => {
+            if (this.categoryDirectories) {
+                const categoryMenuItem = this.categoryDirectories.get(Constants.CategoryType.FAVORITES);
+                if (categoryMenuItem)
+                    this._loadGnomeFavorites(categoryMenuItem);
+            }
+        }, this);
     }
 
     get menuButton() {
@@ -171,10 +153,10 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
     }
 
     setDefaultMenuView() {
-        if (this.has_search) {
-            this.searchEntry.clearWithoutSearchChangeEvent();
-            this.searchResults.setTerms([]);
-        }
+        this.searchEntry.clearWithoutSearchChangeEvent();
+        this.searchResults.setTerms([]);
+        // Search results have been cleared, set category box active if needed.
+        this._setCategoriesBoxInactive(false);
 
         this._clearActorsFromBox();
         this.resetScrollBarPosition();
@@ -186,12 +168,12 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
 
     updateWidth(setDefaultMenuView, leftPanelWidthOffset = 0, rightPanelWidthOffset = 0) {
         if (this.is_dual_panel) {
-            const leftPanelWidth = this._settings.get_int('left-panel-width') + leftPanelWidthOffset;
-            const rightPanelWidth = this._settings.get_int('right-panel-width') + rightPanelWidthOffset;
+            const leftPanelWidth = ArcMenuManager.settings.get_int('left-panel-width') + leftPanelWidthOffset;
+            const rightPanelWidth = ArcMenuManager.settings.get_int('right-panel-width') + rightPanelWidthOffset;
             this.leftBox.style = `width: ${leftPanelWidth}px;`;
             this.rightBox.style = `width: ${rightPanelWidth}px;`;
         } else {
-            const widthAdjustment = this._settings.get_int('menu-width-adjustment');
+            const widthAdjustment = ArcMenuManager.settings.get_int('menu-width-adjustment');
             let menuWidth = this.default_menu_width + widthAdjustment;
             // Set a 300px minimum limit for the menu width
             menuWidth = Math.max(300, menuWidth);
@@ -213,7 +195,7 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
 
     getIconWidthFromSetting() {
         const gridIconPadding = 10;
-        const iconSizeEnum = this._settings.get_enum('menu-item-grid-icon-size');
+        const iconSizeEnum = ArcMenuManager.settings.get_enum('menu-item-grid-icon-size');
 
         const {width, height_, iconSize_} = Utils.getGridIconSize(iconSizeEnum, this.icon_grid_size);
         return width + gridIconPadding;
@@ -246,9 +228,9 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
         }
     }
 
-    reloadApplications(forceReload = false) {
+    reloadApplications() {
         // Only reload applications if the menu is closed.
-        if (!forceReload && this.arcMenu.isOpen) {
+        if (this.arcMenu.isOpen) {
             this.reloadQueued = true;
             if (!this._reloadAppsOnMenuClosedID) {
                 this._reloadAppsOnMenuClosedID = this.arcMenu.connect('menu-closed', () => {
@@ -262,19 +244,8 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
 
         this.searchResults?.setTerms([]);
 
-        if (this.applicationsMap) {
-            this.applicationsMap.forEach((value, _key, _map) => {
-                value.destroy();
-            });
-            this.applicationsMap = null;
-        }
+        this._destroyMenuItems();
 
-        if (this.categoryDirectories) {
-            this.categoryDirectories.forEach((value, _key, _map) => {
-                value.destroy();
-            });
-            this.categoryDirectories = null;
-        }
         this.activeCategoryItem = null;
         this.activeMenuItem = null;
 
@@ -361,7 +332,7 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
     }
 
     _loadCategory(categoryMenuItem, dir) {
-        const showNewAppsIndicator = !this._settings.get_boolean('disable-recently-installed-apps');
+        const showNewAppsIndicator = !ArcMenuManager.settings.get_boolean('disable-recently-installed-apps');
         const iter = dir.iter();
         let nextType;
         while ((nextType = iter.next()) !== GMenu.TreeItemType.INVALID) {
@@ -383,15 +354,14 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
                     continue;
 
                 let item = this.applicationsMap.get(app);
-                if (!item) {
-                    const isContainedInCategory = true;
-                    item = new MW.ApplicationMenuItem(this, app, this.display_type, null, isContainedInCategory);
-                }
 
                 if (categoryMenuItem instanceof MW.SubCategoryMenuItem) {
                     const subMenuItem = new MW.ApplicationMenuItem(this, app, Constants.DisplayType.GRID, null, true);
                     categoryMenuItem.appList.push(subMenuItem);
-                } else {
+                    continue;
+                } else if (!item) {
+                    const isContainedInCategory = true;
+                    item = new MW.ApplicationMenuItem(this, app, this.display_type, null, isContainedInCategory);
                     categoryMenuItem.appList.push(app);
                     this.applicationsMap.set(app, item);
                 }
@@ -403,7 +373,7 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
                 if (subdir.get_is_nodisplay())
                     continue;
 
-                const showSubMenus = this._settings.get_boolean('show-category-sub-menus');
+                const showSubMenus = ArcMenuManager.settings.get_boolean('show-category-sub-menus');
                 if (showSubMenus) {
                     // Only go one layer deep for sub menus
                     if (categoryMenuItem instanceof MW.SubCategoryMenuItem) {
@@ -433,7 +403,7 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
     }
 
     setNewAppIndicator() {
-        const disabled = this._settings.get_boolean('disable-recently-installed-apps');
+        const disabled = ArcMenuManager.settings.get_boolean('disable-recently-installed-apps');
         if (!disabled && this.categoryDirectories) {
             for (const categoryMenuItem of this.categoryDirectories.values()) {
                 categoryMenuItem.setNewAppIndicator(false);
@@ -536,6 +506,8 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
 
                 const placeMenuItem = this.createMenuItem({name, icon, 'id': filePath},
                     Constants.DisplayType.LIST, isContainedInCategory);
+                if (!(placeMenuItem instanceof MW.PlaceMenuItem))
+                    return;
                 placeMenuItem.setAsRecentFile(recentFile, () => {
                     try {
                         this.recentFilesManager.removeItem(placeMenuItem.fileUri);
@@ -559,7 +531,7 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
     }
 
     _displayPlaces() {
-        const directoryShortcuts = this._settings.get_value('directory-shortcuts').deep_unpack();
+        const directoryShortcuts = ArcMenuManager.settings.get_value('directory-shortcuts').deep_unpack();
         for (let i = 0; i < directoryShortcuts.length; i++) {
             const directoryData = directoryShortcuts[i];
             const isContainedInCategory = false;
@@ -583,7 +555,6 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
             id = 'gnome-control-center.desktop';
             app = this.appSys.lookup_app(id);
         }
-
         if (app)
             return new MW.ShortcutMenuItem(this, itemData, displayType, isContainedInCategory);
 
@@ -617,7 +588,8 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
         case Constants.ShortcutCommands.SWITCH_USER: {
             const item = new MW.ShortcutMenuItem(this, itemData, displayType, isContainedInCategory);
             item.powerType = Utils.getPowerTypeFromShortcutCommand(id);
-            MW.bindPowerItemVisibility(item);
+            const binding = MW.bindPowerItemVisibility(item);
+            item.connect('destroy', () => binding?.unbind());
             return item;
         }
         case Constants.ShortcutCommands.ARCMENU_SETTINGS:
@@ -680,7 +652,7 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
     }
 
     getSettings(schema, path) {
-        const schemaDir = this.extension.dir.get_child('schemas');
+        const schemaDir = ArcMenuManager.extension.dir.get_child('schemas');
         let schemaSource;
         if (schemaDir.query_exists(null)) {
             schemaSource = Gio.SettingsSchemaSource.new_from_directory(
@@ -696,7 +668,7 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
         if (!schemaObj) {
             log(
                 `Schema ${schema} could not be found for extension ${
-                    this.extension.metadata.uuid}. Please check your installation.`
+                    ArcMenuManager.extension.metadata.uuid}. Please check your installation.`
             );
             return null;
         }
@@ -715,8 +687,8 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
 
         let pinnedAppsMenuItem;
         if (pinnedAppData.isFolder) {
-            const folderSchema = `${this._settings.schema_id}.pinned-apps-folders`;
-            const folderPath = `${this._settings.path}pinned-apps-folders/${pinnedAppData.id}/`;
+            const folderSchema = `${ArcMenuManager.settings.schema_id}.pinned-apps-folders`;
+            const folderPath = `${ArcMenuManager.settings.path}pinned-apps-folders/${pinnedAppData.id}/`;
             try {
                 const folderSettings = this.getSettings(folderSchema, folderPath);
 
@@ -724,7 +696,7 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
                 pinnedAppsMenuItem = new MW.PinnedAppsFolderMenuItem(this, pinnedAppData, folderSettings, folderAppList,
                     this.display_type, isContainedInCategory);
             } catch (e) {
-                log(`Error creating new pinned apps folder: ${e}`);
+                console.log(`Error creating new pinned apps folder: ${e}`);
                 return null;
             }
         } else {
@@ -738,8 +710,10 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
             for (let j = 0; j < newPinnedAppsList.length; j++)
                 array.push(newPinnedAppsList[j].pinnedAppData);
 
-            this._settings.set_value('pinned-apps', new GLib.Variant('aa{ss}', array));
+            ArcMenuManager.settings.set_value('pinned-apps', new GLib.Variant('aa{ss}', array));
         }, this);
+
+        pinnedAppsMenuItem.connect('destroy', () => pinnedAppsMenuItem.disconnectObject(this));
 
         return pinnedAppsMenuItem;
     }
@@ -747,7 +721,7 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
     _loadPinnedApps() {
         this.pinnedAppsArray = [];
 
-        const pinnedAppsList = this._settings.get_value('pinned-apps').deepUnpack();
+        const pinnedAppsList = ArcMenuManager.settings.get_value('pinned-apps').deepUnpack();
 
         pinnedAppsList.forEach(pinnedAppData => {
             const id = pinnedAppData.id;
@@ -823,19 +797,19 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
     _createPlaces(id) {
         const places = this.placesManager.get(id);
 
-        const applicationShortcuts = this._settings.get_value('application-shortcuts').deep_unpack();
+        const applicationShortcuts = ArcMenuManager.settings.get_value('application-shortcuts').deep_unpack();
         const haveApplicationShortcuts = applicationShortcuts.length > 0;
         const haveNetworkDevices = this.placesManager.get('network').length > 0;
         const haveExternalDevices = this.placesManager.get('devices').length > 0;
         const haveBookmarks = this.placesManager.get('bookmarks').length > 0;
 
-        if (this._settings.get_boolean('show-bookmarks')) {
+        if (ArcMenuManager.settings.get_boolean('show-bookmarks')) {
             if (id === 'bookmarks' && haveBookmarks) {
                 const needsSeparator = haveApplicationShortcuts;
                 this._addPlacesToMenu(id, places, needsSeparator);
             }
         }
-        if (this._settings.get_boolean('show-external-devices')) {
+        if (ArcMenuManager.settings.get_boolean('show-external-devices')) {
             if (id === 'devices' && haveExternalDevices) {
                 const needsSeparator = !haveNetworkDevices && (haveBookmarks || haveApplicationShortcuts);
                 this._addPlacesToMenu(id, places, needsSeparator);
@@ -915,8 +889,13 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
 
         this._futureActiveItem = false;
         let currentCharacter;
-        const alphabetizeAllPrograms = this._settings.get_boolean('alphabetize-all-programs') &&
-            this.display_type === Constants.DisplayType.LIST;
+
+        const groupAllAppsListView = ArcMenuManager.settings.get_boolean('group-apps-alphabetically-list-layouts');
+        const groupAllAppsGridView = ArcMenuManager.settings.get_boolean('group-apps-alphabetically-grid-layouts');
+        const isGrid = this.display_type === Constants.DisplayType.GRID;
+        const isList = this.display_type === Constants.DisplayType.LIST;
+
+        const groupAllAppsAlphabetically = (groupAllAppsListView && isList) || (groupAllAppsGridView && isGrid);
 
         this._setGridColumns(grid);
 
@@ -940,7 +919,7 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
             if (parent)
                 parent.remove_child(item);
 
-            if (alphabetizeAllPrograms && category === Constants.CategoryType.ALL_PROGRAMS) {
+            if (groupAllAppsAlphabetically && category === Constants.CategoryType.ALL_PROGRAMS) {
                 const appNameFirstChar = app.get_name().charAt(0).toLowerCase();
                 if (currentCharacter !== appNameFirstChar) {
                     currentCharacter = appNameFirstChar;
@@ -980,9 +959,6 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
 
     _onSearchEntryChanged(searchEntry, searchString) {
         if (searchEntry.isEmpty()) {
-            // Enable Category Mouse Hover activation while search results are inactive.
-            this._setCategoriesBoxInactive(false);
-
             if (this.applicationsBox.contains(this.searchResults))
                 this.applicationsBox.remove_child(this.searchResults);
 
@@ -1113,7 +1089,7 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
             else if (symbol === Clutter.KEY_ISO_Left_Tab)
                 direction = St.DirectionType.TAB_BACKWARD;
 
-            if (this.has_search && this.searchEntry.hasKeyFocus() &&
+            if (this.searchEntry.hasKeyFocus() &&
                 this.searchResults.hasActiveResult() && this.searchResults.get_parent()) {
                 const topSearchResult = this.searchResults.getTopResult();
                 if (topSearchResult.has_style_pseudo_class('active')) {
@@ -1145,7 +1121,10 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
     }
 
     _onDestroy() {
+        ArcMenuManager.settings.disconnectObject(this);
         this._disconnectReloadApps();
+
+        AppFavorites.getAppFavorites().disconnectObject(this);
 
         if (this.recentFilesManager) {
             this.recentFilesManager.destroy();
@@ -1153,7 +1132,7 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
         }
 
         this._tree.disconnectObject(this);
-        this._tree = null;
+        delete this._tree;
 
         if (this.applicationsBox) {
             if (this.applicationsBox.contains(this.applicationsGrid))
@@ -1163,26 +1142,35 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
         if (this.network) {
             this.network.destroy();
             this.networkMenuItem.destroy();
+            this.network = null;
+            this.networkMenuItem = null;
         }
 
         if (this.computer) {
             this.computer.destroy();
             this.computerMenuItem.destroy();
+            this.computer = null;
+            this.computerMenuItem = null;
         }
 
         if (this.placesManager) {
             for (const id in this._placesSections) {
                 if (Object.hasOwn(this._placesSections, id)) {
                     const children = this._placesSections[id].get_children();
-                    children.forEach(child => child.destroy());
+                    children.forEach(child => {
+                        child.destroy();
+                        child = null;
+                    });
                 }
             }
             this.placesManager.destroy();
             this.placesManager = null;
         }
 
-        if (this.searchEntry)
+        if (this.searchEntry) {
             this.searchEntry.destroy();
+            this.searchEntry = null;
+        }
 
         if (this.searchResults) {
             this.searchResults.setTerms([]);
@@ -1190,33 +1178,47 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
             this.searchResults = null;
         }
 
-        if (this.pinnedAppsArray) {
-            for (let i = 0; i < this.pinnedAppsArray.length; i++)
-                this.pinnedAppsArray[i].destroy();
+        this._destroyMenuItems();
 
-            this.pinnedAppsArray = null;
+        this._pinnedAppsGrid.destroy();
+        this._pinnedAppsGrid = null;
+        this.applicationsGrid.destroy();
+        this.applicationsGrid = null;
+
+        this._sortedAppsList = null;
+        this._delegate = null;
+        this._menuButton = null;
+        this.contextMenuManager = null;
+        this.subMenuManager = null;
+        this.arcMenu = null;
+        this.iconTheme = null;
+        this.appSys = null;
+        this.activeCategoryItem = null;
+        this.activeMenuItem = null;
+        this._futureActiveItem = null;
+    }
+
+    _destroyMenuItems() {
+        if (this.pinnedAppsMap) {
+            this.pinnedAppsMap.forEach(menuItem => menuItem.destroy());
+            this.pinnedAppsMap = null;
         }
+        this.pinnedAppsArray = null;
 
         if (this.applicationsMap) {
-            this.applicationsMap.forEach((value, _key, _map) => {
-                value.destroy();
-            });
+            this.applicationsMap.forEach(menuItem => menuItem.destroy());
             this.applicationsMap = null;
         }
 
         if (this.categoryDirectories) {
-            this.categoryDirectories.forEach((value, _key, _map) => {
-                value.destroy();
-            });
+            this.categoryDirectories.forEach(menuItem => menuItem.destroy());
             this.categoryDirectories = null;
         }
     }
 
     _setCategoriesBoxInactive(inactive) {
-        const activateOnHover = this._settings.get_boolean('activate-on-hover');
-        if (!activateOnHover)
-            return;
-        if (!this.categoriesBox && !this.supports_category_hover_activation)
+        const activateOnHover = ArcMenuManager.settings.get_boolean('activate-on-hover');
+        if (!activateOnHover || !this.categoriesBox || !this.supports_category_hover_activation)
             return;
 
         this.blockCategoryHoverActivation = inactive;
@@ -1238,7 +1240,12 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
             overlay_scrollbars: true,
         });
 
-        scrollBox.get_vscroll_bar().z_position = 1;
+        // With overlay_scrollbars = true, the scrollbar appears behind the menu items
+        // Maybe a bug in GNOME? Fix it with this.
+        scrollBox.get_children().forEach(child => {
+            if (child instanceof St.ScrollBar)
+                child.z_position = 1;
+        });
 
         const panAction = new Clutter.PanAction({interpolate: true});
         panAction.connect('pan', action => this._onPan(action, scrollBox));
@@ -1302,11 +1309,4 @@ export const BaseMenuLayout = class ArcMenuBaseMenuLayout extends St.BoxLayout {
         navButton.add_child(button);
         return navButton;
     }
-
-    _keyFocusIn(actor) {
-        if (this._focusChild === actor)
-            return;
-        this._focusChild = actor;
-        Utils.ensureActorVisibleInScrollView(actor);
-    }
-};
+}

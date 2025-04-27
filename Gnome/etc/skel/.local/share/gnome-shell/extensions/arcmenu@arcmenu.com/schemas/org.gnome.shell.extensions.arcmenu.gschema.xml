@@ -27,8 +27,14 @@
     <enum id='org.gnome.shell.extensions.arcmenu.forcemenulocation'>
         <value value='0' nick='Off'/>
         <value value='1' nick='TopCentered'/>
-        <value value='2' nick='BottomCentered'/>
-        <value value='3' nick='MonitorCentered'/>
+        <value value='2' nick='TopLeft'/>
+        <value value='3' nick='TopRight'/>
+        <value value='4' nick='BottomCentered'/>
+        <value value='5' nick='BottomLeft'/>
+        <value value='6' nick='BottomRight'/>
+        <value value='7' nick='LeftCentered'/>
+        <value value='8' nick='RightCentered'/>
+        <value value='9' nick='MonitorCentered'/>
     </enum>
     <enum id='org.gnome.shell.extensions.arcmenu.menu-position'>
         <value value="0" nick="Left"/>
@@ -129,6 +135,14 @@
     </key>
   </schema>
   <schema path="/org/gnome/shell/extensions/arcmenu/" id="org.gnome.shell.extensions.arcmenu">
+    <key type="i" name="update-notifier-project-version">
+      <default>0</default>
+      <summary>The project version of when an update notification was shown</summary>
+    </key>
+    <key type="b" name="update-notifier-enabled">
+      <default>true</default>
+      <summary>Enable/Disable the update notifications</summary>
+    </key>
     <key type="i" name="menu-position-alignment">
       <default>50</default>
       <summary>Menu position alignment</summary>
@@ -335,9 +349,13 @@
       <default>false</default>
       <summary>Show category sub menus.</summary>
     </key>
-    <key type="b" name="alphabetize-all-programs">
+    <key type="b" name="group-apps-alphabetically-list-layouts">
       <default>true</default>
-      <summary>Separate All Programs by a Character Listing</summary>
+      <summary>Group Apps Alphabetically. For "All Apps" sections on list layouts</summary>
+    </key>
+    <key type="b" name="group-apps-alphabetically-grid-layouts">
+      <default>false</default>
+      <summary>Group Apps Alphabetically. For "All Apps" sections on grid layouts</summary>
     </key>
     <key type="b" name="multi-lined-labels">
       <default>true</default>
@@ -580,7 +598,7 @@
       <summary>Menu button position offset for main panel</summary>
     </key>
     <key name="extra-categories" type="a(ib)">
-      <default>[(0, true), (1, true), (2, false), (3, false), (4, false)]</default>
+      <default>[(3, true), (2, true), (0, false), (1, false), (4, false)]</default>
       <summary>Array of extra categories. See Constants.js - Categories</summary>
     </key>
     <key name="arcmenu-extra-categories-links" type="a(ib)">
@@ -746,53 +764,6 @@
       </default>
       <summary>Context menu shortcut items</summary>
     </key>
-    <!-- DEPRACATED -->
-    <!-- Keep for one release in order to convert old setting to new setting format -->
-    <key name="pinned-app-list" type="as">
-      <default>[]</default>
-      <summary>List of Apps Pinned to Menu</summary>
-    </key>
-    <key name="directory-shortcuts-list" type="aas">
-      <default>[]</default>
-      <summary>List of default directory paths used for links on the right side of ArcMenu</summary>
-    </key>
-    <key name="application-shortcuts-list" type="aas">
-      <default>[]</default>
-      <summary>List of default directory paths used for links on the right side of ArcMenu</summary>
-    </key>
-    <key name="az-extra-buttons" type="aas">
-      <default>[]</default>
-      <summary>List of AZ Layout extra buttons</summary>
-    </key>
-    <key name="eleven-extra-buttons" type="aas">
-      <default>[]</default>
-      <summary>List of Eleven Layout extra buttons</summary>
-    </key>
-    <key name="insider-extra-buttons" type="aas">
-      <default>[]</default>
-      <summary>List of Insider Layout extra buttons</summary>
-    </key>
-    <key name="windows-extra-buttons" type="aas">
-      <default>[]</default>
-      <summary>List of Windows Layout extra buttons</summary>
-    </key>
-    <key name="unity-extra-buttons" type="aas">
-      <default>[]</default>
-      <summary>List of Unity Layout extra buttons</summary>
-    </key>
-    <key name="brisk-extra-shortcuts" type="aas">
-      <default>[]</default>
-      <summary>List of Brisk Layout extra shortcuts</summary>
-    </key>
-    <key name="mint-extra-buttons" type="aas">
-      <default>[]</default>
-      <summary>List of Mint Layout extra buttons</summary>
-    </key>
-    <key name="context-menu-shortcuts" type="aas">
-      <default>[]</default>
-      <summary>List of shortcuts on ArcMenu button context menu</summary>
-    </key>
-    <!-- END DEPRACATED -->
     <key name="pop-folders-data" type="a{ss}">
       <default>{}</default>
       <summary>List of org.gnome.desktop.app-folders id:name</summary>

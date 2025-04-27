@@ -20,6 +20,7 @@ const GLib = imports.gi.GLib;
 const Gtk = imports.gi.Gtk;
 const Enums = imports.enums;
 const DesktopIconsUtil = imports.desktopIconsUtil;
+const SignalManager = imports.signalManager;
 
 var TemplatesScriptsManagerFlags = {
     'NONE': 0,
@@ -27,16 +28,22 @@ var TemplatesScriptsManagerFlags = {
     'HIDE_EXTENSIONS': 2,
 };
 
-var TemplatesScriptsManager = class {
+var TemplatesScriptsManager = class extends SignalManager.SignalManager {
     constructor(baseFolder, flags, activatedCB) {
+        super();
+        // Too many templates can result in resource exhaustion, crashing
+        // the desktop. To avoid this, we limit the number of templates to 100.
+        // It can happen if the Templates folder points to the wrong folder,
+        // or if there is a loop due to a symlink to an already added folder.
+        this._maxNumberOfTemplates = 100;
         this._activatedCB = activatedCB;
         this._entries = [];
         this._entriesEnumerateCancellable = null;
         this._readingEntries = false;
         this._entriesDir = baseFolder;
-        this._entriesDirMonitors = [];
         this._entriesFolderChanged = false;
         this._flags = flags;
+        this._entriesDirSignals = new SignalManager.SignalManager();
 
         if (this._entriesDir == GLib.get_home_dir()) {
             this._entriesDir = null;
@@ -44,7 +51,7 @@ var TemplatesScriptsManager = class {
         if (this._entriesDir !== null) {
             this._monitorDir = baseFolder.monitor_directory(Gio.FileMonitorFlags.WATCH_MOVES, null);
             this._monitorDir.set_rate_limit(1000);
-            this._monitorDir.connect('changed', (obj, file, otherFile, eventType) => {
+            this.connectSignal(this._monitorDir, 'changed', (obj, file, otherFile, eventType) => {
                 this._updateEntries().catch(e => {
                     print(`Exception while updating entries in monitor: ${e.message}\n${e.stack}`);
                 });
@@ -53,6 +60,11 @@ var TemplatesScriptsManager = class {
                 print(`Exception while updating entries: ${e.message}\n${e.stack}`);
             });
         }
+    }
+
+    destroy() {
+        this._entriesDirSignals.disconnectAllSignals();
+        this.disconnectAllSignals();
     }
 
     async _updateEntries() {
@@ -68,12 +80,9 @@ var TemplatesScriptsManager = class {
         this._readingEntries = true;
         let entriesList = null;
 
+        this._processedEntries = 0;
         do {
-            this._entriesDirMonitors.forEach(f => {
-                f[0].disconnect(f[1]);
-                f[0].cancel();
-            });
-            this._entriesDirMonitors = [];
+            this._entriesDirSignals.disconnectAllSignals();
             this._entriesFolderChanged = false;
             if (!this._entriesDir.query_exists(null)) {
                 entriesList = null;
@@ -87,13 +96,16 @@ var TemplatesScriptsManager = class {
     }
 
     async _processDirectory(directory) {
+        this._processedEntries++;
+        if (this._processedEntries >= this._maxNumberOfTemplates) {
+            return [];
+        }
         if (directory !== this._entriesDir) {
             let monitorDir = directory.monitor_directory(Gio.FileMonitorFlags.WATCH_MOVES, null);
             monitorDir.set_rate_limit(1000);
-            let monitorId = monitorDir.connect('changed', (obj, file, otherFile, eventType) => {
+            this._entriesDirSignals.connectSignal(monitorDir, 'changed', (obj, file, otherFile, eventType) => {
                 this._updateEntries();
             });
-            this._entriesDirMonitors.push([monitorDir, monitorId]);
         }
 
         try {
@@ -152,6 +164,10 @@ var TemplatesScriptsManager = class {
                             }
                             let child = fileEnum.get_child(info);
                             fileList.push([info.get_name(), isDir ? child : child.get_path(), isDir ? [] : null]);
+                            this._processedEntries++;
+                            if (this._processedEntries >= this._maxNumberOfTemplates) {
+                                break;
+                            }
                         }
                     } catch (e) {
                         if (e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED)) {
@@ -194,7 +210,7 @@ var TemplatesScriptsManager = class {
             let subDirs = fileItem[2];
             if (subDirs === null) {
                 let menuItem = new Gtk.MenuItem({label: menuItemName});
-                menuItem.connect('activate', () => {
+                this.connectSignal(menuItem, 'activate', () => {
                     this._activatedCB(menuItemPath);
                 });
                 scriptSubMenu.add(menuItem);

@@ -17,9 +17,10 @@
   "settings-schema": "org.gnome.shell.extensions.blur-my-shell",
   "shell-version": [
     "46",
-    "47"
+    "47",
+    "48"
   ],
   "url": "https://github.com/aunetx/blur-my-shell",
   "uuid": "blur-my-shell@aunetx",
-  "version": 67
+  "version": 68
 }

@@ -6,6 +6,7 @@ import Pango from 'gi://Pango';
 import Shell from 'gi://Shell';
 import St from 'gi://St';
 
+import * as Config from 'resource:///org/gnome/shell/misc/config.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {getLoginManager} from 'resource:///org/gnome/shell/misc/loginManager.js';
 
@@ -13,6 +14,8 @@ import * as Constants from './constants.js';
 import {ArcMenuManager} from './arcmenuManager.js';
 
 import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
+
+const [ShellVersion] = Config.PACKAGE_VERSION.split('.').map(s => Number(s));
 
 const InterfaceXml = `<node>
   <interface name="com.Extensions.ArcMenu">
@@ -22,6 +25,7 @@ const InterfaceXml = `<node>
 
 export const DBusService = class {
     constructor() {
+        this._exported = false;
         this.ToggleArcMenu = () => {};
 
         this._dbusExportedObject = Gio.DBusExportedObject.wrapJSObject(InterfaceXml, this);
@@ -29,8 +33,10 @@ export const DBusService = class {
         const onBusAcquired = (connection, _name) => {
             try {
                 this._dbusExportedObject.export(connection, '/com/Extensions/ArcMenu');
+                this._exported = true;
             } catch (error) {
                 console.log(`ArcMenu Error - onBusAcquired export failed: ${error}`);
+                this._exported = false;
             }
         };
 
@@ -43,52 +49,18 @@ export const DBusService = class {
     }
 
     destroy() {
-        this._dbusExportedObject.unexport();
-        Gio.bus_unown_name(this._ownerId);
+        if (this._ownerId) {
+            Gio.bus_unown_name(this._ownerId);
+            this._ownerId = null;
+        }
+
+        if (this._dbusExportedObject && this._exported)
+            this._dbusExportedObject.unexport();
+        this._dbusExportedObject = null;
+        this._exported = null;
+        this.ToggleArcMenu = null;
     }
 };
-
-export function convertOldSetting(settings, oldSetting, newSetting) {
-    const data = settings.get_value(oldSetting).deepUnpack();
-
-    if (!data.length)
-        return;
-
-    const newDataArray = [];
-
-    if (oldSetting === 'pinned-app-list') {
-        settings.set_strv(oldSetting, []);
-
-        for (let i = 0; i < data.length; i += 3) {
-            const newData = {};
-            if (data[i])
-                newData.name = data[i];
-            if (data[i + 1])
-                newData.icon = data[i + 1];
-            if (data[i + 2])
-                newData.id = data[i + 2];
-
-            newDataArray.push(newData);
-        }
-    } else {
-        settings.set_value(oldSetting, new GLib.Variant('aas', []));
-
-        data.forEach(entry => {
-            const newData = {};
-            if (entry[0])
-                newData.name = entry[0];
-            if (entry[1])
-                newData.icon = entry[1];
-            if (entry[2])
-                newData.id = entry[2];
-
-            newDataArray.push(newData);
-        });
-    }
-
-    settings.set_value(newSetting, new GLib.Variant('aa{ss}', newDataArray));
-    console.log(`Converted ${oldSetting} to ${newSetting}`);
-}
 
 export function activateHibernateOrSleep(powerType) {
     const loginManager = getLoginManager();
@@ -142,28 +114,6 @@ export function canHibernateOrSleep(callName, asyncCallback) {
     });
 }
 
-export const SettingsConnectionsHandler = class ArcMenuSettingsConnectionsHandler {
-    constructor(settings) {
-        this._connections = new Map();
-        this._settings = settings;
-    }
-
-    connect(...args) {
-        const callback = args.pop();
-        for (const event of args)
-            this._connections.set(this._settings.connect(`changed::${event}`, callback), this._settings);
-    }
-
-    destroy() {
-        this._connections.forEach((object, id) => {
-            object.disconnect(id);
-            id = null;
-        });
-
-        this._connections = null;
-    }
-};
-
 export function convertToButton(item) {
     item.tooltipLocation = Constants.TooltipLocation.BOTTOM_CENTERED;
     item.remove_child(item.label);
@@ -188,7 +138,7 @@ export function convertToGridLayout(item) {
 
     item.add_style_class_name('ArcMenuIconGrid');
     item.set({
-        vertical: true,
+        ...getOrientationProp(true),
         x_align: Clutter.ActorAlign.CENTER,
         tooltipLocation: Constants.TooltipLocation.BOTTOM_CENTERED,
         style: `width: ${width}px; height: ${height}px;`,
@@ -365,7 +315,7 @@ export function getMenuButtonIcon(path) {
             return iconPath;
     }
 
-    log('ArcMenu Error - Failed to set menu button icon. Set to System Default.');
+    console.log('ArcMenu Error - Failed to set menu button icon. Set to System Default.');
     return 'start-here-symbolic';
 }
 
@@ -474,29 +424,6 @@ export function openPrefs(uuid) {
         extension.openPreferences();
 }
 
-export function getDashToPanelPosition(settings, index) {
-    var positions = null;
-    var side = 'NONE';
-
-    try {
-        positions = JSON.parse(settings.get_string('panel-positions'));
-        side = positions[index];
-    } catch (e) {
-        log(`Error parsing Dash to Panel positions: ${e.message}`);
-    }
-
-    if (side === 'TOP')
-        return St.Side.TOP;
-    else if (side === 'RIGHT')
-        return St.Side.RIGHT;
-    else if (side === 'BOTTOM')
-        return St.Side.BOTTOM;
-    else if (side === 'LEFT')
-        return St.Side.LEFT;
-    else
-        return St.Side.BOTTOM;
-}
-
 /**
  *
  * @param {Clutter.Actor} parent
@@ -535,4 +462,16 @@ export function getScrollViewAdjustments(scrollView) {
         hadjustment,
         vadjustment,
     };
+}
+
+/**
+ *
+ * @param {boolean} vertical
+ * @description GNOME 48 - St.BoxLayout uses 'orientation' instead of 'vertical'
+ */
+export function getOrientationProp(vertical) {
+    if (ShellVersion >= 48)
+        return {orientation: vertical ? Clutter.Orientation.VERTICAL : Clutter.Orientation.HORIZONTAL};
+    else
+        return {vertical};
 }

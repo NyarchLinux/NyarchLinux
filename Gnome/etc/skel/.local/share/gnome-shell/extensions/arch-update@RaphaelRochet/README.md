@@ -28,6 +28,11 @@ To install, simply download as zip and unzip contents in ~/.local/share/gnome-sh
 
 ## Changes
 
+### v64
+- Added translation : Georgian
+- Updated translations : Spanish, Hungarian, Slovak
+- Added Gnome 48
+
 ### v63
 - Update translation : Brazilian Portugues
 - Fix errors after extension being disabled

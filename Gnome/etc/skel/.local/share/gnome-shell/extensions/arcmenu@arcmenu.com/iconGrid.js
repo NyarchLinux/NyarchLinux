@@ -178,26 +178,35 @@ export const IconGridLayout = GObject.registerClass({
         let natRowHeight = 0;
         let natHeight = 0;
         let firstRow = true;
+        let column = 0;
 
         for (let i = 0; i < children.length; i += 1) {
             const child = children[i];
             if (!child.visible)
                 continue;
 
+            const isSeparator = child instanceof MW.ArcMenuSeparator;
             const [childMinHeight, childNatHeight] = child.get_preferred_height(-1);
 
             minRowHeight = Math.max(minRowHeight, childMinHeight);
             natRowHeight = Math.max(natRowHeight, childNatHeight);
 
-            const newRow = i % totalColumns === 0;
+            const newRow = column % totalColumns === 0;
             if (firstRow && newRow) {
                 firstRow = false;
                 natHeight = natRowHeight; // + this.rowSpacing + PADDING;
+                natRowHeight = 0;
+            } else if (isSeparator) {
+                natHeight += childNatHeight + this.rowSpacing;
                 natRowHeight = 0;
             } else if (newRow) {
                 natHeight += natRowHeight + this.rowSpacing;
                 natRowHeight = 0;
             }
+
+            column++;
+            if (column === this.columns || isSeparator)
+                column = 0;
         }
 
         this._height = natHeight;
@@ -218,29 +227,40 @@ export const IconGridLayout = GObject.registerClass({
         let nChangedIcons = 0;
         let rowHeight = 0;
         let y = 0;
+        let column = 0;
+        let naturalWidth = 0;
+        let naturalHeight = 0;
 
         for (let i = 0; i < children.length; i += 1) {
             const child = children[i];
 
-            let column = i % this.columns;
+            const isSeparator = child instanceof MW.ArcMenuSeparator;
+            const xFill = child.x_align === Clutter.ActorAlign.FILL;
+
             if (isRtl)
                 column = swap(column, this.columns);
 
-            const newRow = column === 0;
+            const newRow = column % this.columns === 0;
 
-            let [,, naturalWidth, naturalHeight] = child.get_preferred_size();
+            [,, naturalWidth, naturalHeight] = child.get_preferred_size();
 
-            const xFill = child.x_align === Clutter.ActorAlign.FILL;
-            if (xFill)
+            if (isSeparator)
+                naturalWidth = this._width;
+            else if (xFill)
                 naturalWidth = this._width / this.columns;
 
-            const x = xOffset + column * (naturalWidth + this.columnSpacing);
+            let x;
+            if (isSeparator)
+                x = 0;
+            else
+                x = xOffset + column * (naturalWidth + this.columnSpacing);
 
             // The first item in a row will determine the row height
-            if (newRow) {
+            // add previous child naturalHeight offset
+            if (isSeparator || newRow)
                 y += rowHeight;
-                rowHeight = naturalHeight + this.rowSpacing;
-            }
+
+            rowHeight = naturalHeight + this.rowSpacing;
 
             childBox.set_origin(Math.floor(x), Math.floor(y));
             childBox.set_size(naturalWidth, naturalHeight);
@@ -249,6 +269,11 @@ export const IconGridLayout = GObject.registerClass({
                 child.allocate(childBox);
             else if (animateIconPosition(child, childBox, nChangedIcons))
                 nChangedIcons++;
+
+            column++;
+
+            if (column === this.columns || isSeparator)
+                column = 0;
         }
 
         this._sizeChanged = false;
@@ -442,8 +467,6 @@ class IconGrid extends St.Widget {
             x_align: Clutter.ActorAlign.FILL,
         });
 
-        this._settings = ArcMenuManager.settings;
-
         // only need acceptDrop for the main pinned-apps grid
         if (acceptDrop) {
             // DND requires this to be set
@@ -461,7 +484,7 @@ class IconGrid extends St.Widget {
         if (!source.folderId)
             return false;
 
-        const pinnedAppsList = this._settings.get_value('pinned-apps').deepUnpack();
+        const pinnedAppsList = ArcMenuManager.settings.get_value('pinned-apps').deepUnpack();
         for (let i = 0; i < pinnedAppsList.length; i++) {
             if (pinnedAppsList[i].id === source.pinnedAppData.id)
                 return false;
@@ -501,9 +524,9 @@ class IconGrid extends St.Widget {
         folderSettings.set_value('pinned-apps', new GLib.Variant('aa{ss}', folderPinnedApps));
 
         // add app to main pinned apps
-        const pinnedAppsList = this._settings.get_value('pinned-apps').deepUnpack();
+        const pinnedAppsList = ArcMenuManager.settings.get_value('pinned-apps').deepUnpack();
         pinnedAppsList.push(sourceData);
-        this._settings.set_value('pinned-apps', new GLib.Variant('aa{ss}', pinnedAppsList));
+        ArcMenuManager.settings.set_value('pinned-apps', new GLib.Variant('aa{ss}', pinnedAppsList));
 
         return true;
     }
@@ -584,4 +607,3 @@ class IconGrid extends St.Widget {
         return this.layout_manager.getDropTarget(x, y);
     }
 });
-

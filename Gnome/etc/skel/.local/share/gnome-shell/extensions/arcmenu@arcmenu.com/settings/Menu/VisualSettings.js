@@ -110,7 +110,13 @@ class ArcMenuVisualSettingsPage extends SubPage {
         const menuLocations = new Gtk.StringList();
         menuLocations.append(_('Off'));
         menuLocations.append(_('Top Centered'));
+        menuLocations.append(_('Top Left'));
+        menuLocations.append(_('Top Right'));
         menuLocations.append(_('Bottom Centered'));
+        menuLocations.append(_('Bottom Left'));
+        menuLocations.append(_('Bottom Right'));
+        menuLocations.append(_('Left Centered'));
+        menuLocations.append(_('Right Centered'));
         menuLocations.append(_('Monitor Centered'));
         const menuLocationRow = new Adw.ComboRow({
             title: _('Override Menu Location'),
@@ -197,7 +203,7 @@ class ArcMenuVisualSettingsPage extends SubPage {
         iconsSizeFrame.add(gridIconsSizeRow);
 
         const customGridIconButton = new Gtk.Button({
-            icon_name: 'emblem-system-symbolic',
+            icon_name: 'applications-system-symbolic',
             valign: Gtk.Align.CENTER,
             visible: gridIconsSizeRow.selected === Constants.GridIconSize.CUSTOM,
         });

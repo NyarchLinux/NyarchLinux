@@ -96,6 +96,10 @@ class ManageWindow {
         });
     }
 
+    refreshWindowPosition() {
+        this._moveIntoPlace();
+    }
+
     disconnect() {
         for (let signalID of this._signalIDs) {
             this._window.disconnect(signalID);
@@ -332,6 +336,10 @@ export class EmulateX11WindowType {
             this._clearWindow(window);
             this._windowList = this._windowList.filter(item => item !== window);
         });
+    }
+
+    refreshWindowsPosition() {
+        this._windowList.forEach(window => {window.customJS_ding.refreshWindowPosition();});
     }
 
     _clearWindow(window) {

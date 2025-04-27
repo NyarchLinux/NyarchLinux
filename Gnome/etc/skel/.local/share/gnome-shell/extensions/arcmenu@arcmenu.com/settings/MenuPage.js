@@ -90,7 +90,7 @@ class ArcMenuMenuPage extends Adw.PreferencesPage {
         this.tweaksRow = new PW.SettingRow({
             title: _('%s Layout Tweaks').format(_(layoutName)),
             subtitle: _('Settings specific to the current menu layout'),
-            icon_name: 'emblem-system-symbolic',
+            icon_name: 'applications-system-symbolic',
         });
         this._addSubPageToRow(this.tweaksRow, {
             pageClass: LayoutTweaksPage,

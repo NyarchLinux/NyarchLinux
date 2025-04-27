@@ -6,22 +6,22 @@ import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
+import {ArcMenuManager} from '../arcmenuManager.js';
 import {BaseMenuLayout} from './baseMenuLayout.js';
 import * as Constants from '../constants.js';
 import * as MW from '../menuWidgets.js';
 import * as PlaceDisplay from '../placeDisplay.js';
-import * as Utils from '../utils.js';
+import {getScrollViewAdjustments, getOrientationProp} from '../utils.js';
 
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-export const Layout = class WindowsLayout extends BaseMenuLayout {
+export class Layout extends BaseMenuLayout {
     static {
         GObject.registerClass(this);
     }
 
     constructor(menuButton) {
         super(menuButton, {
-            has_search: true,
             search_display_type: Constants.DisplayType.LIST,
             display_type: Constants.DisplayType.LIST,
             context_menu_location: Constants.ContextMenuLocation.RIGHT,
@@ -29,7 +29,7 @@ export const Layout = class WindowsLayout extends BaseMenuLayout {
             row_spacing: 0,
             default_menu_width: 315,
             icon_grid_size: Constants.GridIconSize.SMALL,
-            vertical: false,
+            ...getOrientationProp(false),
             category_icon_size: Constants.LARGE_ICON_SIZE,
             apps_icon_size: Constants.LARGE_ICON_SIZE,
             quicklinks_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
@@ -50,7 +50,7 @@ export const Layout = class WindowsLayout extends BaseMenuLayout {
             y_expand: true,
             x_align: Clutter.ActorAlign.START,
             y_align: Clutter.ActorAlign.FILL,
-            vertical: true,
+            ...getOrientationProp(true),
             style: 'spacing: 6px;',
         });
         this.add_child(this.actionsBox);
@@ -63,7 +63,7 @@ export const Layout = class WindowsLayout extends BaseMenuLayout {
             x_expand: true,
             y_expand: true,
             y_align: Clutter.ActorAlign.FILL,
-            vertical: true,
+            ...getOrientationProp(true),
             style: 'spacing: 6px;',
         });
         this.add_child(this.subMainBox);
@@ -75,7 +75,7 @@ export const Layout = class WindowsLayout extends BaseMenuLayout {
             style_class: this._disableFadeEffect ? '' : 'vfade',
         });
         this.pinnedAppsBox = new St.BoxLayout({
-            vertical: true,
+            ...getOrientationProp(true),
             x_expand: true,
             x_align: Clutter.ActorAlign.FILL,
         });
@@ -84,7 +84,7 @@ export const Layout = class WindowsLayout extends BaseMenuLayout {
         this.pinnedAppsVerticalSeparator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MEDIUM,
             Constants.SeparatorAlignment.VERTICAL);
 
-        this.applicationsBox = new St.BoxLayout({vertical: true});
+        this.applicationsBox = new St.BoxLayout({...getOrientationProp(true)});
         this.applicationsScrollBox = this._createScrollBox({
             x_expand: false,
             y_expand: true,
@@ -97,7 +97,7 @@ export const Layout = class WindowsLayout extends BaseMenuLayout {
 
         this.subMainBox.add_child(this.searchEntry);
 
-        const applicationShortcutsList = this._settings.get_value('application-shortcuts').deep_unpack();
+        const applicationShortcutsList = ArcMenuManager.settings.get_value('application-shortcuts').deep_unpack();
         this.applicationShortcuts = [];
         for (let i = 0; i < applicationShortcutsList.length; i++) {
             const shortcutMenuItem = this.createMenuItem(applicationShortcutsList[i],
@@ -108,11 +108,11 @@ export const Layout = class WindowsLayout extends BaseMenuLayout {
                 shortcutMenuItem.destroy();
         }
 
-        const directoryShortcutsList = this._settings.get_value('directory-shortcuts').deep_unpack();
+        const directoryShortcutsList = ArcMenuManager.settings.get_value('directory-shortcuts').deep_unpack();
         this._loadPlaces(directoryShortcutsList);
 
         this.externalDevicesBox = new St.BoxLayout({
-            vertical: true,
+            ...getOrientationProp(true),
             x_expand: true,
             y_expand: true,
         });
@@ -120,14 +120,14 @@ export const Layout = class WindowsLayout extends BaseMenuLayout {
         this.placesManager = new PlaceDisplay.PlacesManager();
         for (let i = 0; i < Constants.SECTIONS.length; i++) {
             const id = Constants.SECTIONS[i];
-            this._placesSections[id] = new St.BoxLayout({vertical: true});
+            this._placesSections[id] = new St.BoxLayout({...getOrientationProp(true)});
             this.placesManager.connectObject(`${id}-updated`, () => this._redisplayPlaces(id), this);
 
             this._createPlaces(id);
             this.externalDevicesBox.add_child(this._placesSections[id]);
         }
 
-        this._settings.connectObject('changed::windows-layout-extra-shortcuts', () => this._createExtraButtons(), this);
+        ArcMenuManager.settings.connectObject('changed::windows-layout-extra-shortcuts', () => this._createExtraButtons(), this);
         this._createExtraButtons();
 
         this.updateWidth();
@@ -136,6 +136,7 @@ export const Layout = class WindowsLayout extends BaseMenuLayout {
 
         this._createExtrasMenu();
         this.setDefaultMenuView();
+        this._connectAppChangedEvents();
     }
 
     _createExtraButtons() {
@@ -150,7 +151,7 @@ export const Layout = class WindowsLayout extends BaseMenuLayout {
 
         const isContainedInCategory = false;
 
-        const extraButtons = this._settings.get_value('windows-layout-extra-shortcuts').deep_unpack();
+        const extraButtons = ArcMenuManager.settings.get_value('windows-layout-extra-shortcuts').deep_unpack();
         for (let i = 0; i < extraButtons.length; i++) {
             const {id} = extraButtons[i];
             if (id === Constants.ShortcutCommands.SEPARATOR) {
@@ -168,7 +169,7 @@ export const Layout = class WindowsLayout extends BaseMenuLayout {
         }
 
         let leaveButton;
-        const powerDisplayStyle = this._settings.get_enum('power-display-style');
+        const powerDisplayStyle = ArcMenuManager.settings.get_enum('power-display-style');
         if (powerDisplayStyle === Constants.PowerDisplayStyle.IN_LINE)
             leaveButton = new MW.PowerOptionsBox(this, true);
         else
@@ -178,10 +179,10 @@ export const Layout = class WindowsLayout extends BaseMenuLayout {
     }
 
     updateWidth(setDefaultMenuView) {
-        const leftPanelWidth = this._settings.get_int('left-panel-width');
+        const leftPanelWidth = ArcMenuManager.settings.get_int('left-panel-width');
         this.applicationsScrollBox.style = `width: ${leftPanelWidth}px;`;
 
-        const widthAdjustment = this._settings.get_int('menu-width-adjustment');
+        const widthAdjustment = ArcMenuManager.settings.get_int('menu-width-adjustment');
         let menuWidth = this.default_menu_width + widthAdjustment;
         // Set a 300px minimum limit for the menu width
         menuWidth = Math.max(300, menuWidth);
@@ -235,7 +236,7 @@ export const Layout = class WindowsLayout extends BaseMenuLayout {
         const section = new PopupMenu.PopupMenuSection();
         this.extrasMenu.addMenuItem(section);
 
-        const extrasMenuPopupBox = new St.BoxLayout({vertical: true});
+        const extrasMenuPopupBox = new St.BoxLayout({...getOrientationProp(true)});
         extrasMenuPopupBox._delegate = extrasMenuPopupBox;
         section.actor.add_child(extrasMenuPopupBox);
 
@@ -244,7 +245,7 @@ export const Layout = class WindowsLayout extends BaseMenuLayout {
             y_expand: false,
             x_align: Clutter.ActorAlign.FILL,
             y_align: Clutter.ActorAlign.START,
-            vertical: true,
+            ...getOrientationProp(true),
         });
         extrasMenuPopupBox.add_child(headerBox);
 
@@ -265,7 +266,7 @@ export const Layout = class WindowsLayout extends BaseMenuLayout {
 
         extrasMenuPopupBox.add_child(this.computerScrollBox);
 
-        const computerBox = new St.BoxLayout({vertical: true});
+        const computerBox = new St.BoxLayout({...getOrientationProp(true)});
         this._addChildToParent(this.computerScrollBox, computerBox);
 
         computerBox.add_child(this.createLabelRow(_('Application Shortcuts')));
@@ -291,7 +292,7 @@ export const Layout = class WindowsLayout extends BaseMenuLayout {
     }
 
     toggleExtrasMenu() {
-        const {vadjustment} = Utils.getScrollViewAdjustments(this.computerScrollBox);
+        const {vadjustment} = getScrollViewAdjustments(this.computerScrollBox);
         vadjustment.set_value(0);
 
         const themeNode = this.arcMenu.actor.get_theme_node();
@@ -306,7 +307,7 @@ export const Layout = class WindowsLayout extends BaseMenuLayout {
 
         Main.layoutManager.setDummyCursorGeometry(x, y, 0, 0);
 
-        const height = this._settings.get_int('menu-height');
+        const height = ArcMenuManager.settings.get_int('menu-height');
         this.extrasMenu.box.style = `height: ${height}px;`;
 
         this.extrasMenu.toggle();
@@ -320,10 +321,10 @@ export const Layout = class WindowsLayout extends BaseMenuLayout {
         super.setDefaultMenuView();
 
         this.displayAllApps();
-        if (!this._settings.get_boolean('windows-disable-pinned-apps'))
+        if (!ArcMenuManager.settings.get_boolean('windows-disable-pinned-apps'))
             this.displayPinnedApps();
 
-        const {vadjustment} = Utils.getScrollViewAdjustments(this.pinnedAppsScrollBox);
+        const {vadjustment} = getScrollViewAdjustments(this.pinnedAppsScrollBox);
         vadjustment.set_value(0);
     }
 
@@ -361,7 +362,7 @@ export const Layout = class WindowsLayout extends BaseMenuLayout {
     displayAllApps() {
         this._clearActorsFromBox();
 
-        if (!this._settings.get_boolean('windows-disable-frequent-apps'))
+        if (!ArcMenuManager.settings.get_boolean('windows-disable-frequent-apps'))
             this.displayFrequentApps();
 
         const appList = [];
@@ -395,7 +396,7 @@ export const Layout = class WindowsLayout extends BaseMenuLayout {
     displayPinnedApps() {
         super._clearActorsFromBox(this.pinnedAppsBox);
 
-        const pinnedApps = this._settings.get_value('pinned-apps').deepUnpack();
+        const pinnedApps = ArcMenuManager.settings.get_value('pinned-apps').deepUnpack();
 
         if (pinnedApps.length < 1) {
             if (this.contains(this.pinnedAppsScrollBox)) {
@@ -422,7 +423,7 @@ export const Layout = class WindowsLayout extends BaseMenuLayout {
         if (!this.pinnedAppsBox.contains(this._pinnedAppsGrid))
             this.pinnedAppsBox.add_child(this._pinnedAppsGrid);
     }
-};
+}
 
 export class ExtrasButton extends MW.ArcMenuButtonItem {
     static {
@@ -431,7 +432,7 @@ export class ExtrasButton extends MW.ArcMenuButtonItem {
 
     constructor(menuLayout) {
         super(menuLayout, _('Extras'), 'open-menu-symbolic');
-        this.toggleMenuOnClick = false;
+        this._closeMenuOnActivate = false;
     }
 
     activate(event) {

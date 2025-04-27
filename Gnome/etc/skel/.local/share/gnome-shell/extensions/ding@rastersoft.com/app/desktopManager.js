@@ -37,6 +37,7 @@ const TemplatesScriptsManager = imports.templatesScriptsManager;
 const Thumbnails = imports.thumbnails;
 const FileItemMenu = imports.fileItemMenu;
 const AutoAr = imports.autoAr;
+const SignalManager = imports.signalManager;
 
 const Gettext = imports.gettext.domain('ding');
 
@@ -1007,12 +1008,13 @@ var DesktopManager = class {
         this._findFileTextArea = new Gtk.Entry();
         contentArea.pack_start(this._findFileTextArea, true, true, 5);
         contentArea = undefined;
-        this._findFileTextArea.connect('activate', () => {
+        this._findFileSignalManager = new SignalManager.SignalManager();
+        this._findFileSignalManager.connectSignal(this._findFileTextArea, 'activate', () => {
             if (this._findFileButton.sensitive) {
                 this._findFileWindow.response(Gtk.ResponseType.OK);
             }
         });
-        this._findFileTextArea.connect('changed', () => {
+        this._findFileSignalManager.connectSignal(this._findFileTextArea, 'changed', () => {
             let context = this._findFileTextArea.get_style_context();
             if (this.scanForFiles(this._findFileTextArea.text, true)) {
                 this._findFileButton.sensitive = true;
@@ -1036,13 +1038,14 @@ var DesktopManager = class {
             this.scanForFiles(null);
         }
         this._findFileWindow.show_all();
-        this._findFileWindow.connect('close', () => {
+        this._findFileSignalManager.connectSignal(this._findFileWindow, 'close', () => {
             this._findFileWindow.response(Gtk.ResponseType.CANCEL);
         });
-        this._findFileWindow.connect('response', (actor, retval) => {
+        this._findFileSignalManager.connectSignal(this._findFileWindow, 'response', (actor, retval) => {
             if (retval == Gtk.ResponseType.CANCEL) {
                 this.unselectAll();
             }
+            this._findFileSignalManager.disconnectAllSignals();
             this._findFileWindow.destroy();
             this._findFileWindow = null;
         });
@@ -1110,7 +1113,7 @@ var DesktopManager = class {
 
         this._changeBackgroundMenuItem = new Gtk.MenuItem({label: _('Change Background…')});
         this._changeBackgroundMenuItem.connect('activate', () => {
-            let desktopFile = Gio.DesktopAppInfo.new('gnome-background-panel.desktop');
+            const desktopFile = Gio.DesktopAppInfo.new('gnome-background-panel.desktop');
             const context = Gdk.Display.get_default().get_app_launch_context();
             context.set_timestamp(Gtk.get_current_event_time());
             desktopFile.launch([], context);
@@ -1120,12 +1123,21 @@ var DesktopManager = class {
         this._menu.add(new Gtk.SeparatorMenuItem());
 
         this._settingsMenuItem = new Gtk.MenuItem({label: _('Desktop Icons Settings')});
-        this._settingsMenuItem.connect('activate', () => Prefs.showPreferences());
+        if (GLib.getenv('XDG_CURRENT_DESKTOP').split(':').includes('ubuntu')) {
+            this._settingsMenuItem.connect("activate", () => {
+                const desktopFile = Gio.DesktopAppInfo.new('gnome-ubuntu-panel.desktop');
+                const context = Gdk.Display.get_default().get_app_launch_context();
+                context.set_timestamp(Gtk.get_current_event_time());
+                desktopFile.launch([], context);
+            });
+        } else {
+            this._settingsMenuItem.connect("activate", () => Prefs.showPreferences());
+        }
         this._menu.add(this._settingsMenuItem);
 
         this._displaySettingsMenuItem = new Gtk.MenuItem({label: _('Display Settings')});
         this._displaySettingsMenuItem.connect('activate', () => {
-            let desktopFile = Gio.DesktopAppInfo.new('gnome-display-panel.desktop');
+            const desktopFile = Gio.DesktopAppInfo.new('gnome-display-panel.desktop');
             const context = Gdk.Display.get_default().get_app_launch_context();
             context.set_timestamp(Gtk.get_current_event_time());
             desktopFile.launch([], context);

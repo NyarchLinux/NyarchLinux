@@ -23,11 +23,13 @@ const GLib = imports.gi.GLib;
 const DBusUtils = imports.dbusUtils;
 const DesktopIconsUtil = imports.desktopIconsUtil;
 const Gettext = imports.gettext.domain('ding');
+const SignalManager = imports.signalManager;
 
 const _ = Gettext.gettext;
 
-var AskRenamePopup = class {
+var AskRenamePopup = class extends SignalManager.SignalManager {
     constructor(extensionManager, fileItem, allowReturnOnSameName, closeCB) {
+        super();
         this._extensionManager = extensionManager
         this._closeCB = closeCB;
         this._allowReturnOnSameName = allowReturnOnSameName;
@@ -54,11 +56,11 @@ var AskRenamePopup = class {
         contentBox.attach(this._textArea, 0, 1, 1, 1);
         this._button = new Gtk.Button({label: allowReturnOnSameName ? _('OK') : _('Rename')});
         contentBox.attach(this._button, 1, 1, 1, 1);
-        this._buttonId = this._button.connect('clicked', this._do_rename.bind(this));
-        this._textAreaChangedId = this._textArea.connect('changed', this._validate.bind(this));
-        this._textAreaActivateId = this._textArea.connect('activate', this._do_rename.bind(this));
+        this.connectSignal(this._button, 'clicked', this._do_rename.bind(this));
+        this.connectSignal(this._textArea, 'changed', this._validate.bind(this));
+        this.connectSignal(this._textArea, 'activate', this._do_rename.bind(this));
+        this.connectSignal(this._popover, 'closed', this._cleanAll.bind(this));
         this._extensionManager.showPopup();
-        this._popoverId = this._popover.connect('closed', this._cleanAll.bind(this));
         this._textArea.set_can_default(true);
         this._popover.set_default_widget(this._textArea);
         this._button.get_style_context().add_class('suggested-action');
@@ -70,10 +72,7 @@ var AskRenamePopup = class {
     }
 
     _cleanAll() {
-        this._button.disconnect(this._buttonId);
-        this._textArea.disconnect(this._textAreaActivateId);
-        this._textArea.disconnect(this._textAreaChangedId);
-        this._popover.disconnect(this._popoverId);
+        this.disconnectAllSignals();
         this._extensionManager.hidePopup();
         this._closeCB();
     }
