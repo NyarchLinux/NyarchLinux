@@ -7,14 +7,14 @@
         color:#ffffff;
       }
       .ColorScheme-Highlight {
-        color:#004397;
+        color:#8d0051;
       }</style>
  </defs>
- <rect class="ColorScheme-Highlight" transform="rotate(90)" x="13" y="-37" width="38" height="10" ry="2" fill="#004397"/>
+ <rect class="ColorScheme-Highlight" transform="rotate(90)" x="13" y="-37" width="38" height="10" ry="2" fill="#8d0051"/>
  <rect id="shadow" class="ColorScheme-Highlight" transform="rotate(90)" x="13" y="-37" width="38" height="10" ry="2" fill="#000000" opacity=".2"/>
- <rect class="ColorScheme-Highlight" x="6" y="27" width="52" height="10" ry="2" fill="#004397"/>
- <rect class="ColorScheme-Highlight" x="6" y="43" width="52" height="10" ry="2" fill="#004397"/>
- <rect class="ColorScheme-Highlight" x="6" y="11" width="52" height="10" ry="2" fill="#004397"/>
+ <rect class="ColorScheme-Highlight" x="6" y="27" width="52" height="10" ry="2" fill="#8d0051"/>
+ <rect class="ColorScheme-Highlight" x="6" y="43" width="52" height="10" ry="2" fill="#8d0051"/>
+ <rect class="ColorScheme-Highlight" x="6" y="11" width="52" height="10" ry="2" fill="#8d0051"/>
  <path class="ColorScheme-Background" d="M12 15h24v2H12z" fill="#ffffff"/>
  <ellipse class="ColorScheme-Background" cx="43" cy="16" rx="2" ry="2" fill="#ffffff"/>
  <ellipse class="ColorScheme-Background" cx="51" cy="16" rx="2" ry="2" fill="#ffffff"/>
