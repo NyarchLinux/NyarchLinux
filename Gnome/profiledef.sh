@@ -15,6 +15,7 @@ arch="x86_64"
 pacman_conf="./pacman.conf"
 airootfs_image_type="squashfs"
 airootfs_image_tool_options=('-comp' 'zstd' '-b' '1M')
+bootstrap_tarball_compression=(zstd)
 file_permissions=(
   ["/etc/shadow"]="0:0:0400"
   ["/etc/gshadow"]="0:0:0400"

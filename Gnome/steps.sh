@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Revision: 2022.11.23
+# Revision: 25.04
 # (GNU/General Public License version 3.0)
 # by eznix (https://sourceforge.net/projects/ezarch/)
 

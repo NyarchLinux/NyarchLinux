@@ -170,9 +170,11 @@ poppler-glib
 # Pipewire - comment out pulseaudio packages if using pipewire
 pipewire
 pipewire-alsa
+pipewire-audio
 pipewire-docs
 pipewire-jack
 pipewire-pulse
+pipewire-v4l2
 alsa-card-profiles
 gst-plugin-pipewire
 wireplumber
@@ -188,12 +190,29 @@ xvidcore
 
 # XORG
 mesa
-xorg
-xorg-server
+xclip
+xf86-input-evdev
+xf86-input-libinput
+xf86-input-synaptics
+xf86-input-vmmouse
+xf86-input-void
+xf86-video-amdgpu
+xf86-video-ati
+xf86-video-dummy
+xf86-video-fbdev
+xf86-video-nouveau
+xf86-video-qxl
+xf86-video-vesa
+xf86-video-vmware
 xorg-apps
-xorg-drivers
-xorg-xkill
+xorg-font-util
+xorg-fonts-75dpi
+xorg-fonts-100dpi
+xorg-fonts-encodings
+xorg-server
+xorg-server-common
 xorg-xinit
+xorg-xwayland
 
 # Networking
 curl
