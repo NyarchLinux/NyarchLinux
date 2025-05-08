@@ -18,7 +18,7 @@
 It is strongly suggested to <b>do not use this Linux distribution as daily drive</b>, since it is not made by a team of experts and there are way better distros out there. <br />
 If you want a similar configuration to what our distro offers out of the box, you can use [Nyarcher](https://github.com/NyarchLinux/Nyarcher), a script to install Nyarch
 customizations on top of any other Linux distro with Gnome pre installed. <br />
-If you want to use it anyways, <b>Nyarch is not much more than a heavily bloated Arch Linux install script</b>, it relies on Arch Linux standard repositories, so for normal packages you will receive frequent updates that do not depend on us.
+If you want to use it anyways, Nyarch relies on Arch Linux standard repositories, so for normal packages you will receive frequent updates that do not depend on us.
 
 ## Contributing
 If you want to contribute to the development of this distribution, please take a look at [CONTRIBUTING.md](https://github.com/NyarchLinux/NyarchLinux/blob/main/CONTRIBUTING.md).
@@ -26,6 +26,8 @@ If you want to contribute to the development of this distribution, please take a
 ## Will you make other DEs spins?
 
 ### Why Gnome?
+KDE 6 was not out yet when I made the distro.
+
 We opted for Gnome as first spin because of these reasons:
 - Gnome has very well curated animations
 - GTK applications and Gnome itself are very touch friendly and laptop friendly, these devices are often used to consume multimedia content, so anime, mangas, VNs, and LNs.
