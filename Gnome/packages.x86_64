@@ -324,7 +324,7 @@ yelp
 gdm
 
 # Calamares dependencies (not listed elsewhere)
-alci-calamares
+calamares
 
 # AUR
 yay-bin
