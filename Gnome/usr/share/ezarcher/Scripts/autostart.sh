@@ -9,7 +9,7 @@ if [ "$USER" = "$LIVEUSER" ]; then
    gsettings set org.gnome.desktop.session idle-delay "uint32 0"
    gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type "nothing"
    gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-type "nothing"
-   #sh -c "pkexec calamares"
+   sh -c "pkexec calamares"
 else
     flatpak run moe.nyarchlinux.tour
     rm -rf ~/.config/autostart/start.desktop
