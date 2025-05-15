@@ -1,5 +1,3 @@
-<!--https://github.com/calamares/calamares/blob/81c82ef343353dd37af33a7c9570e61a6a22121a/com.github.calamares.calamares.policy-->
-
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- SPDX-FileCopyrightText: no
      SPDX-License-Identifier: CC0-1.0
@@ -17,8 +15,8 @@
     <message>Authentication is required to run the installation program</message>
     <icon_name>drive-harddisk</icon_name>
     <defaults>
-     <allow_any>yes</allow_any>
-     <allow_inactive>yes</allow_inactive>
+     <allow_any>no</allow_any>
+     <allow_inactive>no</allow_inactive>
      <allow_active>yes</allow_active>
     </defaults>
     <annotate key="org.freedesktop.policykit.exec.path">/usr/bin/calamares</annotate>
