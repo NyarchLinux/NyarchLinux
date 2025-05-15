@@ -3,6 +3,9 @@
 systemctl enable bluetooth
 systemctl enable grub-btrfsd
 
+# Fix calamares policy
+rm -rf /usr/share/polkit-1/actions/com.github.calamares.calamares.policy
+mv /usr/share/polkit-1/actions/com.github.calamares.calamares.polic /usr/share/polkit-1/actions/com.github.calamares.calamares.policy
 sudo pacman -Syy
 pacman-key --init
 # Install material you library
