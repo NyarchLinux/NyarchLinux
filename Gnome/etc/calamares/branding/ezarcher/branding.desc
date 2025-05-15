@@ -182,10 +182,10 @@ images:
 # the corresponding CSS attributes of #sidebarApp.
 
 style:
-   SidebarBackground:    "#31241"
-   SidebarText:          "#ecdbd"
-   SidebarTextCurrent:    "#d2edf"
-   SidebarBackgroundCurrent: "#312429"
+   SidebarBackground:    "#312429"
+   SidebarText:          "#ECDBDF"
+   SidebarTextCurrent:    "#F6D7E2"
+   SidebarBackgroundCurrent: "#A1005C"
 
 ### SLIDESHOW
 #
