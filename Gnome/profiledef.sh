@@ -5,7 +5,7 @@ iso_name="nyarch-gnome"
 iso_label="NYARCH-GNOME_$(date +%y%m%d)"
 iso_publisher="Nyarch Linux <https://nyarchlinux.moe>"
 iso_application="Nyarchlinux DVD"
-iso_version="$(date +%y%m%d)"
+iso_version="$(date --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%y%m%d)"
 install_dir="arch"
 buildmodes=('iso')
 bootmodes=('bios.syslinux.mbr' 'bios.syslinux.eltorito'
@@ -25,8 +25,6 @@ file_permissions=(
   ["/usr/local/bin/choose-mirror"]="0:0:755"
   ["/usr/local/bin/Installation_guide"]="0:0:755"
   ["/usr/local/bin/livecd-sound"]="0:0:755"
-  ["/usr/local/bin/ezarch.bios"]="0:0:755"
-  ["/usr/local/bin/ezarch.uefi"]="0:0:755"
   ["/usr/local/bin/ezmaint"]="0:0:755"
   ["/usr/share/ezarcher/Scripts/"]="0:0:755"
   ["/usr/local/bin/grubinstall.sh"]="0:0:755"

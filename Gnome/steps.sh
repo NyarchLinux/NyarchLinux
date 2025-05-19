@@ -1,8 +1,9 @@
 #!/bin/bash
 
-# Revision: 25.04
+# Revision: 25.05.02
 # (GNU/General Public License version 3.0)
 # by eznix (https://sourceforge.net/projects/ezarch/)
+# This script is also modified by Nyarch Linux developers
 
 # ----------------------------------------
 # Define Variables
@@ -62,7 +63,6 @@ sleep 2
 
 # Requirements and preparation
 prepreqs () {
-pacman -S --noconfirm archlinux-keyring
 pacman -S --needed --noconfirm archiso mkinitcpio-archiso
 }
 

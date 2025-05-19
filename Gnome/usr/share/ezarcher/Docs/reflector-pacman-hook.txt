@@ -16,10 +16,11 @@ Target = pacman-mirrorlist
 Description = Updating pacman-mirrorlist with reflector and removing pacnew...
 When = PostTransaction
 Depends = reflector
-Exec = /bin/sh -c "reflector --country 'United States'--latest 10 --sort rate --protocol https --save /etc/pacman.d/mirrorlist"
+Exec = /bin/sh -c "reflector -c 'United States' -l 10 --sort rate -p https --save /etc/pacman.d/mirrorlist"
 
 Save and close the file. 
 
+_____
 reflector-pacman-hook.txt
-# Revision: 2023.07.07 -- by eznix (https://sourceforge.net/projects/ezarch/)
+# Revision: 25.05.02 -- by eznix (https://sourceforge.net/projects/ezarch/)
 # (GNU/General Public License version 3.0)

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ezarcher maintenance
-# Revision: 2022.12.06 -- by eznix (https://sourceforge.net/projects/ezarch/)
+# Revision: 25.05.02 -- by eznix (https://sourceforge.net/projects/ezarch/)
 # (GNU/General Public License version 3.0)
 
 # ---------------------------------------
@@ -21,7 +21,7 @@ welcomer () {
   echo "=     Ezarcher Maintenance Script                 ="
   echo "=                                                 ="
   echo "=                                                 ="
-  echo "=     Revision: 2022.12.06                        ="
+  echo "=     Revision: 25.05.02                          ="
   echo "=                                                 ="
   echo "=     Brought to you by eznix                     ="
   echo "=     https://sourceforge.net/projects/ezarch/    ="
@@ -30,17 +30,9 @@ welcomer () {
   sleep 4
 }
 
-enbluetooth () {
-  clear
-  systemctl enable --now bluetooth.service
-  clear
-  echo -e "\n"
-  clear
-}
-
 journalcln () {
   clear
-  journalctl --vacuum-time=2weeks
+  journalctl --vacuum-time=5days
   clear
   echo -e "\n"
   echo "Journal directory cleaned"
@@ -50,7 +42,7 @@ journalcln () {
 
 sysupdate () {
   clear
-  pacman -Syu
+  pacman -Syyu
   clear
   echo -e "\n"
   echo "Full system upgrade finished"
@@ -60,7 +52,7 @@ sysupdate () {
 
 pkgsccache () {
   clear
-  pacman -Scc
+  paccache -rk1
   clear
   echo -e "\n"
   echo "Package cache cleaned"
@@ -73,8 +65,8 @@ keysreset () {
   rm /var/lib/pacman/sync/*
   rm -rf /etc/pacman.d/gnupg/*
   pacman-key --init
-  pacman-key --populate
-  pacman -S --noconfirm archlinux-keyring
+  pacman-key --populate archlinux
+  pacman -Sy --noconfirm archlinux-keyring
   clear
   echo -e "\n"
   echo "All pacman keys are reset"
@@ -115,13 +107,19 @@ runreflector () {
   clear
 }
 
-enfirewall () {
+enbluetooth () {
   clear
-  systemctl enable firewalld.service
-  systemctl start firewalld.service
+  systemctl enable --now bluetooth.service
   clear
-  echo "Firewalld Service is enabled"
-  sleep 2
+  echo -e "\n"
+  clear
+}
+
+enbfirewalld () {
+  clear
+  systemctl enable --now firewalld.service
+  clear
+  echo -e "\n"
   clear
 }
 
@@ -153,8 +151,8 @@ do
     5 ) journalcln ;;
     6 ) usercachecln ;;
     7 ) enbluetooth ;;
-    8 ) enfirewall ;;
-
+    8 ) enbfirewalld ;;
+ 
     x|X ) exit;;
     * ) invalid ;;
   esac

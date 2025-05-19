@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # grubinstall script
-# Revision: 25.04.02 -- by eznix (https://sourceforge.net/projects/ezarch/)
+# Revision: 25.05.02 -- by eznix (https://sourceforge.net/projects/ezarch/)
 # (GNU/General Public License version 3.0)
 
 # Assign output of findmount to variable

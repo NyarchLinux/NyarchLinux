@@ -1,0 +1,178 @@
+
+---------------------------------------------------
+
+Arch Install - UEFI System & GPT Partition Layout
+
+Multiple Choice Desktop Example
+
+---------------------------------------------------
+
+1. Set keyboard layout - default is US
+** Available layouts can be listed with:
+ls /usr/share/kbd/keymaps/i386/**/*.map.gz | less
+** To modify the layout, append a corresponding file name to loadkeys, UK for example:
+loadkeys uk.map.gz
+
+2. Verify boot mode (UEFI or Legacy):
+ls /sys/firmware/efi/efivars
+** If the directory does not exist, the system may be booted in Legacy BIOS Mode
+
+3. Check internet connection:
+ping google.com
+
+4. Update system clock
+timedatectl set-ntp true
+
+5. Sync repositories, Install Reflector and Create mirrorlist, & install latest keyring
+pacman -Sy
+pacman -S archlinux-keyring
+pacman -S --needed reflector
+reflector -c 'United States' --sort rate -l 10 -p https --save /etc/pacman.d/mirrorlist
+
+6. Run cfdisk - UEFI GPT
+cfdisk /dev/sda
+sda1: efi system, sda2: swap, sda3: root, sda4: home
+efi system partition: type: EFI System, size: 512Mb, format: fat32
+
+7. Format partitions
+mkfs.fat -F32 /dev/sda1
+mkfs.ext4 /dev/sda3
+mkfs.ext4 /dev/sda4 
+mkswap /dev/sda2
+swapon /dev/sda2
+
+8. Mount partitions
+mount /dev/sda3 /mnt
+mkdir -p /mnt/efi
+mount /dev/sda1 /mnt/efi
+mkdir /mnt/home
+mount /dev/sda4 /mnt/home
+
+9. Install base packages
+pacstrap /mnt base base-devel cryptsetup curl dbus-broker dbus-broker-units dialog e2fsprogs device-mapper dhcpcd dosfstools efibootmgr gptfdisk grub less linux-lts linux-firmware linux-lts-headers lvm2 mkinitcpio mtools nano nvme-cli reflector rsync sysfsutils xz zstd
+
+10. Create fstab
+genfstab -U /mnt >> /mnt/etc/fstab
+
+11. Chroot into system
+arch-chroot /mnt
+
+12. Configure timezone --  Example, choose your correct timezone
+rm -rf /etc/localtime
+to list geographic areas:
+ls /usr/share/zoneinfo/
+pick timezome and:
+ln -sf /usr/share/zoneinfo/America/Phoenix /etc/localtime
+hwclock --systohc --utc
+
+13. Configure locale --  Example, choose your correct locale
+echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
+echo "C.UTF-8 UTF-8" >> /etc/locale.gen
+locale-gen
+echo "LANG=en_US.UTF-8" > /etc/locale.conf
+export LANG=en_US.UTF-8
+
+14. Configure networking
+
+A. Create hostname --  Example, choose your own hostname (computer name)
+echo myhostname > /etc/hostname
+
+B. Edit hosts file
+nano /etc/hosts
+Add lines:
+127.0.0.1	localhost
+::1		localhost
+127.0.1.1	myhostname.localdomain myhostname
+
+15. Create root password and user  --  Example, choose your own username
+passwd root
+useradd -m -G sys,log,network,floppy,scanner,power,rfkill,users,video,storage,optical,lp,audio,wheel,adm -s /usr/bin/bash username
+passwd username
+export VISUAL=nano
+export EDITOR=nano
+visudo /etc/sudoers
+uncomment line: 
+%wheel ALL=(ALL) ALL
+
+16. Sync repositories, Install Reflector and Create mirrorlist
+pacman -S reflector
+reflector --latest 10 --protocol https --save /etc/pacman.d/mirrorlist
+
+17. Install GRUB
+pacman -S grub efibootmgr os-prober
+grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB --recheck
+grub-mkconfig -o /boot/grub/grub.cfg
+
+18. Run mkinitcpio -- linux-lts for long term support kernel, linux for standard kernel
+mkinitcpio -p linux-lts
+
+19. Install software - still inside chroot!
+
+Xorg
+pacman -S mesa xclip xf86-input-evdev xf86-input-libinput xf86-input-synaptics xf86-input-vmmouse xf86-input-void xf86-video-amdgpu xf86-video-ati xf86-video-dummy xf86-video-fbdev xf86-video-nouveau xf86-video-qxl xf86-video-vesa xf86-video-vmware xorg-apps xorg-font-util xorg-fonts-75dpi xorg-fonts-100dpi xorg-fonts-encodings xorg-server xorg-server-common xorg-xinit xorg-xwayland xterm
+
+General
+pacman -S --needed amd-ucode archlinux-contrib aspell aspell-en arch-install-scripts archiso bash-completion bcachefs-tools bind binutils bluez bluez-utils bolt btrfs-progs bzip2 cdrtools cmake cpio cryfs dd_rescue ddrescue devtools diffutils dkms dmidecode dos2unix dvd+rw-tools efitools encfs exfatprogs f2fs-tools fatresize fsarchiver fuse3 fwupd git gnome-disk-utility gnome-keyring gocryptfs gpart gparted grsync gvfs gvfs-afc gvfs-goa gvfs-gphoto2 grsync gvfs-mtp gvfs-nfs gvfs-smb gzip haveged hdparm hspell htop hunspell hunspell-en_us hwdata hwdetect hwinfo inxi intel-ucode jfsutils keepassxc ldns lha libblockdev libburn libisofs libisoburn logrotate lsb-release lsof lsscsi lz4 lrzip lzip lzop man-db man-pages mdadm mkinitcpio-archiso mkinitcpio-nfs-utils ntfs-3g openssl 7zip pacutils pacman-contrib pahole papirus-icon-theme parted perl perl-data-dump perl-json perl-lwp-protocol-https perl-term-readline-gnu perl-term-ui pkgfile plocate polkit pv python-mutagen python-pycryptodomex python-setuptools python-sphinx python-websockets python-xattr qt5ct rsync s-nail sdparm sdl2 sg3_utils smartmontools squashfs-tools sudo tar testdisk texinfo tlp udftools udisks2 unace unarj unrar unzip upower usbmuxd usbutils vim which xdg-user-dirs xdg-utils xfsprogs xz zip zstd
+
+Multimedia
+pacman -S --needed alsa-card-profiles alsa-lib alsa-plugins alsa-firmware alsa-utils audacious audacious-plugins cdrdao dvdauthor faac faad2 ffmpeg ffmpegthumbnailer flac frei0r-plugins gstreamer gst-libav gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugin-pipewire gst-plugins-ugly gstreamer-vaapi imagemagick lame libdvdcss libopenraw mencoder mjpegtools mpv pipewire pipewire-alsa pipewire-audio pipewire-docs pipewire-jack pipewire-pulse pipewire-v4l2 poppler-glib sox smplayer wireplumber x265 x264 xvidcore
+
+Networking
+pacman -S --needed avahi b43-fwcutter broadcom-wl-dkms dmraid dnsmasq dnsutils ethtool filezilla firefox firewalld inetutils iwd net-tools netctl networkmanager networkmanager-openvpn network-manager-applet nm-connection-editor nfs-utils nilfs-utils nss-mdns openbsd-netcat openconnect openresolv openssh openssl openvpn samba vsftpd wget wireless-regdb wireless_tools whois wpa_supplicant
+
+Fonts
+pacman -S --needed ttf-ubuntu-font-family ttf-dejavu ttf-bitstream-vera ttf-liberation noto-fonts ttf-roboto ttf-opensans opendesktop-fonts cantarell-fonts freetype2
+
+Printing
+pacman -S --needed cups cups-pdf cups-filters cups-pk-helper foomatic-db foomatic-db-engine ghostscript gsfonts gutenprint python-pillow python-pip python-reportlab simple-scan system-config-printer
+
+LXQt Desktop
+pacman -S --needed abiword accountsservice aisleriot brightnessctl breeze-icons fastfetch featherpad geany gnumeric guvcview k3b kwin liblxqt libstatgrab libsysstat lximage-qt lxqt-about lxqt-admin lxqt-archiver lxqt-build-tools lxqt-config lxqt-globalkeys lxqt-notificationd lxqt-openssh-askpass lxqt-panel lxqt-policykit lxqt-powermanagement lxqt-qtplugin lxqt-runner lxqt-session lxqt-sudo lxqt-themes meld pcmanfm-qt pavucontrol-qt print-manager qbittorrent qterminal screengrab sddm xdg-desktop-portal-lxqt xpdf xscreensaver
+
+Plasma Desktop
+pacman -S --needed abiword accountsservice aisleriot archlinux-appstream-data ark audiocd-kio bluedevil breeze-gtk breeze-icons discover dolphin fastfetch geany gnumeric guvcview gwenview k3b kcalc kate kdeconnect kde-gtk-config kinfocenter kio-fuse konsole kscreen kwallet-pam kwayland-integration kwin meld okular oxygen packagekit packagekit-qt6 papirus-icon-theme pavucontrol-qt plasma-browser-integration plasma-desktop plasma-disks plasma-nm plasma-pa plasma-systemmonitor plasma-vault plasma-workspace-wallpapers powerdevil print-manager qbittorrent sddm sddm-kcm solid sweeper spectacle xdg-desktop-portal-kde xsettingsd
+
+Xfce Desktop
+pacman -S --needed abiword accountsservice aisleriot blueman catfish dconf-editor fastfetch galculator geany gnome-firmware gnumeric guvcview light-locker lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings materia-gtk-theme meld orchis-theme pavucontrol polkit-gnome transmission-gtk xarchiver xdg-desktop-portal-gtk xfburn xfce4 xfce4-goodies xpdf
+
+Mate Desktop
+pacman -S --needed abiword accountsservice aisleriot blueman brasero dconf-editor fastfetch geany gnome-firmware gnumeric guvcview light-locker lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings mate mate-applet-dock mate-extra mate-polkit materia-gtk-theme meld orchis-theme transmission-gtk xdg-desktop-portal-gtk
+
+Cinnamon Desktop
+pacman -S --needed abiword accountsservice adapta-gtk-theme aisleriot blueman brasero cinnamon cinnamon-translations dconf-editor fastfetch file-roller geany gnome-firmware gnome-terminal gnumeric gsound guvcview light-locker lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings materia-gtk-theme meld nemo nemo-fileroller nemo-share orchis-theme pavucontrol polkit-gnome tldr tmux transmission-gtk viewnior xdg-desktop-portal-gtk xed xpdf
+
+Gnome Desktop
+pacman -S --needed abiword accountsservice adwaita-icon-theme aisleriot blueman brasero dconf-editor eog fastfetch file-roller gdm geany ghex gnome gnome-dictionary gnome-firmware gnome-photos gnome-sound-recorder gnome-tweaks gnumeric materia-gtk-theme meld orchis-theme papirus-icon-theme pavucontrol polkit-gnome seahorse sysprof tldr tmux transmission-gtk xdg-desktop-portal-gtk
+
+LXDE Desktop
+pacman -S --needed abiword accountsservice aisleriot blueman fastfetch galculator geany gnumeric guvcview lxde lxdm materia-gtk-theme meld openbox orchis-theme papirus-icon-theme pavucontrol pcmanfm transmission-gtk xarchiver xpdf
+
+Budgie Desktop
+pacman -S --needed abiword accountsservice aisleriot appstream archlinux-appstream-data blueman brasero budgie budgie-extras dconf-editor evince fastfetch file-roller geany gnome-firmware gnome-software gnome-terminal gnome-user-share gnumeric gsound guvcview magpie-wm materia-gtk-theme meld nemo nemo-fileroller nemo-share orchis-theme papirus-icon-theme pavucontrol polkit-gnome transmission-gtk xdg-desktop-portal-gtk viewnior xed
+
+20. Systemd services
+systemctl disable dhcpcd.service
+systemctl enable haveged.service
+systemctl enable bluetooth.service
+systemctl enable cups.service
+systemctl enable NetworkManager
+systemctl enable fstrim.timer
+systemctl enable plocate-updatedb.timer
+
+21. Display Managers
+
+systemctl enable sddm.service (for KDE & LXQT)
+-- OR --
+systemctl enable lightdm.service (for Budgie, Cinnamon, Mate & XFCE)
+-- OR --
+systemctl enable gdm.service (for Gnome)
+-- OR --
+systemctl enable lxdm.service (for LXDE)
+
+22. Exit chroot
+exit (arch-chroot)
+umount -a
+reboot
+
+# Revision: 25.05.02 -- by eznix (https://sourceforge.net/projects/ezarch/)
+# (GNU/General Public License version 3.0)

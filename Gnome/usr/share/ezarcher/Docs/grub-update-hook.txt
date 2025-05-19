@@ -47,6 +47,7 @@ else
   grub-mkconfig -o /boot/grub/grub.cfg
 fi
 
+_____
 grub-update-hook.txt
-# Revision: 2023.07.10 -- by eznix (https://sourceforge.net/projects/ezarch/)
+# Revision: 25.05.02 -- by eznix (https://sourceforge.net/projects/ezarch/)
 # (GNU/General Public License version 3.0)

@@ -7,12 +7,12 @@ archiso libburn libisofs libisoburn mkinitcpio-archiso squashfs-tools
 Getting started building Calamares:
 
 Runtime dependencies for Calamares:
-boost-libs cmake dmidecode gtk-update-icon-cache icu kconfig kcoreaddons kdbusaddons kiconthemes ki18n kio kparts kpmcore kservice kwidgetsaddons libpwquality parted plasma-framework polkit-qt5 qt5-location qt5-svg qt5-webengine qt5-xmlpatterns qt5ct solid squashfs-tools udisks2 upower yaml-cpp
+qt5-svg qt5-webengine yaml-cpp networkmanager upower kcoreaddons5 kconfig5 ki18n5 kservice5 kwidgetsaddons5 kpmcore squashfs-tools rsync cryptsetup qt5-xmlpatterns doxygen dmidecode gptfdisk hwinfo kparts5 polkit-qt5 python solid5 qt5-tools boost-libs libpwquality qt5-quickcontrols2
 
 Build time dependencies for Calamares:
-extra-cmake-modules git boost qt5-tools qt5-translations 
+git cmake extra-cmake-modules kpmcore boost python-jsonschema python-pyaml python-unidecode gawk 
 
-
+_____
 getting-started-archiso.txt
-# Revision: 2023.07.07 -- by eznix (https://sourceforge.net/projects/ezarch/)
+# Revision: 25.05.02 -- by eznix (https://sourceforge.net/projects/ezarch/)
 # (GNU/General Public License version 3.0)
