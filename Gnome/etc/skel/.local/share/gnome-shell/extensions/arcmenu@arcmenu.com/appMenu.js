@@ -9,6 +9,7 @@ import {AppMenu} from 'resource:///org/gnome/shell/ui/appMenu.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
+import {ArcMenuManager} from './arcmenuManager.js';
 import * as Utils from './utils.js';
 
 const DESKTOP_ICONS_UUIDS = [
@@ -32,15 +33,14 @@ export const AppContextMenu = class ArcMenuAppContextMenu extends AppMenu {
     constructor(sourceActor, menuLayout) {
         super(sourceActor, St.Side.TOP);
 
-        this._settings = menuLayout.settings;
-        this._menuButton = menuLayout.menuButton;
-
         this._menuLayout = menuLayout;
+        this._menuButton = this._menuLayout.menuButton;
+
+        this._pinnedAppData = this.sourceActor.pinnedAppData;
+
         this._enableFavorites = true;
         this._showSingleWindows = true;
         this.actor.add_style_class_name('arcmenu-menu app-menu');
-
-        this._pinnedAppData = this.sourceActor.pinnedAppData;
 
         Main.uiGroup.add_child(this.actor);
         this._menuLayout.contextMenuManager.addMenu(this);
@@ -66,7 +66,7 @@ export const AppContextMenu = class ArcMenuAppContextMenu extends AppMenu {
                 if (isFolder)
                     sourceSettings = this.sourceActor.folderSettings;
                 else
-                    sourceSettings = this._settings;
+                    sourceSettings = ArcMenuManager.settings;
 
                 const pinnedAppsList = sourceSettings.get_value('pinned-apps').deepUnpack();
                 for (let i = 0; i < pinnedAppsList.length; i++) {
@@ -77,12 +77,12 @@ export const AppContextMenu = class ArcMenuAppContextMenu extends AppMenu {
                     }
                 }
             } else {
-                const pinnedAppsList = this._settings.get_value('pinned-apps').deepUnpack();
+                const pinnedAppsList = ArcMenuManager.settings.get_value('pinned-apps').deepUnpack();
                 const newPinnedAppData = {
                     id: this._app.get_id(),
                 };
                 pinnedAppsList.push(newPinnedAppData);
-                this._settings.set_value('pinned-apps',  new GLib.Variant('aa{ss}', pinnedAppsList));
+                ArcMenuManager.settings.set_value('pinned-apps',  new GLib.Variant('aa{ss}', pinnedAppsList));
             }
         });
 
@@ -92,13 +92,13 @@ export const AppContextMenu = class ArcMenuAppContextMenu extends AppMenu {
                 try {
                     dst.delete(null);
                 } catch (e) {
-                    log(`Failed to delete shortcut: ${e.message}`);
+                    console.log(`Failed to delete shortcut: ${e.message}`);
                 }
             } else if (src && dst) {
                 try {
                     src.copy(dst, Gio.FileCopyFlags.OVERWRITE, null, null);
                 } catch (e) {
-                    log(`Failed to copy to desktop: ${e.message}`);
+                    console.log(`Failed to copy to desktop: ${e.message}`);
                 }
             }
             this.close();
@@ -106,15 +106,13 @@ export const AppContextMenu = class ArcMenuAppContextMenu extends AppMenu {
         });
         this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem(), 8);
 
-        this._settings.connectObject('changed::pinned-apps', () => this._updateArcMenuPinnedItem(), this.actor);
-        this.desktopExtensionStateChangedId =
-            Main.extensionManager.connect('extension-state-changed', (data, changedExtension) => {
-                if (DESKTOP_ICONS_UUIDS.includes(changedExtension.uuid))
-                    this._updateDesktopShortcutItem();
-            });
+        ArcMenuManager.settings.connectObject('changed::pinned-apps', () => this._updateArcMenuPinnedItem(), this.actor);
+        Main.extensionManager.connectObject('extension-state-changed', (data, changedExtension) => {
+            if (DESKTOP_ICONS_UUIDS.includes(changedExtension.uuid))
+                this._updateDesktopShortcutItem();
+        });
 
         this.connect('active-changed', () => this._activeChanged());
-        this.connect('destroy', () => this._onDestroy());
     }
 
     _activeChanged() {
@@ -137,13 +135,19 @@ export const AppContextMenu = class ArcMenuAppContextMenu extends AppMenu {
         this.sourceActor.add_style_pseudo_class('active');
     }
 
-    _onDestroy() {
+    destroy() {
         this.destroyed = true;
+        this._createDesktopShortcutItem = null;
+        this._arcMenuPinnedItem = null;
         this._disconnectSignals();
-        if (this.desktopExtensionStateChangedId) {
-            Main.extensionManager.disconnect(this.desktopExtensionStateChangedId);
-            this.desktopExtensionStateChangedId = null;
-        }
+
+        Main.extensionManager.disconnectObject(this);
+
+        this._menuButton = null;
+        this._pinnedAppData = null;
+        this._menuLayout = null;
+
+        super.destroy();
     }
 
     closeMenus() {
@@ -247,7 +251,7 @@ export const AppContextMenu = class ArcMenuAppContextMenu extends AppMenu {
             if (!folder && this.sourceActor.folderSettings)
                 sourceSettings = this.sourceActor.folderSettings;
             else
-                sourceSettings = this._settings;
+                sourceSettings = ArcMenuManager.settings;
 
             // Unpinned the folder, reset all folder settings keys
             if (folder) {
@@ -378,7 +382,7 @@ export const AppContextMenu = class ArcMenuAppContextMenu extends AppMenu {
     }
 
     _disconnectSignals() {
-        this._settings.disconnectObject(this.actor);
+        ArcMenuManager.settings.disconnectObject(this.actor);
         this._appSystem.disconnectObject(this.actor);
         this._parentalControlsManager.disconnectObject(this.actor);
         this._appFavorites.disconnectObject(this.actor);

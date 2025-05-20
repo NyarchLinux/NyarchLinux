@@ -5,21 +5,21 @@ import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
+import {ArcMenuManager} from '../arcmenuManager.js';
 import {BaseMenuLayout} from './baseMenuLayout.js';
 import * as Constants from '../constants.js';
 import * as MW from '../menuWidgets.js';
-import * as Utils from '../utils.js';
+import {getScrollViewAdjustments, getOrientationProp} from '../utils.js';
 
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-export const Layout = class InsiderLayout extends BaseMenuLayout {
+export class Layout extends BaseMenuLayout {
     static {
         GObject.registerClass(this);
     }
 
     constructor(menuButton) {
         super(menuButton, {
-            has_search: true,
             display_type: Constants.DisplayType.GRID,
             search_display_type: Constants.DisplayType.GRID,
             search_results_spacing: 4,
@@ -28,7 +28,7 @@ export const Layout = class InsiderLayout extends BaseMenuLayout {
             row_spacing: 10,
             default_menu_width: 525,
             icon_grid_size: Constants.GridIconSize.SMALL,
-            vertical: false,
+            ...getOrientationProp(false),
             category_icon_size: Constants.MEDIUM_ICON_SIZE,
             apps_icon_size: Constants.LARGE_ICON_SIZE,
             quicklinks_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
@@ -41,7 +41,7 @@ export const Layout = class InsiderLayout extends BaseMenuLayout {
             y_expand: true,
             x_align: Clutter.ActorAlign.START,
             y_align: Clutter.ActorAlign.FILL,
-            vertical: true,
+            ...getOrientationProp(true),
             style: 'spacing: 6px;',
         });
         this.add_child(this.actionsBox);
@@ -54,18 +54,18 @@ export const Layout = class InsiderLayout extends BaseMenuLayout {
             x_expand: true,
             y_expand: true,
             y_align: Clutter.ActorAlign.START,
-            vertical: true,
+            ...getOrientationProp(true),
         });
         this.add_child(this._mainBox);
 
-        const userAvatar = this._settings.get_boolean('disable-user-avatar');
+        const userAvatar = ArcMenuManager.settings.get_boolean('disable-user-avatar');
         if (!userAvatar) {
             const userMenuBox = new St.BoxLayout({
                 x_expand: true,
                 y_expand: true,
                 x_align: Clutter.ActorAlign.CENTER,
                 y_align: Clutter.ActorAlign.START,
-                vertical: true,
+                ...getOrientationProp(true),
                 style: 'padding-bottom: 6px;',
             });
             const avatarMenuIcon = new MW.AvatarMenuIcon(this, 75, true);
@@ -82,7 +82,7 @@ export const Layout = class InsiderLayout extends BaseMenuLayout {
         this.searchEntry.style = 'margin: 0px 10px 10px 10px;';
         this._mainBox.add_child(this.searchEntry);
 
-        this.applicationsBox = new St.BoxLayout({vertical: true});
+        this.applicationsBox = new St.BoxLayout({...getOrientationProp(true)});
         this.applicationsScrollBox = this._createScrollBox({
             x_expand: false,
             y_expand: false,
@@ -99,7 +99,7 @@ export const Layout = class InsiderLayout extends BaseMenuLayout {
             halign: Clutter.ActorAlign.FILL,
         });
 
-        this._settings.connectObject('changed::insider-layout-extra-shortcuts', () => this._createExtraButtons(), this);
+        ArcMenuManager.settings.connectObject('changed::insider-layout-extra-shortcuts', () => this._createExtraButtons(), this);
         this._createExtraButtons();
 
         this.updateWidth();
@@ -109,6 +109,7 @@ export const Layout = class InsiderLayout extends BaseMenuLayout {
         this._createPinnedAppsMenu();
         this.setDefaultMenuView();
         this.activeCategoryType = Constants.CategoryType.HOME_SCREEN;
+        this._connectAppChangedEvents();
     }
 
     _createExtraButtons() {
@@ -120,7 +121,7 @@ export const Layout = class InsiderLayout extends BaseMenuLayout {
         this.actionsBox.add_child(this.pinnedAppsButton);
 
         const isContainedInCategory = false;
-        const extraButtons = this._settings.get_value('insider-layout-extra-shortcuts').deep_unpack();
+        const extraButtons = ArcMenuManager.settings.get_value('insider-layout-extra-shortcuts').deep_unpack();
 
         for (let i = 0; i < extraButtons.length; i++) {
             const {id} = extraButtons[i];
@@ -139,7 +140,7 @@ export const Layout = class InsiderLayout extends BaseMenuLayout {
         }
 
         let leaveButton;
-        const powerDisplayStyle = this._settings.get_enum('power-display-style');
+        const powerDisplayStyle = ArcMenuManager.settings.get_enum('power-display-style');
         if (powerDisplayStyle === Constants.PowerDisplayStyle.IN_LINE)
             leaveButton = new MW.PowerOptionsBox(this, true);
         else
@@ -161,7 +162,7 @@ export const Layout = class InsiderLayout extends BaseMenuLayout {
         const section = new PopupMenu.PopupMenuSection();
         this.pinnedAppsMenu.addMenuItem(section);
 
-        const pinnedAppsPopupBox = new St.BoxLayout({vertical: true});
+        const pinnedAppsPopupBox = new St.BoxLayout({...getOrientationProp(true)});
         pinnedAppsPopupBox._delegate = pinnedAppsPopupBox;
         section.actor.add_child(pinnedAppsPopupBox);
 
@@ -170,7 +171,7 @@ export const Layout = class InsiderLayout extends BaseMenuLayout {
             y_expand: false,
             x_align: Clutter.ActorAlign.FILL,
             y_align: Clutter.ActorAlign.START,
-            vertical: true,
+            ...getOrientationProp(true),
         });
         pinnedAppsPopupBox.add_child(headerBox);
 
@@ -191,7 +192,7 @@ export const Layout = class InsiderLayout extends BaseMenuLayout {
         });
         pinnedAppsPopupBox.add_child(this.pinnedAppsScrollBox);
 
-        this.pinnedAppsBox = new St.BoxLayout({vertical: true});
+        this.pinnedAppsBox = new St.BoxLayout({...getOrientationProp(true)});
         this._addChildToParent(this.pinnedAppsScrollBox, this.pinnedAppsBox);
 
         this.displayPinnedApps();
@@ -208,7 +209,7 @@ export const Layout = class InsiderLayout extends BaseMenuLayout {
     }
 
     togglePinnedAppsMenu() {
-        const {vadjustment} = Utils.getScrollViewAdjustments(this.pinnedAppsScrollBox);
+        const {vadjustment} = getScrollViewAdjustments(this.pinnedAppsScrollBox);
         vadjustment.set_value(0);
 
         const themeNode = this.arcMenu.actor.get_theme_node();
@@ -224,7 +225,7 @@ export const Layout = class InsiderLayout extends BaseMenuLayout {
 
         Main.layoutManager.setDummyCursorGeometry(x, y, 0, 0);
 
-        const height = this._settings.get_int('menu-height');
+        const height = ArcMenuManager.settings.get_int('menu-height');
         this.pinnedAppsMenu.box.style = `height: ${height}px; min-width: 250px;`;
 
         this.pinnedAppsMenu.toggle();
@@ -242,7 +243,7 @@ export const Layout = class InsiderLayout extends BaseMenuLayout {
         if (!this.applicationsBox.contains(this.applicationsGrid))
             this.applicationsBox.add_child(this.applicationsGrid);
 
-        const {vadjustment} = Utils.getScrollViewAdjustments(this.pinnedAppsScrollBox);
+        const {vadjustment} = getScrollViewAdjustments(this.pinnedAppsScrollBox);
         vadjustment.set_value(0);
 
         this.activeCategoryType = Constants.CategoryType.HOME_SCREEN;
@@ -269,7 +270,7 @@ export const Layout = class InsiderLayout extends BaseMenuLayout {
 
         this._pinnedAppsGrid.setColumns(1);
     }
-};
+}
 
 class PinnedAppsButton extends MW.ArcMenuButtonItem {
     static {
@@ -278,7 +279,7 @@ class PinnedAppsButton extends MW.ArcMenuButtonItem {
 
     constructor(menuLayout) {
         super(menuLayout, _('Pinned Apps'), 'open-menu-symbolic');
-        this.toggleMenuOnClick = false;
+        this._closeMenuOnActivate = false;
     }
 
     activate(event) {

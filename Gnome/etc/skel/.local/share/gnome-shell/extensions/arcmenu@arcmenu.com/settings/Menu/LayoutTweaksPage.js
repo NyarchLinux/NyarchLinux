@@ -777,6 +777,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
     _loadGnomeMenuTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
         tweaksGroup.add(this._createActivateOnHoverRow());
+        tweaksGroup.add(this._createSearchBarLocationRow());
         tweaksGroup.add(this._createFlipHorizontalRow());
         tweaksGroup.add(this._createVertSeparatorRow());
         this.add(tweaksGroup);

@@ -101,16 +101,11 @@ class ArcMenuMenuButton extends PanelMenu.Button {
     _init(panelInfo, monitorIndex) {
         super._init(0.5, null, true);
 
-        this._destroyed = false;
-
         this.set({
             x_expand: false,
         });
 
         this.add_style_class_name('arcmenu-panel-menu');
-
-        this._extension = ArcMenuManager.extension;
-        this._settings = ArcMenuManager.settings;
 
         // Link search providers to this menu
         this.searchProviderDisplayId = `ArcMenu_${monitorIndex}`;
@@ -131,40 +126,26 @@ class ArcMenuMenuButton extends PanelMenu.Button {
 
         // Create Main Menus - ArcMenu and ArcMenu's context menu
         this.arcMenu = new ArcMenu(this, 0.5, St.Side.TOP);
-        this.arcMenu.connect('open-state-changed', this._onOpenStateChanged.bind(this));
+        this.arcMenu.connectObject('open-state-changed', this._onOpenStateChanged.bind(this), this);
 
         this.arcMenuContextMenu = new ArcMenuContextMenu(this, 0.5, St.Side.TOP);
-        this.arcMenuContextMenu.connect('open-state-changed', this._onOpenStateChanged.bind(this));
+        this.arcMenuContextMenu.connectObject('open-state-changed', this._onOpenStateChanged.bind(this), this);
 
-        this.menuManager = new PopupMenu.PopupMenuManager(this._panel);
+        this.menuManager = new PopupMenu.PopupMenuManager();
         this.menuManager._changeMenu = () => {};
         this.menuManager.addMenu(this.arcMenu);
         this.menuManager.addMenu(this.arcMenuContextMenu);
 
         // Context Menus for applications and other menu items
-        this.contextMenuManager = new PopupMenu.PopupMenuManager(this);
+        this.contextMenuManager = new PopupMenu.PopupMenuManager();
         this.contextMenuManager._changeMenu = () => {};
-        this.contextMenuManager._onMenuSourceEnter = menu => {
-            if (this.contextMenuManager.activeMenu && this.contextMenuManager.activeMenu !== menu)
-                return Clutter.EVENT_STOP;
-
-            return Clutter.EVENT_PROPAGATE;
-        };
 
         // Sub Menu Manager - Control all other popup menus
-        this.subMenuManager = new PopupMenu.PopupMenuManager(this);
+        this.subMenuManager = new PopupMenu.PopupMenuManager();
         this.subMenuManager._changeMenu = () => {};
 
         this.menuButtonWidget = new MenuButtonWidget();
         this.add_child(this.menuButtonWidget);
-    }
-
-    get extension() {
-        return this._extension;
-    }
-
-    get settings() {
-        return this._settings;
     }
 
     initiate() {
@@ -173,8 +154,8 @@ class ArcMenuMenuButton extends PanelMenu.Button {
         if (this._dtp?.state === Utils.ExtensionState.ACTIVE && global.dashToPanel)
             this.syncWithDashToPanel();
 
-        this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', () => this.updateHeight());
-        this._startupCompleteId = Main.layoutManager.connect('startup-complete', () => this.updateHeight());
+        Main.layoutManager.connectObject('monitors-changed', () => this.updateHeight(), this);
+        Main.layoutManager.connectObject('startup-complete', () => this.updateHeight(), this);
 
         this.setMenuPositionAlignment();
         this.createMenuLayout();
@@ -183,35 +164,26 @@ class ArcMenuMenuButton extends PanelMenu.Button {
     syncWithDashToPanel() {
         const dtp = Extension.lookupByUUID(Constants.DASH_TO_PANEL_UUID);
         this._dtpSettings = dtp.getSettings('org.gnome.shell.extensions.dash-to-panel');
+        this._dtpActive = true;
 
-        const side = Utils.getDashToPanelPosition(this._dtpSettings, this._monitorIndex);
+        const side = this._panelParent.getPosition();
         this.updateArrowSide(side);
 
-        this.dtpPostionChangedID = this._dtpSettings.connect('changed::panel-positions', () => {
-            const newSide = Utils.getDashToPanelPosition(this._dtpSettings, this._monitorIndex);
+        this._dtpSettings.connectObject('changed::panel-positions', () => {
+            const newSide = this._panelParent.getPosition();
             this.updateArrowSide(newSide);
-        });
+        }, this);
     }
 
-    async createMenuLayout() {
+    createMenuLayout() {
         this._clearTooltipShowingId();
         this._clearTooltip();
 
         this._destroyMenuLayout();
 
-        const layout = this._settings.get_enum('menu-layout');
+        const layout = ArcMenuManager.settings.get_enum('menu-layout');
 
-        if (this._destroyed)
-            return;
-
-        this._menuLayout = await LayoutHandler.createMenuLayout(this, layout);
-
-        // MenuButton may be destroyed while createMenuLayout() is running
-        if (this._destroyed && this._menuLayout) {
-            this._menuLayout.arcMenu = null;
-            this._menuLayout.destroy();
-            return;
-        }
+        this._menuLayout = LayoutHandler.createMenuLayout(this, layout);
 
         if (this._menuLayout) {
             this.arcMenu.box.add_child(this._menuLayout);
@@ -222,9 +194,9 @@ class ArcMenuMenuButton extends PanelMenu.Button {
     }
 
     setMenuPositionAlignment() {
-        const layout = this._settings.get_enum('menu-layout');
-        const arrowAlignment = 1 - (this._settings.get_int('menu-position-alignment') / 100);
-        const panelPosition = this._settings.get_enum('position-in-panel');
+        const layout = ArcMenuManager.settings.get_enum('menu-layout');
+        const arrowAlignment = 1 - (ArcMenuManager.settings.get_int('menu-position-alignment') / 100);
+        const panelPosition = ArcMenuManager.settings.get_enum('position-in-panel');
 
         if (layout !== Constants.MenuLayout.RUNNER) {
             if (panelPosition === Constants.MenuPosition.CENTER) {
@@ -232,8 +204,8 @@ class ArcMenuMenuButton extends PanelMenu.Button {
                 this.arcMenu._arrowAlignment = arrowAlignment;
                 this.arcMenuContextMenu._boxPointer.setSourceAlignment(.5);
                 this.arcMenu._boxPointer.setSourceAlignment(.5);
-            } else if (this._dtp?.state === Utils.ExtensionState.ACTIVE) {
-                const side = Utils.getDashToPanelPosition(this._dtpSettings, this._monitorIndex);
+            } else if (this._dtpActive) {
+                const side = this._panelParent.getPosition();
                 this.updateArrowSide(side, false);
             } else {
                 this.updateArrowSide(St.Side.TOP, false);
@@ -259,7 +231,7 @@ class ArcMenuMenuButton extends PanelMenu.Button {
             menu._arrowSide = side;
             menu._boxPointer._arrowSide = side;
             menu._boxPointer._userArrowSide = side;
-            menu._boxPointer.setSourceAlignment(0.5);
+            menu._boxPointer.setSourceAlignment(arrowAlignment);
             menu._arrowAlignment = arrowAlignment;
             menu._boxPointer._border.queue_repaint();
         }
@@ -268,8 +240,43 @@ class ArcMenuMenuButton extends PanelMenu.Button {
             this.setMenuPositionAlignment();
     }
 
+    _getDashToPanelGeom() {
+        if (!this._dtpActive || !this._panelParent.intellihide?.enabled)
+            return {width: 0, height: 0};
+
+        const dtpPostion = this._panelParent.getPosition();
+        const menuLocation = ArcMenuManager.settings.get_enum('force-menu-location');
+
+        const width = this._panelParent.geom?.w ?? 0;
+        const height = this._panelParent.geom?.h ?? 0;
+
+        const {MenuLocation} = Constants;
+        const topLocations = [MenuLocation.TOP_CENTERED, MenuLocation.TOP_LEFT, MenuLocation.TOP_RIGHT];
+        const bottomLocations = [MenuLocation.BOTTOM_CENTERED, MenuLocation.BOTTOM_LEFT, MenuLocation.BOTTOM_RIGHT];
+        const leftLocations = [MenuLocation.BOTTOM_LEFT, MenuLocation.TOP_LEFT, MenuLocation.LEFT_CENTERED];
+        const rightLocations = [MenuLocation.BOTTOM_RIGHT, MenuLocation.TOP_RIGHT, MenuLocation.RIGHT_CENTERED];
+        const xCenterLocations = [MenuLocation.BOTTOM_CENTERED, MenuLocation.TOP_CENTERED];
+        const yCenterLocations = [MenuLocation.LEFT_CENTERED, MenuLocation.RIGHT_CENTERED];
+
+        const needsTopAdjustment = topLocations.includes(menuLocation) || yCenterLocations.includes(menuLocation);
+        const needsBottomAdjustment = bottomLocations.includes(menuLocation) || yCenterLocations.includes(menuLocation);
+        const needsLeftAdjustment = leftLocations.includes(menuLocation) || xCenterLocations.includes(menuLocation);
+        const needsRightAdjustment = rightLocations.includes(menuLocation) || xCenterLocations.includes(menuLocation);
+
+        if (dtpPostion === St.Side.TOP && needsTopAdjustment)
+            return {width: 0, height};
+        if (dtpPostion === St.Side.BOTTOM && needsBottomAdjustment)
+            return {width: 0, height};
+        if (dtpPostion === St.Side.LEFT && needsLeftAdjustment)
+            return {width, height: 0};
+        if (dtpPostion === St.Side.RIGHT && needsRightAdjustment)
+            return {width, height: 0};
+
+        return {width: 0, height: 0};
+    }
+
     forceMenuLocation() {
-        const layout = this._settings.get_enum('menu-layout');
+        const layout = ArcMenuManager.settings.get_enum('menu-layout');
         if (layout === Constants.MenuLayout.RUNNER ||
             layout === Constants.MenuLayout.RAVEN ||
             layout === Constants.MenuLayout.GNOME_OVERVIEW)
@@ -277,11 +284,11 @@ class ArcMenuMenuButton extends PanelMenu.Button {
 
         this.arcMenu.actor.remove_style_class_name('bottomOfScreenMenu');
 
-        const newMenuLocation = this._settings.get_enum('force-menu-location');
+        const newMenuLocation = ArcMenuManager.settings.get_enum('force-menu-location');
         if (this._menuLocation !== newMenuLocation) {
             this._menuLocation = newMenuLocation;
 
-            if (newMenuLocation === Constants.ForcedMenuLocation.OFF) {
+            if (newMenuLocation === Constants.MenuLocation.OFF) {
                 this.arcMenu.sourceActor = this.arcMenu.focusActor = this;
                 this.arcMenu._boxPointer.setPosition(this, 0.5);
                 this.setMenuPositionAlignment();
@@ -294,27 +301,63 @@ class ArcMenuMenuButton extends PanelMenu.Button {
             this.arcMenu._arrowAlignment = 0.5;
         }
 
-        if (newMenuLocation === Constants.ForcedMenuLocation.OFF)
+        if (newMenuLocation === Constants.MenuLocation.OFF)
             return;
 
-        this.updateArrowSide(St.Side.TOP, false);
-        const rect = Main.layoutManager.getWorkAreaForMonitor(this._monitorIndex);
-        const positionX = Math.round(rect.x + (rect.width / 2));
-        let positionY;
+        const monitor = Main.layoutManager.findMonitorForActor(this);
+        const workArea = Main.layoutManager.getWorkAreaForMonitor(this._monitorIndex);
+        const menuHeight = ArcMenuManager.settings.get_int('menu-height');
 
-        if (newMenuLocation === Constants.ForcedMenuLocation.TOP_CENTERED) {
-            positionY = rect.y;
-        } else if (newMenuLocation === Constants.ForcedMenuLocation.BOTTOM_CENTERED) {
-            positionY = rect.y + rect.height - 1;
+        // Offset width and height of DtP when intellihide is enabled.
+        const {width: dtpWidth, height: dtpHeight} = this._getDashToPanelGeom();
+
+        const xLeft = workArea.x + dtpWidth;
+        const xRight = workArea.x + workArea.width - 1 - dtpWidth;
+        const yTop = workArea.y + dtpHeight;
+        const yBottom = workArea.y + workArea.height - 1 - dtpHeight;
+        const xCentered = Math.round(monitor.x + (monitor.width / 2));
+        const yCentered = Math.round(monitor.y + (monitor.height / 2) - (menuHeight / 2));
+        let x, y;
+        let side = St.Side.TOP;
+
+        if (newMenuLocation === Constants.MenuLocation.TOP_CENTERED) {
+            x = xCentered;
+            y = yTop;
+        } else if (newMenuLocation === Constants.MenuLocation.TOP_LEFT) {
+            side = St.Side.LEFT;
+            x = xLeft;
+            y = yTop;
+        } else if (newMenuLocation === Constants.MenuLocation.TOP_RIGHT) {
+            side = St.Side.RIGHT;
+            x = xRight;
+            y = yTop;
+        } else if (newMenuLocation === Constants.MenuLocation.BOTTOM_CENTERED) {
+            x = xCentered;
+            y = yBottom;
             this.arcMenu.actor.add_style_class_name('bottomOfScreenMenu');
-        } else if (newMenuLocation === Constants.ForcedMenuLocation.MONITOR_CENTERED) {
-            const menuHeight = this._settings.get_int('menu-height');
-            const monitor = Main.layoutManager.findMonitorForActor(this);
-            positionY = Math.round(monitor.y + (monitor.height / 2) - (menuHeight / 2));
-            Main.layoutManager.setDummyCursorGeometry(positionX, positionY, 0, 0);
+        }  else if (newMenuLocation === Constants.MenuLocation.BOTTOM_LEFT) {
+            side = St.Side.LEFT;
+            x = xLeft;
+            y = yBottom;
+            this.arcMenu.actor.add_style_class_name('bottomOfScreenMenu');
+        } else if (newMenuLocation === Constants.MenuLocation.BOTTOM_RIGHT) {
+            side = St.Side.RIGHT;
+            x = xRight;
+            y = yBottom;
+            this.arcMenu.actor.add_style_class_name('bottomOfScreenMenu');
+        } else if (newMenuLocation === Constants.MenuLocation.LEFT_CENTERED) {
+            x = xLeft;
+            y = yCentered;
+        } else if (newMenuLocation === Constants.MenuLocation.RIGHT_CENTERED) {
+            x = xRight;
+            y = yCentered;
+        } else if (newMenuLocation === Constants.MenuLocation.MONITOR_CENTERED) {
+            x = xCentered;
+            y = yCentered;
         }
 
-        Main.layoutManager.setDummyCursorGeometry(positionX, positionY, 0, 0);
+        this.updateArrowSide(side, false);
+        Main.layoutManager.setDummyCursorGeometry(x, y, 0, 0);
     }
 
     vfunc_event(event) {
@@ -332,11 +375,11 @@ class ArcMenuMenuButton extends PanelMenu.Button {
 
     _getClickActionForButton(button) {
         if (button === Clutter.BUTTON_PRIMARY)
-            return this._settings.get_enum('menu-button-left-click-action');
+            return ArcMenuManager.settings.get_enum('menu-button-left-click-action');
         else if (button === Clutter.BUTTON_SECONDARY)
-            return this._settings.get_enum('menu-button-right-click-action');
+            return ArcMenuManager.settings.get_enum('menu-button-right-click-action');
         else if (button === Clutter.BUTTON_MIDDLE)
-            return this._settings.get_enum('menu-button-middle-click-action');
+            return ArcMenuManager.settings.get_enum('menu-button-middle-click-action');
         else
             return -1;
     }
@@ -356,11 +399,9 @@ class ArcMenuMenuButton extends PanelMenu.Button {
     toggleMenu() {
         this.closeOtherMenus();
 
-        this.forceMenuLocation();
-
-        const layout = this._settings.get_enum('menu-layout');
+        const layout = ArcMenuManager.settings.get_enum('menu-layout');
         if (layout === Constants.MenuLayout.GNOME_OVERVIEW) {
-            if (this._settings.get_boolean('gnome-dash-show-applications'))
+            if (ArcMenuManager.settings.get_boolean('gnome-dash-show-applications'))
                 Main.overview._overview._controls._toggleAppsPage();
             else
                 Main.overview.toggle();
@@ -373,25 +414,29 @@ class ArcMenuMenuButton extends PanelMenu.Button {
 
             if (this._menuLayout?.updateStyle)
                 this._menuLayout.updateStyle();
+
+            this._maybeShowPanel();
         }
 
         this.arcMenu.toggle();
 
-        if (this.arcMenu.isOpen)
+        if (this.arcMenu.isOpen) {
             this._menuLayout?.grab_key_focus();
+            this.forceMenuLocation();
+        }
     }
 
     updateHeight() {
         if (!this._menuLayout)
             return;
 
-        const layout = this._settings.get_enum('menu-layout');
+        const layout = ArcMenuManager.settings.get_enum('menu-layout');
         if (layout === Constants.MenuLayout.RUNNER || layout === Constants.MenuLayout.RAVEN) {
             this._menuLayout.style = '';
             return;
         }
 
-        const height = this._settings.get_int('menu-height');
+        const height = ArcMenuManager.settings.get_int('menu-height');
         this._menuLayout.style = `height: ${height}px;`;
     }
 
@@ -416,25 +461,17 @@ class ArcMenuMenuButton extends PanelMenu.Button {
     }
 
     _onDestroy() {
-        this._destroyed = true;
         this._stopTrackingMouse();
-
-        if (this._monitorsChangedId) {
-            Main.layoutManager.disconnect(this._monitorsChangedId);
-            this._monitorsChangedId = null;
-        }
-
-        if (this._startupCompleteId) {
-            Main.layoutManager.disconnect(this._startupCompleteId);
-            this._startupCompleteId = null;
-        }
-
+        Main.layoutManager.disconnectObject(this);
         this._clearTooltipShowingId();
 
-        if (this.dtpPostionChangedID && this._dtpSettings) {
-            this._dtpSettings.disconnect(this.dtpPostionChangedID);
-            this.dtpPostionChangedID = null;
+        if (this._dtpSettings) {
+            this._dtpSettings.disconnectObject(this);
+            this._dtpSettings = null;
         }
+
+        if (this.dtp)
+            this.dtp = null;
 
         this._destroyMenuLayout();
 
@@ -443,6 +480,19 @@ class ArcMenuMenuButton extends PanelMenu.Button {
         this.arcMenu?.destroy();
         this.arcMenu = null;
         this.arcMenuContextMenu?.destroy();
+        this.arcMenuContextMenu = null;
+
+        this.menuManager = null;
+        this.contextMenuManager = null;
+        this.subMenuManager = null;
+
+        this.menuButtonWidget.destroy();
+        this.menuButtonWidget = null;
+
+        this._panel.statusArea['ArcMenu'] = null;
+        this._panel = null;
+        this._panelBox = null;
+        this._panelParent = null;
 
         super._onDestroy();
     }
@@ -485,7 +535,6 @@ class ArcMenuMenuButton extends PanelMenu.Button {
 
     _onOpenStateChanged(_menu, open) {
         if (open) {
-            this._maybeShowPanel();
             this.menuButtonWidget.addStylePseudoClass('active');
             this.add_style_pseudo_class('active');
 
@@ -558,19 +607,7 @@ class ArcMenuMenuButton extends PanelMenu.Button {
         const panelBoxRect = this._panelBox.get_transformed_extents();
         const cursorLocation = new Graphene.Point({x, y});
 
-        if (panelBoxRect.contains_point(cursorLocation))
-            return true;
-
-        // Check if panel or panel menus have grab actor
-        const grabActor = global.stage.get_grab_actor();
-        const sourceActor = grabActor?._sourceActor || grabActor;
-        const statusArea = this._panelParent.statusArea ?? this._panel.statusArea;
-        const quickSettingsMenu = statusArea?.quickSettings?.menu.actor;
-
-        if (sourceActor && (quickSettingsMenu?.contains(sourceActor) || this._panelParent.contains(sourceActor)))
-            return true;
-
-        return false;
+        return panelBoxRect.contains_point(cursorLocation);
     }
 
     _startTrackingMouse(callback) {
@@ -601,7 +638,6 @@ export const ArcMenu = class ArcMenuArcMenu extends PopupMenu.PopupMenu {
         this.actor.add_style_class_name('panel-menu arcmenu-menu');
         this.actor.hide();
         this._menuClosedID = this.connect('menu-closed', () => this._menuButton.setDefaultMenuView());
-        this.connect('destroy', () => this._onDestroy());
 
         this.actor.connectObject('captured-event', this._onCapturedEvent.bind(this), this);
 
@@ -628,45 +664,51 @@ export const ArcMenu = class ArcMenuArcMenu extends PopupMenu.PopupMenu {
 
     close(animate) {
         if (this.isOpen)
-            this._menuButton.closeOtherMenus();
+            this._menuButton?.closeOtherMenus();
 
         super.close(animate);
     }
 
-    _onDestroy() {
+    destroy() {
+        this._boxPointer.remove_effect_by_name('dim');
         if (this._menuClosedID) {
             this.disconnect(this._menuClosedID);
             this._menuClosedID = null;
         }
+        super.destroy();
+        this._dimEffect = null;
+        this._menuButton = null;
     }
 };
 
 var ArcMenuContextMenu = class ArcMenuArcMenuContextMenu extends PopupMenu.PopupMenu {
     constructor(sourceActor, arrowAlignment, arrowSide) {
         super(sourceActor, arrowAlignment, arrowSide);
-        this._settings = ArcMenuManager.settings;
-        this._extension = ArcMenuManager.extension;
         this._systemActions = SystemActions.getDefault();
 
         this.actor.add_style_class_name('panel-menu app-menu');
         Main.uiGroup.add_child(this.actor);
         this.actor.hide();
 
-        const menuItemsChangedId = this._settings.connect('changed::context-menu-items',
-            () => this.populateMenuItems());
+        ArcMenuManager.settings.connectObject('changed::context-menu-items',
+            () => this.populateMenuItems(), this);
 
         this.populateMenuItems();
-        this.connect('destroy', () => {
-            this.disconnectPowerOptions();
-            this._settings.disconnect(menuItemsChangedId);
-        });
+    }
+
+    destroy() {
+        this.disconnectPowerOptions();
+        ArcMenuManager.settings.disconnectObject(this);
+
+        this._systemActions = null;
+        super.destroy();
     }
 
     populateMenuItems() {
         this.disconnectPowerOptions();
         this.removeAll();
 
-        const contextMenuShortcuts = this._settings.get_value('context-menu-items').deep_unpack();
+        const contextMenuShortcuts = ArcMenuManager.settings.get_value('context-menu-items').deep_unpack();
 
         for (let i = 0; i < contextMenuShortcuts.length; i++) {
             const {name, id} = contextMenuShortcuts[i];
@@ -676,7 +718,7 @@ var ArcMenuContextMenu = class ArcMenuArcMenuContextMenu extends PopupMenu.Popup
             } else if (id === Constants.ShortcutCommands.SEPARATOR) {
                 this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
             } else if (id === Constants.ShortcutCommands.SETTINGS) {
-                this.addAction(_('ArcMenu Settings'), () => this._extension.openPreferences());
+                this.addAction(_('ArcMenu Settings'), () => ArcMenuManager.extension.openPreferences());
             } else if (id.includes(Constants.ShortcutCommands.SETTINGS)) {
                 const settingsPage = id.replace(Constants.ShortcutCommands.SETTINGS, '');
                 if (settingsPage === 'About')
@@ -704,8 +746,8 @@ var ArcMenuContextMenu = class ArcMenuArcMenuContextMenu extends PopupMenu.Popup
     addArcMenuSettingsItem(title, prefsVisiblePage) {
         const item = new PopupMenu.PopupMenuItem(_(title));
         item.connect('activate', () => {
-            this._settings.set_int('prefs-visible-page', prefsVisiblePage);
-            this._extension.openPreferences();
+            ArcMenuManager.settings.set_int('prefs-visible-page', prefsVisiblePage);
+            ArcMenuManager.extension.openPreferences();
         });
         this.addMenuItem(item);
     }

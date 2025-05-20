@@ -3,13 +3,13 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 export default {
-    PACKAGE_VERSION: 58,
+    PACKAGE_VERSION: 62,
     PACKAGE_URL: 'https://github.com/GSConnect/gnome-shell-extension-gsconnect',
     PACKAGE_BUGREPORT: 'https://github.com/GSConnect/gnome-shell-extension-gsconnect/issues/new',
     PACKAGE_DATADIR: '/usr/local/share/gnome-shell/extensions/gsconnect@andyholmes.github.io',
     PACKAGE_LOCALEDIR: '/usr/local/share/locale',
     GSETTINGS_SCHEMA_DIR: '/usr/local/share/glib-2.0/schemas',
-    GNOME_SHELL_LIBDIR: '/usr/local/lib64',
+    GNOME_SHELL_LIBDIR: '/usr/local/lib/x86_64-linux-gnu',
 
     APP_ID: 'org.gnome.Shell.Extensions.GSConnect',
     APP_PATH: '/org/gnome/Shell/Extensions/GSConnect',

@@ -25,8 +25,8 @@ export class ArcMenuManager {
         return ArcMenuManager.getDefault().settings;
     }
 
-    static get settingsControllers() {
-        return ArcMenuManager.getDefault().settingsControllers;
+    static get menuControllers() {
+        return ArcMenuManager.getDefault().menuControllers;
     }
 
     destroy() {

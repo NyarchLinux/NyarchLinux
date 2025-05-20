@@ -69,9 +69,6 @@
 # Defaults!/usr/local/bin/sudoreplay !log_output
 # Defaults!REBOOT !log_output
 
-# Enable insults in sudo
-Defaults insults
-
 ##
 ## Runas alias specification
 ##

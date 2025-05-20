@@ -105,8 +105,12 @@
                 <property name="title" translatable="yes">Time (ms) before hiding</property>
                 <property name="subtitle" translatable="yes">(100 is default)</property>
                 <child>
-                  <object class="GtkCheckButton" id="preview_immediate_click_button">
-                    <property name="receives_default">False</property>
+                  <object class="GtkBox">
+                    <child>
+                      <object class="GtkCheckButton" id="preview_immediate_click_button">
+                        <property name="receives_default">False</property>
+                      </object>
+                    </child>
                     <child>
                       <object class="GtkLabel" id="preview_immediate_click_label">
                         <property name="name">4</property>
@@ -322,7 +326,7 @@
                     <property name="receives_default">False</property>
                     <property name="valign">center</property>
                     <property name="active">True</property>
-                    <signal name="toggled" handler="preview_title_position_bottom_button_toggled_cb" swapped="no"/>
+                    <signal name="toggled" handler="preview_title_position_bottom_button_toggled_cb"/>
                   </object>
                 </child>
                 <child>
@@ -331,7 +335,7 @@
                     <property name="receives_default">False</property>
                     <property name="valign">center</property>
                     <property name="group">preview_title_position_bottom_button</property>
-                    <signal name="toggled" handler="preview_title_position_top_button_toggled_cb" swapped="no"/>
+                    <signal name="toggled" handler="preview_title_position_top_button_toggled_cb"/>
                   </object>
                 </child>
               </object>

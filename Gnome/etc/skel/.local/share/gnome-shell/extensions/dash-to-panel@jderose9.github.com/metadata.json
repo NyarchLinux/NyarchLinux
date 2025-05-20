@@ -9,9 +9,10 @@
   "name": "Dash to Panel",
   "shell-version": [
     "46",
-    "47"
+    "47",
+    "48"
   ],
   "url": "https://github.com/home-sweet-gnome/dash-to-panel",
   "uuid": "dash-to-panel@jderose9.github.com",
-  "version": 64
+  "version": 68
 }

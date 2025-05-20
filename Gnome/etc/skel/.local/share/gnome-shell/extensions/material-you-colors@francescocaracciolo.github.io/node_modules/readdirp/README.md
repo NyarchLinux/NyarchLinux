@@ -1,11 +1,10 @@
 # readdirp [![Weekly downloads](https://img.shields.io/npm/dw/readdirp.svg)](https://github.com/paulmillr/readdirp)
 
-Recursive version of [fs.readdir](https://nodejs.org/api/fs.html#fs_fs_readdir_path_options_callback). Exposes a **stream API** and a **promise API**.
-
-Supports both ESM and common.js.
+Recursive version of fs.readdir. Exposes a **stream API** (with small RAM & CPU footprint) and a **promise API**.
 
 ```sh
 npm install readdirp
+jsr add jsr:@paulmillr/readdirp
 ```
 
 ```javascript

@@ -40,7 +40,11 @@ std::unordered_set<Glob> getIgnoreGlobs(Env env, Value opts) {
         Value item = items.Get(Number::New(env, i));
         if (item.IsString()) {
           auto key = item.As<String>().Utf8Value();
-          result.emplace(key);
+          try {
+            result.emplace(key);
+          } catch (const std::regex_error& e) {
+            Error::New(env, e.what()).ThrowAsJavaScriptException();
+          }
         }
       }
     }
@@ -112,6 +116,9 @@ private:
 
   void execute() override {
     backend->getEventsSince(watcher, &snapshotPath);
+    if (watcher->mEvents.hasError()) {
+      throw std::runtime_error(watcher->mEvents.getError());
+    }
   }
 
   Value getResult() override {

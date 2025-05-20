@@ -4,9 +4,10 @@
   "name": "GSConnect",
   "shell-version": [
     "46",
-    "47"
+    "47",
+    "48"
   ],
   "url": "https://github.com/GSConnect/gnome-shell-extension-gsconnect/wiki",
   "uuid": "gsconnect@andyholmes.github.io",
-  "version": 58
+  "version": 62
 }

@@ -318,6 +318,7 @@ export default class DING extends Extension {
     updateDesktopGeometry() {
         if (this.data.actionGroup && (Main.layoutManager.monitors.length != 0)) {
             this.data.actionGroup.change_action_state('desktopGeometry', this.getDesktopGeometry());
+            this.data.x11Manager.refreshWindowsPosition();
         }
     }
 

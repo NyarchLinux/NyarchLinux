@@ -2,27 +2,28 @@ import Clutter from 'gi://Clutter';
 import GObject from 'gi://GObject';
 import St from 'gi://St';
 
+import {ArcMenuManager} from '../arcmenuManager.js';
 import {BaseMenuLayout} from './baseMenuLayout.js';
 import * as Constants from '../constants.js';
 import * as MW from '../menuWidgets.js';
+import {getOrientationProp} from '../utils.js';
 
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-export const Layout = class AzLayout extends BaseMenuLayout {
+export class Layout extends BaseMenuLayout {
     static {
         GObject.registerClass(this);
     }
 
     constructor(menuButton) {
         super(menuButton, {
-            has_search: true,
             display_type: Constants.DisplayType.GRID,
             search_display_type: Constants.DisplayType.GRID,
             search_results_spacing: 4,
             context_menu_location: Constants.ContextMenuLocation.BOTTOM_CENTERED,
             column_spacing: 4,
             row_spacing: 4,
-            vertical: true,
+            ...getOrientationProp(true),
             default_menu_width: 460,
             icon_grid_size: Constants.GridIconSize.LARGE_RECT,
             category_icon_size: Constants.MEDIUM_ICON_SIZE,
@@ -45,7 +46,7 @@ export const Layout = class AzLayout extends BaseMenuLayout {
             y_expand: true,
             x_align: Clutter.ActorAlign.FILL,
             y_align: Clutter.ActorAlign.FILL,
-            vertical: true,
+            ...getOrientationProp(true),
         });
         this.add_child(this._mainBox);
 
@@ -54,7 +55,7 @@ export const Layout = class AzLayout extends BaseMenuLayout {
             y_expand: false,
             x_align: Clutter.ActorAlign.FILL,
             y_align: Clutter.ActorAlign.START,
-            vertical: false,
+            ...getOrientationProp(false),
         });
         this._mainBox.add_child(this.topBox);
 
@@ -76,7 +77,7 @@ export const Layout = class AzLayout extends BaseMenuLayout {
         this._mainBox.add_child(this.allAppsButton);
 
         this.applicationsBox = new St.BoxLayout({
-            vertical: true,
+            ...getOrientationProp(true),
             x_expand: true,
             y_expand: true,
             x_align: Clutter.ActorAlign.FILL,
@@ -99,7 +100,7 @@ export const Layout = class AzLayout extends BaseMenuLayout {
             y_expand: false,
             x_align: Clutter.ActorAlign.FILL,
             y_align: Clutter.ActorAlign.END,
-            vertical: false,
+            ...getOrientationProp(false),
         });
         this._mainBox.add_child(this.bottomBox);
 
@@ -108,11 +109,11 @@ export const Layout = class AzLayout extends BaseMenuLayout {
             y_expand: true,
             x_align: Clutter.ActorAlign.FILL,
             y_align: Clutter.ActorAlign.CENTER,
-            vertical: false,
+            ...getOrientationProp(false),
         });
         this.actionsBox.style = 'margin: 0px 10px; spacing: 10px;';
 
-        const searchBarLocation = this._settings.get_enum('searchbar-default-top-location');
+        const searchBarLocation = ArcMenuManager.settings.get_enum('searchbar-default-top-location');
         if (searchBarLocation === Constants.SearchbarLocation.TOP) {
             this.topBox.add_child(this.searchEntry);
             this.bottomBox.add_child(this.actionsBox);
@@ -121,7 +122,7 @@ export const Layout = class AzLayout extends BaseMenuLayout {
             this.bottomBox.add_child(this.searchEntry);
         }
 
-        this._settings.connectObject('changed::az-layout-extra-shortcuts', () => this._createExtraButtons(), this);
+        ArcMenuManager.settings.connectObject('changed::az-layout-extra-shortcuts', () => this._createExtraButtons(), this);
         this._createExtraButtons();
 
         this.updateStyle();
@@ -129,6 +130,7 @@ export const Layout = class AzLayout extends BaseMenuLayout {
         this.loadCategories();
         this.loadPinnedApps();
         this.setDefaultMenuView();
+        this._connectAppChangedEvents();
     }
 
     _createExtraButtons() {
@@ -138,7 +140,7 @@ export const Layout = class AzLayout extends BaseMenuLayout {
         this.actionsBox.add_child(avatarMenuItem);
 
         const isContainedInCategory = false;
-        const extraButtons = this._settings.get_value('az-layout-extra-shortcuts').deep_unpack();
+        const extraButtons = ArcMenuManager.settings.get_value('az-layout-extra-shortcuts').deep_unpack();
 
         for (let i = 0; i < extraButtons.length; i++) {
             const {id} = extraButtons[i];
@@ -157,7 +159,7 @@ export const Layout = class AzLayout extends BaseMenuLayout {
             }
         }
 
-        const powerDisplayStyle = this._settings.get_enum('power-display-style');
+        const powerDisplayStyle = ArcMenuManager.settings.get_enum('power-display-style');
         let leaveButton;
         if (powerDisplayStyle === Constants.PowerDisplayStyle.IN_LINE)
             leaveButton = new MW.PowerOptionsBox(this);
@@ -269,4 +271,4 @@ export const Layout = class AzLayout extends BaseMenuLayout {
         this.allAppsButton.destroy();
         super._onDestroy();
     }
-};
+}

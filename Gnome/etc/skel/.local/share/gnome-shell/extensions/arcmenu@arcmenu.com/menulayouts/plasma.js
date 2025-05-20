@@ -5,27 +5,32 @@ import GObject from 'gi://GObject';
 import Shell from 'gi://Shell';
 import St from 'gi://St';
 
+import * as Config from 'resource:///org/gnome/shell/misc/config.js';
+
+import {ArcMenuManager} from '../arcmenuManager.js';
 import {BaseMenuLayout} from './baseMenuLayout.js';
 import * as Constants from '../constants.js';
 import * as MW from '../menuWidgets.js';
 import * as PlaceDisplay from '../placeDisplay.js';
+import {getOrientationProp} from '../utils.js';
 
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-export const Layout = class PlasmaLayout extends BaseMenuLayout {
+const [ShellVersion] = Config.PACKAGE_VERSION.split('.').map(s => Number(s));
+
+export class Layout extends BaseMenuLayout {
     static {
         GObject.registerClass(this);
     }
 
     constructor(menuButton) {
         super(menuButton, {
-            has_search: true,
             display_type: Constants.DisplayType.LIST,
             search_display_type: Constants.DisplayType.LIST,
             column_spacing: 0,
             row_spacing: 0,
             default_menu_width: 450,
-            vertical: true,
+            ...getOrientationProp(true),
             category_icon_size: Constants.MEDIUM_ICON_SIZE,
             apps_icon_size: Constants.MEDIUM_ICON_SIZE,
             quicklinks_icon_size: Constants.MEDIUM_ICON_SIZE,
@@ -40,21 +45,21 @@ export const Layout = class PlasmaLayout extends BaseMenuLayout {
         this.topBox = new St.BoxLayout({
             x_expand: true,
             y_expand: false,
-            vertical: false,
+            ...getOrientationProp(false),
             x_align: Clutter.ActorAlign.FILL,
             y_align: Clutter.ActorAlign.START,
         });
         this.leftTopBox = new St.BoxLayout({
             x_expand: false,
             y_expand: false,
-            vertical: false,
+            ...getOrientationProp(false),
             y_align: Clutter.ActorAlign.CENTER,
             style: 'padding-left: 10px; margin-left: 0.4em',
         });
         this.rightTopBox = new St.BoxLayout({
             x_expand: true,
             y_expand: false,
-            vertical: true,
+            ...getOrientationProp(true),
             x_align: Clutter.ActorAlign.FILL,
             y_align: Clutter.ActorAlign.START,
             style_class: 'popup-menu-item',
@@ -88,13 +93,13 @@ export const Layout = class PlasmaLayout extends BaseMenuLayout {
             y_align: Clutter.ActorAlign.START,
             style_class: this._disableFadeEffect ? '' : 'small-vfade',
         });
-        this.applicationsBox = new St.BoxLayout({vertical: true});
+        this.applicationsBox = new St.BoxLayout({...getOrientationProp(true)});
         this._addChildToParent(this.applicationsScrollBox, this.applicationsBox);
 
         this.navigateBoxContainer = new St.BoxLayout({
             x_expand: true,
             y_expand: false,
-            vertical: true,
+            ...getOrientationProp(true),
             x_align: Clutter.ActorAlign.FILL,
             y_align: Clutter.ActorAlign.START,
         });
@@ -114,10 +119,10 @@ export const Layout = class PlasmaLayout extends BaseMenuLayout {
         layout.hookup_style(this.grid);
         this.navigateBox.add_child(this.grid);
 
-        this.pinnedAppsButton = new PlasmaMenuItem(this, _('Pinned'), `${this._extension.path}/${Constants.ArcMenuLogoSymbolic}`);
+        this.pinnedAppsButton = new PlasmaMenuItem(this, _('Pinned'), `${ArcMenuManager.extension.path}/${Constants.ArcMenuLogoSymbolic}`);
         this.pinnedAppsButton.connect('activate', () => this.displayPinnedApps());
         this.grid.layout_manager.attach(this.pinnedAppsButton, 0, 0, 1, 1);
-        this.pinnedAppsButton.set_style_pseudo_class('active-item');
+        this.pinnedAppsButton.setActive(true);
 
         this.applicationsButton = new PlasmaMenuItem(this, _('Apps'), 'preferences-desktop-apps-symbolic');
         this.applicationsButton.connect('activate', () => this.displayCategories());
@@ -133,7 +138,7 @@ export const Layout = class PlasmaLayout extends BaseMenuLayout {
 
         this.categoryHeader = new PlasmaCategoryHeader(this);
 
-        const searchBarLocation = this._settings.get_enum('searchbar-default-top-location');
+        const searchBarLocation = ArcMenuManager.settings.get_enum('searchbar-default-top-location');
         if (searchBarLocation === Constants.SearchbarLocation.BOTTOM) {
             this.searchEntry.style = 'margin: 3px 10px 5px 10px;';
             this.topBox.style = 'padding-top: 0.5em;';
@@ -179,7 +184,7 @@ export const Layout = class PlasmaLayout extends BaseMenuLayout {
             this.add_child(this.navigateBoxContainer);
         }
 
-        const applicationShortcutsList = this._settings.get_value('application-shortcuts').deep_unpack();
+        const applicationShortcutsList = ArcMenuManager.settings.get_value('application-shortcuts').deep_unpack();
         this.applicationShortcuts = [];
         for (let i = 0; i < applicationShortcutsList.length; i++) {
             const shortcutMenuItem = this.createMenuItem(applicationShortcutsList[i],
@@ -190,11 +195,11 @@ export const Layout = class PlasmaLayout extends BaseMenuLayout {
                 shortcutMenuItem.destroy();
         }
 
-        const directoryShortcutsList = this._settings.get_value('directory-shortcuts').deep_unpack();
+        const directoryShortcutsList = ArcMenuManager.settings.get_value('directory-shortcuts').deep_unpack();
         this._loadPlaces(directoryShortcutsList);
 
         this.externalDevicesBox = new St.BoxLayout({
-            vertical: true,
+            ...getOrientationProp(true),
             x_expand: true,
             y_expand: true,
         });
@@ -203,7 +208,7 @@ export const Layout = class PlasmaLayout extends BaseMenuLayout {
         this.placesManager = new PlaceDisplay.PlacesManager();
         for (let i = 0; i < Constants.SECTIONS.length; i++) {
             const id = Constants.SECTIONS[i];
-            this._placesSections[id] = new St.BoxLayout({vertical: true});
+            this._placesSections[id] = new St.BoxLayout({...getOrientationProp(true)});
             this.placesManager.connectObject(`${id}-updated`, () => this._redisplayPlaces(id), this);
 
             this._createPlaces(id);
@@ -215,6 +220,7 @@ export const Layout = class PlasmaLayout extends BaseMenuLayout {
         this.loadCategories();
         this.loadPinnedApps();
         this.setDefaultMenuView();
+        this._connectAppChangedEvents();
     }
 
     populateFrequentAppsList(categoryMenuItem) {
@@ -250,7 +256,7 @@ export const Layout = class PlasmaLayout extends BaseMenuLayout {
         this.categoryDirectories = null;
         this.categoryDirectories = new Map();
         this.hasPinnedApps = true;
-        const extraCategories = this._settings.get_value('extra-categories').deep_unpack();
+        const extraCategories = ArcMenuManager.settings.get_value('extra-categories').deep_unpack();
 
         for (let i = 0; i < extraCategories.length; i++) {
             const [categoryEnum, shouldShow] = extraCategories[i];
@@ -316,18 +322,18 @@ export const Layout = class PlasmaLayout extends BaseMenuLayout {
     }
 
     _createPowerItems() {
-        this.sessionBox = new St.BoxLayout({vertical: true});
+        this.sessionBox = new St.BoxLayout({...getOrientationProp(true)});
         this._destroyableObjects.push(this.sessionBox);
         this.sessionBox.add_child(this.createLabelRow(_('Session')));
 
-        this.systemBox = new St.BoxLayout({vertical: true});
+        this.systemBox = new St.BoxLayout({...getOrientationProp(true)});
         this._destroyableObjects.push(this.systemBox);
         this.systemBox.add_child(this.createLabelRow(_('System')));
 
         this.hasSessionOption = false;
         this.hasSystemOption = false;
 
-        const powerOptions = this._settings.get_value('power-options').deep_unpack();
+        const powerOptions = ArcMenuManager.settings.get_value('power-options').deep_unpack();
         for (let i = 0; i < powerOptions.length; i++) {
             const powerType = powerOptions[i][0];
             const shouldShow = powerOptions[i][1];
@@ -388,7 +394,7 @@ export const Layout = class PlasmaLayout extends BaseMenuLayout {
     setDefaultMenuView() {
         super.setDefaultMenuView();
         this.clearActiveItem();
-        this.pinnedAppsButton.set_style_pseudo_class('active-item');
+        this.pinnedAppsButton.setActive(true);
         this.displayPinnedApps();
     }
 
@@ -396,7 +402,7 @@ export const Layout = class PlasmaLayout extends BaseMenuLayout {
         if (this.contains(this.categoryHeader))
             this.remove_child(this.categoryHeader);
 
-        const searchBarLocation = this._settings.get_enum('searchbar-default-top-location');
+        const searchBarLocation = ArcMenuManager.settings.get_enum('searchbar-default-top-location');
         if (searchBarLocation === Constants.SearchbarLocation.BOTTOM)
             this.insert_child_at_index(this.categoryHeader, 1);
         else
@@ -436,7 +442,7 @@ export const Layout = class PlasmaLayout extends BaseMenuLayout {
 
         super._onDestroy();
     }
-};
+}
 
 class PlasmaMenuItem extends MW.BaseMenuItem {
     static {
@@ -448,13 +454,11 @@ class PlasmaMenuItem extends MW.BaseMenuItem {
         this.iconPath = iconPath;
 
         this.tooltipLocation = Constants.TooltipLocation.BOTTOM_CENTERED;
-        this.vertical = true;
+        this.set({
+            ...getOrientationProp(true),
+        });
 
-        const searchbarLocation = this._settings.get_enum('searchbar-default-top-location');
-        if (searchbarLocation === Constants.SearchbarLocation.TOP)
-            this.name = 'arcmenu-plasma-button-top';
-        else
-            this.name = 'arcmenu-plasma-button-bottom';
+        this.add_style_class_name('arcmenu-plasma-button');
 
         this._iconBin = new St.Bin({
             y_expand: true,
@@ -492,7 +496,7 @@ class PlasmaMenuItem extends MW.BaseMenuItem {
         } else {
             this._menuButton.tooltip.hide();
         }
-        const shouldHover = this._settings.get_boolean('plasma-enable-hover');
+        const shouldHover = ArcMenuManager.settings.get_boolean('plasma-enable-hover');
         if (shouldHover && this.hover && !this.isActive)
             this.activate(Clutter.get_current_event());
     }
@@ -502,12 +506,12 @@ class PlasmaMenuItem extends MW.BaseMenuItem {
         if (activeChanged) {
             this._active = active;
             if (active) {
-                this.add_style_class_name('selected');
+                this._setSelectedStyle();
                 this._menuLayout.activeMenuItem = this;
                 if (this.can_focus)
                     this.grab_key_focus();
-            } else {
-                this.remove_style_class_name('selected');
+            } else if (!this._activeCategory) {
+                this._removeSelectedStyle();
             }
             this.notify('active');
         }
@@ -515,12 +519,27 @@ class PlasmaMenuItem extends MW.BaseMenuItem {
 
     setActive(active) {
         if (active) {
-            this.isActive = true;
-            this.set_style_pseudo_class('active-item');
+            this._activeCategory = true;
+            this.add_style_pseudo_class('active');
         } else {
-            this.isActive = false;
-            this.set_style_pseudo_class(null);
+            this._activeCategory = false;
+            this.remove_style_pseudo_class('active');
+            this._removeSelectedStyle();
         }
+    }
+
+    _setSelectedStyle() {
+        if (ShellVersion >= 47)
+            this.add_style_pseudo_class('selected');
+        else
+            this.add_style_class_name('selected');
+    }
+
+    _removeSelectedStyle() {
+        if (ShellVersion >= 47)
+            this.remove_style_pseudo_class('selected');
+        else
+            this.remove_style_class_name('selected');
     }
 
     activate(event) {
@@ -572,6 +591,9 @@ class PlasmaCategoryHeader extends St.BoxLayout {
         });
 
         this.add_child(this.categoryLabel);
+        this.connect('destroy', () => {
+            this._menuLayout = null;
+        });
     }
 
     setActiveCategory(categoryText) {

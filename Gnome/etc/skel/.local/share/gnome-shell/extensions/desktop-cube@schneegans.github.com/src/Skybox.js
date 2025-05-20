@@ -17,6 +17,7 @@ import GObject from 'gi://GObject';
 import Shell from 'gi://Shell';
 import GdkPixbuf from 'gi://GdkPixbuf';
 import Cogl from 'gi://Cogl';
+import St from 'gi://St';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
@@ -66,8 +67,9 @@ var SkyboxEffect = GObject.registerClass({
   vfunc_build_pipeline() {
 
     // In the vertex shader, we compute the view space position of the actor's corners.
-    this.add_glsl_snippet(Shell.SnippetHook.VERTEX, 'varying vec4 vsPos;',
-                          'vsPos = cogl_modelview_matrix * cogl_position_in;', false);
+    this.add_glsl_snippet(
+      Cogl.SnippetHook ? Cogl.SnippetHook.VERTEX : Shell.SnippetHook.VERTEX,
+      'varying vec4 vsPos;', 'vsPos = cogl_modelview_matrix * cogl_position_in;', false);
 
     const fragmentDeclares = `
       varying vec4      vsPos;
@@ -102,8 +104,9 @@ var SkyboxEffect = GObject.registerClass({
       cogl_color_out = texture2D(uTexture, vec2(x, y));
     `;
 
-    this.add_glsl_snippet(Shell.SnippetHook.FRAGMENT, fragmentDeclares, fragmentCode,
-                          false);
+    this.add_glsl_snippet(
+      Cogl.SnippetHook ? Cogl.SnippetHook.FRAGMENT : Shell.SnippetHook.FRAGMENT,
+      fragmentDeclares, fragmentCode, false);
   }
 
   // For each draw call, we have to set some uniform values.
@@ -131,11 +134,20 @@ var SkyboxEffect = GObject.registerClass({
         ];
 
         try {
-          const pixbuf  = GdkPixbuf.Pixbuf.new_from_stream_finish(result);
-          const texture = new Clutter.Image();
-          texture.set_data(pixbuf.get_pixels(), FORMATS[pixbuf.get_n_channels() - 1],
-                           pixbuf.get_width(), pixbuf.get_height(),
-                           pixbuf.get_rowstride());
+          const pixbuf = GdkPixbuf.Pixbuf.new_from_stream_finish(result);
+          const texture =
+            St.ImageContent.new_with_preferred_size(pixbuf.width, pixbuf.height);
+
+          // https://gitlab.gnome.org/GNOME/gnome-shell/-/commit/44b84e458a22046fedb85701ea25ad08ecc0d43f
+          if (utils.shellVersionIsAtLeast(48, 'beta')) {
+            texture.set_data(global.stage.context.get_backend().get_cogl_context(),
+                             pixbuf.get_pixels(), FORMATS[pixbuf.get_n_channels() - 1],
+                             pixbuf.width, pixbuf.height, pixbuf.rowstride);
+          } else {
+            texture.set_data(pixbuf.get_pixels(), FORMATS[pixbuf.get_n_channels() - 1],
+                             pixbuf.width, pixbuf.height, pixbuf.rowstride);
+          }
+
           resolve(texture);
         } catch (error) {
           reject(error);

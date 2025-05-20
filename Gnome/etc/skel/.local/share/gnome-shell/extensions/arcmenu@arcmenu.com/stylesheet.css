@@ -63,7 +63,7 @@
     padding-bottom: 6px;
 }
 
-#arcmenu-plasma-button-top{
+.arcmenu-plasma-button{
     width: 90px;
     height: 65px;
     border-radius: 8px;
@@ -71,29 +71,6 @@
     padding: 5px;
     spacing: 0px;
     margin: 0px;
-    border-top-width: 2px;
-    border-color: transparent;
-}
-#arcmenu-plasma-button-top:active-item, .arcmenu-plasma-button-top:active{
-    background-color: rgba(245, 245, 245, .05);
-    border-top-width: 2px;
-    border-color: rgb(61, 174, 235);
-}
-#arcmenu-plasma-button-bottom{
-    width: 90px;
-    height: 65px;
-    border-radius: 8px;
-    text-align: center;
-    padding: 5px;
-    spacing: 0px;
-    margin: 0px;
-    border-bottom-width: 2px;
-    border-color: transparent;
-}
-#arcmenu-plasma-button-bottom:active-item, .arcmenu-plasma-button-bottom:active{
-    background-color: rgba(245, 245, 245, .05);
-    border-bottom-width: 2px;
-    border-color: rgb(61, 174, 235);
 }
 
 .small-vfade{
@@ -145,7 +122,8 @@
 /* Recently Installed App Indicator Text */
 .arcmenu-text-indicator{
     font-size: small;
-    border-radius: 8px; 
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.1);
     margin: 0px; 
     padding: 0px 10px;
 }

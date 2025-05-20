@@ -15,7 +15,7 @@ ARCMENU_SCHEMA = "org.gnome.shell.extensions.arcmenu"
 EXTENSION_UUID = "material-you-colors@francescocaracciolo.github.io"
 EXTENSIONDIR = "~/.local/share/gnome-shell/extensions/" + EXTENSION_UUID
 EXTENSION_SCHEMA = "org.gnome.shell.extensions.material-you-colors"
-VERSION = 47 
+VERSION = 48
 
 COLOR_TO_ACCENT = {
   0xffbc9769: "orange",

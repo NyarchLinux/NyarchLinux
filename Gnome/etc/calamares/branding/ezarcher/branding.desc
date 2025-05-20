@@ -124,8 +124,8 @@ navigation: widget
 strings:
     productName:         "Nyarch Linux"
     shortProductName:    nyarch
-    version:             24.04
-    shortVersion:        24.04
+    version:             25.04
+    shortVersion:        25.04
     versionedName:       Nyarch Linux
     shortVersionedName:  Nyarch Linux
     bootloaderEntryName: nyarch
@@ -180,11 +180,12 @@ images:
 # These colors can **also** be set through the stylesheet, if the
 # branding component also ships a stylesheet.qss. Then they are
 # the corresponding CSS attributes of #sidebarApp.
+
 style:
-   SidebarBackground:    "#262830"
-   SidebarText:          "#e0e0e8"
-   SidebarTextCurrent:    "#d2edff"
-   SidebarBackgroundCurrent: "#004397"
+   SidebarBackground:    "#312429"
+   SidebarText:          "#ECDBDF"
+   SidebarTextCurrent:    "#F6D7E2"
+   SidebarBackgroundCurrent: "#A1005C"
 
 ### SLIDESHOW
 #

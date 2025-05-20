@@ -25,6 +25,7 @@ const TemplatesScriptsManager = imports.templatesScriptsManager;
 const DesktopIconsUtil = imports.desktopIconsUtil;
 const Prefs = imports.preferences;
 const ShowErrorPopup = imports.showErrorPopup;
+const SignalManager = imports.signalManager;
 
 const Gettext = imports.gettext.domain('ding');
 
@@ -34,6 +35,7 @@ var FileItemMenu = class {
     constructor(desktopManager) {
         this._currentFileItem = null;
         this._menu = null;
+        this._menuSignals = new SignalManager.SignalManager();
         this._desktopManager = desktopManager;
         DBusUtils.GnomeArchiveManager.connect('changed-status', () => {
             // wait a second to ensure that everything has settled
@@ -99,6 +101,7 @@ var FileItemMenu = class {
         }
         this._currentFileItem = this._desktopManager.getFileItemFromURI(this._currentFileItem.uri);
         if (!this._currentFileItem) {
+            this._menuSignals.disconnectAllSignals();
             this._menu.destroy();
             this._menu = null;
         }
@@ -112,7 +115,7 @@ var FileItemMenu = class {
         let element = new Gtk.MenuItem({label});
         this._menu.add(element);
         if (action) {
-            element.connect('activate', action);
+            this._menuSignals.connectSignal(element, 'activate', action);
         }
         return element;
     }
@@ -124,6 +127,11 @@ var FileItemMenu = class {
         this._currentFileItem = fileItem;
 
         let selectedItemsNum = this._desktopManager.getNumberOfSelectedItems();
+
+        if (this._menu) {
+            this._menuSignals.disconnectAllSignals();
+            this._menu.destroy();
+        }
 
         this._menu = new Gtk.Menu();
         const menuStyleContext = this._menu.get_style_context();
@@ -137,10 +145,11 @@ var FileItemMenu = class {
             );
         }
 
-        this._menu.connect_after('selection-done', () => {
+        this._menuSignals.connectSignal(this._menu, 'selection-done', () => {
+            this._menuSignals.disconnectAllSignals();
             this._menu.destroy();
             this._menu = null;
-        });
+        }, {after: true});
 
         let keepStacked = Prefs.desktopSettings.get_boolean('keep-stacked');
         if (keepStacked && !fileItem.stackUnique) {
@@ -409,11 +418,12 @@ var FileItemMenu = class {
             let chooser = Gtk.AppChooserDialog.new_for_content_type(null,
                 Gtk.DialogFlags.MODAL + Gtk.DialogFlags.USE_HEADER_BAR,
                 mimetype);
+            let signals = new SignalManager.SignalManager();
             chooser.show_all();
-            chooser.connect('close', () => {
+            signals.connectSignal(chooser, 'close', () => {
                 chooser.response(Gtk.ResponseType.CANCEL);
             });
-            chooser.connect('response', (actor, retval) => {
+            signals.connectSignal(chooser, 'response', (actor, retval) => {
                 if (retval == Gtk.ResponseType.OK) {
                     let appInfo = chooser.get_app_info();
                     if (appInfo) {
@@ -425,6 +435,9 @@ var FileItemMenu = class {
                     }
                 }
                 chooser.hide();
+                signals.disconnectAllSignals();
+                chooser = null;
+                signals = null;
             });
         }
     }

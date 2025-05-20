@@ -12,8 +12,6 @@ export const RecentFilesManager = class ArcMenuRecentFilesManager {
         this._bookmarksFile = new GLib.BookmarkFile();
         this._recentFile = GLib.build_filenamev([GLib.get_user_data_dir(), 'recently-used.xbel']);
         this._queryCancellables = [];
-
-        this._settings = ArcMenuManager.settings;
     }
 
     getRecentFiles() {
@@ -21,7 +19,7 @@ export const RecentFilesManager = class ArcMenuRecentFilesManager {
             this._bookmarksFile.load_from_file(this._recentFile);
         } catch (e) {
             if (!e.matches(GLib.BookmarkFileError.FILE_NOT_FOUND)) {
-                log(`Could not open recent files: ${e.message}`);
+                console.log(`Could not open recent files: ${e.message}`);
                 return [];
             }
         }
@@ -36,7 +34,7 @@ export const RecentFilesManager = class ArcMenuRecentFilesManager {
             this._bookmarksFile.remove_item(uri);
             this._bookmarksFile.to_file(this._recentFile);
         } catch (e) {
-            log(`Could not save recent file ${uri}: ${e.message}`);
+            console.log(`Could not save recent file ${uri}: ${e.message}`);
         }
     }
 
@@ -61,7 +59,7 @@ export const RecentFilesManager = class ArcMenuRecentFilesManager {
 
             if (fileInfo) {
                 const isHidden = fileInfo.get_attribute_boolean('standard::is-hidden');
-                const showHidden = this._settings.get_boolean('show-hidden-recent-files');
+                const showHidden = ArcMenuManager.settings.get_boolean('show-hidden-recent-files');
 
                 if (isHidden && !showHidden)
                     return {error: `${file.get_basename()} is hidden.`};
@@ -97,5 +95,7 @@ export const RecentFilesManager = class ArcMenuRecentFilesManager {
 
     destroy() {
         this.cancelCurrentQueries();
+        this._bookmarksFile = null;
+        this._recentFile = null;
     }
 };

@@ -59,6 +59,8 @@ export const SettingsPage = {
     POWER_OPTIONS: 12,
     EXTRA_CATEGORIES: 13,
     PINNED_APPS: 14,
+    DONATE: 15,
+    WHATS_NEW: 16,
 };
 
 export const DefaultMenuViewTognee = {
@@ -81,7 +83,7 @@ export const SoftwareManagerIDs = ['org.manjaro.pamac.manager.desktop', 'pamac-m
     'org.gnome.Software.desktop', 'tr.org.pardus.software.desktop'];
 
 export const Categories = [
-    {CATEGORY: CategoryType.FAVORITES, NAME: _('Favorites'), ICON: 'emblem-favorite-symbolic'},
+    {CATEGORY: CategoryType.FAVORITES, NAME: _('Favorites'), ICON: 'emote-love-symbolic'},
     {CATEGORY: CategoryType.FREQUENT_APPS, NAME: _('Frequent Apps'), ICON: 'user-bookmarks-symbolic'},
     {CATEGORY: CategoryType.ALL_PROGRAMS, NAME: _('All Apps'), ICON: 'view-app-grid-symbolic'},
     {CATEGORY: CategoryType.PINNED_APPS, NAME: _('Pinned Apps'), ICON: 'view-pin-symbolic'},
@@ -126,11 +128,17 @@ export const CategoryIconType = {
     SYMBOLIC: 1,
 };
 
-export const ForcedMenuLocation = {
+export const MenuLocation = {
     OFF: 0,
     TOP_CENTERED: 1,
-    BOTTOM_CENTERED: 2,
-    MONITOR_CENTERED: 3,
+    TOP_LEFT: 2,
+    TOP_RIGHT: 3,
+    BOTTOM_CENTERED: 4,
+    BOTTOM_LEFT: 5,
+    BOTTOM_RIGHT: 6,
+    LEFT_CENTERED: 7,
+    RIGHT_CENTERED: 8,
+    MONITOR_CENTERED: 9,
 };
 
 export const IconSize = {

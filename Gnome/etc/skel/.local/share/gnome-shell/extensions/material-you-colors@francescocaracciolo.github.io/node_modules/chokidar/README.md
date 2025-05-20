@@ -112,7 +112,7 @@ chokidar.watch('file', {
   // ignored: (file, _stats) => _stats?.isFile() && !file.endsWith('.txt'),
 
   awaitWriteFinish: true, // emit single event when chunked writes are completed
-  atomic: true // emit proper events when "atomic writes" (mv _tmp file) are used
+  atomic: true, // emit proper events when "atomic writes" (mv _tmp file) are used
 
   // The options also allow specifying custom intervals in ms
   // awaitWriteFinish: {
@@ -120,6 +120,7 @@ chokidar.watch('file', {
   //   pollInterval: 100
   // },
   // atomic: 100,
+
   interval: 100,
   binaryInterval: 300,
 
@@ -235,22 +236,29 @@ system being watched by this `FSWatcher` instance. The object's keys are all the
 directories (using absolute paths unless the `cwd` option was used), and the
 values are arrays of the names of the items contained in each directory.
 
-## CLI
+### CLI
 
-If you need a CLI interface for your file watching, check out
-third party [chokidar-cli](https://github.com/open-cli-tools/chokidar-cli), allowing you to
-execute a command on each change, or get a stdio stream of change events.
+Check out third party [chokidar-cli](https://github.com/open-cli-tools/chokidar-cli),
+which allows to execute a command on each change, or get a stdio stream of change events.
 
 ## Troubleshooting
 
-* On Linux, sometimes there's `ENOSP` error:
-    * `bash: cannot set terminal process group (-1): Inappropriate ioctl for device bash: no job control in this shell`
-  `Error: watch /home/ ENOSPC`
-    * This means Chokidar ran out of file handles and you'll need to increase their count by executing the following command in Terminal:
-  `echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p`
-* If using 3.x, upgrade to latest chokidar to prevent fsevents-related issues:
-    * `npm WARN optional dep failed, continuing fsevents@n.n.n`
-    * `TypeError: fsevents is not a constructor`
+Sometimes, Chokidar runs out of file handles, causing `EMFILE` and `ENOSP` errors:
+
+* `bash: cannot set terminal process group (-1): Inappropriate ioctl for device bash: no job control in this shell`
+* `Error: watch /home/ ENOSPC`
+
+There are two things that can cause it.
+
+1. Exhausted file handles for generic fs operations
+    - Can be solved by using [graceful-fs](https://www.npmjs.com/package/graceful-fs),
+      which can monkey-patch native `fs` module used by chokidar: `let fs = require('fs'); let grfs = require('graceful-fs'); grfs.gracefulify(fs);`
+    - Can also be solved by tuning OS: `echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p`.
+2. Exhausted file handles for `fs.watch`
+    - Can't seem to be solved by graceful-fs or OS tuning
+    - It's possible to start using `usePolling: true`, which will switch backend to resource-intensive `fs.watchFile`
+
+All fsevents-related issues (`WARN optional dep failed`, `fsevents is not a constructor`) are solved by upgrading to v4+.
 
 ## Changelog
 
@@ -277,7 +285,7 @@ chok.watch('./directory');
 
 // other way
 import { glob } from 'node:fs/promises';
-const watcher = watch(await glob('**/*.js'));
+const watcher = watch(await Array.fromAsync(glob('**/*.js')));
 
 // unwatching
 // v3

@@ -4,32 +4,31 @@ import St from 'gi://St';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
+import {ArcMenuManager} from '../arcmenuManager.js';
 import {BaseMenuLayout} from './baseMenuLayout.js';
 import * as Constants from '../constants.js';
 import {IconGrid} from '../iconGrid.js';
 import * as MW from '../menuWidgets.js';
+import {getOrientationProp} from '../utils.js';
 
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-export const Layout = class RavenLayout extends BaseMenuLayout {
+export class Layout extends BaseMenuLayout {
     static {
         GObject.registerClass(this);
     }
 
     constructor(menuButton) {
-        const {settings} = menuButton.extension;
-
         super(menuButton, {
-            has_search: true,
             display_type: Constants.DisplayType.GRID,
-            search_display_type: settings.get_enum('raven-search-display-style'),
+            search_display_type: ArcMenuManager.settings.get_enum('raven-search-display-style'),
             search_results_spacing: 4,
             context_menu_location: Constants.ContextMenuLocation.BOTTOM_CENTERED,
             column_spacing: 10,
             row_spacing: 10,
             default_menu_width: 415,
             icon_grid_size: Constants.GridIconSize.SMALL,
-            vertical: false,
+            ...getOrientationProp(false),
             supports_category_hover_activation: true,
             category_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
             apps_icon_size: Constants.LARGE_ICON_SIZE,
@@ -41,10 +40,10 @@ export const Layout = class RavenLayout extends BaseMenuLayout {
         this.arcMenu.box.style = 'padding: 0px; margin: 0px; border-radius: 0px;';
         this.searchEntry.style = 'margin: 10px 10px 10px 10px;';
 
-        this._settings.connectObject('changed::raven-position', () => this._updatePosition(), this);
+        ArcMenuManager.settings.connectObject('changed::raven-position', () => this._updatePosition(), this);
 
-        this._settings.connectObject('changed::enable-clock-widget-raven', () => this._updateWidgets(), this);
-        this._settings.connectObject('changed::enable-weather-widget-raven', () => this._updateWidgets(), this);
+        ArcMenuManager.settings.connectObject('changed::enable-clock-widget-raven', () => this._updateWidgets(), this);
+        ArcMenuManager.settings.connectObject('changed::enable-weather-widget-raven', () => this._updateWidgets(), this);
 
         this.updateLocation();
 
@@ -59,33 +58,33 @@ export const Layout = class RavenLayout extends BaseMenuLayout {
         this.arcMenu.close();
         this.arcMenu._boxPointer.hide();
 
-        const homeScreen = this._settings.get_boolean('enable-unity-homescreen');
+        const homeScreen = ArcMenuManager.settings.get_boolean('enable-unity-homescreen');
         this.activeCategoryName = homeScreen ? _('Pinned') : _('All Programs');
 
-        this.actionsBoxContainer = new St.BoxLayout({
+        this.categoriesBoxContainer = new St.BoxLayout({
             x_expand: false,
             y_expand: true,
             x_align: Clutter.ActorAlign.START,
             y_align: Clutter.ActorAlign.FILL,
-            vertical: true,
+            ...getOrientationProp(true),
         });
 
-        this.actionsBox = new St.BoxLayout({
+        this.categoriesBox = new St.BoxLayout({
             x_expand: false,
             y_expand: true,
             x_align: Clutter.ActorAlign.START,
             y_align: Clutter.ActorAlign.CENTER,
-            vertical: true,
+            ...getOrientationProp(true),
             style: 'spacing: 5px;',
         });
-        this.actionsBoxContainer.add_child(this.actionsBox);
+        this.categoriesBoxContainer.add_child(this.categoriesBox);
 
         this.topBox = new St.BoxLayout({
             x_expand: true,
             y_expand: false,
             x_align: Clutter.ActorAlign.FILL,
             y_align: Clutter.ActorAlign.START,
-            vertical: false,
+            ...getOrientationProp(false),
         });
         this.topBox.add_child(this.searchEntry);
 
@@ -93,14 +92,14 @@ export const Layout = class RavenLayout extends BaseMenuLayout {
             x_expand: true,
             y_expand: true,
             y_align: Clutter.ActorAlign.FILL,
-            vertical: true,
+            ...getOrientationProp(true),
         });
         this._mainBox.add_child(this.topBox);
         this.add_child(this._mainBox);
 
         this.applicationsBox = new St.BoxLayout({
             x_align: Clutter.ActorAlign.FILL,
-            vertical: true,
+            ...getOrientationProp(true),
             style: 'padding-bottom: 10px;',
             style_class: 'arcmenu-margin-box',
         });
@@ -119,7 +118,7 @@ export const Layout = class RavenLayout extends BaseMenuLayout {
             y_expand: true,
             x_align: Clutter.ActorAlign.FILL,
             y_align: Clutter.ActorAlign.END,
-            vertical: true,
+            ...getOrientationProp(true),
             style: 'margin: 0px 10px 10px 10px; spacing: 10px;',
         });
         this._mainBox.add_child(this._widgetBox);
@@ -130,7 +129,7 @@ export const Layout = class RavenLayout extends BaseMenuLayout {
             y_expand: true,
             x_align: Clutter.ActorAlign.FILL,
             y_align: Clutter.ActorAlign.CENTER,
-            vertical: true,
+            ...getOrientationProp(true),
         });
 
         this.shortcutsGrid = new IconGrid({
@@ -140,7 +139,7 @@ export const Layout = class RavenLayout extends BaseMenuLayout {
         });
         this.shortcutsBox.add_child(this.shortcutsGrid);
 
-        const applicationShortcuts = this._settings.get_value('application-shortcuts').deep_unpack();
+        const applicationShortcuts = ArcMenuManager.settings.get_value('application-shortcuts').deep_unpack();
         for (let i = 0; i < applicationShortcuts.length; i++) {
             const shortcutMenuItem = this.createMenuItem(applicationShortcuts[i], Constants.DisplayType.GRID, false);
             if (shortcutMenuItem.shouldShow)
@@ -157,11 +156,12 @@ export const Layout = class RavenLayout extends BaseMenuLayout {
         this.loadPinnedApps();
 
         this.setDefaultMenuView();
+        this._connectAppChangedEvents();
     }
 
     _updateWidgets() {
-        const clockWidgetEnabled = this._settings.get_boolean('enable-clock-widget-raven');
-        const weatherWidgetEnabled = this._settings.get_boolean('enable-weather-widget-raven');
+        const clockWidgetEnabled = ArcMenuManager.settings.get_boolean('enable-clock-widget-raven');
+        const weatherWidgetEnabled = ArcMenuManager.settings.get_boolean('enable-weather-widget-raven');
 
         if (clockWidgetEnabled && !this._clocksItem) {
             this._clocksItem = new MW.WorldClocksWidget(this);
@@ -188,21 +188,21 @@ export const Layout = class RavenLayout extends BaseMenuLayout {
         const style = `margin: 0px 0px 0px 0px; spacing: 10px; background-color: rgba(10, 10, 15, 0.1);
                        padding: 5px 5px; border-color: rgba(186, 196,201, 0.2);`;
 
-        if (this.contains(this.actionsBoxContainer))
-            this.remove_child(this.actionsBoxContainer);
+        if (this.contains(this.categoriesBoxContainer))
+            this.remove_child(this.categoriesBoxContainer);
 
-        const ravenPosition = this._settings.get_enum('raven-position');
+        const ravenPosition = ArcMenuManager.settings.get_enum('raven-position');
         if (ravenPosition === Constants.RavenPosition.LEFT) {
-            this.insert_child_at_index(this.actionsBoxContainer, 0);
-            this.actionsBoxContainer.style = `border-right-width: 1px;${style}`;
+            this.insert_child_at_index(this.categoriesBoxContainer, 0);
+            this.categoriesBoxContainer.style = `border-right-width: 1px;${style}`;
         } else if (ravenPosition === Constants.RavenPosition.RIGHT) {
-            this.insert_child_at_index(this.actionsBoxContainer, 1);
-            this.actionsBoxContainer.style = `border-left-width: 1px;${style}`;
+            this.insert_child_at_index(this.categoriesBoxContainer, 1);
+            this.categoriesBoxContainer.style = `border-left-width: 1px;${style}`;
         }
     }
 
     updateLocation() {
-        const ravenPosition = this._settings.get_enum('raven-position');
+        const ravenPosition = ArcMenuManager.settings.get_enum('raven-position');
 
         const alignment = ravenPosition === Constants.RavenPosition.LEFT ? 0 : 1;
         this.arcMenu._boxPointer.setSourceAlignment(alignment);
@@ -228,7 +228,7 @@ export const Layout = class RavenLayout extends BaseMenuLayout {
 
     setDefaultMenuView() {
         super.setDefaultMenuView();
-        const homeScreen = this._settings.get_boolean('enable-unity-homescreen');
+        const homeScreen = ArcMenuManager.settings.get_boolean('enable-unity-homescreen');
         if (homeScreen) {
             this.activeCategoryName = _('Pinned');
             this.activeCategoryType = Constants.CategoryType.HOME_SCREEN;
@@ -251,7 +251,7 @@ export const Layout = class RavenLayout extends BaseMenuLayout {
         this.categoryDirectories.set(Constants.CategoryType.HOME_SCREEN, categoryMenuItem);
         this.hasPinnedApps = true;
 
-        const extraCategories = this._settings.get_value('extra-categories').deep_unpack();
+        const extraCategories = ArcMenuManager.settings.get_value('extra-categories').deep_unpack();
         for (let i = 0; i < extraCategories.length; i++) {
             const [categoryEnum, shouldShow] = extraCategories[i];
             if (categoryEnum === Constants.CategoryType.PINNED_APPS || !shouldShow)
@@ -267,7 +267,7 @@ export const Layout = class RavenLayout extends BaseMenuLayout {
 
     displayCategories() {
         for (const categoryMenuItem of this.categoryDirectories.values())
-            this.actionsBox.add_child(categoryMenuItem);
+            this.categoriesBox.add_child(categoryMenuItem);
     }
 
     displayPinnedApps() {
@@ -284,8 +284,8 @@ export const Layout = class RavenLayout extends BaseMenuLayout {
             this.applicationsBox.add_child(this.shortcutsBox);
 
         this._widgetBox.hide();
-        const clockWidgetEnabled = this._settings.get_boolean('enable-clock-widget-raven');
-        const weatherWidgetEnabled = this._settings.get_boolean('enable-weather-widget-raven');
+        const clockWidgetEnabled = ArcMenuManager.settings.get_boolean('enable-clock-widget-raven');
+        const weatherWidgetEnabled = ArcMenuManager.settings.get_boolean('enable-weather-widget-raven');
 
         if (clockWidgetEnabled || weatherWidgetEnabled)
             this._widgetBox.show();
@@ -341,4 +341,4 @@ export const Layout = class RavenLayout extends BaseMenuLayout {
 
         super._onDestroy();
     }
-};
+}

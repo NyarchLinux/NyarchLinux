@@ -456,7 +456,7 @@ class DbusOperationsManager {
         }
     }
 
-    ShowItemPropertiesRemote(selection, timestamp, callback = null) {
+    ShowItemPropertiesRemote(selection, timestamp, callback) {
         if (!this.freeDesktopFileManager.proxy) {
             this._sendNoProxyError(callback);
             return;
@@ -474,7 +474,7 @@ class DbusOperationsManager {
         );
     }
 
-    ShowItemsRemote(showInFilesList, timestamp, callback = null) {
+    ShowItemsRemote(showInFilesList, timestamp, callback) {
         if (!this.freeDesktopFileManager.proxy) {
             this._sendNoProxyError(callback);
             return;
@@ -492,7 +492,7 @@ class DbusOperationsManager {
         );
     }
 
-    ShowFileRemote(uri, integer, boolean, callback = null) {
+    ShowFileRemote(uri, integer, boolean, callback) {
         if (!this.gnomeNautilusPreviewManager.proxy) {
             this._sendNoProxyError(callback);
             return;
@@ -508,7 +508,7 @@ class DbusOperationsManager {
             });
     }
 
-    ExtractRemote(extractFileItem, folder, boolean, callback = null) {
+    ExtractRemote(extractFileItem, folder, boolean, callback) {
         if (!this.gnomeArchiveManager.proxy) {
             this._sendNoProxyError(callback);
             return;
@@ -524,7 +524,7 @@ class DbusOperationsManager {
             });
     }
 
-    CompressRemote(compressFileItems, folder, boolean, callback = null) {
+    CompressRemote(compressFileItems, folder, boolean, callback) {
         if (!this.gnomeArchiveManager.proxy) {
             this._sendNoProxyError(callback);
             return;
@@ -618,7 +618,7 @@ class RemoteFileOperationsManager extends DbusOperationsManager {
         );
     }
 
-    CopyURIsRemote(fileList, uri, callback = null) {
+    CopyURIsRemote(fileList, uri, callback) {
         if (!this.fileOperationsManager.proxy) {
             this._sendNoProxyError(callback);
             return;
@@ -638,7 +638,7 @@ class RemoteFileOperationsManager extends DbusOperationsManager {
         );
     }
 
-    RenameURIRemote(fileList, uri, callback = null) {
+    RenameURIRemote(fileList, uri, callback) {
         if (!this.fileOperationsManager.proxy) {
             this._sendNoProxyError(callback);
             return;
@@ -658,7 +658,7 @@ class RemoteFileOperationsManager extends DbusOperationsManager {
         );
     }
 
-    TrashURIsRemote(fileList, callback = null) {
+    TrashURIsRemote(fileList, callback) {
         if (!this.fileOperationsManager.proxy) {
             this._sendNoProxyError(callback);
             return;
@@ -677,7 +677,7 @@ class RemoteFileOperationsManager extends DbusOperationsManager {
         );
     }
 
-    DeleteURIsRemote(fileList, callback = null) {
+    DeleteURIsRemote(fileList, callback) {
         if (!this.fileOperationsManager.proxy) {
             this._sendNoProxyError(callback);
             return;
@@ -696,7 +696,7 @@ class RemoteFileOperationsManager extends DbusOperationsManager {
         );
     }
 
-    EmptyTrashRemote(askConfirmation, callback = null) {
+    EmptyTrashRemote(askConfirmation, callback) {
         if (!this.fileOperationsManager.proxy) {
             this._sendNoProxyError(callback);
             return;
@@ -715,7 +715,7 @@ class RemoteFileOperationsManager extends DbusOperationsManager {
         );
     }
 
-    UndoRemote(callback = null) {
+    UndoRemote(callback) {
         if (!this.fileOperationsManager.proxy) {
             this._sendNoProxyError(callback);
             return;
@@ -733,7 +733,7 @@ class RemoteFileOperationsManager extends DbusOperationsManager {
         );
     }
 
-    RedoRemote(callback = null) {
+    RedoRemote(callback) {
         if (!this.fileOperationsManager.proxy) {
             this._sendNoProxyError(callback);
             return;
@@ -782,7 +782,7 @@ class LegacyRemoteFileOperationsManager extends DbusOperationsManager {
         );
     }
 
-    CopyURIsRemote(fileList, uri, callback = null) {
+    CopyURIsRemote(fileList, uri, callback) {
         if (!this.fileOperationsManager.proxy) {
             this._sendNoProxyError(callback);
             return;
@@ -801,7 +801,7 @@ class LegacyRemoteFileOperationsManager extends DbusOperationsManager {
         );
     }
 
-    RenameURIRemote(fileList, uri, callback = null) {
+    RenameURIRemote(fileList, uri, callback) {
         if (!this.fileOperationsManager.proxy) {
             this._sendNoProxyError(callback);
             return;
@@ -820,7 +820,7 @@ class LegacyRemoteFileOperationsManager extends DbusOperationsManager {
         );
     }
 
-    TrashURIsRemote(fileList, callback = null) {
+    TrashURIsRemote(fileList, callback) {
         if (!this.fileOperationsManager.proxy) {
             this._sendNoProxyError(callback);
             return;
@@ -838,7 +838,7 @@ class LegacyRemoteFileOperationsManager extends DbusOperationsManager {
         );
     }
 
-    DeleteURIsRemote(fileList, callback = null) {
+    DeleteURIsRemote(fileList, callback) {
         if (!this.fileOperationsManager.proxy) {
             this._sendNoProxyError(callback);
             return;
@@ -857,7 +857,7 @@ class LegacyRemoteFileOperationsManager extends DbusOperationsManager {
         );
     }
 
-    EmptyTrashRemote(callback = null) {
+    EmptyTrashRemote(callback) {
         if (!this.fileOperationsManager.proxy) {
             this._sendNoProxyError(callback);
             return;
@@ -874,7 +874,7 @@ class LegacyRemoteFileOperationsManager extends DbusOperationsManager {
         );
     }
 
-    UndoRemote(callback = null) {
+    UndoRemote(callback) {
         if (!this.fileOperationsManager.proxy) {
             this._sendNoProxyError(callback);
             return;
@@ -891,7 +891,7 @@ class LegacyRemoteFileOperationsManager extends DbusOperationsManager {
         );
     }
 
-    RedoRemote(callback = null) {
+    RedoRemote(callback) {
         if (!this.fileOperationsManager.proxy) {
             this._sendNoProxyError(callback);
             return;
