@@ -2,7 +2,7 @@
 Here are listed all the main changes done to EzArcher Gnome template, in order to replicate it on *almost* any distribution.
 
 - [x] Added Flatpak, Neofetch, Appimage Launcher and webapp-manager to packages
-- [ ] Added nvidia drivers (Nvidia Test branch)
+- [x] Added nvidia drivers (Nvidia branch)
 - [x] Deleted some packages that were considered useless
 - [x] Added /etc/os-release file
 - [x] Changed grub spalshscreen to https://www.reddit.com/r/LinuxFurries/comments/pcf0yp/i_made_a_dark_mode_of_the_nyarch_wallpaper_i_am/
@@ -14,12 +14,11 @@ Here are listed all the main changes done to EzArcher Gnome template, in order t
 - [x] Installed gnome extensions:
     - [x] Blur my shell
     - [x] Material You (Modified version) that integrates
-        - [x] Customi color theming
+        - [x] Custom color theming
         - [x] Some patches for better behavoir on Nyarch 
         - [x] Added pywal theming
-    - [x] ~Nyarcmenu (custom)~ Now we just use ArcMenu
-        - [x] SHips a modified version of Raven layout
-        - [x] Changes colors with material you extension 
+        - [x] Added custom icon theming
+        - [x] Added ArcMenu theming  
     - [x] Compiz lamp effect
     - [x] Compiz windows effect
     - [x] Rounded corners for windows
@@ -30,7 +29,7 @@ Here are listed all the main changes done to EzArcher Gnome template, in order t
     - [x] Arch Linux Updates Indicator
     - [x] Logo Background (From Fedora)
 - [x] Enable tap to click on touchpad in settings
-- [x] ~Nyaofetch, Nekofetch commands (alias of neofetch), aliased neofetch to show [this ASCII art](https://gist.github.com/jso8910/06e939e95bb0071f7a0d8f12a63c10ac).~
+- [x] ~Nyaofetch, Nekofetch commands (alias of neofetch), aliased fastfetch to show [this ASCII art](https://gist.github.com/jso8910/06e939e95bb0071f7a0d8f12a63c10ac).~
 - [x] Customized Calamares
 - [x] Installed [Nyarch Tour](https://github.com/NyarchLinux/NyarchTour)
 - [x] Installed [Nyarch Customize](https://github.com/NyarchLinux/NyarchCustomize)
@@ -43,8 +42,14 @@ Here are listed all the main changes done to EzArcher Gnome template, in order t
 - [x] Added theming to Kitty
 - [x] Nyaofetch and Nekofetch changed into commands, that displays png if running from kitty, ascii else
 - [x] Created Nyarch Wizard to suggest some apps to install
-- [ ] Grub theme (?)
-- [x] Installed AURA (package manager and AUR helper)
+- [X] Grub theme (?)
+- [x] Installed nyay (yay) (AUR helper)
 - [x] Created an alias of Aura called Nyaura
 - [x] Installed pywal
-- [x] Added insults to sudo
+- [x] Set BTRFS as default filesystem
+- [x] Pre configure automatic snapshots for disaster recovery
+- [x] Installed [Nyarch Assistant](https://github.com/NyarchLinux/NyarchAssistant)
+- [x] Installed [Nyarch Updater](https://github.com/NyarchLinux/NyarchUpdater)
+- [x] Enabled autologin and calamares polkit for live user
+- [x] Preinstall Pamac
+- [x] Preinstall gearlever for AppImages
