@@ -342,7 +342,7 @@ pango
 python-numpy
 gearlever
 timeshift
-timeshift-autosnap
+#timeshift-autosnap
 tuned-ppd
 
 # Chaotic
