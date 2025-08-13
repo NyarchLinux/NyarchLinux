@@ -256,7 +256,6 @@ adwaita-icon-theme
 baobab
 dconf-editor
 decibels
-evince
 gnome-applets
 gnome-backgrounds
 gnome-bluetooth-3.0
@@ -293,6 +292,7 @@ gsound
 loupe
 mutter
 nautilus
+papers
 pavucontrol
 polkit-gnome
 dart-sass
