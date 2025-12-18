@@ -92,7 +92,7 @@ export class Layout extends BaseMenuLayout {
             style: 'padding-bottom: 10px; spacing: 8px;',
             style_class: 'arcmenu-margin-box',
         });
-        this.applicationsScrollBox = this._createScrollBox({
+        this.applicationsScrollBox = this._createScrollView({
             x_expand: true,
             y_expand: true,
             x_align: Clutter.ActorAlign.FILL,
@@ -199,6 +199,9 @@ export class Layout extends BaseMenuLayout {
     }
 
     loadFrequentApps() {
+        this.frequentAppsList?.forEach(item => {
+            item.destroy();
+        });
         this.frequentAppsList = [];
 
         if (ArcMenuManager.settings.get_boolean('eleven-disable-frequent-apps'))
@@ -326,6 +329,10 @@ export class Layout extends BaseMenuLayout {
     _onDestroy() {
         if (this.arcMenu)
             this.arcMenu.box.style = null;
+
+        this.frequentAppsList?.forEach(item => {
+            item.destroy();
+        });
         this.backButton.destroy();
         this.allAppsButton.destroy();
 

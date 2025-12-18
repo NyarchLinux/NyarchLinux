@@ -424,6 +424,46 @@ export function openPrefs(uuid) {
         extension.openPreferences();
 }
 
+export function createPanActionScrollView(menuButton, params) {
+    const scrollView = new St.ScrollView({
+        ...params,
+        clip_to_allocation: true,
+        hscrollbar_policy: St.PolicyType.NEVER,
+        vscrollbar_policy: St.PolicyType.AUTOMATIC,
+        overlay_scrollbars: true,
+    });
+
+    // With overlay_scrollbars = true, the scrollbar appears behind the menu items
+    // Maybe a bug in GNOME? Fix it with this.
+    scrollView.get_children().forEach(child => {
+        if (child instanceof St.ScrollBar)
+            child.z_position = 1;
+    });
+
+    const onPanFunc = (a, mb, sv) => {
+        mb.clearTooltipShowingId();
+        mb.hideTooltip();
+
+        let delta;
+        if (a.get_delta)
+            delta = a.get_delta().get_y();
+        else
+            [, , delta] = a.get_motion_delta(0);
+
+        const {vadjustment} = getScrollViewAdjustments(sv);
+        vadjustment.value -= delta;
+        return false;
+    };
+
+    createAction({
+        actor: scrollView,
+        actionType: Constants.ClutterAction.PAN,
+        actionParams: {interpolate: true},
+        actionArgs: {onPan: action => onPanFunc(action, menuButton, scrollView)},
+    });
+    return scrollView;
+}
+
 /**
  *
  * @param {Clutter.Actor} parent
@@ -474,4 +514,113 @@ export function getOrientationProp(vertical) {
         return {orientation: vertical ? Clutter.Orientation.VERTICAL : Clutter.Orientation.HORIZONTAL};
     else
         return {vertical};
+}
+
+/**
+ * Creates and adds gestures or actions to a ClutterActor based on the provided action type.
+ * Supports ClutterGestures (GNOME 49+) or ClutterActions (GNOME 48 and earlier), depending on the Shell version.
+ *
+ * @param {object} args - Configuration object for the action.
+ * @param {Clutter.Actor} args.actor - The ClutterActor to attach the actions to.
+ * @param {Constants.ClutterAction} args.actionType - The type of action to create.
+ * @param {object} [args.actionParams] - Optional parameters for initializing the gesture/action.
+ * @param {object} args.actionArgs - Callbacks for handling gesture/action events.
+ * @param {Function} [args.actionArgs.onClick] - Callback for click events.
+ * @param {Function} [args.actionArgs.onPressed] - Callback for press state changes.
+ * @param {Function} [args.actionArgs.onLongPress] - Callback for long-press events.
+ * @param {Function} [args.actionArgs.onRightClick] - Callback for right-click events.
+ * @param {Function} [args.actionArgs.onPan] - Callback for pan events.
+ * @returns {object} An object mapping action names to their instances. Possible keys include:
+ *   - `clickAction`: `Clutter.ClickGesture` (GNOME 49+) or `Clutter.ClickAction`.
+ *   - `longPressAction`: `Clutter.LongPressGesture` (GNOME 49+ only).
+ *   - `rightClickAction`: `Clutter.ClickGesture` (GNOME 49+ only).
+ *   - `panAction`: `Clutter.PanGesture` (GNOME 49+) or `Clutter.PanAction`.
+ *   Returns an empty object if `actionType` is unsupported or `args` is invalid.
+ */
+export function createAction(args) {
+    const actions = ShellVersion >= 49 ? getGestures(args) : getActions(args);
+
+    Object.values(actions).forEach(action => {
+        args.actor.add_action(action);
+    });
+
+    return actions;
+}
+
+// ClutterGestures (GNOME 49+)
+function getGestures(args) {
+    const actions = {};
+    const {actionType, actionParams, actionArgs} = args;
+
+    switch (actionType) {
+    case Constants.ClutterAction.CLICK: {
+        const clickGesture = new Clutter.ClickGesture(actionParams);
+        actions.clickAction = clickGesture;
+
+        if (actionArgs.onClick)
+            clickGesture.connect('recognize', actionArgs.onClick);
+        if (actionArgs.onPressed)
+            clickGesture.connect('notify::pressed', actionArgs.onPressed);
+        if (actionArgs.onLongPress) {
+            const longPressGesture = new Clutter.LongPressGesture();
+            actions.longPressAction = longPressGesture;
+            longPressGesture.connect('recognize', actionArgs.onLongPress);
+        }
+        if (actionArgs.onRightClick) {
+            const rightClickGesture = new Clutter.ClickGesture({
+                required_button: Clutter.BUTTON_SECONDARY,
+                recognize_on_press: true,
+            });
+            actions.rightClickAction = rightClickGesture;
+            rightClickGesture.connect('recognize', actionArgs.onRightClick);
+        }
+        break;
+    }
+    case Constants.ClutterAction.PAN: {
+        const panGesture = new Clutter.PanGesture();
+        actions.panAction = panGesture;
+
+        if (actionArgs.onPan)
+            panGesture.connect('pan-update', actionArgs.onPan);
+        break;
+    }
+    default:
+        break;
+    }
+
+    return actions;
+}
+
+// ClutterActions (GNOME 48 and earlier)
+function getActions(args) {
+    const actions = {};
+    const {actionType, actionParams, actionArgs} = args;
+
+    switch (actionType) {
+    case Constants.ClutterAction.CLICK: {
+        const clickAction = new Clutter.ClickAction(actionParams);
+        actions.clickAction = clickAction;
+
+        if (actionArgs.onClick)
+            clickAction.connect('clicked', actionArgs.onClick);
+        if (actionArgs.onPressed)
+            clickAction.connect('notify::pressed', actionArgs.onPressed);
+        if (actionArgs.onLongPress)
+            clickAction.connect('long-press', actionArgs.onLongPress);
+        break;
+    }
+    case Constants.ClutterAction.PAN: {
+        const panAction = new Clutter.PanAction(actionParams);
+        actions.panAction = panAction;
+
+        if (actionArgs.onPan)
+            panAction.connect('pan', actionArgs.onPan);
+
+        break;
+    }
+    default:
+        break;
+    }
+
+    return actions;
 }

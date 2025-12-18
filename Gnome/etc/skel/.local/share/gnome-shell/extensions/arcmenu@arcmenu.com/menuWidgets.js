@@ -37,7 +37,7 @@ const INDICATOR_ICON_SIZE = 18;
 const USER_AVATAR_SIZE = 28;
 
 const TOOLTIP_SHOW_TIME = 150;
-const TOOLTIP_HIDE_TIME = 100;
+const TOOLTIP_HIDE_TIME = 150;
 
 const [ShellVersion] = Config.PACKAGE_VERSION.split('.').map(s => Number(s));
 
@@ -118,6 +118,27 @@ export function bindPowerItemVisibility(powerMenuItem) {
     }
 }
 
+/**
+ *
+ * @param {Shell.App} app
+ * @param {Clutter.Event} event
+ */
+export function launchApp(app, event) {
+    const activateOnLaunch = ArcMenuManager.settings.get_boolean('activate-on-launch');
+    const button = event ? event.get_button() : 0;
+    const modifiers = event ? event.get_state() : 0;
+    const isMiddleButton = button && button === Clutter.BUTTON_MIDDLE;
+    const isCtrlPressed = (modifiers & Clutter.ModifierType.CONTROL_MASK) !== 0;
+    const shouldOpenNewWindow = app.can_open_new_window() &&
+                                app.state === Shell.AppState.RUNNING &&
+                                (!activateOnLaunch || isCtrlPressed || isMiddleButton);
+
+    if (shouldOpenNewWindow)
+        app.open_new_window(-1);
+    else
+        app.activate();
+}
+
 export class BaseMenuItem extends St.BoxLayout {
     static [GObject.properties] = {
         'active': GObject.ParamSpec.boolean('active', 'active', 'active',
@@ -179,24 +200,37 @@ export class BaseMenuItem extends St.BoxLayout {
         if (params.reactive && params.hover)
             this.bind_property('hover', this, 'active', GObject.BindingFlags.SYNC_CREATE);
 
-        this._panAction = new Clutter.PanAction({interpolate: true});
-        this._panAction.connect('pan', this._onPan.bind(this));
-        this.add_action(this._panAction);
+        const {panAction} = Utils.createAction({
+            actor: this,
+            actionType: Constants.ClutterAction.PAN,
+            actionParams: {interpolate: true},
+            actionArgs: {onPan: this._onPan.bind(this)},
+        });
+        this._panAction = panAction;
 
-        this._clickAction = new Clutter.ClickAction({
-            enabled: this._activatable,
+        const {clickAction} = Utils.createAction({
+            actor: this,
+            actionType: Constants.ClutterAction.CLICK,
+            actionParams: {enabled: this._activatable},
+            actionArgs: {
+                onClick: this._onClicked.bind(this),
+                onLongPress: this._onLongPress.bind(this),
+                onPressed: this._onPressed.bind(this),
+                onRightClick: this.popupMenu.bind(this),
+            },
         });
-        this._clickAction.connect('clicked', this._onClicked.bind(this));
-        this._clickAction.connect('long-press', this._onLongPress.bind(this));
-        this._clickAction.connect('notify::pressed', () => {
-            if (this._clickAction.pressed)
-                this.add_style_pseudo_class('active');
-            else
-                this.remove_style_pseudo_class('active');
-        });
-        this.add_action(this._clickAction);
+        this._clickAction = clickAction;
 
         this.connect('destroy', () => this._onDestroy());
+    }
+
+    popupMenu() {
+        if (this.hasContextMenu) {
+            this.popupContextMenu();
+            this.add_style_pseudo_class('active');
+        } else {
+            this.remove_style_pseudo_class('active');
+        }
     }
 
     _onPan(action) {
@@ -207,23 +241,33 @@ export class BaseMenuItem extends St.BoxLayout {
             parent = parent.get_parent();
         }
 
-        this._clickAction.release();
+        if (ShellVersion < 49)
+            this._clickAction.release();
 
-        return this._menuLayout._onPan(action, parent);
+        this._menuButton.clearTooltipShowingId();
+        this._menuButton.hideTooltip(true);
+
+        let delta;
+        if (action.get_delta)
+            delta = action.get_delta().get_y();
+        else
+            [, , delta] = action.get_motion_delta(0);
+
+        const {vadjustment} = Utils.getScrollViewAdjustments(parent);
+        vadjustment.value -= delta;
+        return false;
     }
 
     _onClicked(action) {
         const isPrimaryOrTouch = action.get_button() === Clutter.BUTTON_PRIMARY || action.get_button() === 0;
-        if (isPrimaryOrTouch) {
+        const isMiddleButton = action.get_button() === Clutter.BUTTON_MIDDLE || action.get_button() === 2;
+        if (isPrimaryOrTouch || isMiddleButton) {
             this.active = false;
             this._menuLayout.grab_key_focus();
             this.remove_style_pseudo_class('active');
             this.activate(Clutter.get_current_event());
-        } else if (action.get_button() === Clutter.BUTTON_SECONDARY) {
-            if (this.hasContextMenu)
-                this.popupContextMenu();
-            else
-                this.remove_style_pseudo_class('active');
+        } else if (action.get_button() === Clutter.BUTTON_SECONDARY && ShellVersion < 49) {
+            this.popupMenu();
         } else if (action.get_button() === 8) {
             const backButton = this._menuLayout.backButton;
             if (backButton && backButton.visible) {
@@ -235,7 +279,19 @@ export class BaseMenuItem extends St.BoxLayout {
         }
     }
 
-    _onLongPress(action, theActor, state) {
+    _onPressed() {
+        if (this._clickAction.pressed)
+            this.add_style_pseudo_class('active');
+        else
+            this.remove_style_pseudo_class('active');
+    }
+
+    _onLongPress(action, actor, state) {
+        if (ShellVersion >= 49) {
+            this.popupMenu();
+            return true;
+        }
+
         const isPrimaryOrTouch = action.get_button() === Clutter.BUTTON_PRIMARY || action.get_button() === 0;
         if (state === Clutter.LongPressState.QUERY)
             return isPrimaryOrTouch && this._menuLayout.arcMenu.isOpen && this.hasContextMenu;
@@ -267,7 +323,7 @@ export class BaseMenuItem extends St.BoxLayout {
     }
 
     set active(active) {
-        if (this.isDestroyed || !this.mapped)
+        if (this.isDestroyed)
             return;
 
         // Prevent a mouse hover event from setting a new active menu item, until next mouse move event.
@@ -286,13 +342,8 @@ export class BaseMenuItem extends St.BoxLayout {
                     topSearchResult.remove_style_pseudo_class('active');
 
                 // track the active menu item for keyboard navigation
-                if (this._menuLayout.activeMenuItem !== this) {
+                if (this._menuLayout.activeMenuItem !== this)
                     this._menuLayout.activeMenuItem = this;
-                    // Ensure the new activeMenuItem is visible in scroll view, only when not hovered.
-                    // We don't want to mouse to adjust the scrollview.
-                    if (!this.hover)
-                        Utils.ensureActorVisibleInScrollView(this);
-                }
 
                 this._setSelectedStyle();
                 if (this.can_focus)
@@ -333,10 +384,9 @@ export class BaseMenuItem extends St.BoxLayout {
             let {description} = this;
             if (this._app)
                 description = this._app.get_description();
-            this._menuButton.tooltip.showTooltip(this, this.tooltipLocation, tooltipTitle,
-                description, this._displayType ? this._displayType : -1);
+            this._menuButton.showTooltip(this, this.tooltipLocation, tooltipTitle, description, this._displayType ?? -1);
         } else if (!this.hover || this._menuLayout.blockHoverState) {
-            this._menuButton.tooltip.hide();
+            this._menuButton.hideTooltip();
         }
     }
 
@@ -352,6 +402,10 @@ export class BaseMenuItem extends St.BoxLayout {
     vfunc_key_focus_in() {
         super.vfunc_key_focus_in();
         this.active = true;
+
+        // Ensure the new activeMenuItem is visible in scroll view
+        if (!this.hover)
+            Utils.ensureActorVisibleInScrollView(this);
     }
 
     vfunc_key_focus_out() {
@@ -377,8 +431,9 @@ export class BaseMenuItem extends St.BoxLayout {
 
         let state = event.get_state();
 
-        // if user has a modifier down (except capslock and numlock)
+        // if user has a modifier down (except control, capslock and numlock)
         // then don't handle the key press here
+        state &= ~Clutter.ModifierType.CONTROL_MASK;
         state &= ~Clutter.ModifierType.LOCK_MASK;
         state &= ~Clutter.ModifierType.MOD2_MASK;
         state &= Clutter.ModifierType.MODIFIER_MASK;
@@ -400,9 +455,6 @@ export class BaseMenuItem extends St.BoxLayout {
     }
 
     _onDestroy() {
-        if (this._menuButton.tooltip && this._menuButton.tooltip.sourceActor === this)
-            this._menuButton.tooltip.hide(true);
-
         this.contextMenu = null;
         this.isDestroyed = true;
         this._menuButton = null;
@@ -570,26 +622,33 @@ export class Tooltip extends St.Label {
         this.connect('destroy', () => this._onDestroy());
     }
 
-    showTooltip(sourceActor, location, titleLabel, description, displayType) {
+    setTooltipData(sourceActor, location, titleLabel, description, displayType) {
         if (!sourceActor)
             return;
 
         if (this.sourceActor === sourceActor) {
-            this._showTimeout(titleLabel, description, displayType);
+            this._setTooltipText(titleLabel, description, displayType);
             return;
         }
 
+        this.sourceActor?.disconnectObject(this);
         this.sourceActor = sourceActor;
+        this.sourceActor.connectObject('destroy', () => {
+            if (this.sourceActor === sourceActor) {
+                this._menuButton.clearTooltipShowingId();
+                this.hide();
+            }
+        }, this);
         this.location = location;
 
-        this._showTimeout(titleLabel, description, displayType);
+        this._setTooltipText(titleLabel, description, displayType);
     }
 
     disableTooltips() {
         this._useTooltips = !ArcMenuManager.settings.get_boolean('disable-tooltips');
     }
 
-    _setToolTipText(titleLabel, description, displayType) {
+    _setTooltipText(titleLabel, description, displayType) {
         let isEllipsized, titleText;
         if (titleLabel instanceof St.Label) {
             const lbl = titleLabel.clutter_text;
@@ -614,104 +673,78 @@ export class Tooltip extends St.Label {
         } else if (displayType === Constants.DisplayType.BUTTON) {
             this.text = titleText ?? '';
         }
-
-        return !!this.text;
     }
 
-    _showTimeout(titleLabel, description, displayType) {
-        if (this._useTooltips) {
-            this._menuButton.tooltipShowingID = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 750, () => {
-                const shouldShow = this._setToolTipText(titleLabel, description, displayType);
-
-                if (!shouldShow) {
-                    this._menuButton.tooltipShowingID = null;
-                    return GLib.SOURCE_REMOVE;
-                }
-
-                this._show();
-                this._menuButton.tooltipShowing = true;
-                this._menuButton.tooltipShowingID = null;
-                return GLib.SOURCE_REMOVE;
-            });
-        }
-    }
-
-    _show() {
-        if (!this.sourceActor)
+    show() {
+        if (!this.sourceActor || !this.text || !this._useTooltips)
             return;
-        if (this._useTooltips) {
-            this.opacity = 0;
-            this.show();
 
-            const [stageX, stageY] = this.sourceActor.get_transformed_position();
+        this.opacity = 0;
+        super.show();
 
-            const itemWidth  = this.sourceActor.allocation.x2 - this.sourceActor.allocation.x1;
-            const itemHeight = this.sourceActor.allocation.y2 - this.sourceActor.allocation.y1;
+        const [stageX, stageY] = this.sourceActor.get_transformed_position();
 
-            const labelWidth = this.get_width();
-            const labelHeight = this.get_height();
+        const itemWidth  = this.sourceActor.allocation.x2 - this.sourceActor.allocation.x1;
+        const itemHeight = this.sourceActor.allocation.y2 - this.sourceActor.allocation.y1;
 
-            let x, y;
-            const gap = 5;
+        const labelWidth = this.get_width();
+        const labelHeight = this.get_height();
 
-            switch (this.location) {
-            case Constants.TooltipLocation.BOTTOM_CENTERED:
-                y = stageY + itemHeight + gap;
-                x = stageX + Math.floor((itemWidth - labelWidth) / 2);
-                break;
-            case Constants.TooltipLocation.TOP_CENTERED:
-                y = stageY - labelHeight - gap;
-                x = stageX + Math.floor((itemWidth - labelWidth) / 2);
-                break;
-            case Constants.TooltipLocation.BOTTOM:
-            default:
-                y = stageY + itemHeight + gap;
-                x = stageX + gap;
-                break;
-            }
+        let x, y;
+        const gap = 5;
 
-            // keep the label inside the screen
-            const monitor = Main.layoutManager.findMonitorForActor(this.sourceActor);
-            if (x - monitor.x < gap)
-                x += monitor.x - x + gap;
-            else if (x + labelWidth > monitor.x + monitor.width - gap)
-                x -= x + labelWidth - (monitor.x + monitor.width) + gap;
-            else if (y - monitor.y < gap)
-                y += monitor.y - y + gap;
-            else if (y + labelHeight > monitor.y + monitor.height - gap)
-                y -= y + labelHeight - (monitor.y + monitor.height) + gap;
-
-            this.set_position(x, y);
-            this.ease({
-                opacity: 255,
-                duration: TOOLTIP_SHOW_TIME,
-                mode: Clutter.AnimationMode.EASE_OUT_QUAD,
-            });
+        switch (this.location) {
+        case Constants.TooltipLocation.BOTTOM_CENTERED:
+            y = stageY + itemHeight + gap;
+            x = stageX + Math.floor((itemWidth - labelWidth) / 2);
+            break;
+        case Constants.TooltipLocation.TOP_CENTERED:
+            y = stageY - labelHeight - gap;
+            x = stageX + Math.floor((itemWidth - labelWidth) / 2);
+            break;
+        case Constants.TooltipLocation.BOTTOM:
+        default:
+            y = stageY + itemHeight + gap;
+            x = stageX + gap;
+            break;
         }
+
+        // keep the label inside the screen
+        const monitor = Main.layoutManager.findMonitorForActor(this.sourceActor);
+        if (x - monitor.x < gap)
+            x += monitor.x - x + gap;
+        else if (x + labelWidth > monitor.x + monitor.width - gap)
+            x -= x + labelWidth - (monitor.x + monitor.width) + gap;
+        else if (y - monitor.y < gap)
+            y += monitor.y - y + gap;
+        else if (y + labelHeight > monitor.y + monitor.height - gap)
+            y -= y + labelHeight - (monitor.y + monitor.height) + gap;
+
+        this.set_position(x, y);
+        this.ease({
+            opacity: 255,
+            duration: TOOLTIP_SHOW_TIME,
+            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+        });
     }
 
     hide(instantHide) {
-        if (this._useTooltips) {
-            if (this._menuButton.tooltipShowingID) {
-                GLib.source_remove(this._menuButton.tooltipShowingID);
-                this._menuButton.tooltipShowingID = null;
-            }
-            this.sourceActor = null;
-            this.ease({
-                opacity: 0,
-                duration: instantHide ? 0 : TOOLTIP_HIDE_TIME,
-                mode: Clutter.AnimationMode.EASE_OUT_QUAD,
-                onComplete: () => super.hide(),
-            });
-        }
+        if (!this._useTooltips)
+            return;
+
+        this._menuButton.clearTooltipShowingId();
+        this.sourceActor?.disconnectObject(this);
+        this.sourceActor = null;
+        this.ease({
+            opacity: 0,
+            duration: instantHide ? 0 : TOOLTIP_HIDE_TIME,
+            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+            onComplete: () => super.hide(),
+        });
     }
 
     _onDestroy() {
-        if (this._menuButton.tooltipShowingID) {
-            GLib.source_remove(this._menuButton.tooltipShowingID);
-            this._menuButton.tooltipShowingID = null;
-        }
-
+        this._menuButton.clearTooltipShowingId();
         global.stage.remove_child(this);
         this.sourceActor = null;
         this._menuButton = null;
@@ -812,7 +845,7 @@ export class PowerOptionsBox extends St.ScrollView {
     }
 }
 
-// 'Power Off / Log Out' button with popupmenu that shows lock, power off, restart, etc
+// 'Power Off' button with popupmenu that shows lock, power off, restart, etc
 export class LeaveButton extends BaseMenuItem {
     static {
         GObject.registerClass(this);
@@ -834,7 +867,7 @@ export class LeaveButton extends BaseMenuItem {
 
         if (showLabel) {
             this.label = new St.Label({
-                text: _('Power Off / Log Out'),
+                text: _('Power Off'),
                 y_expand: false,
                 y_align: Clutter.ActorAlign.CENTER,
             });
@@ -851,7 +884,7 @@ export class LeaveButton extends BaseMenuItem {
 
             this._closeMenuOnActivate = true;
             this._displayType = Constants.DisplayType.BUTTON;
-            this.tooltipText = _('Power Off / Log Out');
+            this.tooltipText = _('Power Off');
         }
     }
 
@@ -926,15 +959,9 @@ export class LeaveButton extends BaseMenuItem {
         this.leaveMenu.connect('open-state-changed', (menu, open) => {
             if (open) {
                 this.add_style_pseudo_class('active');
-                if (this._menuButton.tooltipShowingID) {
-                    GLib.source_remove(this._menuButton.tooltipShowingID);
-                    this._menuButton.tooltipShowingID = null;
-                    this._menuButton.tooltipShowing = false;
-                }
-                if (this.tooltip) {
-                    this.tooltip.hide();
-                    this._menuButton.tooltipShowing = false;
-                }
+                this.active = true;
+                this._menuButton.clearTooltipShowingId();
+                this._menuButton.hideTooltip();
             } else {
                 this.remove_style_pseudo_class('active');
                 this.active = false;
@@ -1193,7 +1220,8 @@ export class ViewAllAppsButton extends BaseMenuItem {
 
         const defaultMenuView = ArcMenuManager.settings.get_enum('default-menu-view');
         if (defaultMenuView === Constants.DefaultMenuView.PINNED_APPS ||
-            defaultMenuView === Constants.DefaultMenuView.FREQUENT_APPS)
+            defaultMenuView === Constants.DefaultMenuView.FREQUENT_APPS ||
+            defaultMenuView === Constants.DefaultMenuView.PINNED_AND_FREQUENT_APPS)
             this._menuLayout.displayCategories();
         else
             this._menuLayout.displayAllApps();
@@ -1323,14 +1351,11 @@ export class ShortcutMenuItem extends BaseMenuItem {
             else if (this.folderPath)
                 this.contextMenu.setFolderPath(this.folderPath);
         }
-        if (this.contextMenu !== undefined) {
-            if (this.tooltip !== undefined)
-                this.tooltip.hide();
+        if (this.contextMenu !== undefined)
             this.contextMenu.open(BoxPointer.PopupAnimation.FULL);
-        }
     }
 
-    activate() {
+    activate(event) {
         switch (this._command) {
         case Constants.ShortcutCommands.LOG_OUT:
         case Constants.ShortcutCommands.LOCK:
@@ -1355,7 +1380,7 @@ export class ShortcutMenuItem extends BaseMenuItem {
             break;
         default: {
             if (this._app)
-                this._app.open_new_window(-1);
+                launchApp(this._app, event);
             else
                 Util.spawnCommandLine(this._command);
         }
@@ -1391,7 +1416,8 @@ export class AvatarMenuItem extends BaseMenuItem {
     }
 
     activate(event) {
-        Util.spawnCommandLine('gnome-control-center user-accounts');
+        const userSettingsCommand = ShellVersion >= 46 ? 'system users' : 'user-accounts';
+        Util.spawnCommandLine(`gnome-control-center ${userSettingsCommand}`);
         this._menuLayout.arcMenu.toggle();
         super.activate(event);
     }
@@ -1450,19 +1476,15 @@ export class AvatarMenuIcon extends St.Bin {
     }
 
     _onHover() {
-        if (this.hover) {
-            this._menuButton.tooltip.showTooltip(this, this.tooltipLocation, GLib.get_real_name(),
-                null, Constants.DisplayType.BUTTON);
-        } else {
-            this._menuButton.tooltip.hide();
-        }
+        if (this.hover)
+            this._menuButton.showTooltip(this, this.tooltipLocation, GLib.get_real_name(), null, Constants.DisplayType.BUTTON);
+        else
+            this._menuButton.hideTooltip();
     }
 
     _onUserChanged() {
         if (this._user.is_loaded) {
             this.label.set_text(this._user.get_real_name());
-            if (this.tooltip)
-                this.tooltip.titleLabel.text = this._user.get_real_name();
 
             let iconFile = this._user.get_icon_file();
             if (iconFile && !GLib.file_test(iconFile, GLib.FileTest.EXISTS))
@@ -1509,13 +1531,16 @@ export class DraggableMenuItem extends BaseMenuItem {
         });
 
         if (isDraggable) {
-            this.remove_action(this._panAction);
-            this.remove_action(this._clickAction);
-
-            this._panAction = null;
-
             this._draggable = DND.makeDraggable(this, {timeoutThreshold: 400});
-            this._draggable.addClickAction(this._clickAction);
+
+            if (ShellVersion < 49) {
+                this.remove_action(this._panAction);
+                this.remove_action(this._clickAction);
+
+                this._panAction = null;
+                this._draggable.addClickAction(this._clickAction);
+            }
+
             this._draggable._animateDragEnd = eventTime => {
                 this._draggable._animationInProgress = true;
                 this._draggable._onAnimationComplete(this._draggable._dragActor, eventTime);
@@ -1534,15 +1559,8 @@ export class DraggableMenuItem extends BaseMenuItem {
 
     _onDragBegin() {
         this.isDragging = true;
-        if (this._menuButton.tooltipShowingID) {
-            GLib.source_remove(this._menuButton.tooltipShowingID);
-            this._menuButton.tooltipShowingID = null;
-            this._menuButton.tooltipShowing = false;
-        }
-        if (this.tooltip) {
-            this.tooltip.hide();
-            this._menuButton.tooltipShowing = false;
-        }
+        this._menuButton.clearTooltipShowingId();
+        this._menuButton.hideTooltip();
 
         if (this.contextMenu && this.contextMenu.isOpen)
             this.contextMenu.toggle();
@@ -1807,7 +1825,7 @@ export class DraggableMenuItem extends BaseMenuItem {
     }
 
     cancelActions() {
-        if (this._draggable)
+        if (this._draggable && ShellVersion < 49)
             this._draggable.fakeRelease();
 
         DND.removeDragMonitor(this._hoveringDragMonitor);
@@ -2014,15 +2032,9 @@ export class PinnedAppsFolderMenuItem extends DraggableMenuItem {
     }
 
     _loadPinnedApps() {
-        if (this._menuButton.tooltipShowingID) {
-            GLib.source_remove(this._menuButton.tooltipShowingID);
-            this._menuButton.tooltipShowingID = null;
-            this._menuButton.tooltipShowing = false;
-        }
-        if (this.tooltip) {
-            this.tooltip.hide();
-            this._menuButton.tooltipShowing = false;
-        }
+        this._menuButton.clearTooltipShowingId();
+        this._menuButton.hideTooltip();
+
         for (let i = this.appList.length - 1; i >= 0; --i) {
             const item = this.appList[i];
             item.disconnectObject(this);
@@ -2133,8 +2145,7 @@ export class PinnedAppsFolderMenuItem extends DraggableMenuItem {
                 this.contextMenu.centerBoxPointerPosition();
             this.contextMenu.addUnpinItem(this._command, this.folderSettings);
         }
-        if (this.tooltip !== undefined)
-            this.tooltip.hide();
+
         this.contextMenu.open(BoxPointer.PopupAnimation.FULL);
     }
 
@@ -2310,8 +2321,7 @@ export class PinnedAppsMenuItem extends DraggableMenuItem {
             else
                 this.contextMenu.addUnpinItem(this._command);
         }
-        if (this.tooltip !== undefined)
-            this.tooltip.hide();
+
         this.contextMenu.open(BoxPointer.PopupAnimation.FULL);
     }
 
@@ -2383,7 +2393,7 @@ export class PinnedAppsMenuItem extends DraggableMenuItem {
 
     activate(event) {
         if (this._app)
-            this._app.open_new_window(-1);
+            launchApp(this._app, event);
         else if (this._command === Constants.ShortcutCommands.SHOW_APPS)
             Main.overview._overview._controls._toggleAppsPage();
         else
@@ -2539,8 +2549,6 @@ export class ApplicationMenuItem extends BaseMenuItem {
 
     popupContextMenu() {
         this.removeIndicator();
-        if (this.tooltip)
-            this.tooltip.hide();
 
         if (!this._app && !this.folderPath)
             return;
@@ -2558,17 +2566,14 @@ export class ApplicationMenuItem extends BaseMenuItem {
         this.contextMenu.open(BoxPointer.PopupAnimation.FULL);
     }
 
-    activateSearchResult(provider, metaInfo, terms) {
+    activateSearchResult(provider, metaInfo, terms, event) {
         if (provider.activateResult) {
             provider.activateResult(metaInfo.id, terms);
             if (metaInfo.clipboardText)
                 St.Clipboard.get_default().set_text(St.ClipboardType.CLIPBOARD, metaInfo.clipboardText);
         } else if (metaInfo.id.endsWith('.desktop')) {
             const app = this._menuLayout.appSys.lookup_app(metaInfo.id);
-            if (app.can_open_new_window())
-                app.open_new_window(-1);
-            else
-                app.activate();
+            launchApp(app, event);
         } else {
             this._menuLayout.arcMenu.itemActivated(BoxPointer.PopupAnimation.NONE);
             const systemActions = SystemActions.getDefault();
@@ -2591,7 +2596,7 @@ export class ApplicationMenuItem extends BaseMenuItem {
         if (this.isSearchResult) {
             this.activateSearchResult(this.provider, this.metaInfo, this.resultsView.terms, event);
         } else {
-            this._app.open_new_window(-1);
+            launchApp(this._app, event);
             super.activate(event);
         }
         this._menuLayout.arcMenu.toggle();
@@ -2632,7 +2637,7 @@ export class FolderDialog extends PopupMenu.PopupMenu {
             row_spacing: hasRowSpacing ? this._menuLayout.rowSpacing : 4,
         });
 
-        this._scrollView = this._menuLayout._createScrollBox({
+        this._scrollView = Utils.createPanActionScrollView(this._menuButton, {
             x_expand: true,
             y_expand: true,
             x_align: Clutter.ActorAlign.FILL,
@@ -2704,15 +2709,8 @@ export class FolderDialog extends PopupMenu.PopupMenu {
             });
 
             this._sourceActor.add_style_pseudo_class('active');
-            if (this._menuButton.tooltipShowingID) {
-                GLib.source_remove(this._menuButton.tooltipShowingID);
-                this._menuButton.tooltipShowingID = null;
-                this._menuButton.tooltipShowing = false;
-            }
-            if (this.tooltip) {
-                this.tooltip.hide();
-                this._menuButton.tooltipShowing = false;
-            }
+            this._menuButton.clearTooltipShowingId();
+            this._menuButton.hideTooltip();
         } else {
             this.box.ease({
                 scale_x: .3,
@@ -2959,7 +2957,7 @@ export class CategoryMenuItem extends BaseMenuItem {
         this._updateIcon();
 
         this._indicator = new St.Icon({
-            icon_name: 'starred-symbolic',
+            icon_name: 'media-record-symbolic',
             style_class: 'arcmenu-indicator',
             icon_size: INDICATOR_ICON_SIZE,
             x_expand: true,
@@ -3268,9 +3266,6 @@ export class PlaceMenuItem extends BaseMenuItem {
     }
 
     popupContextMenu() {
-        if (this.tooltip)
-            this.tooltip.hide();
-
         if (this.contextMenu === undefined) {
             this.contextMenu = new AppContextMenu(this, this._menuLayout);
             if (this.folderPath)
@@ -3442,7 +3437,7 @@ export class SearchEntry extends St.Entry {
 
         if (!this.isEmpty() && searchResult) {
             if (symbol === Clutter.KEY_Return || symbol === Clutter.KEY_KP_Enter) {
-                searchResult.activate(event);
+                searchResult.activate();
                 return Clutter.EVENT_STOP;
             } else if (symbol === Clutter.KEY_Menu && searchResult.hasContextMenu) {
                 searchResult.popupContextMenu();

@@ -194,7 +194,7 @@ class AppIndicatorProxy extends DBusProxy {
                     });
                 } catch (e) {
                     if (!AppIndicatorProxy.OPTIONAL_PROPERTIES.includes(p) ||
-                        !e.matches(Gio.DBusError, Gio.DBusError.UNKNOWN_PROPERTY))
+                        !(e instanceof Gio.DBusError))
                         logError(e);
                 }
             }));
@@ -315,7 +315,8 @@ class AppIndicatorProxy extends DBusProxy {
                 Util.Logger.debug(`Error when calling 'Get(${propertyName})' ` +
                     `in ${this.gName}, ${this.gObjectPath}, ` +
                     `org.freedesktop.DBus.Properties, ${this.gInterfaceName} ` +
-                    `while refreshing property ${propertyName}: ${e}`);
+                    `while refreshing property ${propertyName}: ${e}\n` +
+                    `${e.stack}`);
                 this.set_cached_property(propertyName, null);
                 this._cancellables.delete(propertyName);
                 delete this._changedProperties[propertyName];
@@ -1324,8 +1325,13 @@ class AppIndicatorsIconActor extends St.Icon {
             preferredHeight: height,
         });
 
-        imageContent.set_bytes(pixmapVariant.get_data_as_bytes(), PIXMAPS_FORMAT,
-            width, height, rowStride);
+        // Remove this dynamic check when we depend on GNOME 48.
+        const coglContext = [];
+        const mutterBackend = global.stage?.context?.get_backend?.();
+        if (imageContent.set_bytes.length === 6 && mutterBackend?.get_cogl_context)
+            coglContext.push(mutterBackend.get_cogl_context());
+        imageContent.set_bytes(...coglContext, pixmapVariant.get_data_as_bytes(),
+            PIXMAPS_FORMAT, width, height, rowStride);
 
         if (iconType !== SNIconType.OVERLAY && !this._indicator.hasOverlayIcon) {
             const scaledSize = iconSize * scaleFactor;

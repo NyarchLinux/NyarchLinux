@@ -3,11 +3,11 @@ import Gtk from 'gi://Gtk';
 
 import * as Constants from './constants.js';
 
-import {AboutPage} from './settings/AboutPage.js';
-import {DonatePage} from './settings/DonatePage.js';
-import {GeneralPage} from './settings/GeneralPage.js';
-import {MenuButtonPage} from './settings/MenuButtonPage.js';
-import {MenuPage} from './settings/MenuPage.js';
+import {AboutPage} from './settings/aboutPage.js';
+import {DonatePage} from './settings/donatePage.js';
+import {GeneralPage} from './settings/generalPage.js';
+import {MenuButtonPage} from './settings/menuButtonPage.js';
+import {MenuPage} from './settings/menuPage.js';
 
 import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 

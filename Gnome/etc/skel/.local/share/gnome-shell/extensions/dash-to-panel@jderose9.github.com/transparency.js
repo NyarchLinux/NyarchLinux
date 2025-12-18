@@ -85,6 +85,16 @@ export const DynamicTransparency = class {
       [
         SETTINGS,
         [
+          'changed::trans-use-border',
+          'changed::trans-border-use-custom-color',
+          'changed::trans-border-custom-color',
+          'changed::trans-border-width',
+        ],
+        () => this._updateBorderAndSet(),
+      ],
+      [
+        SETTINGS,
+        [
           'changed::trans-dynamic-behavior',
           'changed::trans-use-dynamic-opacity',
           'changed::trans-dynamic-distance',
@@ -103,7 +113,7 @@ export const DynamicTransparency = class {
     this._proximityManager.removeWatch(this._proximityWatchId)
 
     if (SETTINGS.get_boolean('trans-use-dynamic-opacity')) {
-      let isVertical = this._dtpPanel.checkIfVertical()
+      let isVertical = this._dtpPanel.geom.vertical
       let threshold = SETTINGS.get_int('trans-dynamic-distance')
 
       this._windowOverlap = false
@@ -133,9 +143,10 @@ export const DynamicTransparency = class {
 
     this._updateColor(themeBackground)
     this._updateAlpha(themeBackground)
+    this._updateBorder()
     this._updateGradient()
     this._setBackground()
-    this._setGradient()
+    this._setGradientAndBorder()
   }
 
   _updateColorAndSet() {
@@ -148,9 +159,14 @@ export const DynamicTransparency = class {
     this._setBackground()
   }
 
+  _updateBorderAndSet() {
+    this._updateBorder()
+    this._setGradientAndBorder()
+  }
+
   _updateGradientAndSet() {
     this._updateGradient()
-    this._setGradient()
+    this._setGradientAndBorder()
   }
 
   _updateColor(themeBackground) {
@@ -173,13 +189,44 @@ export const DynamicTransparency = class {
     }
   }
 
+  _updateBorder() {
+    let rgba = this._dtpPanel._getDefaultLineColor(
+      Utils.checkIfColorIsBright(this.backgroundColorRgb),
+    ) // supply parameter manually or else an exception (something is undefined) will arise
+    const isLineCustom = SETTINGS.get_boolean('trans-border-use-custom-color')
+    rgba = isLineCustom
+      ? SETTINGS.get_string('trans-border-custom-color')
+      : rgba
+
+    const showBorder = SETTINGS.get_boolean('trans-use-border')
+    const borderWidth = SETTINGS.get_int('trans-border-width')
+
+    const position = this._dtpPanel.getPosition()
+    let borderPosition = ''
+    if (position == St.Side.LEFT) {
+      borderPosition = 'right'
+    }
+    if (position == St.Side.RIGHT) {
+      borderPosition = 'left'
+    }
+    if (position == St.Side.TOP) {
+      borderPosition = 'bottom'
+    }
+    if (position == St.Side.BOTTOM) {
+      borderPosition = 'top'
+    }
+
+    const style = `border: 0 solid ${rgba}; border-${borderPosition}-width:${borderWidth}px;`
+    this._borderStyle = showBorder ? style : ''
+  }
+
   _updateGradient() {
     this._gradientStyle = ''
 
     if (SETTINGS.get_boolean('trans-use-custom-gradient')) {
       this._gradientStyle +=
         'background-gradient-direction: ' +
-        (this._dtpPanel.checkIfVertical() ? 'horizontal;' : 'vertical;') +
+        (this._dtpPanel.geom.vertical ? 'horizontal;' : 'vertical;') +
         'background-gradient-start: ' +
         Utils.getrgbaColor(
           SETTINGS.get_string('trans-gradient-top-color'),
@@ -206,12 +253,13 @@ export const DynamicTransparency = class {
     )
   }
 
-  _setGradient() {
+  _setGradientAndBorder() {
     this._dtpPanel.panel.set_style(
       'background: none; ' +
         'border-image: none; ' +
         'background-image: none; ' +
         this._gradientStyle +
+        this._borderStyle +
         'transition-duration:' +
         this.animationDuration,
     )

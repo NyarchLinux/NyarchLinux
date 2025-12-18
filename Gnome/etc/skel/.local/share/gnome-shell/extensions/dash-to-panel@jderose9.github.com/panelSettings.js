@@ -46,6 +46,7 @@ export var availableMonitors = []
 
 export async function init(settings) {
   useCache = true
+  cache = {}
   prefsOpenedId = settings.connect(
     'changed::prefs-opened',
     () => (useCache = !settings.get_boolean('prefs-opened')),
@@ -221,7 +222,7 @@ export function getPrimaryIndex(dtpPrimaryId) {
   return availableMonitors.findIndex((am) => am.primary)
 }
 
-export async function setMonitorsInfo(settings) {
+export function setMonitorsInfo(settings) {
   return new Promise((resolve, reject) => {
     try {
       let monitorInfos = []
@@ -229,7 +230,6 @@ export async function setMonitorsInfo(settings) {
         proxy.GetCurrentStateRemote((displayInfo, e) => {
           if (e) return reject(`Error getting display state: ${e}`)
 
-          let gsPrimaryIndex = 0
           let ids = {}
 
           //https://gitlab.gnome.org/GNOME/mutter/-/blob/main/data/dbus-interfaces/org.gnome.Mutter.DisplayConfig.xml#L347
@@ -245,8 +245,6 @@ export async function setMonitorsInfo(settings) {
 
             if (ids[id]) id = connector && !ids[connector] ? connector : i
 
-            if (primary) gsPrimaryIndex = i
-
             monitorInfos.push({
               id,
               product,
@@ -258,7 +256,7 @@ export async function setMonitorsInfo(settings) {
             ids[id] = 1
           })
 
-          _saveMonitors(settings, monitorInfos, gsPrimaryIndex)
+          _saveMonitors(settings, monitorInfos)
 
           resolve()
         })
@@ -282,19 +280,14 @@ export async function setMonitorsInfo(settings) {
   })
 }
 
-function _saveMonitors(settings, monitorInfos, gsPrimaryIndex) {
+function _saveMonitors(settings, monitorInfos) {
   let keyPrimary = 'primary-monitor'
   let dtpPrimaryMonitor = settings.get_string(keyPrimary)
 
   // convert previously saved index to monitor id
   if (dtpPrimaryMonitor.match(/^\d{1,2}$/) && monitorInfos[dtpPrimaryMonitor])
-    dtpPrimaryMonitor = monitorInfos[dtpPrimaryMonitor].id
+    settings.set_string(keyPrimary, monitorInfos[dtpPrimaryMonitor].id)
 
-  // default to gnome-shell primary monitor
-  if (!dtpPrimaryMonitor)
-    dtpPrimaryMonitor = monitorInfos[gsPrimaryIndex]?.id || 0
-
-  settings.set_string(keyPrimary, dtpPrimaryMonitor)
   availableMonitors = Object.freeze(monitorInfos)
 }
 

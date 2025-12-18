@@ -103,7 +103,7 @@ export class Layout extends BaseMenuLayout {
             style: 'padding-bottom: 10px;',
             style_class: 'arcmenu-margin-box',
         });
-        this.applicationsScrollBox = this._createScrollBox({
+        this.applicationsScrollBox = this._createScrollView({
             x_expand: false,
             y_expand: false,
             x_align: Clutter.ActorAlign.START,

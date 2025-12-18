@@ -6,7 +6,6 @@ import Shell from 'gi://Shell';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import {ArcMenuManager} from './arcmenuManager.js';
-import * as Constants from './constants.js';
 
 const MUTTER_SCHEMA = 'org.gnome.mutter';
 
@@ -14,6 +13,7 @@ export class OverrideOverlayKey {
     constructor() {
         this.isOverrideOverlayEnabled = false;
         this._ignoreHotKeyChangedEvent = false;
+        this.enabled = false;
 
         this._mutterSettings = new Gio.Settings({'schema': MUTTER_SCHEMA});
 
@@ -27,12 +27,13 @@ export class OverrideOverlayKey {
         Main.layoutManager.connectObject('startup-complete', () => this._overrideOverlayKey(), this);
     }
 
-    enable(toggleMenu) {
+    enable(hotkey, toggleMenu) {
+        this.enabled = true;
         this._toggleMenu = toggleMenu;
 
         this._ignoreHotKeyChangedEvent = true;
 
-        this._mutterSettings.set_string('overlay-key', Constants.SUPER_L);
+        this._mutterSettings.set_string('overlay-key', hotkey);
         Main.wm.allowKeybinding('overlay-key', Shell.ActionMode.ALL);
 
         this.isOverrideOverlayEnabled = true;
@@ -44,6 +45,7 @@ export class OverrideOverlayKey {
     }
 
     disable() {
+        this.enabled = false;
         this._ignoreHotKeyChangedEvent = true;
         this._mutterSettings.set_value('overlay-key', this._oldOverlayKey);
 
@@ -66,7 +68,7 @@ export class OverrideOverlayKey {
         this.defaultOverlayKeyID = GObject.signal_handler_find(global.display, {signalId: 'overlay-key'});
 
         if (!this.defaultOverlayKeyID) {
-            console.log('ArcMenu Error - Failed to set Super_L hotkey');
+            console.log('ArcMenu Error - Failed to set Super hotkey');
             return;
         }
 

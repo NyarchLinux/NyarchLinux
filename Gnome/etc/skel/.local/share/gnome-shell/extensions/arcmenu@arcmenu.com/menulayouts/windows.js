@@ -68,7 +68,7 @@ export class Layout extends BaseMenuLayout {
         });
         this.add_child(this.subMainBox);
 
-        this.pinnedAppsScrollBox = this._createScrollBox({
+        this.pinnedAppsScrollBox = this._createScrollView({
             x_expand: true,
             y_expand: true,
             y_align: Clutter.ActorAlign.START,
@@ -85,7 +85,7 @@ export class Layout extends BaseMenuLayout {
             Constants.SeparatorAlignment.VERTICAL);
 
         this.applicationsBox = new St.BoxLayout({...getOrientationProp(true)});
-        this.applicationsScrollBox = this._createScrollBox({
+        this.applicationsScrollBox = this._createScrollView({
             x_expand: false,
             y_expand: true,
             x_align: Clutter.ActorAlign.START,
@@ -230,7 +230,10 @@ export class Layout extends BaseMenuLayout {
     }
 
     _createExtrasMenu() {
-        this.extrasMenu = new PopupMenu.PopupMenu(Main.layoutManager.dummyCursor, 0, St.Side.TOP);
+        this._dummyCursor = new St.Widget({width: 0, height: 0, opacity: 0});
+        Main.layoutManager.uiGroup.add_child(this._dummyCursor);
+
+        this.extrasMenu = new PopupMenu.PopupMenu(this._dummyCursor, 0, St.Side.TOP);
         this.extrasMenu.actor.add_style_class_name('popup-menu arcmenu-menu');
 
         const section = new PopupMenu.PopupMenuSection();
@@ -257,7 +260,7 @@ export class Layout extends BaseMenuLayout {
             Constants.SeparatorAlignment.HORIZONTAL);
         headerBox.add_child(separator);
 
-        this.computerScrollBox = this._createScrollBox({
+        this.computerScrollBox = this._createScrollView({
             x_expand: true,
             y_expand: true,
             y_align: Clutter.ActorAlign.START,
@@ -305,7 +308,7 @@ export class Layout extends BaseMenuLayout {
         if (this.arcMenu._arrowSide === St.Side.LEFT)
             x += rise;
 
-        Main.layoutManager.setDummyCursorGeometry(x, y, 0, 0);
+        this._dummyCursor.set_position(Math.round(x), Math.round(y));
 
         const height = ArcMenuManager.settings.get_int('menu-height');
         this.extrasMenu.box.style = `height: ${height}px;`;
@@ -422,6 +425,12 @@ export class Layout extends BaseMenuLayout {
 
         if (!this.pinnedAppsBox.contains(this._pinnedAppsGrid))
             this.pinnedAppsBox.add_child(this._pinnedAppsGrid);
+    }
+
+    _onDestroy() {
+        super._onDestroy();
+        this._dummyCursor.destroy();
+        this._dummyCursor = null;
     }
 }
 

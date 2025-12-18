@@ -118,11 +118,10 @@ class ArcMenuMenuButton extends PanelMenu.Button {
         this.menu.destroy();
         this.menu = null;
 
-        this.tooltipShowing = false;
-        this.tooltipShowingID = null;
-        this.tooltip = new MW.Tooltip(this);
+        this._tooltipShowingID = null;
+        this._tooltip = new MW.Tooltip(this);
 
-        this._dtpNeedsRelease = false;
+        this._intellihideRelease = false;
 
         // Create Main Menus - ArcMenu and ArcMenu's context menu
         this.arcMenu = new ArcMenu(this, 0.5, St.Side.TOP);
@@ -176,8 +175,8 @@ class ArcMenuMenuButton extends PanelMenu.Button {
     }
 
     createMenuLayout() {
-        this._clearTooltipShowingId();
-        this._clearTooltip();
+        this.clearTooltipShowingId();
+        this.hideTooltip(true);
 
         this._destroyMenuLayout();
 
@@ -384,7 +383,15 @@ class ArcMenuMenuButton extends PanelMenu.Button {
             return -1;
     }
 
-    closeOtherMenus() {
+    onArcMenuClose() {
+        // Clear active state for activeMenuItem
+        if (this._menuLayout?.activeMenuItem)
+            this._menuLayout.activeMenuItem.active = false;
+
+        this._closeOtherMenus();
+    }
+
+    _closeOtherMenus() {
         if (this.contextMenuManager.activeMenu)
             this.contextMenuManager.activeMenu.toggle();
         if (this.subMenuManager.activeMenu)
@@ -397,7 +404,7 @@ class ArcMenuMenuButton extends PanelMenu.Button {
     }
 
     toggleMenu() {
-        this.closeOtherMenus();
+        this._closeOtherMenus();
 
         const layout = ArcMenuManager.settings.get_enum('menu-layout');
         if (layout === Constants.MenuLayout.GNOME_OVERVIEW) {
@@ -445,25 +452,31 @@ class ArcMenuMenuButton extends PanelMenu.Button {
             this._menuLayout.updateWidth(true);
     }
 
-    _clearTooltipShowingId() {
-        if (this.tooltipShowingID) {
-            GLib.source_remove(this.tooltipShowingID);
-            this.tooltipShowingID = null;
+    clearTooltipShowingId() {
+        if (this._tooltipShowingID) {
+            GLib.source_remove(this._tooltipShowingID);
+            this._tooltipShowingID = null;
         }
     }
 
-    _clearTooltip() {
-        this.tooltipShowing = false;
-        if (this.tooltip) {
-            this.tooltip.hide();
-            this.tooltip.sourceActor = null;
-        }
+    showTooltip(sourceActor, location, titleLabel, description, displayType) {
+        this.clearTooltipShowingId();
+        this._tooltipShowingID = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 750, () => {
+            this._tooltip.setTooltipData(sourceActor, location, titleLabel, description, displayType);
+            this._tooltip.show();
+            this._tooltipShowingID = null;
+            return GLib.SOURCE_REMOVE;
+        });
+    }
+
+    hideTooltip(instant) {
+        this._tooltip.hide(instant);
     }
 
     _onDestroy() {
         this._stopTrackingMouse();
         Main.layoutManager.disconnectObject(this);
-        this._clearTooltipShowingId();
+        this.clearTooltipShowingId();
 
         if (this._dtpSettings) {
             this._dtpSettings.disconnectObject(this);
@@ -475,8 +488,8 @@ class ArcMenuMenuButton extends PanelMenu.Button {
 
         this._destroyMenuLayout();
 
-        this.tooltip?.destroy();
-        this.tooltip = null;
+        this._tooltip?.destroy();
+        this._tooltip = null;
         this.arcMenu?.destroy();
         this.arcMenu = null;
         this.arcMenuContextMenu?.destroy();
@@ -541,20 +554,20 @@ class ArcMenuMenuButton extends PanelMenu.Button {
             if (Main.panel.menuManager && Main.panel.menuManager.activeMenu)
                 Main.panel.menuManager.activeMenu.toggle();
 
-            if (!this._dtpNeedsRelease && this._panelParent.intellihide?.enabled)
-                this._dtpNeedsRelease = true;
+            if (!this._intellihideRelease && this._panelParent.intellihide?.enabled)
+                this._intellihideRelease = true;
         } else {
             if (!this.arcMenu.isOpen) {
-                this._clearTooltipShowingId();
-                this._clearTooltip();
+                this.clearTooltipShowingId();
+                this.hideTooltip(true);
             }
 
             if (!this.arcMenu.isOpen && !this.arcMenuContextMenu.isOpen) {
                 this.menuButtonWidget.removeStylePseudoClass('active');
                 this.remove_style_pseudo_class('active');
 
-                if (this._dtpNeedsRelease && !this._panelNeedsHiding) {
-                    this._dtpNeedsRelease = false;
+                if (this._intellihideRelease && !this._panelNeedsHiding) {
+                    this._intellihideRelease = false;
                     const hidePanel = () => this._panelParent.intellihide?.release(1);
 
                     const isMouseOnPanel = this._isMouseOnPanel();
@@ -595,12 +608,20 @@ class ArcMenuMenuButton extends PanelMenu.Button {
 
     _isMouseOnPanel() {
         const [x, y] = global.get_pointer();
+        return this._panelHasMousePointer(x, y);
+    }
 
-        const mouseOnPanel = this._panelHasMousePointer(x, y);
-        if (mouseOnPanel)
-            return true;
+    _panelChildHasGrab() {
+        const grabActor = global.stage.get_grab_actor();
+        if (!grabActor)
+            return false;
 
-        return false;
+        const statusArea = this._panelParent.statusArea ?? this._panel.statusArea;
+        const quickSettingsMenu = statusArea?.quickSettings?.menu.actor;
+
+        const sourceActor = grabActor._sourceActor || grabActor;
+
+        return this._panelParent.contains(sourceActor) || quickSettingsMenu?.contains(sourceActor);
     }
 
     _panelHasMousePointer(x, y) {
@@ -615,7 +636,8 @@ class ArcMenuMenuButton extends PanelMenu.Button {
             return;
 
         this._pointerWatch = PointerWatcher.getPointerWatcher().addWatch(500, (pX, pY) => {
-            if (!this._panelHasMousePointer(pX, pY)) {
+            const panelChildHasGrab = this._panelChildHasGrab();
+            if (!this._panelHasMousePointer(pX, pY) && !panelChildHasGrab) {
                 callback();
                 this._stopTrackingMouse();
             }
@@ -637,7 +659,6 @@ export const ArcMenu = class ArcMenuArcMenu extends PopupMenu.PopupMenu {
         Main.uiGroup.add_child(this.actor);
         this.actor.add_style_class_name('panel-menu arcmenu-menu');
         this.actor.hide();
-        this._menuClosedID = this.connect('menu-closed', () => this._menuButton.setDefaultMenuView());
 
         this.actor.connectObject('captured-event', this._onCapturedEvent.bind(this), this);
 
@@ -658,23 +679,19 @@ export const ArcMenu = class ArcMenuArcMenu extends PopupMenu.PopupMenu {
         if (!this.isOpen) {
             this._menuButton.arcMenu.actor._muteInput = false;
             this._menuButton.arcMenu.actor._muteKeys = false;
+            this._menuButton?.setDefaultMenuView();
         }
         super.open(animate);
     }
 
     close(animate) {
-        if (this.isOpen)
-            this._menuButton?.closeOtherMenus();
+        this._menuButton?.onArcMenuClose();
 
         super.close(animate);
     }
 
     destroy() {
         this._boxPointer.remove_effect_by_name('dim');
-        if (this._menuClosedID) {
-            this.disconnect(this._menuClosedID);
-            this._menuClosedID = null;
-        }
         super.destroy();
         this._dimEffect = null;
         this._menuButton = null;
@@ -777,7 +794,7 @@ var ArcMenuContextMenu = class ArcMenuArcMenuContextMenu extends PopupMenu.Popup
     }
 
     addPowerOptionsMenuItem() {
-        const powerOptionsItem = new PopupMenu.PopupSubMenuMenuItem(_('Power Off / Log Out'));
+        const powerOptionsItem = new PopupMenu.PopupSubMenuMenuItem(_('Power Off'));
 
         const suspendItem = powerOptionsItem.menu.addAction(_('Suspend'),
             () => this._systemActions.activateSuspend());

@@ -1,4 +1,5 @@
 import St from 'gi://St';
+import GLib from 'gi://GLib';
 import Meta from 'gi://Meta';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
@@ -83,23 +84,34 @@ export const PanelBlur = class PanelBlur {
     }
 
     blur_dtp_panels() {
-        // FIXME when Dash to Panel changes its size, it seems it creates new
-        // panels; but I can't get to delete old widgets
-
-        // blur every panel found
-        global.dashToPanel.panels.forEach(p => {
-            this.maybe_blur_panel(p.panel);
+        // Defer the blurring to the next idle cycle.
+        // This is crucial to ensure the panel actors have been allocated their
+        // final size and position by the compositor, avoiding race conditions
+        // during extension startup.
+        GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+            if (!global.dashToPanel?.panels) {
+                return GLib.SOURCE_REMOVE;
+            }
+    
+            this._log("Blurring Dash to Panel panels after idle.");
+    
+            // blur every panel found
+            global.dashToPanel.panels.forEach(p => {
+                this.maybe_blur_panel(p.panel);
+            });
+    
+            // if main panel is not included in the previous panels, blur it
+            if (
+                !global.dashToPanel.panels
+                    .map(p => p.panel)
+                    .includes(Main.panel)
+                &&
+                this.settings.dash_to_panel.BLUR_ORIGINAL_PANEL
+            )
+                this.maybe_blur_panel(Main.panel);
+    
+            return GLib.SOURCE_REMOVE;
         });
-
-        // if main panel is not included in the previous panels, blur it
-        if (
-            !global.dashToPanel.panels
-                .map(p => p.panel)
-                .includes(Main.panel)
-            &&
-            this.settings.dash_to_panel.BLUR_ORIGINAL_PANEL
-        )
-            this.maybe_blur_panel(Main.panel);
     };
 
     /// Blur a panel only if it is not already blurred (contained in the list)
@@ -438,11 +450,15 @@ export const PanelBlur = class PanelBlur {
                     let same_monitor = actors.monitor.index == window_monitor_i;
 
                     let window_vertical_pos = meta_window.get_frame_rect().y;
+                    let window_vertical_bottom = window_vertical_pos + meta_window.get_frame_rect().height;
 
                     // if so, and if in the same monitor, then it overlaps
                     if (same_monitor
                         &&
-                        window_vertical_pos < panel_bottom + 5 * scale
+                        // check if panel is on top
+                        ((panel_top === 0 && window_vertical_pos < panel_bottom + 5 * scale) ||
+                        // check if panel is at the bottom
+                        (panel_top > 0 && window_vertical_bottom > panel_top - 5 * scale))
                     )
                         window_overlap_panel = true;
                 });

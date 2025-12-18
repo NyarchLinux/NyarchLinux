@@ -146,7 +146,8 @@ export const Window = GObject.registerClass({
     Template: 'resource:///org/gnome/Shell/Extensions/GSConnect/ui/preferences-window.ui',
     Children: [
         // HeaderBar
-        'headerbar', 'infobar', 'stack',
+        'headerbar', 'stack',
+        'infobar_discoverable', 'infobar_openssl',
         'service-menu', 'service-edit', 'refresh-button',
         'device-menu', 'prev-button',
 
@@ -203,11 +204,20 @@ export const Window = GObject.registerClass({
         // Discoverable InfoBar
         this.settings.bind(
             'discoverable',
-            this.infobar,
+            this.infobar_discoverable,
             'reveal-child',
             Gio.SettingsBindFlags.INVERT_BOOLEAN
         );
         this.add_action(this.settings.create_action('discoverable'));
+
+        // OpenSSL-missing infobar
+        this.settings.bind(
+            'missing-openssl',
+            this.infobar_openssl,
+            'reveal-child',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+        this.add_action(this.settings.create_action('missing-openssl'));
 
         // Application Menu
         this._initMenu();
@@ -297,7 +307,9 @@ export const Window = GObject.registerClass({
     }
 
     _refresh() {
-        if (this.service.active && this.device_list.get_children().length < 1) {
+        const missing_openssl = this.settings.get_boolean('missing-openssl');
+        const no_devices = this.service.active && this.device_list.get_children().length < 1;
+        if (missing_openssl || no_devices) {
             this.device_list_spinner.active = true;
             this.service.activate_action('refresh', null);
         } else {
@@ -485,6 +497,14 @@ export const Window = GObject.registerClass({
 
         this.service_edit.active = false;
         this.service_edit.grab_focus();
+    }
+
+    _onRetryOpenssl(button, event) {
+        this.settings.set_boolean('enabled', false);
+        GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT_IDLE, 2, () => {
+            this.settings.set_boolean('enabled', true);
+            return GLib.SOURCE_REMOVE;
+        });
     }
 
     /*

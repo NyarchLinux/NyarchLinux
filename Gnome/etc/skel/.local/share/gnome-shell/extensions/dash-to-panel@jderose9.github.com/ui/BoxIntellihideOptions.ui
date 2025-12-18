@@ -27,6 +27,12 @@
     <property name="step-increment">10</property>
     <property name="upper">4000</property>
   </object>
+  <object class="GtkAdjustment" id="intellihide_reveal_delay_adjustment">
+    <property name="lower">0</property>
+    <property name="page-increment">100</property>
+    <property name="step-increment">10</property>
+    <property name="upper">4000</property>
+  </object>
   <object class="GtkAdjustment" id="intellihide_enable_hide_delay_adjustment">
     <property name="page-increment">100</property>
     <property name="step-increment">10</property>
@@ -44,10 +50,38 @@
       <object class="AdwPreferencesGroup">
         <child>
           <object class="AdwActionRow">
-            <property name="title" translatable="yes">Only hide the panel when it is obstructed by windows</property>
+            <property name="title" translatable="yes">Only hide the panel from windows</property>
             <child>
-              <object class="GtkSwitch" id="intellihide_window_hide_switch">
-                <property name="valign">center</property>
+              <object class="GtkBox">
+                <property name="margin-end">10</property>
+                <child>
+                  <object class="GtkCheckButton" id="intellihide_window_hide_button">
+                    <property name="receives-default">False</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label" translatable="yes">Overlapping</property>
+                    <property name="name">4</property>
+                    <property name="use-markup">True</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <child>
+                  <object class="GtkCheckButton" id="intellihide_window_monitor_hide_button">
+                    <property name="receives-default">False</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label" translatable="yes">On same monitor</property>
+                    <property name="name">4</property>
+                    <property name="use-markup">True</property>
+                  </object>
+                </child>
               </object>
             </child>
           </object>
@@ -73,7 +107,61 @@
       <object class="AdwPreferencesGroup">
         <child>
           <object class="AdwActionRow">
-            <property name="title" translatable="yes">Require pressure at the edge of the screen to reveal the panel</property>
+            <property name="title" translatable="yes">Touching the monitor's edge with the pointer reveals the panel</property>
+            <child>
+              <object class="GtkSwitch" id="intellihide_use_pointer_switch">
+                <property name="valign">center</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <property name="margin-start">10</property>
+                <child>
+                  <object class="GtkCheckButton" id="intellihide_use_pointer_limit_button">
+                    <property name="receives-default">False</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label" translatable="yes">Limit to panel length</property>
+                    <property name="name">4</property>
+                    <property name="use-markup">True</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow" id="intellihide_revealed_hover_options">
+            <property name="title" translatable="yes">Hovering the panel area keeps the panel revealed</property>
+            <child>
+              <object class="GtkSwitch" id="intellihide_revealed_hover_switch">
+                <property name="valign">center</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <property name="margin-start">10</property>
+                <child>
+                  <object class="GtkCheckButton" id="intellihide_revealed_hover_limit_button">
+                    <property name="receives-default">False</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label" translatable="yes">Limit to panel length</property>
+                    <property name="name">4</property>
+                    <property name="use-markup">True</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow" id="intellihide_use_pressure_options">
+            <property name="title" translatable="yes">Require pressure at the edge of the monitor to reveal the panel</property>
             <child>
               <object class="GtkSwitch" id="intellihide_use_pressure_switch">
                 <property name="valign">center</property>
@@ -82,7 +170,7 @@
           </object>
         </child>
         <child>
-          <object class="AdwActionRow" id="intellihide_use_pressure_options">
+          <object class="AdwActionRow" id="intellihide_use_pressure_options2">
             <property name="title" translatable="yes">Required pressure threshold (px)</property>
             <child>
               <object class="GtkSpinButton" id="intellihide_pressure_threshold_spinbutton">
@@ -96,7 +184,7 @@
           </object>
         </child>
         <child>
-          <object class="AdwActionRow" id="intellihide_use_pressure_options2">
+          <object class="AdwActionRow" id="intellihide_use_pressure_options3">
             <property name="title" translatable="yes">Required pressure timeout (ms)</property>
             <child>
               <object class="GtkSpinButton" id="intellihide_pressure_time_spinbutton">
@@ -192,6 +280,21 @@
             <child>
               <object class="GtkSpinButton" id="intellihide_close_delay_spinbutton">
                 <property name="adjustment">intellihide_close_delay_adjustment</property>
+                <property name="numeric">True</property>
+                <property name="text">10</property>
+                <property name="valign">center</property>
+                <property name="value">10</property>
+                <property name="width-chars">4</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Delay before revealing the panel (ms)</property>
+            <child>
+              <object class="GtkSpinButton" id="intellihide_reveal_delay_spinbutton">
+                <property name="adjustment">intellihide_reveal_delay_adjustment</property>
                 <property name="numeric">True</property>
                 <property name="text">10</property>
                 <property name="valign">center</property>

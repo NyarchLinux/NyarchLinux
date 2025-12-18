@@ -47,7 +47,7 @@ export class Layout extends BaseMenuLayout {
         });
 
         this.applicationsBox = new St.BoxLayout({...getOrientationProp(true)});
-        this.applicationsScrollBox = this._createScrollBox({
+        this.applicationsScrollBox = this._createScrollView({
             y_align: Clutter.ActorAlign.START,
             style_class: this._disableFadeEffect ? '' : 'small-vfade',
         });
@@ -68,7 +68,7 @@ export class Layout extends BaseMenuLayout {
         this._mainBox.add_child(verticalSeparator);
         this._mainBox.add_child(horizontalFlip ? this.leftBox : this.rightBox);
 
-        this.categoriesScrollBox = this._createScrollBox({
+        this.categoriesScrollBox = this._createScrollView({
             x_expand: true,
             y_expand: false,
             y_align: Clutter.ActorAlign.START,
@@ -101,12 +101,14 @@ export class Layout extends BaseMenuLayout {
 
         const searchBarLocation = ArcMenuManager.settings.get_enum('searchbar-default-top-location');
         if (searchBarLocation === Constants.SearchbarLocation.TOP) {
-            this.searchEntry.add_style_class_name('arcmenu-search-top');
-            this.searchEntry.style = 'margin-bottom: 0px;';
-            this.insert_child_at_index(this.searchEntry, 0);
-
             const separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MEDIUM,
                 Constants.SeparatorAlignment.HORIZONTAL);
+
+            this.searchEntry.add_style_class_name('arcmenu-search-top');
+            this.searchEntry.style = 'margin-bottom: 0px;';
+            this.searchEntry.bind_property('visible', separator, 'visible', GObject.BindingFlags.SYNC_CREATE);
+
+            this.insert_child_at_index(this.searchEntry, 0);
             this.insert_child_at_index(separator, 1);
         } else if (searchBarLocation === Constants.SearchbarLocation.BOTTOM) {
             this.searchEntry.add_style_class_name('arcmenu-search-bottom');

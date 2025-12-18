@@ -367,9 +367,12 @@ export const ChannelService = GObject.registerClass({
             if (!packet.body.deviceName)
                 throw new Error('missing deviceName');
 
-            // Reject invalid device names
-            if (!Device.validateName(packet.body.deviceName))
-                throw new Error(`invalid deviceName "${packet.body.deviceName}"`);
+            // Sanitize invalid device names
+            if (!Device.validateName(packet.body.deviceName)) {
+                const sanitized = Device.sanitizeName(packet.body.deviceName);
+                debug(`Sanitized invalid device name "${packet.body.deviceName}" to "${sanitized}"`);
+                packet.body.deviceName = sanitized;
+            }
 
             debug(packet);
 
@@ -704,6 +707,25 @@ export const Channel = GObject.registerClass({
         return this._authenticate(connection);
     }
 
+    async _exchangeIdentities() {
+        await this.sendPacket(this.backend.identity);
+        const identity = await this.readPacket();
+
+        if (this.identity.body.protocolVersion !== identity.body.protocolVersion) {
+            this.identity = null;
+            throw new Error(`Unexpected protocol version ${identity.protocolVersion}; ` +
+                            `handshake started with protocol version ${this.identity.protocolVersion}`);
+        }
+
+        if (this.identity.body.deviceId !== identity.body.deviceId) {
+            this.identity = null;
+            throw new Error(`Unexpected device ID "${identity.body.deviceId}"; ` +
+                            `handshake started with device ID "${this.identity.body.deviceId}"`);
+        }
+
+        this.identity = identity;
+    }
+
     /**
      * Negotiate an incoming connection
      *
@@ -740,17 +762,19 @@ export const Channel = GObject.registerClass({
             if (!this.identity.body.deviceName)
                 throw new Error('missing deviceName');
 
-            // Reject invalid device names
-            if (!Device.validateName(this.identity.body.deviceName))
-                throw new Error(`invalid deviceName "${this.identity.body.deviceName}"`);
+            // Sanitize invalid device names
+            if (!Device.validateName(this.identity.body.deviceName)) {
+                const sanitized = Device.sanitizeName(this.identity.body.deviceName);
+                debug(`Sanitized invalid device name "${this.identity.body.deviceName}" to "${sanitized}"`);
+                this.identity.body.deviceName = sanitized;
+            }
 
             this._connection = await this._encryptClient(connection);
 
             // Starting with protocol version 8, the devices are expected to
             // exchange identity packets again after TLS negotiation
             if (this.identity.body.protocolVersion >= 8) {
-                await this.sendPacket(this.backend.identity);
-                this.identity = await this.readPacket();
+                await this._exchangeIdentities();
             }
         } catch (e) {
             this.close();
@@ -780,8 +804,7 @@ export const Channel = GObject.registerClass({
             // Starting with protocol version 8, the devices are expected to
             // exchange identity packets again after TLS negotiation
             if (this.identity.body.protocolVersion >= 8) {
-                await this.sendPacket(this.backend.identity);
-                this.identity = await this.readPacket();
+                await this._exchangeIdentities();
             }
         } catch (e) {
             this.close();

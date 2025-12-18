@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 export default {
-    PACKAGE_VERSION: 62,
+    PACKAGE_VERSION: 71,
     PACKAGE_URL: 'https://github.com/GSConnect/gnome-shell-extension-gsconnect',
     PACKAGE_BUGREPORT: 'https://github.com/GSConnect/gnome-shell-extension-gsconnect/issues/new',
     PACKAGE_DATADIR: '/usr/local/share/gnome-shell/extensions/gsconnect@andyholmes.github.io',

@@ -92,7 +92,7 @@ export class Layout extends BaseMenuLayout {
             ...getOrientationProp(true),
             style: 'margin: 2px 0px;',
         });
-        this.applicationsScrollBox = this._createScrollBox({
+        this.applicationsScrollBox = this._createScrollView({
             x_expand: true,
             y_expand: true,
             x_align: Clutter.ActorAlign.START,
@@ -121,7 +121,7 @@ export class Layout extends BaseMenuLayout {
         }
 
         this.shortcutsBox = new St.BoxLayout({...getOrientationProp(true)});
-        this.shortcutsScrollBox = this._createScrollBox({
+        this.shortcutsScrollBox = this._createScrollView({
             y_align: Clutter.ActorAlign.START,
             style_class: this._disableFadeEffect ? '' : 'small-vfade',
         });
