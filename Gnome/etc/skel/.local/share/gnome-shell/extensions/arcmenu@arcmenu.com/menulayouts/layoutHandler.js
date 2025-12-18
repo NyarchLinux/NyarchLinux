@@ -20,6 +20,7 @@ import {Layout as TogneeLayout} from './tognee.js';
 import {Layout as UnityLayout} from './unity.js';
 import {Layout as WhiskerLayout} from './whisker.js';
 import {Layout as WindowsLayout} from './windows.js';
+import {Layout as ZestLayout} from './zest.js';
 
 /**
  *
@@ -54,6 +55,7 @@ export function createMenuLayout(menuButton, layoutEnum, isStandaloneRunner) {
         [MenuLayout.UNITY]: UnityLayout,
         [MenuLayout.WHISKER]: WhiskerLayout,
         [MenuLayout.WINDOWS]: WindowsLayout,
+        [MenuLayout.ZEST]: ZestLayout,
     };
 
     const LayoutClass = layoutMap[layoutEnum] || ArcMenuLayout; // Default to ArcMenu if layout isn't found

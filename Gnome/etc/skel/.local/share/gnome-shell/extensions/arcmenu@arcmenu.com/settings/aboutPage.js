@@ -6,8 +6,20 @@ import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk';
 
 import * as Config from 'resource:///org/gnome/Shell/Extensions/js/misc/config.js';
-
 import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
+
+const getGioUnixOutputStream = async () => {
+    try {
+        const {default: GioUnix} = await import('gi://GioUnix');
+        if (GioUnix.OutputStream)
+            return GioUnix.OutputStream;
+
+        return Gio.UnixOutputStream;
+    } catch {
+        return Gio.UnixOutputStream;
+    }
+};
+const GioUnixOutputStream = await getGioUnixOutputStream();
 
 export const AboutPage = GObject.registerClass(
 class ArcMenuAboutPage extends Adw.PreferencesPage {
@@ -83,10 +95,13 @@ class ArcMenuAboutPage extends Adw.PreferencesPage {
 
         let releaseNotes = '';
         try {
-            const fileContent = GLib.file_get_contents(`${path}/RELEASENOTES`)[1];
+            const fileContent = GLib.file_get_contents(`${path}/RELEASENOTES.md`)[1];
             const decoder = new TextDecoder('utf-8');
             releaseNotes = decoder.decode(fileContent);
-        } catch (e) {
+            releaseNotes = releaseNotes.replace(/^(?:(\t| {4}))?- /gm,
+                (_match, indent) => indent ? `${indent}◦ ` : '• '
+            );
+        } catch {
             releaseNotes = "Failed to load 'What's New' content.";
         }
 
@@ -95,6 +110,7 @@ class ArcMenuAboutPage extends Adw.PreferencesPage {
             use_markup: true,
             xalign: Gtk.Align.START,
             justify: Gtk.Justification.LEFT,
+            wrap: true,
             margin_top: 14,
             margin_bottom: 14,
             margin_start: 14,
@@ -110,7 +126,7 @@ class ArcMenuAboutPage extends Adw.PreferencesPage {
             vexpand: true,
             valign: Gtk.Align.END,
         });
-        whatsNewGroup.add(enableNotificationsGroup);
+        whatsNewPage.add(enableNotificationsGroup);
 
         const enableNotificationsSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER,
@@ -195,7 +211,7 @@ class ArcMenuAboutPage extends Adw.PreferencesPage {
             this._showFileChooser(
                 _('Load Settings'),
                 {action: Gtk.FileChooserAction.OPEN},
-                '_Open',
+                _('Open'),
                 filename => {
                     if (filename && GLib.file_test(filename, GLib.FileTest.EXISTS)) {
                         const settingsFile = Gio.File.new_for_path(filename);
@@ -208,8 +224,7 @@ class ArcMenuAboutPage extends Adw.PreferencesPage {
                                        null
                                    );
 
-                        // TODO: Replace this with `GioUnix.OutputStream` later
-                        const outputStream = new Gio.UnixOutputStream({fd: stdin, close_fd: true});
+                        const outputStream = new GioUnixOutputStream({fd: stdin, close_fd: true});
                         GLib.close(stdout);
                         GLib.close(stderr);
                         outputStream.splice(settingsFile.read(null),
@@ -226,7 +241,7 @@ class ArcMenuAboutPage extends Adw.PreferencesPage {
             this._showFileChooser(
                 _('Save Settings'),
                 {action: Gtk.FileChooserAction.SAVE},
-                '_Save',
+                _('Save'),
                 filename => {
                     const file = Gio.file_new_for_path(filename);
                     const raw = file.replace(null, false, Gio.FileCreateFlags.NONE, null);
@@ -267,7 +282,7 @@ class ArcMenuAboutPage extends Adw.PreferencesPage {
         creditsPage.add(historyGroup);
 
         const historyText = '<span size="small">ArcMenu was first released in 2017 by Andy C. The original ArcMenu project can be found <a href="https://gitlab.com/LinxGem33/Arc-Menu">here</a>.\n\n' +
-                            'In 2017, ArcMenu <i>started</i> as a fork of the Zorin menu extension by <a href="https://zorin.com/os/Zorin">Zorin OS</a>. ' +
+                            'In 2017, ArcMenu started as a fork of the Zorin menu extension by <a href="https://zorin.com/os/Zorin">Zorin OS</a>. ' +
                             "As it's own separate project, ArcMenu rapidly began developing innovative features and quickly diverged " +
                             'away from Zorin menu thanks to the works of <a href="https://gitlab.com/LinxGem33">Andy C</a>, ' +
                             '<a href="https://gitlab.com/AndrewZaech">Andrew Zaech</a>, <a href="https://github.com/lexruee">Alexander Rüedlinger</a>, and other contributors. ' +
@@ -386,7 +401,7 @@ class ArcMenuAboutPage extends Adw.PreferencesPage {
             modal: true,
             action: params.action,
         });
-        dialog.add_button('_Cancel', Gtk.ResponseType.CANCEL);
+        dialog.add_button(_('Cancel'), Gtk.ResponseType.CANCEL);
         dialog.add_button(acceptBtn, Gtk.ResponseType.ACCEPT);
 
         dialog.connect('response', (self, response) => {

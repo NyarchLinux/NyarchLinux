@@ -5,7 +5,7 @@ import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk';
 
 import * as PW from '../../prefsWidgets.js';
-import * as SettingsUtils from '../SettingsUtils.js';
+import * as SettingsUtils from '../settingsUtils.js';
 
 import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
@@ -74,7 +74,7 @@ class ArcMenuManageThemesDialog extends PW.DialogWindow {
             this._showFileChooser(
                 `${_('Load')} ${_('Menu Themes')}`,
                 {action: Gtk.FileChooserAction.OPEN},
-                '_Open',
+                _('Open'),
                 filename => {
                     if (filename && GLib.file_test(filename, GLib.FileTest.EXISTS)) {
                         const settingsFile = Gio.File.new_for_path(filename);
@@ -140,7 +140,7 @@ class ArcMenuManageThemesDialog extends PW.DialogWindow {
                     this._showFileChooser(
                         `${_('Save')} ${_('Menu Themes')}`,
                         {action: Gtk.FileChooserAction.SAVE},
-                        '_Save',
+                        _('Save'),
 
                         filename => {
                             const file = Gio.file_new_for_path(filename);
@@ -266,7 +266,7 @@ class ArcMenuManageThemesDialog extends PW.DialogWindow {
             modal: true,
             action: params.action,
         });
-        dialog.add_button('_Cancel', Gtk.ResponseType.CANCEL);
+        dialog.add_button(_('Cancel'), Gtk.ResponseType.CANCEL);
         dialog.add_button(acceptBtn, Gtk.ResponseType.ACCEPT);
 
         dialog.connect('response', (self, response) => {

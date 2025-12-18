@@ -36,6 +36,7 @@ export class Layout extends BaseMenuLayout {
             quicklinks_icon_size: Constants.MEDIUM_ICON_SIZE,
             buttons_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
             pinned_apps_icon_size: Constants.MEDIUM_ICON_SIZE,
+            can_hide_search: false,
         });
 
         // Some menu items might not be on the menu at the time of destroy();
@@ -87,7 +88,7 @@ export class Layout extends BaseMenuLayout {
         this.topBox.add_child(this.rightTopBox);
 
         // Applications Box - Contains Favorites, Categories or programs
-        this.applicationsScrollBox = this._createScrollBox({
+        this.applicationsScrollBox = this._createScrollView({
             x_expand: true,
             y_expand: true,
             y_align: Clutter.ActorAlign.START,
@@ -491,10 +492,9 @@ class PlasmaMenuItem extends MW.BaseMenuItem {
     _onHover() {
         if (this.hover) {
             const description = null;
-            this._menuButton.tooltip.showTooltip(this, this.tooltipLocation, this.label,
-                description, Constants.DisplayType.LIST);
+            this._menuButton.showTooltip(this, this.tooltipLocation, this.label, description, Constants.DisplayType.LIST);
         } else {
-            this._menuButton.tooltip.hide();
+            this._menuButton.hideTooltip();
         }
         const shouldHover = ArcMenuManager.settings.get_boolean('plasma-enable-hover');
         if (shouldHover && this.hover && !this.isActive)

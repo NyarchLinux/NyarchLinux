@@ -19,12 +19,10 @@ export const DragLocation = {
     BOTTOM_EDGE: 6,
 };
 
-// eslint-disable-next-line jsdoc/require-jsdoc
 function swap(value, length) {
     return length - value - 1;
 }
 
-// eslint-disable-next-line jsdoc/require-jsdoc
 function animateIconPosition(icon, box, nChangedIcons) {
     if (!icon.has_allocation() || icon.allocation.equal(box) || icon.opacity === 0) {
         icon.allocate(box);
@@ -228,6 +226,7 @@ export const IconGridLayout = GObject.registerClass({
         let rowHeight = 0;
         let y = 0;
         let column = 0;
+        let rtlColumn;
         let naturalWidth = 0;
         let naturalHeight = 0;
 
@@ -238,7 +237,7 @@ export const IconGridLayout = GObject.registerClass({
             const xFill = child.x_align === Clutter.ActorAlign.FILL;
 
             if (isRtl)
-                column = swap(column, this.columns);
+                rtlColumn = swap(column, this.columns);
 
             const newRow = column % this.columns === 0;
 
@@ -249,11 +248,12 @@ export const IconGridLayout = GObject.registerClass({
             else if (xFill)
                 naturalWidth = this._width / this.columns;
 
+            const adjustedColumn = rtlColumn ?? column;
             let x;
             if (isSeparator)
                 x = 0;
             else
-                x = xOffset + column * (naturalWidth + this.columnSpacing);
+                x = xOffset + adjustedColumn * (naturalWidth + this.columnSpacing);
 
             // The first item in a row will determine the row height
             // add previous child naturalHeight offset
@@ -281,8 +281,10 @@ export const IconGridLayout = GObject.registerClass({
     }
 
     addItem(item, index = -1) {
-        if (this._items.has(item))
-            throw new Error(`Item ${item} already added to IconGridLayout`);
+        if (this._items.has(item)) {
+            console.log(`ArcMenu Error: Item ${item} already added to IconGridLayout`);
+            return;
+        }
 
         if (!this._container)
             return;
@@ -298,8 +300,10 @@ export const IconGridLayout = GObject.registerClass({
     }
 
     moveItem(item, newPosition) {
-        if (!this._items.has(item))
-            throw new Error(`Item ${item} is not part of the IconGridLayout`);
+        if (!this._items.has(item)) {
+            console.log(`ArcMenu Error: Item ${item} is not part of the IconGridLayout`);
+            return;
+        }
 
         this._shouldEaseItems = true;
 
@@ -309,8 +313,10 @@ export const IconGridLayout = GObject.registerClass({
     }
 
     removeItem(item) {
-        if (!this._items.has(item))
-            throw new Error(`Item ${item} is not part of the IconGridLayout`);
+        if (!this._items.has(item)) {
+            console.log(`ArcMenu Error: Item ${item} is not part of the IconGridLayout`);
+            return;
+        }
 
         if (!this._container)
             return;

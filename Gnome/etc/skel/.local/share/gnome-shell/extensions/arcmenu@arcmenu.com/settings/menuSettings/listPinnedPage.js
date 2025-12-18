@@ -6,10 +6,23 @@ import Gtk from 'gi://Gtk';
 
 import * as Constants from '../../constants.js';
 import * as PW from '../../prefsWidgets.js';
-import * as SettingsUtils from '../SettingsUtils.js';
-import {SubPage} from './SubPage.js';
+import * as SettingsUtils from '../settingsUtils.js';
+import {SubPage} from './subPage.js';
 
 import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
+
+const getGioUnixDesktopAppInfo = async () => {
+    try {
+        const {default: GioUnix} = await import('gi://GioUnix');
+        if (GioUnix.DesktopAppInfo)
+            return GioUnix.DesktopAppInfo;
+
+        return Gio.DesktopAppInfo;
+    } catch {
+        return Gio.DesktopAppInfo;
+    }
+};
+const GioUnixDesktopAppInfo = await getGioUnixDesktopAppInfo();
 
 /**
  *
@@ -192,7 +205,7 @@ class ArcMenuListPinnedPage extends SubPage {
 
         row.shortcutData = shortcutData;
 
-        let appInfo = Gio.DesktopAppInfo.new(id);
+        let appInfo = GioUnixDesktopAppInfo.new(id);
         let shortcutIcon = icon;
         let rowTitle = name;
 
@@ -200,10 +213,10 @@ class ArcMenuListPinnedPage extends SubPage {
             const extension = ExtensionPreferences.lookupByURL(import.meta.url);
             shortcutIcon = `${extension.path}/${Constants.ArcMenuLogoSymbolic}`;
         } else if (id === 'org.gnome.Settings.desktop' && !appInfo) {
-            appInfo = Gio.DesktopAppInfo.new('gnome-control-center.desktop');
+            appInfo = GioUnixDesktopAppInfo.new('gnome-control-center.desktop');
         } else if (id === Constants.ShortcutCommands.SOFTWARE) {
             for (const softwareManagerID of Constants.SoftwareManagerIDs) {
-                const app = Gio.DesktopAppInfo.new(softwareManagerID);
+                const app = GioUnixDesktopAppInfo.new(softwareManagerID);
                 if (app) {
                     const appIcon = app.get_icon();
                     shortcutIcon = appIcon ? appIcon.to_string() : '';
@@ -613,8 +626,8 @@ class ArcMenuAddCustomLinkDialogWindow extends PW.DialogWindow {
                 modal: true,
                 action: Gtk.FileChooserAction.OPEN,
             });
-            dialog.add_button('_Cancel', Gtk.ResponseType.CANCEL);
-            dialog.add_button('_Open', Gtk.ResponseType.ACCEPT);
+            dialog.add_button(_('Cancel'), Gtk.ResponseType.CANCEL);
+            dialog.add_button(_('Open'), Gtk.ResponseType.ACCEPT);
 
             dialog.set_filter(fileFilter);
 

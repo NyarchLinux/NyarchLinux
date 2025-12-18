@@ -17,10 +17,10 @@
 
 import Clutter from 'gi://Clutter'
 import Meta from 'gi://Meta'
+import Mtk from 'gi://Mtk'
 import Shell from 'gi://Shell'
 import St from 'gi://St'
 
-import * as GrabHelper from 'resource:///org/gnome/shell/ui/grabHelper.js'
 import * as Layout from 'resource:///org/gnome/shell/ui/layout.js'
 import * as Main from 'resource:///org/gnome/shell/ui/main.js'
 import * as OverviewControls from 'resource:///org/gnome/shell/ui/overviewControls.js'
@@ -73,6 +73,9 @@ export const Intellihide = class {
     )
 
     this.enabled = false
+  }
+
+  init() {
     this._changeEnabledStatus()
   }
 
@@ -81,10 +84,11 @@ export const Intellihide = class {
     this._monitor = this._dtpPanel.monitor
     this._animationDestination = -1
     this._pendingUpdate = false
+    this._hover = false
     this._hoveredOut = false
     this._windowOverlap = false
     this._translationProp =
-      'translation_' + (this._dtpPanel.checkIfVertical() ? 'x' : 'y')
+      'translation_' + (this._dtpPanel.geom.vertical ? 'x' : 'y')
 
     this._panelBox.translation_y = 0
     this._panelBox.translation_x = 0
@@ -92,9 +96,18 @@ export const Intellihide = class {
     this._setTrackPanel(true)
     this._bindGeneralSignals()
 
-    if (SETTINGS.get_boolean('intellihide-hide-from-windows')) {
+    if (this._hidesFromWindows()) {
+      let watched = SETTINGS.get_boolean('intellihide-hide-from-windows')
+        ? this._panelBox.get_parent()
+        : new Mtk.Rectangle({
+            x: this._monitor.x,
+            y: this._monitor.y,
+            width: this._monitor.width,
+            height: this._monitor.height,
+          })
+
       this._proximityWatchId = this._proximityManager.createWatch(
-        this._panelBox.get_parent(),
+        watched,
         this._dtpPanel.monitor.index,
         Proximity.Mode[SETTINGS.get_string('intellihide-behaviour')],
         0,
@@ -106,7 +119,8 @@ export const Intellihide = class {
       )
     }
 
-    this._setRevealMechanism()
+    if (SETTINGS.get_boolean('intellihide-use-pointer'))
+      this._setRevealMechanism()
 
     let lastState = SETTINGS.get_int('intellihide-persisted-state')
 
@@ -131,19 +145,19 @@ export const Intellihide = class {
 
   disable(reset) {
     this.enabled = false
+    this._hover = false
 
     if (this._proximityWatchId) {
       this._proximityManager.removeWatch(this._proximityWatchId)
     }
 
     this._setTrackPanel(false)
-
-    this._signalsHandler.destroy()
-    this._timeoutsHandler.destroy()
-
     this._removeRevealMechanism()
 
     this._revealPanel(!reset)
+
+    this._signalsHandler.destroy()
+    this._timeoutsHandler.destroy()
   }
 
   destroy() {
@@ -161,7 +175,7 @@ export const Intellihide = class {
     )
   }
 
-  revealAndHold(holdStatus) {
+  revealAndHold(holdStatus, immediate) {
     if (
       !this.enabled ||
       (holdStatus == Hold.NOTIFY &&
@@ -170,7 +184,7 @@ export const Intellihide = class {
     )
       return
 
-    if (!this._holdStatus) this._revealPanel()
+    if (!this._holdStatus) this._revealPanel(immediate)
 
     this._holdStatus |= holdStatus
 
@@ -191,6 +205,13 @@ export const Intellihide = class {
   reset() {
     this.disable(true)
     this.enable()
+  }
+
+  _hidesFromWindows() {
+    return (
+      SETTINGS.get_boolean('intellihide-hide-from-windows') ||
+      SETTINGS.get_boolean('intellihide-hide-from-monitor-windows')
+    )
   }
 
   _changeEnabledStatus() {
@@ -216,23 +237,21 @@ export const Intellihide = class {
       [
         this._dtpPanel.taskbar,
         ['menu-closed', 'end-drag'],
-        () => {
-          this._panelBox.sync_hover()
-          this._onHoverChanged()
-        },
+        () => this._queueUpdatePanelPosition(),
       ],
       [
         SETTINGS,
         [
+          'changed::intellihide-use-pointer',
           'changed::intellihide-use-pressure',
           'changed::intellihide-hide-from-windows',
+          'changed::intellihide-hide-from-monitor-windows',
           'changed::intellihide-behaviour',
           'changed::intellihide-pressure-threshold',
           'changed::intellihide-pressure-time',
         ],
         () => this.reset(),
       ],
-      [this._panelBox, 'notify::hover', () => this._onHoverChanged()],
       [
         this._dtpPanel.taskbar.previewMenu,
         'open-state-changed',
@@ -254,22 +273,12 @@ export const Intellihide = class {
     }
   }
 
-  _onHoverChanged() {
-    this._hoveredOut = !this._panelBox.hover
-    this._queueUpdatePanelPosition()
-  }
-
   _setTrackPanel(enable) {
     let actorData = Utils.getTrackedActorData(this._panelBox)
 
     actorData.affectsStruts = !enable
     actorData.trackFullscreen = !enable
 
-    Main.layoutManager.panelBox.reactive = enable
-    Main.layoutManager.panelBox.track_hover = enable
-
-    this._panelBox.track_hover = enable
-    this._panelBox.reactive = enable
     this._panelBox.visible = enable ? enable : this._panelBox.visible
 
     Main.layoutManager._queueUpdateRegions()
@@ -292,19 +301,26 @@ export const Intellihide = class {
       this._signalsHandler.add([
         this._pressureBarrier,
         'trigger',
-        () => this._queueUpdatePanelPosition(true),
+        () => {
+          let [x, y] = global.get_pointer()
+
+          if (this._pointerIn(x, y, 1, 'intellihide-use-pointer-limit-size'))
+            this._queueUpdatePanelPosition(true)
+          else this._pressureBarrier._isTriggered = false
+        },
       ])
-    } else {
-      this._pointerWatch = PointerWatcher.getPointerWatcher().addWatch(
-        CHECK_POINTER_MS,
-        (x, y) => this._checkMousePointer(x, y),
-      )
     }
+
+    this._pointerWatch = PointerWatcher.getPointerWatcher().addWatch(
+      CHECK_POINTER_MS,
+      (x, y) => this._checkMousePointer(x, y),
+    )
   }
 
   _removeRevealMechanism() {
     if (this._pointerWatch) {
       PointerWatcher.getPointerWatcher()._removeWatch(this._pointerWatch)
+      this._pointerWatch = 0
     }
 
     if (this._pressureBarrier) {
@@ -319,7 +335,7 @@ export const Intellihide = class {
     let position = this._dtpPanel.geom.position
     let opts = { backend: global.backend }
 
-    if (this._dtpPanel.checkIfVertical()) {
+    if (this._dtpPanel.geom.vertical) {
       opts.y1 = this._monitor.y
       opts.y2 = this._monitor.y + this._monitor.height
       opts.x1 = opts.x2 = this._monitor.x
@@ -345,24 +361,75 @@ export const Intellihide = class {
   }
 
   _checkMousePointer(x, y) {
-    let position = this._dtpPanel.geom.position
-
     if (
-      !this._panelBox.hover &&
+      !this._pressureBarrier &&
+      !this._hover &&
       !Main.overview.visible &&
-      ((position == St.Side.TOP && y <= this._monitor.y + 1) ||
-        (position == St.Side.BOTTOM &&
-          y >= this._monitor.y + this._monitor.height - 1) ||
-        (position == St.Side.LEFT && x <= this._monitor.x + 1) ||
-        (position == St.Side.RIGHT &&
-          x >= this._monitor.x + this._monitor.width - 1)) &&
-      x >= this._monitor.x &&
-      x < this._monitor.x + this._monitor.width &&
-      y >= this._monitor.y &&
-      y < this._monitor.y + this._monitor.height
+      this._pointerIn(x, y, 1, 'intellihide-use-pointer-limit-size')
     ) {
+      this._hover = true
       this._queueUpdatePanelPosition(true)
+    } else if (this._panelBox.visible) {
+      let keepRevealedOnHover = SETTINGS.get_boolean(
+        'intellihide-revealed-hover',
+      )
+      let fixedOffset = keepRevealedOnHover
+        ? this._dtpPanel.geom.outerSize + this._dtpPanel.geom.topOffset
+        : 1
+      let hover = this._pointerIn(
+        x,
+        y,
+        fixedOffset,
+        'intellihide-revealed-hover-limit-size',
+      )
+
+      if (hover == this._hover) return
+
+      this._hoveredOut = !hover
+      this._hover = hover
+      this._queueUpdatePanelPosition()
     }
+  }
+
+  _pointerIn(x, y, fixedOffset, limitSizeSetting) {
+    let geom = this._dtpPanel.geom
+    let position = geom.position
+    let varCoordX1 = this._monitor.x
+    let varCoordY1 = this._monitor.y + geom.gsTopPanelHeight // if vertical, ignore the original GS panel if present
+    let varOffset = {}
+
+    if (geom.dockMode && SETTINGS.get_boolean(limitSizeSetting)) {
+      let alloc = this._dtpPanel.allocation
+
+      if (!geom.dynamic) {
+        // when fixed, use the panel clipcontainer which is positioned
+        // relative to the stage itself
+        varCoordX1 = geom.x
+        varCoordY1 = geom.y
+        varOffset[this._dtpPanel.varCoord.c2] =
+          alloc[this._dtpPanel.varCoord.c2] - alloc[this._dtpPanel.varCoord.c1]
+      } else {
+        // when dynamic, the panel clipcontainer spans the whole monitor edge
+        // and the panel is positioned relatively to the clipcontainer
+        varOffset[this._dtpPanel.varCoord.c1] =
+          alloc[this._dtpPanel.varCoord.c1]
+        varOffset[this._dtpPanel.varCoord.c2] =
+          alloc[this._dtpPanel.varCoord.c2]
+      }
+    }
+
+    return (
+      ((position == St.Side.TOP && y <= this._monitor.y + fixedOffset) ||
+        (position == St.Side.BOTTOM &&
+          y >= this._monitor.y + this._monitor.height - fixedOffset) ||
+        (position == St.Side.LEFT && x <= this._monitor.x + fixedOffset) ||
+        (position == St.Side.RIGHT &&
+          x >= this._monitor.x + this._monitor.width - fixedOffset)) &&
+      x >= varCoordX1 + (varOffset.x1 || 0) &&
+      x < varCoordX1 + (varOffset.x2 || this._monitor.width) &&
+      y >= varCoordY1 + (varOffset.y1 || 0) &&
+      y < varCoordY1 + (varOffset.y2 || this._monitor.height)
+    )
   }
 
   _queueUpdatePanelPosition(fromRevealMechanism) {
@@ -398,7 +465,7 @@ export const Intellihide = class {
       Main.overview.visibleTarget ||
       this._dtpPanel.taskbar.previewMenu.opened ||
       this._dtpPanel.taskbar._dragMonitor ||
-      this._panelBox.get_hover() ||
+      this._hover ||
       (this._dtpPanel.geom.position == St.Side.TOP &&
         Main.layoutManager.panelBox.get_hover()) ||
       this._checkIfGrab()
@@ -418,34 +485,23 @@ export const Intellihide = class {
       return !mouseBtnIsPressed
     }
 
-    if (!SETTINGS.get_boolean('intellihide-hide-from-windows')) {
-      return this._panelBox.hover
+    if (!this._hidesFromWindows()) {
+      return this._hover
     }
 
     return !this._windowOverlap
   }
 
   _checkIfGrab() {
-    let isGrab
-
-    if (GrabHelper._grabHelperStack)
-      // gnome-shell < 42
-      isGrab = GrabHelper._grabHelperStack.some(
-        (gh) => gh._owner == this._dtpPanel.panel,
-      )
-    else if (global.stage.get_grab_actor) {
-      // gnome-shell >= 42
-      let grabActor = global.stage.get_grab_actor()
-      let sourceActor = grabActor?._sourceActor || grabActor
-
-      isGrab =
-        sourceActor &&
-        (sourceActor == Main.layoutManager.dummyCursor ||
-          this._dtpPanel.statusArea.quickSettings?.menu.actor.contains(
-            sourceActor,
-          ) ||
-          this._dtpPanel.panel.contains(sourceActor))
-    }
+    let grabActor = global.stage.get_grab_actor()
+    let sourceActor = grabActor?._sourceActor || grabActor
+    let isGrab =
+      sourceActor &&
+      (sourceActor == Main.layoutManager.dummyCursor ||
+        this._dtpPanel.statusArea.quickSettings?.menu.actor.contains(
+          sourceActor,
+        ) ||
+        this._dtpPanel.panel.contains(sourceActor))
 
     if (isGrab)
       //there currently is a grab on a child of the panel, check again soon to catch its release
@@ -464,52 +520,62 @@ export const Intellihide = class {
       this._dtpPanel.taskbar._shownInitially = false
     }
 
-    this._animatePanel(0, immediate)
+    this._animatePanel(
+      0,
+      immediate,
+      () => (this._dtpPanel.taskbar._shownInitially = true),
+    )
   }
 
   _hidePanel(immediate) {
     let position = this._dtpPanel.geom.position
-    let size =
-      this._panelBox[
-        position == St.Side.LEFT || position == St.Side.RIGHT
-          ? 'width'
-          : 'height'
-      ]
+    let size = this._panelBox[this._dtpPanel.geom.vertical ? 'width' : 'height']
     let coefficient =
       position == St.Side.TOP || position == St.Side.LEFT ? -1 : 1
 
     this._animatePanel(size * coefficient, immediate)
   }
 
-  _animatePanel(destination, immediate) {
+  _animatePanel(destination, immediate, onComplete) {
     if (destination === this._animationDestination) return
 
     Utils.stopAnimations(this._panelBox)
     this._animationDestination = destination
 
+    let update = () =>
+      this._timeoutsHandler.add([
+        T3,
+        POST_ANIMATE_MS,
+        () => {
+          Main.layoutManager._queueUpdateRegions()
+          this._queueUpdatePanelPosition()
+        },
+      ])
+
     if (immediate) {
       this._panelBox[this._translationProp] = destination
       this._panelBox.visible = !destination
+      update()
     } else if (destination !== this._panelBox[this._translationProp]) {
+      let delay = 0
+
+      if (destination != 0 && this._hoveredOut)
+        delay = SETTINGS.get_int('intellihide-close-delay') * 0.001
+      else if (destination == 0)
+        delay = SETTINGS.get_int('intellihide-reveal-delay') * 0.001
+
       let tweenOpts = {
         //when entering/leaving the overview, use its animation time instead of the one from the settings
         time: Main.overview.visible
           ? SIDE_CONTROLS_ANIMATION_TIME
           : SETTINGS.get_int('intellihide-animation-time') * 0.001,
         //only delay the animation when hiding the panel after the user hovered out
-        delay:
-          destination != 0 && this._hoveredOut
-            ? SETTINGS.get_int('intellihide-close-delay') * 0.001
-            : 0,
+        delay,
         transition: 'easeOutQuad',
         onComplete: () => {
           this._panelBox.visible = !destination
-          Main.layoutManager._queueUpdateRegions()
-          this._timeoutsHandler.add([
-            T3,
-            POST_ANIMATE_MS,
-            () => this._queueUpdatePanelPosition(),
-          ])
+          onComplete ? onComplete() : null
+          update()
         },
       }
 

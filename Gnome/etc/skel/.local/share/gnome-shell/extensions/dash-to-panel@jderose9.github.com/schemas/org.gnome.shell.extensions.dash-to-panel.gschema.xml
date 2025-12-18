@@ -331,6 +331,26 @@
       <summary>Custom gradient bottom opacity</summary>
       <description>Custom gradient bottom opacity for the panel</description>
     </key>
+    <key type="b" name="trans-use-border">
+      <default>false</default>
+      <summary>Display border</summary>
+      <description>Display a border between panel and the rest of the desktop</description>
+    </key>
+    <key type="i" name="trans-border-width">
+      <default>1</default>
+      <summary>Width of panel border</summary>
+      <description>Customize the width of the panel border</description>
+    </key>
+    <key type="b" name="trans-border-use-custom-color">
+      <default>false</default>
+      <summary>Override panel border color</summary>
+      <description>Replace current panel border color</description>
+    </key>
+    <key type="s" name="trans-border-custom-color">
+      <default>"rgba(200,200,200,0.2)"</default>
+      <summary>Custom panel border color</summary>
+      <description>Custom panel border color</description>
+    </key>
     <key type="b" name="intellihide">
       <default>false</default>
       <summary>Intellihide</summary>
@@ -338,18 +358,39 @@
     </key>
     <key type="b" name="intellihide-hide-from-windows">
       <default>false</default>
-      <summary>Only hide from windows</summary>
+      <summary>Only hide from overlapping windows</summary>
       <description>Dictates if the dash should only hide when in conflict with windows</description>
+    </key>
+    <key type="b" name="intellihide-hide-from-monitor-windows">
+      <default>false</default>
+      <summary>Only hide from windows on monitor</summary>
     </key>
     <key name="intellihide-behaviour" enum="org.gnome.shell.extensions.dash-to-panel.proximityBehavior">
       <default>'FOCUSED_WINDOWS'</default>
       <summary>Intellihide behaviour</summary>
       <description>Dictates how to intelligently hide the panel</description>
     </key>
+    <key type="b" name="intellihide-use-pointer">
+      <default>true</default>
+      <summary>Intellihide mouse pointer</summary>
+      <description>The mouse pointer next to the edge of the screen reveals the panel</description>
+    </key>
+    <key type="b" name="intellihide-use-pointer-limit-size">
+      <default>false</default>
+      <summary>Limit to panel length</summary>
+    </key>
+    <key type="b" name="intellihide-revealed-hover">
+      <default>true</default>
+      <summary>Panel stays revealed when hovered</summary>
+    </key>
+    <key type="b" name="intellihide-revealed-hover-limit-size">
+      <default>false</default>
+      <summary>Limit to panel length</summary>
+    </key>
     <key type="b" name="intellihide-use-pressure">
       <default>false</default>
       <summary>Intellihide pressure</summary>
-      <description>To reveal the panel, pressure needs to be applied to the edege of the screen</description>
+      <description>To reveal the panel, pressure needs to be applied to the edge of the screen</description>
     </key>
     <key type="i" name="intellihide-pressure-threshold">
       <default>100</default>
@@ -384,6 +425,11 @@
       <default>400</default>
       <summary>Intellihide close delay</summary>
       <description>The delay (ms) before hiding the panel</description>
+    </key>
+    <key type="i" name="intellihide-reveal-delay">
+      <default>0</default>
+      <summary>Intellihide reveal delay</summary>
+      <description>The delay (ms) before revealing the panel</description>
     </key>
     <key type="s" name="intellihide-key-toggle-text">
       <default>"&lt;Super&gt;i"</default>
@@ -648,6 +694,10 @@
       <default>false</default>
       <summary>Provide monitor isolation</summary>
       <description>Dash shows only windows from the current monitor</description>
+    </key>
+    <key type="b" name="isolate-monitors-with-single-panel">
+      <default>false</default>
+      <summary>Isolate monitors even with a single panel</summary>
     </key>
     <key type="b" name="show-favorites-all-monitors">
       <default>true</default>

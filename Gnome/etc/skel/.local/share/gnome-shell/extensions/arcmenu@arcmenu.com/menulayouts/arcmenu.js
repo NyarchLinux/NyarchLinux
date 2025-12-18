@@ -56,7 +56,7 @@ export class Layout extends BaseMenuLayout {
         this.rightBox = new St.BoxLayout({...getOrientationProp(true)});
 
         // Applications Box - Contains Favorites, Categories or programs
-        this.applicationsScrollBox = this._createScrollBox({
+        this.applicationsScrollBox = this._createScrollView({
             x_expand: true,
             y_expand: true,
             x_align: Clutter.ActorAlign.FILL,
@@ -119,7 +119,7 @@ export class Layout extends BaseMenuLayout {
         }
 
         this.shortcutsBox = new St.BoxLayout({...getOrientationProp(true)});
-        this.shortcutsScrollBox = this._createScrollBox({
+        this.shortcutsScrollBox = this._createScrollView({
             y_align: Clutter.ActorAlign.START,
             style_class: this._disableFadeEffect ? '' : 'small-vfade',
         });
@@ -193,6 +193,7 @@ export class Layout extends BaseMenuLayout {
         this.loadPinnedApps();
         this.setDefaultMenuView();
         this._connectAppChangedEvents();
+        ArcMenuManager.settings.connectObject('changed::arcmenu-layout-max-frequent-apps', () => this.setDefaultMenuView(), this);
     }
 
     _createExtraCategoriesLinks() {
@@ -222,17 +223,17 @@ export class Layout extends BaseMenuLayout {
             const [categoryEnum, shouldShow] = extraCategories[i];
             const extraCategoryItem = this.categoryDirectories.get(categoryEnum);
 
+            if (!extraCategoryItem || !shouldShow)
+                continue;
+
             // Don't show the extra category if the default menu view is the same category.
-            if (shouldShow && categoryEnum === Constants.CategoryType.PINNED_APPS &&
-                defaultMenuView === Constants.DefaultMenuView.PINNED_APPS)
+            if (categoryEnum === Constants.CategoryType.PINNED_APPS &&
+                (defaultMenuView === Constants.DefaultMenuView.PINNED_APPS || defaultMenuView === Constants.DefaultMenuView.PINNED_AND_FREQUENT_APPS))
                 continue;
-            else if (shouldShow && categoryEnum === Constants.CategoryType.FREQUENT_APPS &&
-                defaultMenuView === Constants.DefaultMenuView.FREQUENT_APPS)
+            else if (categoryEnum === Constants.CategoryType.FREQUENT_APPS &&
+                (defaultMenuView === Constants.DefaultMenuView.FREQUENT_APPS || defaultMenuView === Constants.DefaultMenuView.PINNED_AND_FREQUENT_APPS))
                 continue;
-            else if (shouldShow && categoryEnum === Constants.CategoryType.ALL_PROGRAMS &&
-                defaultMenuView === Constants.DefaultMenuView.ALL_PROGRAMS)
-                continue;
-            else if (!extraCategoryItem || !shouldShow)
+            else if (categoryEnum === Constants.CategoryType.ALL_PROGRAMS && defaultMenuView === Constants.DefaultMenuView.ALL_PROGRAMS)
                 continue;
 
             this.showExtraCategoriesLinksBox = true;
@@ -252,20 +253,21 @@ export class Layout extends BaseMenuLayout {
 
         const extraCategories = ArcMenuManager.settings.get_value('extra-categories').deep_unpack();
         const defaultMenuView = ArcMenuManager.settings.get_enum('default-menu-view');
-        if (defaultMenuView === Constants.DefaultMenuView.PINNED_APPS)
+        if (defaultMenuView === Constants.DefaultMenuView.PINNED_APPS || defaultMenuView === Constants.DefaultMenuView.PINNED_AND_FREQUENT_APPS)
             this.hasPinnedApps = true;
 
         for (let i = 0; i < extraCategories.length; i++) {
             const [categoryEnum, shouldShow] = extraCategories[i];
 
+            if (!shouldShow)
+                continue;
+
             // Don't show the extra category if the default menu view is the same category.
-            if (shouldShow && categoryEnum === Constants.CategoryType.PINNED_APPS &&
-                defaultMenuView === Constants.DefaultMenuView.PINNED_APPS)
+            if (categoryEnum === Constants.CategoryType.PINNED_APPS &&
+                (defaultMenuView === Constants.DefaultMenuView.PINNED_APPS || defaultMenuView === Constants.DefaultMenuView.PINNED_AND_FREQUENT_APPS))
                 continue;
-            else if (shouldShow && categoryEnum === Constants.CategoryType.FREQUENT_APPS &&
-                defaultMenuView === Constants.DefaultMenuView.FREQUENT_APPS)
-                continue;
-            else if (!shouldShow)
+            else if (categoryEnum === Constants.CategoryType.FREQUENT_APPS &&
+                (defaultMenuView === Constants.DefaultMenuView.FREQUENT_APPS || defaultMenuView === Constants.DefaultMenuView.PINNED_AND_FREQUENT_APPS))
                 continue;
 
             const categoryMenuItem = new MW.CategoryMenuItem(this, categoryEnum, Constants.DisplayType.LIST);
@@ -279,7 +281,7 @@ export class Layout extends BaseMenuLayout {
 
     displayPinnedApps() {
         const defaultMenuView = ArcMenuManager.settings.get_enum('default-menu-view');
-        if (defaultMenuView === Constants.DefaultMenuView.PINNED_APPS) {
+        if (defaultMenuView === Constants.DefaultMenuView.PINNED_APPS || defaultMenuView === Constants.DefaultMenuView.PINNED_AND_FREQUENT_APPS) {
             this._viewAllAppsButton.show();
             this.backButton.hide();
         } else {
@@ -309,7 +311,8 @@ export class Layout extends BaseMenuLayout {
     displayCategories() {
         const defaultMenuView = ArcMenuManager.settings.get_enum('default-menu-view');
         if (defaultMenuView === Constants.DefaultMenuView.PINNED_APPS ||
-            defaultMenuView === Constants.DefaultMenuView.FREQUENT_APPS) {
+            defaultMenuView === Constants.DefaultMenuView.FREQUENT_APPS ||
+            defaultMenuView === Constants.DefaultMenuView.PINNED_AND_FREQUENT_APPS) {
             this._viewAllAppsButton.hide();
             this.backButton.show();
         } else {
@@ -335,6 +338,8 @@ export class Layout extends BaseMenuLayout {
             this.displayFrequentApps();
         else if (defaultMenuView === Constants.DefaultMenuView.ALL_PROGRAMS)
             this.displayAllApps(false);
+        else if (defaultMenuView === Constants.DefaultMenuView.PINNED_AND_FREQUENT_APPS)
+            this._displayPinnedAndFrequentApps();
     }
 
     displayCategoryAppList(appList, category) {
@@ -342,6 +347,32 @@ export class Layout extends BaseMenuLayout {
         this._viewAllAppsButton.hide();
         this.backButton.show();
         super.displayCategoryAppList(appList, category);
+    }
+
+    _displayPinnedAndFrequentApps() {
+        this.displayPinnedApps();
+
+        this._frequentAppsBox?.destroy();
+        this._frequentAppsBox = new St.BoxLayout({...getOrientationProp(true)});
+
+        this.applicationsBox.insert_child_at_index(this._frequentAppsBox, 1);
+
+        const mostUsed = Shell.AppUsage.get_default().get_most_used();
+        if (mostUsed.length > 0) {
+            const separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MEDIUM,
+                Constants.SeparatorAlignment.HORIZONTAL);
+            this._frequentAppsBox.add_child(separator);
+        }
+
+        const maxFrequentApps = ArcMenuManager.settings.get_int('arcmenu-layout-max-frequent-apps');
+        for (let i = 0; i < Math.min(mostUsed.length, maxFrequentApps + 1); i++) {
+            if (mostUsed[i] && mostUsed[i].get_app_info().should_show()) {
+                const isContainedInCategory = false;
+                const item = new MW.ApplicationMenuItem(this, mostUsed[i], Constants.DisplayType.LIST,
+                    null, isContainedInCategory);
+                this._frequentAppsBox.add_child(item);
+            }
+        }
     }
 
     displayFrequentApps() {
@@ -361,17 +392,8 @@ export class Layout extends BaseMenuLayout {
                 appList.push(item);
             }
         }
-        let activeMenuItemSet = false;
-        for (let i = 0; i < appList.length; i++) {
-            const item = appList[i];
-            if (item.get_parent())
-                item.get_parent().remove_child(item);
-            this.applicationsBox.add_child(item);
-            if (!activeMenuItemSet) {
-                activeMenuItemSet = true;
-                this.activeMenuItem = item;
-            }
-        }
+
+        this._displayAppList(appList, Constants.CategoryType.HOME_SCREEN, this.applicationsGrid);
     }
 
     displayRecentFiles() {

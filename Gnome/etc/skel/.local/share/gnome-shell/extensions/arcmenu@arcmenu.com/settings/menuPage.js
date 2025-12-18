@@ -4,16 +4,16 @@ import Gtk from 'gi://Gtk';
 
 import * as Constants from '../constants.js';
 import * as PW from '../prefsWidgets.js';
-import * as SettingsUtils from './SettingsUtils.js';
+import * as SettingsUtils from './settingsUtils.js';
 
-import {FineTunePage} from './Menu/FineTunePage.js';
-import {LayoutsPage} from './Menu/LayoutsPage.js';
-import {LayoutTweaksPage} from './Menu/LayoutTweaksPage.js';
-import {ListOtherPage} from './Menu/ListOtherPage.js';
-import {ListPinnedPage} from './Menu/ListPinnedPage.js';
-import {SearchOptionsPage} from './Menu/SearchOptionsPage.js';
-import {ThemePage} from './Menu/ThemePage.js';
-import {VisualSettingsPage} from './Menu/VisualSettings.js';
+import {FineTunePage} from './menuSettings/fineTunePage.js';
+import {LayoutsPage} from './menuSettings/layoutsPage.js';
+import {LayoutTweaksPage} from './menuSettings/layoutTweaksPage.js';
+import {ListOtherPage} from './menuSettings/listOtherPage.js';
+import {ListPinnedPage} from './menuSettings/listPinnedPage.js';
+import {SearchOptionsPage} from './menuSettings/searchOptionsPage.js';
+import {ThemePage} from './menuSettings/themePage.js';
+import {VisualSettingsPage} from './menuSettings/visualSettings.js';
 
 import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
@@ -73,7 +73,7 @@ class ArcMenuMenuPage extends Adw.PreferencesPage {
 
         const fineTuneRow = new PW.SettingRow({
             title: _('Fine Tune'),
-            subtitle: _('Adjust less commonly used visual settings'),
+            subtitle: _('Adjust less commonly used settings'),
             icon_name: 'settings-finetune-symbolic',
         });
         this._addSubPageToRow(fineTuneRow, {

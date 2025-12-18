@@ -4,6 +4,7 @@ import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Shell from 'gi://Shell';
 
+import * as Config from 'resource:///org/gnome/shell/misc/config.js';
 import {InputSourceManager} from 'resource:///org/gnome/shell/ui/status/keyboard.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
@@ -14,6 +15,8 @@ import {MenuButton} from './menuButton.js';
 import * as Theming from './theming.js';
 import {StandaloneRunner} from './standaloneRunner.js';
 import * as Utils from './utils.js';
+
+const [ShellVersion] = Config.PACKAGE_VERSION.split('.').map(s => Number(s));
 
 export const MenuController = class {
     constructor(panelInfo, monitorIndex) {
@@ -117,7 +120,8 @@ export const MenuController = class {
                 'menu-button-active-fg-color', 'menu-button-border-radius', 'menu-button-border-width'],
             this._overrideMenuTheme.bind(this));
 
-        this._connectSettings(['arcmenu-hotkey', 'runner-hotkey'], this._updateHotKeyBinder.bind(this));
+        this._connectSettings(['arcmenu-hotkey', 'runner-hotkey', 'arcmenu-hotkey-overlay-key-enabled', 'runner-hotkey-overlay-key-enabled'],
+            this._updateHotKeyBinder.bind(this));
 
         this._connectSettings(['position-in-panel', 'menu-button-position-offset'],
             this._setButtonPosition.bind(this));
@@ -137,7 +141,7 @@ export const MenuController = class {
                 'menu-item-grid-icon-size', 'menu-item-icon-size', 'button-item-icon-size', 'quicklinks-item-icon-size',
                 'menu-item-category-icon-size', 'category-icon-type', 'shortcut-icon-type', 'show-category-sub-menus',
                 'arcmenu-extra-categories-links', 'arcmenu-extra-categories-links-location', 'raven-search-display-style',
-                'runner-show-frequent-apps', 'default-menu-view-redmond', 'disable-recently-installed-apps'],
+                'runner-show-frequent-apps', 'default-menu-view-redmond', 'disable-recently-installed-apps', 'az-layout-merge-panels'],
             this._recreateMenuLayout.bind(this));
 
         this._connectSettings(['left-panel-width', 'right-panel-width', 'menu-width-adjustment'],
@@ -163,12 +167,12 @@ export const MenuController = class {
         if (!this.isPrimaryPanel)
             return;
 
-        if (this._writeTimeoutId)
-            GLib.source_remove(this._writeTimeoutId);
+        if (this._updateThemeDelayId)
+            GLib.source_remove(this._updateThemeDelayId);
 
-        this._writeTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300, () => {
+        this._updateThemeDelayId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300, () => {
             Theming.updateStylesheet();
-            this._writeTimeoutId = null;
+            this._updateThemeDelayId = null;
             return GLib.SOURCE_REMOVE;
         });
     }
@@ -211,7 +215,7 @@ export const MenuController = class {
         const appList = this._appSystem.get_installed().filter(appInfo => {
             try {
                 appInfo.get_id(); // catch invalid file encodings
-            } catch (e) {
+            } catch {
                 return false;
             }
             return appInfo.should_show();
@@ -300,34 +304,82 @@ export const MenuController = class {
         if (!this.isPrimaryPanel)
             return;
 
-        const [runnerHotkey] = ArcMenuManager.settings.get_strv('runner-hotkey');
-        const [menuHotkey] = ArcMenuManager.settings.get_strv('arcmenu-hotkey');
+        if (this._updateHotkeyDelayId)
+            GLib.source_remove(this._updateHotkeyDelayId);
 
-        this._customKeybinding.unbind('ToggleArcMenu');
-        this._customKeybinding.unbind('ToggleRunnerMenu');
-        this._overrideOverlayKey.disable();
+        this._updateHotkeyDelayId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300, () => {
+            const runnerHotkeys = ArcMenuManager.settings.get_strv('runner-hotkey');
+            const arcmenuHotkeys = ArcMenuManager.settings.get_strv('arcmenu-hotkey');
 
-        if (runnerHotkey) {
-            if (!this.runnerMenu)
-                this.runnerMenu = new StandaloneRunner();
-
-            if (runnerHotkey === Constants.SUPER_L) {
-                this._overrideOverlayKey.enable(() => this.toggleStandaloneRunner());
-            } else {
-                this._customKeybinding.bind('ToggleRunnerMenu', 'runner-hotkey',
-                    () => this.toggleStandaloneRunner());
-            }
-        } else if (this.runnerMenu) {
-            this.runnerMenu.destroy();
-            this.runnerMenu = null;
-        }
-
-        if (menuHotkey === Constants.SUPER_L) {
+            this._customKeybinding.unbind('ToggleArcMenu');
+            this._customKeybinding.unbind('ToggleRunnerMenu');
             this._overrideOverlayKey.disable();
-            this._overrideOverlayKey.enable(() => this.toggleMenus());
-        } else if (menuHotkey) {
-            this._customKeybinding.bind('ToggleArcMenu', 'arcmenu-hotkey',
-                () => this.toggleMenus());
+
+            if (arcmenuHotkeys.length > 0) {
+                const superKey = this._getSuperHotkey(arcmenuHotkeys, 'arcmenu');
+                if (superKey) {
+                    this._overrideOverlayKey.enable(superKey, () => this.toggleMenus());
+                    this._spliceSuperHotkeys(arcmenuHotkeys);
+                }
+
+                if (arcmenuHotkeys.length > 0)
+                    this._customKeybinding.bind('ToggleArcMenu', 'arcmenu-hotkey', () => this.toggleMenus());
+            }
+
+            if (runnerHotkeys.length > 0) {
+                if (!this.runnerMenu)
+                    this.runnerMenu = new StandaloneRunner();
+
+                // ArcMenu has priority of the overlay-key. If already enabled, skip for StandaloneRunner.
+                const superKey = this._getSuperHotkey(runnerHotkeys, 'runner');
+                if (superKey && !this._overrideOverlayKey.enabled) {
+                    this._overrideOverlayKey.enable(superKey, () => this.toggleStandaloneRunner());
+                    this._spliceSuperHotkeys(runnerHotkeys);
+                }
+
+                if (runnerHotkeys.length > 0)
+                    this._customKeybinding.bind('ToggleRunnerMenu', 'runner-hotkey', () => this.toggleStandaloneRunner());
+            } else if (this.runnerMenu) {
+                this.runnerMenu.destroy();
+                this.runnerMenu = null;
+            }
+
+            this._updateHotkeyDelayId = null;
+            return GLib.SOURCE_REMOVE;
+        });
+    }
+
+    _spliceSuperHotkeys(hotkeys) {
+        const hasSuperL = hotkeys.includes(Constants.SUPER_L);
+        const hasSuperR = hotkeys.includes(Constants.SUPER_R);
+
+        if (hasSuperL && hasSuperR && ShellVersion >= 48) {
+            hotkeys.splice(hotkeys.indexOf(Constants.SUPER_L), 1);
+            hotkeys.splice(hotkeys.indexOf(Constants.SUPER_R), 1);
+        } else if (hasSuperL || hasSuperR) {
+            const index = hotkeys.findIndex(key => key === Constants.SUPER_L || key === Constants.SUPER_R);
+            if (index !== -1)
+                hotkeys.splice(index, 1);
+        }
+    }
+
+    _getSuperHotkey(hotkeys, type) {
+        const useAsOverlayKey = ArcMenuManager.settings.get_boolean(`${type}-hotkey-overlay-key-enabled`);
+        if (!useAsOverlayKey)
+            return false;
+
+        if (hotkeys.includes(Constants.SUPER_L) && hotkeys.includes(Constants.SUPER_R)) {
+            // GNOME 48+ supports using 'Super' as the overlay-key, which allows both Super_L and Super_R
+            if (ShellVersion >= 48)
+                return Constants.SUPER;
+            else
+                return hotkeys.find(key => key === Constants.SUPER_L || key === Constants.SUPER_R);
+        } else if (hotkeys.includes(Constants.SUPER_L)) {
+            return Constants.SUPER_L;
+        } else if (hotkeys.includes(Constants.SUPER_R)) {
+            return Constants.SUPER_R;
+        } else {
+            return false;
         }
     }
 
@@ -495,9 +547,14 @@ export const MenuController = class {
         }
         this._inputSourcesSettings = null;
 
-        if (this._writeTimeoutId) {
-            GLib.source_remove(this._writeTimeoutId);
-            this._writeTimeoutId = null;
+        if (this._updateThemeDelayId) {
+            GLib.source_remove(this._updateThemeDelayId);
+            this._updateThemeDelayId = null;
+        }
+
+        if (this._updateHotkeyDelayId) {
+            GLib.source_remove(this._updateHotkeyDelayId);
+            this._updateHotkeyDelayId = null;
         }
 
         if (this._appSystem)

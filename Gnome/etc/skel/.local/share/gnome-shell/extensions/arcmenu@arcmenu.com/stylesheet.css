@@ -112,12 +112,10 @@
     min-height: 0px;
 }
 
-/* Recently Installed App Indicator on parent category */
-/*
 .arcmenu-indicator{
+    -st-icon-style: symbolic;
     color: rgb(41, 165, 249);
 }
-*/
 
 /* Recently Installed App Indicator Text */
 .arcmenu-text-indicator{

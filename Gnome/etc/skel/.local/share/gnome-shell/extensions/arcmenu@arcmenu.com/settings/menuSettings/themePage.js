@@ -5,9 +5,9 @@ import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk';
 
-import * as SettingsUtils from '../SettingsUtils.js';
-import {SubPage} from './SubPage.js';
-import {SaveThemeDialog, ManageThemesDialog} from './ThemingDialog.js';
+import * as SettingsUtils from '../settingsUtils.js';
+import {SubPage} from './subPage.js';
+import {SaveThemeDialog, ManageThemesDialog} from './themingDialog.js';
 
 import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 

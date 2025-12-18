@@ -430,7 +430,7 @@ class ArchUpdateIndicator extends Button {
 			} else if (updatesCount == -2) {
 				// Error
 				this.updateIcon.set_gicon( this._getCustIcon('arch-error-symbolic') );
-				if ( this.lastUnknowErrorString.indexOf("/usr/bin/checkupdates") > 0 ) {
+				if (CHECK_CMD === "/usr/bin/checkupdates" && this.lastUnknowErrorString.indexOf("/usr/bin/checkupdates") > 0) {
 					// We do a special change here due to checkupdates moved to pacman-contrib
 					this._updateMenuExpander( false, _("Note : you have to install pacman-contrib to use the 'checkupdates' script.") );
 				} else {

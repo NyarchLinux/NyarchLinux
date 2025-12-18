@@ -4,6 +4,11 @@ const {gettext: _} = domain('arcmenu');
 export const DASH_TO_PANEL_UUID = 'dash-to-panel@jderose9.github.com';
 export const AZTASKBAR_UUID = 'aztaskbar@aztaskbar.gitlab.com';
 
+export const ClutterAction = {
+    CLICK: 0,
+    PAN: 1,
+};
+
 export const SearchbarLocation = {
     BOTTOM: 0,
     TOP: 1,
@@ -41,6 +46,7 @@ export const DefaultMenuView = {
     CATEGORIES_LIST: 1,
     FREQUENT_APPS: 2,
     ALL_PROGRAMS: 3,
+    PINNED_AND_FREQUENT_APPS: 4,
 };
 
 export const SettingsPage = {
@@ -61,6 +67,11 @@ export const SettingsPage = {
     PINNED_APPS: 14,
     DONATE: 15,
     WHATS_NEW: 16,
+};
+
+export const DefaultMenuViewAz = {
+    PINNED_APPS: 0,
+    FREQUENT_APPS: 1,
 };
 
 export const DefaultMenuViewTognee = {
@@ -182,6 +193,8 @@ export const EXTRA_LARGE_ICON_SIZE = 35;
 export const MISC_ICON_SIZE = 24;
 
 export const SUPER_L = 'Super_L';
+export const SUPER_R = 'Super_R';
+export const SUPER = 'Super';
 
 export const SECTIONS = [
     'devices',
@@ -403,6 +416,7 @@ export const MenuLayout = {
     ENTERPRISE: 19,
     POP: 20,
     SLEEK: 21,
+    ZEST: 22,
 };
 
 export const TraditionalMenus = [
@@ -493,6 +507,11 @@ export const ModernMenus = [
         LAYOUT: MenuLayout.SLEEK,
         TITLE: _('Sleek'),
         IMAGE: 'menu-sleek-symbolic',
+    },
+    {
+        LAYOUT: MenuLayout.ZEST,
+        TITLE: _('Zest'),
+        IMAGE: 'menu-zest-symbolic',
     },
 ];
 

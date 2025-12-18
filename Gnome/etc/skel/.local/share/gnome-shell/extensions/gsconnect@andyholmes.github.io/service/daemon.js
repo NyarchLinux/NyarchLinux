@@ -7,11 +7,17 @@
 import Gdk from 'gi://Gdk?version=3.0';
 import 'gi://GdkPixbuf?version=2.0';
 import Gio from 'gi://Gio?version=2.0';
-import 'gi://GIRepository?version=2.0';
 import GLib from 'gi://GLib?version=2.0';
 import GObject from 'gi://GObject?version=2.0';
 import Gtk from 'gi://Gtk?version=3.0';
 import 'gi://Pango?version=1.0';
+
+// GNOME 49 uses GIRepository 3.0
+import('gi://GIRepository?version=3.0').catch(() => {
+    import('gi://GIRepository?version=2.0').catch(() => {});
+});
+
+import('gi://GioUnix?version=2.0').catch(() => {}); // Set version for optional dependency
 
 import system from 'system';
 
@@ -21,8 +27,7 @@ import Config from '../config.js';
 import Device from './device.js';
 import Manager from './manager.js';
 import * as ServiceUI from './ui/service.js';
-
-import('gi://GioUnix?version=2.0').catch(() => {}); // Set version for optional dependency
+import {MissingOpensslError} from '../utils/exceptions.js';
 
 
 /**
@@ -54,8 +59,8 @@ const Service = GObject.registerClass({
             GLib.build_filenamev([Config.CONFIGDIR, 'certificate.pem']),
             GLib.build_filenamev([Config.CONFIGDIR, 'private.pem']),
         ];
-        const certificate = Gio.TlsCertificate.new_for_paths(certPath, keyPath,
-            null);
+
+        const certificate = Gio.TlsCertificate.new_for_paths(certPath, keyPath, null);
 
         if (Device.validateId(certificate.common_name))
             return;
@@ -92,7 +97,7 @@ const Service = GObject.registerClass({
 
         // Notify the user
         const notification = Gio.Notification.new(_('Settings Migrated'));
-        notification.set_body(_('GSConnect has updated to support changes to the KDE Connect protocol. Some devices may need to be repaired.'));
+        notification.set_body(_('GSConnect has updated to support changes to the KDE Connect protocol. Some devices may need to be re-paired.'));
         notification.set_icon(new Gio.ThemedIcon({name: 'dialog-warning'}));
         notification.set_priority(Gio.NotificationPriority.HIGH);
         this.send_notification('settings-migrated', notification);
@@ -211,8 +216,9 @@ const Service = GObject.registerClass({
      * Report a service-level error
      *
      * @param {object} error - An Error or object with name, message and stack
+     * @param {string} [notification_id] - An optional id for the notification
      */
-    notify_error(error) {
+    notify_error(error, notification_id) {
         try {
             // Always log the error
             logError(error);
@@ -226,8 +232,12 @@ const Service = GObject.registerClass({
             if (error.name === undefined)
                 error.name = 'Error';
 
+            if (notification_id !== undefined)
+                id = notification_id;
+            else
+                id = error.url || error.message.trim();
+
             if (error.url !== undefined) {
-                id = error.url;
                 body = _('Click for help troubleshooting');
                 priority = Gio.NotificationPriority.URGENT;
 
@@ -238,7 +248,6 @@ const Service = GObject.registerClass({
                     url: error.url,
                 });
             } else {
-                id = error.message.trim();
                 body = _('Click for more information');
                 priority = Gio.NotificationPriority.HIGH;
 
@@ -298,7 +307,18 @@ const Service = GObject.registerClass({
         this._initActions();
 
         // TODO: remove after a reasonable period of time
-        this._migrateConfiguration();
+        try {
+            this._migrateConfiguration();
+            if (this.settings.get_boolean('missing-openssl'))
+                this.withdraw_notification('gsconnect-missing-openssl');
+            this.settings.set_boolean('missing-openssl', false);
+        } catch (e) {
+            if (e instanceof MissingOpensslError) {
+                this.settings.set_boolean('missing-openssl', true);
+                this.notify_error(e, 'gsconnect-missing-openssl');
+            }
+            throw e;
+        }
 
         this.manager.start();
     }

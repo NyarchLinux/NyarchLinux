@@ -28,6 +28,11 @@ To install, simply download as zip and unzip contents in ~/.local/share/gnome-sh
 
 ## Changes
 
+### v65
+- Added translations : Marathi, Hindi
+- Updated translations : Hungarian, Brazilian Portuguese, Czech, Chinese
+- Added Gnome 49
+
 ### v64
 - Added translation : Georgian
 - Updated translations : Spanish, Hungarian, Slovak

@@ -33,7 +33,7 @@ export class Layout extends BaseMenuLayout {
         });
 
         // Stores the Pinned Icons on the left side
-        this.actionsScrollBox = this._createScrollBox({
+        this.actionsScrollBox = this._createScrollView({
             x_expand: false,
             y_expand: true,
             y_align: Clutter.ActorAlign.CENTER,
@@ -75,7 +75,7 @@ export class Layout extends BaseMenuLayout {
         });
 
         this.applicationsBox = new St.BoxLayout({...getOrientationProp(true)});
-        this.applicationsScrollBox = this._createScrollBox({
+        this.applicationsScrollBox = this._createScrollView({
             y_align: Clutter.ActorAlign.START,
             style_class: this._disableFadeEffect ? '' : 'small-vfade',
         });
@@ -96,7 +96,7 @@ export class Layout extends BaseMenuLayout {
         this._mainBox.add_child(verticalSeparator);
         this._mainBox.add_child(horizontalFlip ? this.leftBox : this.rightBox);
 
-        this.categoriesScrollBox = this._createScrollBox({
+        this.categoriesScrollBox = this._createScrollView({
             x_expand: true,
             y_expand: false,
             y_align: Clutter.ActorAlign.START,
@@ -107,18 +107,18 @@ export class Layout extends BaseMenuLayout {
         this._addChildToParent(this.categoriesScrollBox, this.categoriesBox);
 
         this.searchEntry.style = 'margin: 0px;';
+        const separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MAX,
+            Constants.SeparatorAlignment.HORIZONTAL);
+        this.searchEntry.bind_property('visible', separator, 'visible', GObject.BindingFlags.SYNC_CREATE);
+
         const searchBarLocation = ArcMenuManager.settings.get_enum('searchbar-default-top-location');
         if (searchBarLocation === Constants.SearchbarLocation.TOP) {
             this.searchEntry.add_style_class_name('arcmenu-search-top');
-            const separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MAX,
-                Constants.SeparatorAlignment.HORIZONTAL);
 
             this._parentBox.insert_child_at_index(this.searchEntry, 0);
             this._parentBox.insert_child_at_index(separator, 1);
         } else if (searchBarLocation === Constants.SearchbarLocation.BOTTOM) {
             this.searchEntry.add_style_class_name('arcmenu-search-bottom');
-            const separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MAX,
-                Constants.SeparatorAlignment.HORIZONTAL);
 
             this._parentBox.add_child(separator);
             this._parentBox.add_child(this.searchEntry);

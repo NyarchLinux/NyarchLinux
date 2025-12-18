@@ -3,7 +3,7 @@ import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk';
 
-import {SubPage} from './SubPage.js';
+import {SubPage} from './subPage.js';
 
 import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
@@ -12,53 +12,29 @@ class ArcMenuSearchOptionsPage extends SubPage {
     _init(settings, params) {
         super._init(settings, params);
 
-        this.searchResultsDetails = this._settings.get_boolean('show-search-result-details');
-        this.openWindowsSearchProvider = this._settings.get_boolean('search-provider-open-windows');
-        this.recentFilesSearchProvider = this._settings.get_boolean('search-provider-recent-files');
-        this.highlightSearchResultTerms = this._settings.get_boolean('highlight-search-result-terms');
-        this.maxSearchResults = this._settings.get_int('max-search-results');
-
-        const searchProvidersFrame = new Adw.PreferencesGroup({
-            title: _('Extra Search Providers'),
-        });
-
-        const openWindowsSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER,
-        });
-        openWindowsSwitch.set_active(this.openWindowsSearchProvider);
-        openWindowsSwitch.connect('notify::active', widget => {
-            this._settings.set_boolean('search-provider-open-windows', widget.get_active());
-        });
-        const openWindowsRow = new Adw.ActionRow({
-            title: _('Search for open windows across all workspaces'),
-            activatable_widget: openWindowsSwitch,
-        });
-        openWindowsRow.add_suffix(openWindowsSwitch);
-        searchProvidersFrame.add(openWindowsRow);
-
-        const recentFilesSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER,
-        });
-        recentFilesSwitch.set_active(this.recentFilesSearchProvider);
-        recentFilesSwitch.connect('notify::active', widget => {
-            this._settings.set_boolean('search-provider-recent-files', widget.get_active());
-        });
-        const recentFilesRow = new Adw.ActionRow({
-            title: _('Search for recent files'),
-            activatable_widget: recentFilesSwitch,
-        });
-        recentFilesRow.add_suffix(recentFilesSwitch);
-        searchProvidersFrame.add(recentFilesRow);
-        this.add(searchProvidersFrame);
-
         const searchOptionsFrame = new Adw.PreferencesGroup({
             title: _('Search Options'),
         });
 
+        const hideSearchSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER,
+            active: this._settings.get_boolean('search-hidden'),
+        });
+        hideSearchSwitch.connect('notify::active', widget => {
+            this._settings.set_boolean('search-hidden', widget.get_active());
+        });
+        const hideSearchRow = new Adw.ActionRow({
+            title: _('Hide Search Bar'),
+            subtitle: _('The search bar hides when empty and appears when typing.'),
+            activatable_widget: hideSearchSwitch,
+        });
+        hideSearchRow.add_suffix(hideSearchSwitch);
+        searchOptionsFrame.add(hideSearchRow);
+
         const searchDescriptionsSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER,
+            active: this._settings.get_boolean('show-search-result-details'),
         });
-        searchDescriptionsSwitch.set_active(this.searchResultsDetails);
         searchDescriptionsSwitch.connect('notify::active', widget => {
             this._settings.set_boolean('show-search-result-details', widget.get_active());
         });
@@ -71,8 +47,8 @@ class ArcMenuSearchOptionsPage extends SubPage {
 
         const highlightSearchResultSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER,
+            active: this._settings.get_boolean('highlight-search-result-terms'),
         });
-        highlightSearchResultSwitch.set_active(this.highlightSearchResultTerms);
         highlightSearchResultSwitch.connect('notify::active', widget => {
             this._settings.set_boolean('highlight-search-result-terms', widget.get_active());
         });
@@ -100,7 +76,7 @@ class ArcMenuSearchOptionsPage extends SubPage {
             title: _('Max Search Results'),
             activatable_widget: maxSearchResultsScale,
         });
-        maxSearchResultsScale.set_value(this.maxSearchResults);
+        maxSearchResultsScale.set_value(this._settings.get_int('max-search-results'));
         maxSearchResultsScale.connect('value-changed', widget => {
             this._settings.set_int('max-search-results', widget.get_value());
         });
@@ -154,22 +130,56 @@ class ArcMenuSearchOptionsPage extends SubPage {
         searchBorderSwitch.set_active(searchBorderEnabled);
         searchOptionsFrame.add(searchBorderRow);
 
+        const searchProvidersFrame = new Adw.PreferencesGroup({
+            title: _('Extra Search Providers'),
+        });
+
+        const openWindowsSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER,
+            active: this._settings.get_boolean('search-provider-open-windows'),
+        });
+        openWindowsSwitch.connect('notify::active', widget => {
+            this._settings.set_boolean('search-provider-open-windows', widget.get_active());
+        });
+        const openWindowsRow = new Adw.ActionRow({
+            title: _('Search for open windows across all workspaces'),
+            activatable_widget: openWindowsSwitch,
+        });
+        openWindowsRow.add_suffix(openWindowsSwitch);
+        searchProvidersFrame.add(openWindowsRow);
+
+        const recentFilesSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER,
+            active: this._settings.get_boolean('search-provider-recent-files'),
+        });
+        recentFilesSwitch.connect('notify::active', widget => {
+            this._settings.set_boolean('search-provider-recent-files', widget.get_active());
+        });
+        const recentFilesRow = new Adw.ActionRow({
+            title: _('Search for recent files'),
+            activatable_widget: recentFilesSwitch,
+        });
+        recentFilesRow.add_suffix(recentFilesSwitch);
+        searchProvidersFrame.add(recentFilesRow);
+        this.add(searchProvidersFrame);
+
         this.restoreDefaults = () => {
-            this.searchResultsDetails = this._settings.get_default_value('show-search-result-details').unpack();
-            this.openWindowsSearchProvider = this._settings.get_default_value('search-provider-open-windows').unpack();
-            this.recentFilesSearchProvider = this._settings.get_default_value('search-provider-recent-files').unpack();
-            this.highlightSearchResultTerms =
-                this._settings.get_default_value('highlight-search-result-terms').unpack();
-            this.maxSearchResults = this._settings.get_default_value('max-search-results').unpack();
-            openWindowsSwitch.set_active(this.openWindowsSearchProvider);
-            recentFilesSwitch.set_active(this.recentFilesSearchProvider);
-            highlightSearchResultSwitch.set_active(this.highlightSearchResultTerms);
-            maxSearchResultsScale.set_value(this.maxSearchResults);
-            const [searchBorderEnabled_, defaultSearchBorderValue] =
-                this._settings.get_default_value('search-entry-border-radius').deep_unpack();
+            const searchResultsDetails = this._settings.get_default_value('show-search-result-details').unpack();
+            const openWindowsSearchProvider = this._settings.get_default_value('search-provider-open-windows').unpack();
+            const recentFilesSearchProvider = this._settings.get_default_value('search-provider-recent-files').unpack();
+            const highlightSearchResultTerms = this._settings.get_default_value('highlight-search-result-terms').unpack();
+            const maxSearchResults = this._settings.get_default_value('max-search-results').unpack();
+            const [searchBorderEnabled_, defaultSearchBorderValue] = this._settings.get_default_value('search-entry-border-radius').deep_unpack();
+            const searchHidden = this._settings.get_default_value('search-hidden').unpack();
+
+            openWindowsSwitch.set_active(openWindowsSearchProvider);
+            recentFilesSwitch.set_active(recentFilesSearchProvider);
+            highlightSearchResultSwitch.set_active(highlightSearchResultTerms);
+            maxSearchResultsScale.set_value(maxSearchResults);
             searchBorderSpinButton.set_value(defaultSearchBorderValue);
             searchBorderSwitch.set_active(true);
-            searchDescriptionsSwitch.set_active(this.searchResultsDetails);
+            searchDescriptionsSwitch.set_active(searchResultsDetails);
+            hideSearchSwitch.set_active(searchHidden);
         };
     }
 });

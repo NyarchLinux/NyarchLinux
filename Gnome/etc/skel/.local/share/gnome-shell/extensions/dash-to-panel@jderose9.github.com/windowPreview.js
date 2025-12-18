@@ -69,12 +69,11 @@ export const PreviewMenu = GObject.registerClass(
       this.currentAppIcon = null
       this._focusedPreview = null
       this._peekedWindow = null
+      this._displayWorkspaces = false
       this.allowCloseWindow = true
       this.peekInitialWorkspaceIndex = -1
       this.opened = false
-      this.isVertical =
-        geom.position == St.Side.LEFT || geom.position == St.Side.RIGHT
-      this._translationProp = 'translation_' + (this.isVertical ? 'x' : 'y')
+      this._translationProp = 'translation_' + (geom.vertical ? 'x' : 'y')
       this._translationDirection =
         geom.position == St.Side.TOP || geom.position == St.Side.LEFT ? -1 : 1
       this._translationOffset =
@@ -93,13 +92,13 @@ export const PreviewMenu = GObject.registerClass(
         y_align:
           Clutter.ActorAlign[geom.position != St.Side.BOTTOM ? 'START' : 'END'],
       })
-      this._box = Utils.createBoxLayout({ vertical: this.isVertical })
+      this._box = Utils.createBoxLayout({ vertical: geom.vertical })
       this._scrollView = new St.ScrollView({
         name: 'dashtopanelPreviewScrollview',
         hscrollbar_policy: St.PolicyType.NEVER,
         vscrollbar_policy: St.PolicyType.NEVER,
         enable_mouse_scrolling: true,
-        y_expand: !this.isVertical,
+        y_expand: !geom.vertical,
       })
 
       this._scrollView.add_child(this._box)
@@ -308,9 +307,12 @@ export const PreviewMenu = GObject.registerClass(
       return this.currentAppIcon
     }
 
+    shouldDisplayWorkspaceNumbers() {
+      return this._displayWorkspaces
+    }
+
     _setReactive(reactive) {
       this._box.get_children().forEach((c) => (c.reactive = reactive))
-      this.menu.reactive = reactive
     }
 
     _setOpenedState(opened) {
@@ -344,6 +346,8 @@ export const PreviewMenu = GObject.registerClass(
 
       let currentPreviews = this._box.get_children()
       let l = Math.max(windows.length, currentPreviews.length)
+
+      this._setShouldDisplayWorkspaces(windows)
 
       for (let i = 0; i < l; ++i) {
         if (currentPreviews[i] && windows[i]) {
@@ -390,6 +394,19 @@ export const PreviewMenu = GObject.registerClass(
       preview.assignWindow(window, this.opened)
     }
 
+    _setShouldDisplayWorkspaces(windows) {
+      if (SETTINGS.get_boolean('isolate-workspaces'))
+        return (this._displayWorkspaces = false)
+
+      let workspaces = {
+        [Utils.getCurrentWorkspace().index()]: 1,
+      }
+
+      windows.forEach((w) => (workspaces[w.get_workspace().index()] = 1))
+
+      this._displayWorkspaces = Object.keys(workspaces).length > 1
+    }
+
     _addCloseTimeout() {
       this._timeoutsHandler.add([
         T2,
@@ -401,7 +418,7 @@ export const PreviewMenu = GObject.registerClass(
     _onHoverChanged() {
       this._endOpenCloseTimeouts()
 
-      if (this.currentAppIcon && !this.menu.hover) {
+      if (this.currentAppIcon && !this.menu.hover && !this.hasGrab) {
         this._addCloseTimeout()
         this._endPeek()
       }
@@ -409,9 +426,8 @@ export const PreviewMenu = GObject.registerClass(
 
     _onScrollEvent(actor, event) {
       if (!event.is_pointer_emulated()) {
-        let vOrh = this.isVertical ? 'v' : 'h'
-        let adjustment =
-          this._scrollView['get_' + vOrh + 'scroll_bar']().get_adjustment()
+        let vOrh = this.panel.geom.vertical ? 'v' : 'h'
+        let adjustment = this._scrollView[`${vOrh}adjustment`]
         let increment = adjustment.step_increment
         let delta = increment
 
@@ -477,7 +493,7 @@ export const PreviewMenu = GObject.registerClass(
           SETTINGS.get_int('window-preview-padding') * 2) *
         scaleFactor
 
-      if (this.isVertical) {
+      if (this.panel.geom.vertical) {
         w = previewSize
         this.clipHeight = this.panel.monitor.height
         y = this.panel.monitor.y
@@ -499,7 +515,11 @@ export const PreviewMenu = GObject.registerClass(
           (panelSize + previewSize) +
           panelBoxTheme.get_padding(St.Side.LEFT)
       } else if (geom.position == St.Side.TOP) {
-        y = geom.y + panelSize - panelBoxTheme.get_padding(St.Side.BOTTOM)
+        y =
+          geom.y +
+          geom.topOffset +
+          panelSize -
+          panelBoxTheme.get_padding(St.Side.BOTTOM)
       } else {
         //St.Side.BOTTOM
         y =
@@ -532,7 +552,7 @@ export const PreviewMenu = GObject.registerClass(
           previewsHeight < this.panel.monitor.height,
       )
 
-      if (this.isVertical) {
+      if (this.panel.geom.vertical) {
         y =
           sourceAllocation.y1 +
           appIconMargin -
@@ -592,7 +612,7 @@ export const PreviewMenu = GObject.registerClass(
     _getScrollAdjustmentValues() {
       let [value, , upper, , , pageSize] =
         this._scrollView[
-          (this.isVertical ? 'v' : 'h') + 'adjustment'
+          (this.panel.geom.vertical ? 'v' : 'h') + 'adjustment'
         ].get_values()
 
       return [value, upper, pageSize]
@@ -617,7 +637,7 @@ export const PreviewMenu = GObject.registerClass(
         'background-gradient-direction:' +
         this.panel.getOrientation()
 
-      if (this.isVertical) {
+      if (this.panel.geom.vertical) {
         y = end ? this.panel.monitor.height - FADE_SIZE : 0
       } else {
         x = end ? this.panel.monitor.width - FADE_SIZE : 0
@@ -630,8 +650,8 @@ export const PreviewMenu = GObject.registerClass(
         style: fadeStyle,
         x: x,
         y: y,
-        width: this.isVertical ? this.width : FADE_SIZE,
-        height: this.isVertical ? FADE_SIZE : this.height,
+        width: this.panel.geom.vertical ? this.width : FADE_SIZE,
+        height: this.panel.geom.vertical ? FADE_SIZE : this.height,
       })
 
       return fadeWidget
@@ -645,7 +665,7 @@ export const PreviewMenu = GObject.registerClass(
         if (!c.animatingOut) {
           let [width, height] = c.getSize()
 
-          if (this.isVertical) {
+          if (this.panel.geom.vertical) {
             previewsWidth = Math.max(width, previewsWidth)
             previewsHeight += height
           } else {
@@ -1111,6 +1131,8 @@ export const Preview = GObject.registerClass(
               this._previewMenu.peekInitialWorkspaceIndex,
             )
 
+      this._previewMenu.hasGrab = true
+
       Main.wm._showWindowMenu(null, this.window, Meta.WindowMenuType.WM, {
         x: coords[0],
         y: coords[1],
@@ -1120,10 +1142,13 @@ export const Preview = GObject.registerClass(
 
       let menu = Main.wm._windowMenuManager._manager._menus[0]
 
-      menu.connect('open-state-changed', () =>
-        this._previewMenu.menu.sync_hover(),
-      )
-      this._previewMenu.menu.sync_hover()
+      menu.connect('open-state-changed', (menu, opened) => {
+        if (!opened) {
+          delete this._previewMenu.hasGrab
+
+          if (!this._previewMenu.menu.hover) this._previewMenu.close()
+        }
+      })
 
       if (this.window.get_workspace() != currentWorkspace) {
         let menuItem = new PopupMenu.PopupMenuItem(
@@ -1180,7 +1205,7 @@ export const Preview = GObject.registerClass(
         this._iconBin.destroy_all_children()
         this._iconBin.add_child(icon)
 
-        if (!SETTINGS.get_boolean('isolate-workspaces')) {
+        if (this._previewMenu.shouldDisplayWorkspaceNumbers()) {
           workspaceIndex = (this.window.get_workspace().index() + 1).toString()
           workspaceStyle =
             'margin: 0 4px 0 ' +
@@ -1348,7 +1373,7 @@ export const Preview = GObject.registerClass(
       let size = SETTINGS.get_int('window-preview-size') * scaleFactor
       let w, h
 
-      if (this._previewMenu.isVertical) {
+      if (this._previewMenu.panel.geom.vertical) {
         w = size
         h = (w * aspectRatio.y.size) / aspectRatio.x.size
       } else {

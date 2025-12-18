@@ -23,6 +23,7 @@
         <value value='19' nick='Enterprise'/>
         <value value='20' nick='Pop'/>
         <value value='21' nick='Sleek'/>
+        <value value='22' nick='Zest'/>
     </enum>
     <enum id='org.gnome.shell.extensions.arcmenu.forcemenulocation'>
         <value value='0' nick='Off'/>
@@ -71,6 +72,7 @@
         <value value="1" nick="Categories_List"/>
         <value value="2" nick="Frequent_Apps"/>
         <value value="3" nick="All_Programs"/>
+        <value value="4" nick="Pinned_And_Frequent_Apps"/>
     </enum>
     <enum id='org.gnome.shell.extensions.arcmenu.all-apps-button-action'>
         <value value="0" nick="Categories_List"/>
@@ -83,6 +85,10 @@
     <enum id='org.gnome.shell.extensions.arcmenu.default-menu-view-redmond'>
         <value value="0" nick="All_Programs"/>
         <value value="1" nick="Pinned_Apps"/>
+    </enum>
+    <enum id='org.gnome.shell.extensions.arcmenu.default-menu-view-az'>
+        <value value="0" nick="Pinned_Apps"/>
+        <value value="1" nick="Frequent Apps"/>
     </enum>
     <enum id='org.gnome.shell.extensions.arcmenu.runner-position'>
         <value value="0" nick="Top"/>
@@ -305,6 +311,10 @@
       <default>false</default>
       <summary>Show a larger icon and extra app details</summary>
     </key>
+    <key type="b" name="search-hidden">
+      <default>false</default>
+      <summary>Hide search entry in ArcMenu. Search entry will be hidden when empty.</summary>
+    </key>
     <key type="i" name="max-search-results">
       <default>5</default>
       <summary>The amount of search results to display.</summary>
@@ -497,9 +507,17 @@
       <default>['Super_L']</default>
       <summary>Keybind to open ArcMenu</summary>
     </key>
+    <key name="arcmenu-hotkey-overlay-key-enabled" type="b">
+      <default>true</default>
+      <summary>Override the overlay-key for ArcMenu hotkey</summary>
+    </key>
     <key name="runner-hotkey" type="as">
       <default>[]</default>
       <summary>Keybind to open standalone runner menu. Setting a keybind enables the standalone runner menu.</summary>
+    </key>
+    <key name="runner-hotkey-overlay-key-enabled" type="b">
+      <default>false</default>
+      <summary>Override the overlay-key for the Standalone Runner hotkey</summary>
     </key>
     <key type="b" name="hotkey-open-primary-monitor">
       <default>false</default>
@@ -565,6 +583,10 @@
       <default>false</default>
       <summary>Hide overview on startup</summary>
     </key>
+    <key type="b" name="activate-on-launch">
+      <default>false</default>
+      <summary>Activate existing window instead of opening new one on application launch.</summary>
+    </key>
     <key type="s" name="custom-menu-button-text">
       <default>'Apps'</default>
       <summary>Text of the menu button.</summary>
@@ -605,6 +627,10 @@
       <default>[(0, false), (1, false), (2, false), (3, false), (4, false)]</default>
       <summary>Array of extra categories links for ArcMenu layout. See Constants.js - Categories</summary>
     </key>
+    <key type="i" name="arcmenu-layout-max-frequent-apps">
+      <default>8</default>
+      <summary>The max frequent apps to show when default view set to Pinned And Frequent Apps</summary>
+    </key>
     <key enum="org.gnome.shell.extensions.arcmenu.menuitem-location" name="arcmenu-extra-categories-links-location">
       <default>'Bottom'</default>
       <summary>Display extra categories quick links on ArcMenu Layout home page</summary>
@@ -615,7 +641,23 @@
     </key>
     <key type="i" name="sleek-layout-panel-width">
       <default>225</default>
-      <summary>Sleek layout right panel width.</summary>
+      <summary>Sleek layout extra shortcuts panel width.</summary>
+    </key>
+      <key type="i" name="zest-layout-panel-width">
+      <default>225</default>
+      <summary>Zest layout extra shortcuts panel width.</summary>
+    </key>
+    <key type="b" name="az-layout-merge-panels">
+      <default>false</default>
+      <summary>AZ Layout - Merge the top and bottom panel into one.</summary>
+    </key>
+    <key type="i" name="az-layout-max-frequent-apps">
+      <default>20</default>
+      <summary>AZ Layout - max frequent apps to show when 'default-menu-view-az' set to 'Frequent_Apps'</summary>
+    </key>
+    <key enum="org.gnome.shell.extensions.arcmenu.default-menu-view-az" name="default-menu-view-az">
+      <default>'Pinned_Apps'</default>
+      <summary>Set AZ Layout Default View</summary>
     </key>
     <child name='pinned-apps-folders' schema='org.gnome.shell.extensions.arcmenu.pinned-apps-folders'/>
     <key name="pinned-apps" type="aa{ss}">
@@ -723,6 +765,21 @@
         ]
       </default>
       <summary>'Sleek' layout extra shortcuts</summary>
+    </key>
+      <key name="zest-layout-extra-shortcuts" type="aa{ss}">
+      <default>
+        [
+          {'id': 'ArcMenu_Home', 'name': 'Home', 'icon': 'ArcMenu_Home'},
+          {'id': 'ArcMenu_Documents', 'name': 'Documents', 'icon': 'ArcMenu_Documents'},
+          {'id': 'ArcMenu_Downloads', 'name': 'Downloads', 'icon': 'ArcMenu_Downloads'},
+          {'id': 'ArcMenu_Music', 'name': 'Music', 'icon': 'ArcMenu_Music'},
+          {'id': 'ArcMenu_Pictures', 'name': 'Pictures', 'icon': 'ArcMenu_Pictures'},
+          {'id': 'ArcMenu_Software', 'name': 'Software'},
+          {'id': 'org.gnome.Settings.desktop'},
+          {'id': 'org.gnome.Terminal.desktop'}
+        ]
+      </default>
+      <summary>'Zest' layout extra shortcuts</summary>
     </key>
     <key name="unity-layout-extra-shortcuts" type="aa{ss}">
       <default>

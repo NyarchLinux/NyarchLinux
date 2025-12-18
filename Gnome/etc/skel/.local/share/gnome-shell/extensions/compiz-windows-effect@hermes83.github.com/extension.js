@@ -113,7 +113,7 @@ export default class CompizWindowsEffectExtension extends Extension {
 
             this.resizedActor = null;
             
-            if (actor.metaWindow.get_maximized()) {
+            if (actor.metaWindow.get_maximize_flags()) {
                 this.destroyActorEffect(actor);
 
                 if (!this.settingsData.MAXIMIZE_EFFECT.get()) {
@@ -122,9 +122,9 @@ export default class CompizWindowsEffectExtension extends Extension {
 
                 let monitor = Main.layoutManager.monitors[actor.meta_window.get_monitor()];
                 
-                if (actor.metaWindow.get_maximized() === Meta.MaximizeFlags.BOTH || 
+                if (actor.metaWindow.get_maximize_flags() === Meta.MaximizeFlags.BOTH || 
                         (
-                            actor.metaWindow.get_maximized() === Meta.MaximizeFlags.VERTICAL && 
+                            actor.metaWindow.get_maximize_flags() === Meta.MaximizeFlags.VERTICAL && 
                             (
                                 (sourceRect.y != targetRect.y) || 
                                 (sourceRect.y + sourceRect.height != targetRect.y + targetRect.height) || 

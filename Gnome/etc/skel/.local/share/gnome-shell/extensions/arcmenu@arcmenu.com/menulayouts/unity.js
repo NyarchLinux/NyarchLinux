@@ -1,5 +1,4 @@
 import Clutter from 'gi://Clutter';
-import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import St from 'gi://St';
 
@@ -75,7 +74,7 @@ export class Layout extends BaseMenuLayout {
             style_class: 'arcmenu-margin-box',
             y_align: Clutter.ActorAlign.START,
         });
-        this.applicationsScrollBox = this._createScrollBox({
+        this.applicationsScrollBox = this._createScrollView({
             x_expand: true,
             y_expand: true,
             x_align: Clutter.ActorAlign.FILL,
@@ -221,15 +220,8 @@ export class Layout extends BaseMenuLayout {
         this.categoriesMenu.connect('open-state-changed', (menu, open) => {
             if (open) {
                 this.categoriesButton.add_style_pseudo_class('active');
-                if (this.menuButton.tooltipShowingID) {
-                    GLib.source_remove(this.menuButton.tooltipShowingID);
-                    this.menuButton.tooltipShowingID = null;
-                    this.menuButton.tooltipShowing = false;
-                }
-                if (this.categoriesButton.tooltip) {
-                    this.categoriesButton.tooltip.hide();
-                    this.menuButton.tooltipShowing = false;
-                }
+                this._menuButton.clearTooltipShowingId();
+                this._menuButton.hideTooltip();
             } else {
                 this.categoriesButton.remove_style_pseudo_class('active');
                 this.categoriesButton.active = false;
@@ -244,7 +236,7 @@ export class Layout extends BaseMenuLayout {
         section.actor.add_child(categoriesPopupBox);
         categoriesPopupBox._delegate = categoriesPopupBox;
 
-        this.categoriesScrollBox = this._createScrollBox({
+        this.categoriesScrollBox = this._createScrollView({
             x_expand: true,
             y_expand: true,
             y_align: Clutter.ActorAlign.START,

@@ -232,7 +232,7 @@ class SearchResultsBase extends St.BoxLayout {
                 this._setMoreCount(this.provider.canLaunchSearch ? moreCount : 0);
                 this.show();
                 callback();
-            } catch (e) {
+            } catch {
                 this._clearResultDisplay();
                 callback();
             }
@@ -824,7 +824,7 @@ export class ArcSearchProviderInfo extends BaseMenuItem {
     }
 
     setMoreCount(count) {
-        this._moreLabel.text = _('+ %d more', '+ %d more', count).format(count);
+        this._moreLabel.text = _('+ %d more').format(count);
         this._moreLabel.visible = count > 0;
     }
 }

@@ -51,7 +51,7 @@ export class Layout extends BaseMenuLayout {
             ...getOrientationProp(true),
             y_align: Clutter.ActorAlign.FILL,
         });
-        this.applicationsScrollBox = this._createScrollBox({
+        this.applicationsScrollBox = this._createScrollView({
             x_expand: true,
             y_expand: true,
             y_align: Clutter.ActorAlign.START,
@@ -106,7 +106,7 @@ export class Layout extends BaseMenuLayout {
             y_align: Clutter.ActorAlign.FILL,
             style: 'spacing: 6px;',
         });
-        this.shortcutsScrollBox = this._createScrollBox({
+        this.shortcutsScrollBox = this._createScrollView({
             x_expand: false,
             y_expand: true,
             x_align: Clutter.ActorAlign.START,

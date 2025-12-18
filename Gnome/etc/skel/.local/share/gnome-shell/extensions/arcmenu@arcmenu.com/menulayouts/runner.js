@@ -54,6 +54,7 @@ export class Layout extends BaseMenuLayout {
             buttons_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
             pinned_apps_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
             is_standalone_runner: !!isStandalone,
+            can_hide_search: false,
         });
 
         this.activeMenuItem = null;
@@ -87,7 +88,7 @@ export class Layout extends BaseMenuLayout {
         this.topBox.add_child(this.runnerTweaksButton);
         this.add_child(this.topBox);
 
-        this.applicationsScrollBox = this._createScrollBox({
+        this.applicationsScrollBox = this._createScrollView({
             x_expand: true,
             y_expand: false,
             y_align: Clutter.ActorAlign.START,

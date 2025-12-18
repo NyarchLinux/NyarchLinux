@@ -7,7 +7,7 @@ import Pango from 'gi://Pango';
 
 import * as Constants from '../constants.js';
 import * as PW from '../prefsWidgets.js';
-import * as SettingsUtils from './SettingsUtils.js';
+import * as SettingsUtils from './settingsUtils.js';
 
 import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 

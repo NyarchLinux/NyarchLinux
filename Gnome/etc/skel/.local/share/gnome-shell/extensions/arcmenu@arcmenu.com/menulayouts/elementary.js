@@ -35,7 +35,7 @@ export class Layout extends BaseMenuLayout {
             ...getOrientationProp(true),
             style: 'padding: 8px 0px;',
         });
-        this.applicationsScrollBox = this._createScrollBox({
+        this.applicationsScrollBox = this._createScrollView({
             x_expand: true,
             y_expand: true,
             y_align: Clutter.ActorAlign.START,

@@ -171,7 +171,7 @@ export const TaskbarAppIcon = GObject.registerClass(
       })
       this._dtpIconContainer = new St.Widget({
         layout_manager: new Clutter.BinLayout(),
-        style: getIconContainerStyle(panel.checkIfVertical()),
+        style: getIconContainerStyle(panel.geom.vertical),
       })
 
       this.remove_child(this._iconContainer)
@@ -202,7 +202,7 @@ export const TaskbarAppIcon = GObject.registerClass(
       this._container.add_child(this._dotsContainer)
       this.set_child(this._container)
 
-      if (panel.checkIfVertical()) {
+      if (panel.geom.vertical) {
         this.set_width(panel.geom.innerSize)
       }
 
@@ -447,6 +447,11 @@ export const TaskbarAppIcon = GObject.registerClass(
     _onDestroy() {
       super._onDestroy()
 
+      if (this._updateIconIdleId) {
+        GLib.source_remove(this._updateIconIdleId)
+        this._updateIconIdleId = 0
+      }
+
       this._timeoutsHandler.destroy()
       this._signalsHandler.destroy()
 
@@ -477,18 +482,25 @@ export const TaskbarAppIcon = GObject.registerClass(
       // and position are random values, which might exceeds the integer range
       // resulting in an error when assigned to the a rect. This is a more like
       // a workaround to prevent flooding the system with errors.
-      if (this.get_stage() == null) return
+      if (this.get_stage() == null || this._updateIconIdleId) return
 
-      let rect = new Mtk.Rectangle()
+      this._updateIconIdleId = GLib.idle_add(GLib.PRIORITY_LOW, () => {
+        let rect = new Mtk.Rectangle()
 
-      ;[rect.x, rect.y] = this.get_transformed_position()
-      ;[rect.width, rect.height] = this.get_transformed_size()
+        ;[rect.x, rect.y] = this.get_transformed_position()
+        ;[rect.width, rect.height] = this.get_transformed_size()
 
-      let windows = this.window
-        ? [this.window]
-        : this.getAppIconInterestingWindows(true)
-      windows.forEach(function (w) {
-        w.set_icon_geometry(rect)
+        let windows = this.window
+          ? [this.window]
+          : this.getAppIconInterestingWindows(true)
+
+        windows.forEach(function (w) {
+          w.set_icon_geometry(rect)
+        })
+
+        this._updateIconIdleId = 0
+
+        return GLib.SOURCE_REMOVE
       })
     }
 
@@ -717,7 +729,7 @@ export const TaskbarAppIcon = GObject.registerClass(
           SETTINGS.get_int('group-apps-label-max-width') * scaleFactor
         let variableWidth =
           !useFixedWidth ||
-          this.dtpPanel.checkIfVertical() ||
+          this.dtpPanel.geom.vertical ||
           this.dtpPanel.taskbar.fullScrollView
 
         this._windowTitle[maxLabelWidth > 0 ? 'show' : 'hide']()
@@ -797,7 +809,7 @@ export const TaskbarAppIcon = GObject.registerClass(
             let bgSvg = '/img/highlight_stacked_bg'
 
             if (pos == DOT_POSITION.LEFT || pos == DOT_POSITION.RIGHT) {
-              bgSvg += this.dtpPanel.checkIfVertical() ? '_2' : '_3'
+              bgSvg += this.dtpPanel.geom.vertical ? '_2' : '_3'
             }
 
             inlineStyle +=
@@ -846,7 +858,7 @@ export const TaskbarAppIcon = GObject.registerClass(
     _setAppIconPadding() {
       const padding = getIconPadding(this.dtpPanel)
       const margin = SETTINGS.get_int('appicon-margin')
-      let vertical = this.dtpPanel.checkIfVertical()
+      let vertical = this.dtpPanel.geom.vertical
 
       this.set_style(
         `padding: ${vertical ? margin : 0}px ${vertical ? 0 : margin}px;`,
@@ -893,7 +905,7 @@ export const TaskbarAppIcon = GObject.registerClass(
         Main.uiGroup.add_child(this._menu.actor)
         this._menuManager.addMenu(this._menu)
       }
-      this._menu.updateQuitText()
+      this._menu.updateQuitItems()
 
       this.emit('menu-state-changed', true)
 
@@ -1858,8 +1870,9 @@ export function getInterestingWindows(app, monitor, isolateMonitors) {
 
   if (
     monitor &&
-    SETTINGS.get_boolean('multi-monitors') &&
-    (isolateMonitors || SETTINGS.get_boolean('isolate-monitors'))
+    (isolateMonitors || SETTINGS.get_boolean('isolate-monitors')) &&
+    (SETTINGS.get_boolean('multi-monitors') ||
+      SETTINGS.get_boolean('isolate-monitors-with-single-panel'))
   ) {
     windows = windows.filter(function (w) {
       return w.get_monitor() == monitor.index
@@ -1906,6 +1919,11 @@ export class TaskbarSecondaryMenu extends AppMenu.AppMenu {
     this._enableFavorites = true
     this._showSingleWindows = true
 
+    if (source.window)
+      this._quitAllItem = this.addAction('QuitAll', () =>
+        this._quitFromTaskbar(true),
+      )
+
     // replace quit item
     delete this._quitItem
     this._quitItem = this.addAction(_('Quit'), () => this._quitFromTaskbar())
@@ -1917,40 +1935,38 @@ export class TaskbarSecondaryMenu extends AppMenu.AppMenu {
     ])
   }
 
-  updateQuitText() {
-    let count = this.sourceActor.window
-      ? 1
-      : getInterestingWindows(this._app, this.sourceActor.dtpPanel.monitor)
-          .length
+  updateQuitItems() {
+    let ungrouped = !!this.sourceActor.window
+    let quitText = _('Quit')
+    let count = getInterestingWindows(
+      this._app,
+      this.sourceActor.dtpPanel.monitor,
+    ).length
+    let quitMultipleText = ngettext(
+      'Quit %d Window',
+      'Quit %d Windows',
+      count,
+    ).format(count)
 
-    if (count > 0) {
-      let quitFromTaskbarMenuText = ''
-      if (count == 1) quitFromTaskbarMenuText = _('Quit')
-      else
-        quitFromTaskbarMenuText = ngettext(
-          'Quit %d Window',
-          'Quit %d Windows',
-          count,
-        ).format(count)
+    if (ungrouped) {
+      this._quitAllItem.label.set_text(quitMultipleText)
+      this._quitAllItem.visible = count > 1
+    } else quitText = quitMultipleText
 
-      this._quitItem.label.set_text(quitFromTaskbarMenuText)
-    }
+    this._quitItem.visible = count > 0
+    this._quitItem.label.set_text(quitText)
   }
 
-  _quitFromTaskbar() {
-    let time = global.get_current_time()
-    let windows = this.sourceActor.window // ungrouped applications
-      ? [this.sourceActor.window]
-      : getInterestingWindows(this._app, this.sourceActor.dtpPanel.monitor)
+  _quitFromTaskbar(all) {
+    let windows =
+      !all && this.sourceActor.window // ungrouped applications
+        ? [this.sourceActor.window]
+        : getInterestingWindows(this._app, this.sourceActor.dtpPanel.monitor)
 
-    if (windows.length == this._app.get_windows().length)
-      this._app.request_quit()
-
-    GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
-      windows.forEach((w) => !!w.get_compositor_private() && w.delete(time++))
-
-      return GLib.SOURCE_REMOVE
-    })
+    windows.forEach(
+      (w) =>
+        !!w.get_compositor_private() && w.delete(global.get_current_time()),
+    )
   }
 
   setApp(app) {
@@ -1993,7 +2009,7 @@ export function ItemShowLabel() {
   let labelWidth = this.label.get_width()
   let labelHeight = this.label.get_height()
 
-  let position = this._dtpPanel.getPosition()
+  let position = this._dtpPanel.geom.position
   let labelOffset = node.get_length('-x-offset')
 
   // From TaskbarItemContainer
@@ -2161,7 +2177,7 @@ export const ShowAppsIconWrapper = class extends EventEmitter {
   setShowAppsPadding() {
     let padding = getIconPadding(this.realShowAppsIcon._dtpPanel)
     let sidePadding = SETTINGS.get_int('show-apps-icon-side-padding')
-    let isVertical = this.realShowAppsIcon._dtpPanel.checkIfVertical()
+    let isVertical = this.realShowAppsIcon._dtpPanel.geom.vertical
 
     this.actor.set_style(
       'padding:' +
@@ -2235,7 +2251,7 @@ export const ShowAppsIconWrapper = class extends EventEmitter {
  */
 export const MyShowAppsIconMenu = class extends PopupMenu.PopupMenu {
   constructor(actor, dtpPanel) {
-    super(actor, 0, dtpPanel.getPosition())
+    super(actor, 0, dtpPanel.geom.position)
 
     this._dtpPanel = dtpPanel
 

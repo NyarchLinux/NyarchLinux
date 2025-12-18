@@ -16,9 +16,8 @@ export const StandaloneRunner = class ArcMenuStandaloneRunner {
         // Link search providers to this menu
         this.searchProviderDisplayId = 'StandaloneRunner';
 
-        this.tooltipShowing = false;
-        this.tooltipShowingID = null;
-        this.tooltip = new MW.Tooltip(this);
+        this._tooltipShowingID = null;
+        this._tooltip = new MW.Tooltip(this);
 
         // Create Main Menus - ArcMenu and arcMenu's context menu
         this.arcMenu = new ArcMenu(Main.layoutManager.dummyCursor, 0.5, St.Side.TOP, this);
@@ -40,8 +39,8 @@ export const StandaloneRunner = class ArcMenuStandaloneRunner {
     }
 
     createMenuLayout() {
-        this._clearTooltipShowingId();
-        this._clearTooltip();
+        this.clearTooltipShowingId();
+        this.hideTooltip(true);
 
         this._forcedMenuLocation = false;
 
@@ -54,7 +53,15 @@ export const StandaloneRunner = class ArcMenuStandaloneRunner {
             this.arcMenu.box.add_child(this._menuLayout);
     }
 
-    closeOtherMenus() {
+    onArcMenuClose() {
+        // Clear active state for activeMenuItem
+        if (this._menuLayout?.activeMenuItem)
+            this._menuLayout.activeMenuItem.active = false;
+
+        this._closeOtherMenus();
+    }
+
+    _closeOtherMenus() {
         if (this.contextMenuManager.activeMenu)
             this.contextMenuManager.activeMenu.toggle();
         if (this.subMenuManager.activeMenu)
@@ -62,7 +69,7 @@ export const StandaloneRunner = class ArcMenuStandaloneRunner {
     }
 
     toggleMenu() {
-        this.closeOtherMenus();
+        this._closeOtherMenus();
 
         if (!this.arcMenu.isOpen)
             this._menuLayout.updateLocation();
@@ -80,28 +87,34 @@ export const StandaloneRunner = class ArcMenuStandaloneRunner {
         }
     }
 
-    _clearTooltipShowingId() {
-        if (this.tooltipShowingID) {
-            GLib.source_remove(this.tooltipShowingID);
-            this.tooltipShowingID = null;
+    clearTooltipShowingId() {
+        if (this._tooltipShowingID) {
+            GLib.source_remove(this._tooltipShowingID);
+            this._tooltipShowingID = null;
         }
     }
 
-    _clearTooltip() {
-        this.tooltipShowing = false;
-        if (this.tooltip) {
-            this.tooltip.hide();
-            this.tooltip.sourceActor = null;
-        }
+    showTooltip(sourceActor, location, titleLabel, description, displayType) {
+        this.clearTooltipShowingId();
+        this._tooltipShowingID = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 750, () => {
+            this._tooltip.setTooltipData(sourceActor, location, titleLabel, description, displayType);
+            this._tooltip.show();
+            this._tooltipShowingID = null;
+            return GLib.SOURCE_REMOVE;
+        });
+    }
+
+    hideTooltip(instant) {
+        this._tooltip.hide(instant);
     }
 
     destroy() {
-        this._clearTooltipShowingId();
-        this._clearTooltip();
+        this.clearTooltipShowingId();
+        this.hideTooltip(true);
         this._destroyMenuLayout();
 
-        this.tooltip?.destroy();
-        this.tooltip = null;
+        this._tooltip?.destroy();
+        this._tooltip = null;
 
         this.arcMenu?.destroy();
         this.arcMenu = null;
@@ -140,8 +153,8 @@ export const StandaloneRunner = class ArcMenuStandaloneRunner {
             if (Main.panel.menuManager && Main.panel.menuManager.activeMenu)
                 Main.panel.menuManager.activeMenu.toggle();
         } else  if (!this.arcMenu.isOpen) {
-            this._clearTooltipShowingId();
-            this._clearTooltip();
+            this.clearTooltipShowingId();
+            this.hideTooltip(true);
         }
     }
 };
