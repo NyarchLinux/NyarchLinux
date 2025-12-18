@@ -1,0 +1,76 @@
+/* LibreOffice */
+
+/* 1. Style for the currently selected/active tab */
+notebook > header.top > tabs > tab:checked {
+    border-bottom: 3px solid @accent_color;
+    background-color: rgba(0, 0, 0, 0);
+    box-shadow: none;
+    border-radius: 0px;
+    margin-left: 12px;
+    margin-right: 12px;
+    min-height: 0;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    outline: none;
+}
+
+/* 2. Base style for all other (unselected) tabs */
+notebook > header.top > tabs > tab:not(:checked) {
+    border: none;
+    box-shadow: none;
+    border-bottom: 3px solid transparent;
+    border-radius: 0px;
+    margin-left: 12px;
+    margin-right: 12px;
+    min-height: 0;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    outline: none;
+}
+
+/* 3. On hover */
+notebook > header.top > tabs > tab:hover:not(:checked) {
+    border-bottom-color: #d1d1d1;
+    /* Add this line to remove the grey background on hover */
+    background-color: rgba(0, 0, 0, 0);
+}
+
+/* 4. Titlebar color */
+
+.titlebar:not(headerbar),
+headerbar {
+  background-color: @accent_color;
+}
+
+.titlebar {
+background-color: @accent_color;
+}
+
+.titlebar:backdrop:not(headerbar),
+headerbar:backdrop {
+  background-color: @accent_color;
+}
+
+.titlebar:not(headerbar),
+headerbar {
+  background: @accent_color;
+}
+
+/* 5. Button color */
+headerbar > box > label.title:backdrop, headerbar > box > button:backdrop {
+  color: #a6a6a6;
+}
+
+headerbar > box > label.title, headerbar > box > button {
+  color: #ffffff;
+}
+
+headerbar > box > button {
+background: @accent_color;
+color: #ffffff;
+}
+
+headerbar > box > button.close:hover {
+background: @red_1;
+color: #ffffff;
+}
