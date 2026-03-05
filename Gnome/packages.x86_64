@@ -37,7 +37,7 @@ libusb-compat
 linux
 linux-atm
 linux-firmware
-linux-firmware-bnx2x
+linux-firmware-broadcom
 linux-firmware-marvell
 linux-firmware-qcom
 linux-firmware-qlogic
@@ -157,7 +157,6 @@ gst-plugins-base
 gst-plugins-good
 gst-plugins-bad
 gst-plugins-ugly
-gstreamer-vaapi
 imagemagick
 lame
 libdvdcss
