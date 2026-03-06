@@ -132,12 +132,14 @@ def apply_gtk_theme(base_preset):
  
 def theme_from_color_2(accent_color, isdark):
     from materialyoucolor.scheme import Scheme
+    from material_color_utilities_python.utils import color_utils
     if isdark:
         sch = Scheme.dark(int(accent_color)).__dict__["props"]
     else:
         sch = Scheme.light(int(accent_color)).__dict__["props"]
     generated = {}
     for key, color in sch.items():
+        color = [color_utils.redFromArgb(color), color_utils.greenFromArgb(color), color_utils.blueFromArgb(color), color_utils.alphaFromArgb(color)] 
         generated[key] = ColorUtils.argb_from_argb_arr(color[0], color[1], color[2], color[3])
     theme = {"schemes": {"dark": Scheme(generated), "light": Scheme(generated)}}
     return theme
