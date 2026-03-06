@@ -1,21 +1,6 @@
 name: Build Nyarch ISO on commit
 
 on:
-  push:
-    branches:
-      - main
-      - nvidia
-  pull_request:
-    paths-ignore:
-      - 'docs/**'
-      - '**.editorconfig'
-      - '**.gitignore'
-      - '**.md'
-      - 'LICENSE'
-      - 'PKGBUILD'
-  release:
-    types:
-      - created
   workflow_dispatch:
 jobs:
   build:
