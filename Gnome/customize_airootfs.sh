@@ -21,7 +21,6 @@ wget https://github.com/nyarchlinux/nyarchwizard/releases/latest/download/wizard
 wget https://github.com/nyarchlinux/catgirldownloader/releases/latest/download/catgirldownloader.flatpak
 wget https://github.com/nyarchlinux/nyarchscript/releases/latest/download/nyarchscript.flatpak
 wget https://github.com/nyarchlinux/nyarchcustomize/releases/latest/download/nyarchcustomize.flatpak
-wget https://github.com/nyarchlinux/waifudownloader/releases/latest/download/waifudownloader.flatpak
 wget https://github.com/nyarchlinux/nyarchassistant/releases/latest/download/nyarchassistant.flatpak
 wget https://github.com/nyarchlinux/nyarchupdater/releases/latest/download/nyarchupdater.flatpak
 
@@ -30,7 +29,6 @@ flatpak install -y catgirldownloader.flatpak
 flatpak install -y nyarchcustomize.flatpak
 flatpak install -y wizard.flatpak
 flatpak install -y nyarchscript.flatpak
-flatpak install -y waifudownloader.flatpak
 flatpak install -y nyarchassistant.flatpak
 flatpak install -y nyarchupdater.flatpak
 
@@ -39,7 +37,6 @@ rm -rf catgirldownloader.flatpak
 rm -rf nyarchcustomize.flatpak
 rm -rf wizard.flatpak
 rm -rf nyarchscript.flatpak
-rm -rf waifudownloader.flatpak
 rm -rf nyarchassistant.flatpak
 rm -rf nyarchupdater.flatpak
 
