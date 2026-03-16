@@ -354,3 +354,6 @@ extension-manager
 shortwave
 pamac
 komikku
+
+# Noto CJK Fonts for better Chinese/Japanese/Korean rendering
+noto-fonts-cjk
