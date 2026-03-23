@@ -14,8 +14,6 @@ pip install materialyoucolor --break-system-packages
 flatpak mask "org.freedesktop.Platform.GL.nvidia*"
 flatpak install -y flathub com.github.tchx84.Flatseal
 flatpak install -y org.gtk.Gtk3theme.adw-gtk3 org.gtk.Gtk3theme.adw-gtk3-dark
-wget https://github.com/nyarchlinux/nyarchupdater/releases/latest/download/nyarchupdater.flatpak
-flatpak install -y nyarchupdater.flatpak
 rm -rf nyarchupdater.flatpak
 
 flatpak --remove mask "org.freedesktop.Platform.GL.nvidia*"
