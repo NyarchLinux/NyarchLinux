@@ -295,7 +295,7 @@ pavucontrol
 polkit-gnome
 dart-sass
 sushi
-showtime
+#showtime
 resources
 tldr
 tmux
@@ -349,6 +349,7 @@ nyarchcustomize
 nyarchscript
 catgirldownloader
 nyarchupdater
+nekoplay
 #timeshift-autosnap
 tuned-ppd
 
