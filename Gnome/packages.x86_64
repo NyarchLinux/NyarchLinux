@@ -342,6 +342,7 @@ pango
 python-numpy
 gearlever
 timeshift
+flatseal
 # Nyarch Apps
 nyarchassistant
 nyarchtour
