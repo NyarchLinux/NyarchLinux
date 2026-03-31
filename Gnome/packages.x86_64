@@ -343,6 +343,9 @@ python-numpy
 gearlever
 timeshift
 flatseal
+# Nyarch repo 
+nyarch-keyring
+nyarch-mirrorlist
 # Nyarch Apps
 nyarchassistant
 nyarchtour
