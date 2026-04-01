@@ -152,6 +152,20 @@ Presentation
                 anchors.fill: parent
             }
         }
+      }
+      Slide {
+           anchors.fill: parent
+        Rectangle {
+            anchors.fill: parent
+            border.width: 0
+            color: "#051531"
+            Image {
+                id: slide09
+                source: "slide9.png"
+                fillMode: Image.PreserveAspectFit
+                anchors.fill: parent
+            }
+        }
     } 
     function onActivate() {
         console.log("QML Component (default slideshow) activated");

@@ -124,8 +124,8 @@ navigation: widget
 strings:
     productName:         "Nyarch Linux"
     shortProductName:    nyarch
-    version:             25.04
-    shortVersion:        25.04
+    version:             26.04
+    shortVersion:        26.04
     versionedName:       Nyarch Linux
     shortVersionedName:  Nyarch Linux
     bootloaderEntryName: nyarch
@@ -182,10 +182,10 @@ images:
 # the corresponding CSS attributes of #sidebarApp.
 
 style:
-   SidebarBackground:    "#312429"
-   SidebarText:          "#ECDBDF"
-   SidebarTextCurrent:    "#F6D7E2"
-   SidebarBackgroundCurrent: "#A1005C"
+   SidebarBackground:    "#31261e"
+   SidebarText:          "#eddcd0"
+   SidebarTextCurrent:    "#ffdcc0"
+   SidebarBackgroundCurrent: "#6b3b00"
 
 ### SLIDESHOW
 #
