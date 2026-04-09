@@ -188,11 +188,15 @@ export class DbusMenuItem extends Signals.EventEmitter {
         return this._children_ids.map(el => this._client.getItem(el));
     }
 
+    hasChildren() {
+        return this._children_ids.length > 0;
+    }
+
     handleEvent(event, data, timestamp) {
         if (!data)
             data = GLib.Variant.new_int32(0);
 
-        this._client.sendEvent(this._id, event, data, timestamp);
+        return this._client.sendEvent(this._id, event, data, timestamp);
     }
 
     getId() {
@@ -477,14 +481,14 @@ export const DBusClient = GObject.registerClass({
 
     _onSignal(_sender, signal, params) {
         if (signal === 'LayoutUpdated') {
-            if (!this._active) {
+            if (!this._active && this.getRoot()?.hasChildren()) {
                 this._flagLayoutUpdateRequired = true;
                 return;
             }
 
             this._requestLayoutUpdate();
         } else if (signal === 'ItemsPropertiesUpdated') {
-            if (!this._active) {
+            if (!this._active && this.getRoot()?.hasChildren()) {
                 this._flagItemsUpdateRequired = true;
                 return;
             }
@@ -529,14 +533,18 @@ export const DBusClient = GObject.registerClass({
         }
     }
 
-    sendEvent(id, event, params, timestamp) {
+    async sendEvent(id, event, params, timestamp) {
         if (!this.gNameOwner)
             return;
 
-        this.EventAsync(id, event, params, timestamp, this._cancellable).catch(e => {
-            if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
-                logError(e);
-        });
+        try {
+            await this.EventAsync(id, event, params, timestamp, this._cancellable);
+        } catch (e) {
+            if (e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
+                return;
+
+            throw e;
+        }
     }
 
     _onPropertiesUpdated([changed, removed]) {
@@ -624,6 +632,8 @@ const MenuItemFactory = {
             shellItem, MenuItemFactory._onActivate);
 
         shellItem.connect('destroy', () => {
+            shellItem._dbusItemCancellable?.cancel();
+            shellItem._dbusItemCancellable = null;
             shellItem._dbusItem = null;
             shellItem._dbusClient = null;
             shellItem._icon = null;
@@ -651,7 +661,7 @@ const MenuItemFactory = {
                 menu._parent._openedSubMenu = menu;
             }
 
-            this._dbusItem.handleEvent('opened', null, 0);
+            this._dbusItem.handleEvent('opened', null, 0).catch(logError);
             this._dbusItem.sendAboutToShow();
         } else {
             if (NEED_NESTED_SUBMENU_FIX) {
@@ -660,7 +670,7 @@ const MenuItemFactory = {
                     menu._openedSubMenu.close(false);
             }
 
-            this._dbusItem.handleEvent('closed', null, 0);
+            this._dbusItem.handleEvent('closed', null, 0).catch(logError);
         }
     },
 
@@ -670,7 +680,7 @@ const MenuItemFactory = {
             this._dbusClient.indicator.provideActivationToken(timestamp);
 
         this._dbusItem.handleEvent('clicked', GLib.Variant.new('i', 0),
-            timestamp);
+            timestamp).catch(logError);
     },
 
     _onPropertyChanged(dbusItem, prop, _value) {
@@ -752,10 +762,15 @@ const MenuItemFactory = {
             this._icon.icon_name = iconName;
         } else if (iconData) {
             try {
+                if (!this._dbusItemCancellable) {
+                    this._dbusItemCancellable = new Util.CancellableChild(
+                        this._dbusClient.cancellable);
+                }
+
                 const inputStream = Gio.MemoryInputStream.new_from_bytes(
                     iconData.get_data_as_bytes());
                 this._icon.gicon = await GdkPixbuf.Pixbuf.new_from_stream_async(
-                    inputStream, this._dbusClient.cancellable);
+                    inputStream, this._dbusItemCancellable);
             } catch (e) {
                 if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
                     logError(e);
@@ -868,7 +883,7 @@ export class Client extends Signals.EventEmitter {
             menu._setOpenedSubMenu = this._setOpenedSubmenu.bind(this);
 
         // connect handlers
-        Util.connectSmart(menu, 'open-state-changed', this, this._onMenuOpened);
+        Util.connectSmart(menu, 'open-state-changed', this, this._onMenuOpenStateChanged);
         Util.connectSmart(menu, 'destroy', this, this.destroy);
 
         Util.connectSmart(this._rootItem, 'child-added', this, this._onRootChildAdded);
@@ -935,7 +950,7 @@ export class Client extends Signals.EventEmitter {
         MenuUtils.moveItemInMenu(this._rootMenu, dbusItem, newpos);
     }
 
-    _onMenuOpened(menu, state) {
+    _onMenuOpenStateChanged(menu, state) {
         if (!this._rootItem)
             return;
 
@@ -945,10 +960,18 @@ export class Client extends Signals.EventEmitter {
             if (this._openedSubMenu && this._openedSubMenu.isOpen)
                 this._openedSubMenu.close();
 
-            this._rootItem.handleEvent('opened', null, 0);
+            this._rootItem.handleEvent('opened', null, 0).catch(logError);
             this._rootItem.sendAboutToShow();
         } else {
-            this._rootItem.handleEvent('closed', null, 0);
+            this._rootItem.handleEvent('closed', null, 0).catch(e => {
+                if (e.matches(Gio.DBusError, Gio.DBusError.UNKNOWN_OBJECT)) {
+                    // The menu hay have been removed at this point, thus do not
+                    // spam the users about this if it happens.
+                    return;
+                }
+
+                logError(e);
+            });
         }
     }
 

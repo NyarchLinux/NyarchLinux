@@ -1,3 +1,5 @@
+import Gio from 'gi://Gio';
+
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
@@ -5,7 +7,7 @@ import {ArcMenuManager} from './arcmenuManager.js';
 import * as Constants from './constants.js';
 import {MenuController} from './menuController.js';
 import {SearchProviderEmitter} from './searchProviders/searchProviderEmitter.js';
-import * as Theming from './theming.js';
+import {CustomStylesheet} from './theming.js';
 
 import * as Utils from './utils.js';
 import {UpdateNotification} from './updateNotifier.js';
@@ -13,14 +15,20 @@ import {UpdateNotification} from './updateNotifier.js';
 export default class ArcMenu extends Extension {
     enable() {
         this.settings = this.getSettings();
+
+        // Settings changed in v68.0. Convert the old to new.
+        this._covertOldSettings();
+
+        this._resource = Gio.Resource.load(`${this.path}/data/resources.gresource`);
+        Gio.resources_register(this._resource);
+
         this._arcmenuManager = new ArcMenuManager(this);
-
         this.searchProviderEmitter = new SearchProviderEmitter();
-
+        this.menuControllers = [];
         this._azTaskbarActive = false;
         this._dtpActive = false;
-
         this._updateNotification = new UpdateNotification(this);
+        this._customStylesheet = new CustomStylesheet(this.settings);
 
         const hideOverviewOnStartup = this.settings.get_boolean('hide-overview-on-startup');
         if (hideOverviewOnStartup && Main.layoutManager._startingUp) {
@@ -35,10 +43,6 @@ export default class ArcMenu extends Extension {
 
         this.settings.connectObject('changed::multi-monitor', () => this._reload(), this);
         this.settings.connectObject('changed::dash-to-panel-standalone', () => this._reload(), this);
-        this.menuControllers = [];
-
-        this.customStylesheet = null;
-        Theming.createStylesheet();
 
         this._enableButtons();
 
@@ -64,7 +68,7 @@ export default class ArcMenu extends Extension {
 
         this._connectExtensionSignals();
 
-        global.connectObject('shutdown', () => Theming.deleteStylesheet(), this);
+        global.connectObject('shutdown', () => this._customStylesheet.destroy(), this);
     }
 
     disable() {
@@ -77,8 +81,8 @@ export default class ArcMenu extends Extension {
         this._updateNotification.destroy();
         this._updateNotification = null;
 
-        Theming.deleteStylesheet();
-        this.customStylesheet = null;
+        this._customStylesheet.destroy();
+        this._customStylesheet = null;
 
         this._disableButtons();
         this.menuControllers = null;
@@ -89,7 +93,58 @@ export default class ArcMenu extends Extension {
         this._arcmenuManager.destroy();
         this._arcmenuManager = null;
 
+        Gio.resources_unregister(this._resource);
+        this._resource = null;
         this.settings = null;
+    }
+
+    _covertOldSettings() {
+        const oldButtonTextDefault = this.settings.get_default_value('custom-menu-button-text').unpack();
+        const oldButtonText = this.settings.get_string('custom-menu-button-text');
+        if (oldButtonTextDefault !== oldButtonText) {
+            this.settings.reset('custom-menu-button-text');
+            this.settings.set_string('menu-button-text', oldButtonText);
+        }
+
+        const oldButtonSizeDefault = this.settings.get_default_value('custom-menu-button-icon-size').unpack();
+        const oldButtonSize = this.settings.get_double('custom-menu-button-icon-size');
+        if (oldButtonSizeDefault !== oldButtonSize) {
+            this.settings.reset('custom-menu-button-icon-size');
+            this.settings.set_int('menu-button-icon-size', Math.round(oldButtonSize));
+        }
+
+        const oldButtonPaddingDefault = this.settings.get_default_value('button-padding').unpack();
+        const oldButtonPadding = this.settings.get_int('button-padding');
+        if (oldButtonPaddingDefault !== oldButtonPadding) {
+            this.settings.reset('button-padding');
+            this.settings.set_int('menu-button-padding', oldButtonPadding);
+        }
+
+        const menuButtonIcon = this.settings.get_string('menu-button-icon');
+        switch (menuButtonIcon) {
+        case 'Menu_Icon': {
+            const iconValue = this.settings.get_int('arc-menu-icon');
+            const icon = Constants.MenuIcons[iconValue].IMAGE;
+            if (icon === 'view-app-grid-symbolic')
+                this.settings.set_string('menu-button-icon', icon);
+            else
+                this.settings.set_string('menu-button-icon', `${Constants.RESOURCE_PATH}/actions/${icon}.svg`);
+            break;
+        }
+        case 'Distro_Icon': {
+            const iconValue = this.settings.get_int('distro-icon');
+            const icon = Constants.DistroIcons[iconValue].IMAGE;
+            this.settings.set_string('menu-button-icon', `${Constants.RESOURCE_PATH}/actions/${icon}.svg`);
+            break;
+        }
+        case 'Custom_Icon': {
+            const iconString = this.settings.get_string('custom-menu-button-icon');
+            this.settings.set_string('menu-button-icon', iconString);
+            break;
+        }
+        default:
+            break;
+        }
     }
 
     _getPanelExtensionStates() {
@@ -168,6 +223,10 @@ export default class ArcMenu extends Extension {
 
         const primaryPanelIndex = Main.layoutManager.primaryMonitor?.index;
 
+        // Register hotkeys, DBus methods, and certain settings changed events only once,
+        // on the first panel processed in the loop (independent of primary monitor status).
+        let isFirstPanel = true;
+
         const panelsCount = multiMonitor ? panels.length : Math.min(panels.length, 1);
         for (var i = 0; i < panelsCount; i++) {
             if (!panels[i]) {
@@ -196,8 +255,10 @@ export default class ArcMenu extends Extension {
             else if (panel === Main.panel)
                 monitorIndex = primaryPanelIndex ?? 0;
 
-            const isPrimaryPanel = monitorIndex === primaryPanelIndex;
-            const panelInfo = {panel, panelBox, panelParent, isPrimaryPanel};
+            const panelInfo = {panel, panelBox, panelParent, isFirstPanel};
+
+            if (isFirstPanel)
+                isFirstPanel = false;
 
             const menuController = new MenuController(panelInfo, monitorIndex);
 

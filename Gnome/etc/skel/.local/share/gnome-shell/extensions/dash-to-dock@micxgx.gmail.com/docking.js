@@ -453,11 +453,15 @@ const DockedDash = GObject.registerClass({
 
     _trackDock() {
         if (DockManager.settings.dockFixed) {
+            if (this.get_parent())
+                Main.layoutManager.removeChrome(this);
             Main.layoutManager.addChrome(this, {
                 trackFullscreen: true,
                 affectsStruts: true,
             });
         } else {
+            if (this.get_parent())
+                Main.layoutManager.removeChrome(this);
             Main.layoutManager.addChrome(this);
         }
     }
@@ -1403,7 +1407,7 @@ const DockedDash = GObject.registerClass({
 
                 // Do not show workspaceSwitcher in overview
                 if (!Main.overview.visible)
-                    Main.wm._workspaceSwitcherPopup.display(direction, ws.index());
+                    Main.wm._workspaceSwitcherPopup.display(ws.index());
 
                 return true;
             } else {
@@ -2439,8 +2443,13 @@ export class DockManager {
             const hadOverview = Main.sessionMode.hasOverview;
 
             // Convince LayoutManager to use the legacy startup animation:
-            if (this._settings.disableOverviewOnStartup)
+            // Reset overview controls state to HIDDEN, as skipping the startup
+            // overview leaves it stuck at WINDOW_PICKER
+            if (this._settings.disableOverviewOnStartup) {
                 Main.sessionMode.hasOverview = false;
+                Main.overview._overview.controls._stateAdjustment.value =
+                    OverviewControls.ControlsState.HIDDEN;
+            }
 
             this._signalsHandler.addWithLabel(Labels.STARTUP_ANIMATION,
                 Main.layoutManager, 'startup-complete', () => {

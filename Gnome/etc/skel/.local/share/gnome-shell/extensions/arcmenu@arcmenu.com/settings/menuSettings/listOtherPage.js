@@ -87,14 +87,14 @@ class ArcMenuListOtherPage extends SubPage {
             let name, iconString;
             if (this.list_type === Constants.MenuSettingsListType.POWER_OPTIONS) {
                 name = Constants.PowerOptions[categoryEnum].NAME;
-                iconString = Constants.PowerOptions[categoryEnum].ICON;
+                iconString = Constants.PowerOptions[categoryEnum].IMAGE;
             } else {
                 name = Constants.Categories[categoryEnum].NAME;
-                iconString = Constants.Categories[categoryEnum].ICON;
+                iconString = Constants.Categories[categoryEnum].IMAGE;
             }
 
             const row = new PW.DragRow({
-                gicon: Gio.icon_new_for_string(iconString),
+                gicon: Gio.Icon.new_for_string(iconString),
                 switch_enabled: true,
                 switch_active: shouldShow,
             });

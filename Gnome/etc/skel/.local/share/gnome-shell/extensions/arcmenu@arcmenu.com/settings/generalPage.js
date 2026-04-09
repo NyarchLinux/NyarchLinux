@@ -6,6 +6,7 @@ import GLib from 'gi://GLib';
 import Gtk from 'gi://Gtk';
 
 import * as Constants from '../constants.js';
+import {LayoutTweaksPage} from './menuSettings/layoutTweaksPage.js';
 
 import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
@@ -27,13 +28,14 @@ const forbiddenKeyvals = [
 
 export const GeneralPage = GObject.registerClass(
 class ArcMenuGeneralPage extends Adw.PreferencesPage {
-    _init(settings) {
+    _init(settings, window) {
         super._init({
             title: _('General'),
             icon_name: 'go-home-symbolic',
             name: 'GeneralPage',
         });
         this._settings = settings;
+        this._window = window;
 
         const menuDisplayGroup = new Adw.PreferencesGroup({
             title: _('Panel Display Options'),
@@ -129,7 +131,7 @@ class ArcMenuGeneralPage extends Adw.PreferencesPage {
         const preferTopPanelRow = new Adw.ActionRow({
             title: _('Always Prefer Top Panel'),
             subtitle: _("Useful with Dash to Panel setting 'Keep original gnome-shell top panel'"),
-            activatable_widget: multiMonitorSwitch,
+            activatable_widget: preferTopPanelSwitch,
         });
         preferTopPanelRow.add_suffix(preferTopPanelSwitch);
         // --------------------------------------------------------------------------------------
@@ -165,19 +167,35 @@ class ArcMenuGeneralPage extends Adw.PreferencesPage {
         });
         hideOverviewRow.add_suffix(hideOverviewSwitch);
         generalGroup.add(hideOverviewRow);
+
+        const hideOverviewOnOpenSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER,
+            active: this._settings.get_boolean('hide-overview-on-arcmenu-open'),
+        });
+        hideOverviewOnOpenSwitch.connect('notify::active', widget => {
+            this._settings.set_boolean('hide-overview-on-arcmenu-open', widget.get_active());
+        });
+        const hideOverviewOnOpenRow = new Adw.ActionRow({
+            title: _('Hide Overview when ArcMenu Opens'),
+            activatable_widget: hideOverviewOnOpenSwitch,
+        });
+        hideOverviewOnOpenRow.add_suffix(hideOverviewOnOpenSwitch);
+        generalGroup.add(hideOverviewOnOpenRow);
     }
 
     _createExpanderRow(title, isMenuHotkey) {
         const hotkeySetting = isMenuHotkey ? 'arcmenu-hotkey' : 'runner-hotkey';
         const accelerator = this._settings.get_strv(hotkeySetting);
         const hotkeyString = this.acceleratorToLabel(accelerator);
-        const hotkeyLabel = new Gtk.Label({
-            label: hotkeyString,
-            css_classes: ['dim-label'],
-        });
+
         const customHotkeyRow = new Adw.ActionRow({
             title: _(title),
             activatable: true,
+        });
+
+        const hotkeyLabel = new Gtk.Label({
+            label: hotkeyString,
+            css_classes: ['dim-label'],
         });
         customHotkeyRow.add_suffix(hotkeyLabel);
 
@@ -204,6 +222,22 @@ class ArcMenuGeneralPage extends Adw.PreferencesPage {
             margin_start: 12,
         });
         customHotkeyRow.add_suffix(editButton);
+
+        if (!isMenuHotkey) {
+            const configureButton = new Gtk.Button({
+                icon_name: 'applications-system-symbolic',
+                valign: Gtk.Align.CENTER,
+            });
+            configureButton.connect('clicked', () => {
+                const runnerTweaksPage = new LayoutTweaksPage(this._settings, {
+                    title: _('%s Layout Tweaks').format(_('Runner')),
+                });
+                this._window.push_subpage(runnerTweaksPage);
+                runnerTweaksPage.setActiveLayout(Constants.MenuLayout.RUNNER);
+                runnerTweaksPage.resetScrollAdjustment();
+            });
+            customHotkeyRow.add_prefix(configureButton);
+        }
 
         return customHotkeyRow;
     }
@@ -356,12 +390,8 @@ class ArcMenuHotkeyDialog extends Adw.Window {
         });
         content.append(keyLabel);
 
-        const directory = GLib.path_get_dirname(import.meta.url);
-        const rootDirectory = GLib.path_get_dirname(directory);
-        const iconPath = '/icons/hicolor/16x16/actions/settings-keyboard.svg';
-
         const keyboardImage = new Gtk.Picture({
-            file: Gio.File.new_for_uri(`${rootDirectory}${iconPath}`),
+            file: Gio.File.new_for_uri(`${Constants.RESOURCE_PATH}/emblems/settings-keyboard.svg`),
             halign: Gtk.Align.CENTER,
             valign: Gtk.Align.CENTER,
             can_shrink: false,

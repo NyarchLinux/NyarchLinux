@@ -5,6 +5,7 @@ import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk';
 
 import * as Constants from '../../constants.js';
+import {IconChooserDialog} from '../iconChooserDialog.js';
 import * as PW from '../../prefsWidgets.js';
 import * as SettingsUtils from '../settingsUtils.js';
 import {SubPage} from './subPage.js';
@@ -209,9 +210,8 @@ class ArcMenuListPinnedPage extends SubPage {
         let shortcutIcon = icon;
         let rowTitle = name;
 
-        if (shortcutIcon === Constants.ShortcutCommands.ARCMENU_ICON) {
-            const extension = ExtensionPreferences.lookupByURL(import.meta.url);
-            shortcutIcon = `${extension.path}/${Constants.ArcMenuLogoSymbolic}`;
+        if (shortcutIcon === Constants.ShortcutCommands.ARCMENU_ICON || shortcutIcon.includes?.(Constants.ArcMenuLogoSymbolic)) {
+            shortcutIcon = Constants.ArcMenuLogoSymbolic;
         } else if (id === 'org.gnome.Settings.desktop' && !appInfo) {
             appInfo = GioUnixDesktopAppInfo.new('gnome-control-center.desktop');
         } else if (id === Constants.ShortcutCommands.SOFTWARE) {
@@ -238,11 +238,11 @@ class ArcMenuListPinnedPage extends SubPage {
         if (shortcutData.isFolder)
             shortcutIcon = 'folder-symbolic';
 
-        row.gicon = Gio.icon_new_for_string(shortcutIcon);
+        row.gicon = Gio.Icon.new_for_string(shortcutIcon);
         row.title = GLib.markup_escape_text(rowTitle, -1);
 
         if (id.endsWith('.desktop') && !appInfo) {
-            row.gicon = Gio.icon_new_for_string('dialog-warning-symbolic');
+            row.gicon = Gio.Icon.new_for_string('dialog-warning-symbolic');
             row.title = `<b><i>${_('Invalid Shortcut')}</i></b> - ${row.title ? _(row.title) : id}`;
             row.css_classes = ['error'];
         } else {
@@ -299,7 +299,7 @@ class ArcMenuListPinnedPage extends SubPage {
             editEntryButton.css_classes = ['flat'];
             row.add_suffix(editEntryButton);
             const goNextImage = new Gtk.Image({
-                gicon: Gio.icon_new_for_string('go-next-symbolic'),
+                gicon: Gio.Icon.new_for_string('go-next-symbolic'),
                 valign: Gtk.Align.CENTER,
             });
             row.add_suffix(goNextImage);
@@ -347,11 +347,9 @@ class ArcMenuAddAppsToPinnedListWindow extends PW.DialogWindow {
 
         this._createShortcutsArray();
 
-        const extension = ExtensionPreferences.lookupByURL(import.meta.url);
-
         if (this._dialogType === Constants.MenuSettingsListType.PINNED_APPS  ||
             this._dialogType === Constants.MenuSettingsListType.FOLDER_PINNED_APPS) {
-            const extraItem = [[_('ArcMenu Settings'), `${extension.path}/${Constants.ArcMenuLogoSymbolic}`,
+            const extraItem = [[_('ArcMenu Settings'), Constants.ArcMenuLogoSymbolic,
                 Constants.ShortcutCommands.ARCMENU_SETTINGS]];
             this._loadExtraCategories(extraItem);
             this._loadCategories();
@@ -362,7 +360,7 @@ class ArcMenuAddAppsToPinnedListWindow extends PW.DialogWindow {
             this._loadExtraCategories(extraLinks);
         } else if (this._dialogType === Constants.MenuSettingsListType.APPLICATIONS) {
             const extraLinks = [];
-            extraLinks.push([_('ArcMenu Settings'), `${extension.path}/${Constants.ArcMenuLogoSymbolic}`,
+            extraLinks.push([_('ArcMenu Settings'), Constants.ArcMenuLogoSymbolic,
                 Constants.ShortcutCommands.ARCMENU_SETTINGS]);
             extraLinks.push([_('Run Command...'), 'system-run-symbolic', Constants.ShortcutCommands.RUN_COMMAND]);
             extraLinks.push([_('Activities Overview'), 'view-fullscreen-symbolic',
@@ -374,17 +372,17 @@ class ArcMenuAddAppsToPinnedListWindow extends PW.DialogWindow {
             this._loadCategories();
         } else if (this._dialogType === Constants.MenuSettingsListType.CONTEXT_MENU) {
             const extraLinks = [];
-            extraLinks.push([_('ArcMenu Settings'), `${extension.path}/${Constants.ArcMenuLogoSymbolic}`,
+            extraLinks.push([_('ArcMenu Settings'), Constants.ArcMenuLogoSymbolic,
                 Constants.ShortcutCommands.SETTINGS]);
-            extraLinks.push([_('Menu Settings'), `${extension.path}/${Constants.ArcMenuLogoSymbolic}`,
+            extraLinks.push([_('Menu Settings'), Constants.ArcMenuLogoSymbolic,
                 Constants.ShortcutCommands.SETTINGS_MENU]);
-            extraLinks.push([_('Menu Theming'), `${extension.path}/${Constants.ArcMenuLogoSymbolic}`,
+            extraLinks.push([_('Menu Theming'), Constants.ArcMenuLogoSymbolic,
                 Constants.ShortcutCommands.SETTINGS_THEME]);
-            extraLinks.push([_('Change Menu Layout'), `${extension.path}/${Constants.ArcMenuLogoSymbolic}`,
+            extraLinks.push([_('Change Menu Layout'), Constants.ArcMenuLogoSymbolic,
                 Constants.ShortcutCommands.SETTINGS_LAYOUT]);
-            extraLinks.push([_('Menu Button Settings'), `${extension.path}/${Constants.ArcMenuLogoSymbolic}`,
+            extraLinks.push([_('Menu Button Settings'), Constants.ArcMenuLogoSymbolic,
                 Constants.ShortcutCommands.SETTINGS_BUTTON]);
-            extraLinks.push([_('About'), `${extension.path}/${Constants.ArcMenuLogoSymbolic}`, Constants.ShortcutCommands.SETTINGS_ABOUT]);
+            extraLinks.push([_('About'), Constants.ArcMenuLogoSymbolic, Constants.ShortcutCommands.SETTINGS_ABOUT]);
             extraLinks.push([_('Panel Extension Settings'), 'application-x-addon-symbolic',
                 Constants.ShortcutCommands.PANEL_EXTENSION_SETTINGS]);
             extraLinks.push([_('Activities Overview'), 'view-fullscreen-symbolic',
@@ -471,7 +469,7 @@ class ArcMenuAddAppsToPinnedListWindow extends PW.DialogWindow {
             };
 
             const iconImage = new Gtk.Image({
-                gicon: Gio.icon_new_for_string(iconString),
+                gicon: Gio.Icon.new_for_string(iconString),
                 pixel_size: 22,
             });
             frameRow.add_prefix(iconImage);
@@ -506,7 +504,7 @@ class ArcMenuAddAppsToPinnedListWindow extends PW.DialogWindow {
                 const icon = allApps[i].get_icon() ? allApps[i].get_icon().to_string() : 'dialog-information';
 
                 const iconImage = new Gtk.Image({
-                    gicon: Gio.icon_new_for_string(icon),
+                    gicon: Gio.Icon.new_for_string(icon),
                     pixel_size: 22,
                 });
                 frameRow.add_prefix(iconImage);
@@ -564,7 +562,7 @@ class ArcMenuAddAppsToPinnedListWindow extends PW.DialogWindow {
 });
 
 var AddCustomLinkDialogWindow = GObject.registerClass(
-class ArcMenuAddCustomLinkDialogWindow extends PW.DialogWindow {
+class ArcMenuAddCustomLinkDialogWindow extends PW.HeaderBarDialog {
     _init(settings, parent, dialogType, shortcutData = null) {
         let title = _('Add a Custom Shortcut');
 
@@ -582,123 +580,119 @@ class ArcMenuAddCustomLinkDialogWindow extends PW.DialogWindow {
             }
         }
 
-        super._init(_(title), parent);
-        this.set_default_size(600, 325);
-        this.search_enabled = false;
+        super._init(_(title), shortcutData ? _('Apply') : _('Add'), parent);
+        this.set_default_size(600, 300);
         this._settings = settings;
         this._dialogType = dialogType;
         this.shortcutData = shortcutData;
+        this._iconImage = new Gtk.Image();
 
-        const nameFrameRow = new Adw.ActionRow({
-            title: _('Title'),
-        });
+        const nameFrameRow = new Adw.ActionRow({title: _('Title')});
 
-        const nameEntry = new Gtk.Entry({
+        this._nameEntry = new Gtk.Entry({
             valign: Gtk.Align.CENTER,
             hexpand: true,
             halign: Gtk.Align.FILL,
         });
-        nameFrameRow.add_suffix(nameEntry);
+        nameFrameRow.add_suffix(this._nameEntry);
         this.pageGroup.add(nameFrameRow);
 
         const iconFrameRow = new Adw.ActionRow({
             title: _('Icon'),
             visible: !onlyNameChanges,
         });
-        const iconEntry = new Gtk.Entry({
-            valign: Gtk.Align.CENTER,
-            hexpand: true,
-            halign: Gtk.Align.FILL,
-        });
-
-        const fileFilter = new Gtk.FileFilter();
-        fileFilter.add_pixbuf_formats();
-        const fileChooserButton = new Gtk.Button({
-            icon_name: 'search-symbolic',
-            tooltip_text: _('Browse...'),
-            valign: Gtk.Align.CENTER,
-        });
-
-        fileChooserButton.connect('clicked', () => {
-            const dialog = new Gtk.FileChooserDialog({
-                title: _('Select an Icon'),
-                transient_for: this.get_root(),
-                modal: true,
-                action: Gtk.FileChooserAction.OPEN,
-            });
-            dialog.add_button(_('Cancel'), Gtk.ResponseType.CANCEL);
-            dialog.add_button(_('Open'), Gtk.ResponseType.ACCEPT);
-
-            dialog.set_filter(fileFilter);
-
-            dialog.connect('response', (self, response) => {
-                if (response === Gtk.ResponseType.ACCEPT) {
-                    const iconFilepath = dialog.get_file().get_path();
-                    iconEntry.set_text(iconFilepath);
-                    dialog.destroy();
-                } else if (response === Gtk.ResponseType.CANCEL) {
-                    dialog.destroy();
-                }
-            });
-            dialog.show();
-        });
-        iconFrameRow.add_suffix(iconEntry);
-        iconFrameRow.add_suffix(fileChooserButton);
         this.pageGroup.add(iconFrameRow);
 
-        if (this._dialogType === Constants.MenuSettingsListType.DIRECTORIES)
-            iconEntry.set_text(Constants.ShortcutCommands.FOLDER);
+        const browseFilesButton = new Gtk.Button({
+            valign: Gtk.Align.CENTER,
+            label: _('Browse...'),
+        });
+        browseFilesButton.connect('clicked', () => this._launchIconChooser());
+
+        const iconButton = new Gtk.Button({
+            valign: Gtk.Align.CENTER,
+            child: this._iconImage,
+        });
+        this._clearIconButton = new Gtk.Button({
+            icon_name: 'edit-clear-symbolic',
+            tooltip_text: _('Clear Icon'),
+            valign: Gtk.Align.CENTER,
+            sensitive: false,
+        });
+        this._clearIconButton.connect('clicked', () => {
+            this._iconImage.gicon = null;
+            this._clearIconButton.sensitive = false;
+        });
+        const iconBox = new Gtk.Box({
+            css_classes: ['linked'],
+        });
+        iconBox.append(iconButton);
+        iconBox.append(this._clearIconButton);
+        iconFrameRow.add_suffix(browseFilesButton);
+        iconFrameRow.add_suffix(iconBox);
 
         const cmdFrameRow = new Adw.ActionRow({
             title: this._dialogType === Constants.MenuSettingsListType.DIRECTORIES ? _('Directory') : _('Command'),
             visible: !onlyNameChanges,
         });
 
-        const cmdEntry = new Gtk.Entry({
+        this._cmdEntry = new Gtk.Entry({
             valign: Gtk.Align.CENTER,
             hexpand: true,
             halign: Gtk.Align.FILL,
         });
-        cmdFrameRow.add_suffix(cmdEntry);
+        cmdFrameRow.add_suffix(this._cmdEntry);
         this.pageGroup.add(cmdFrameRow);
 
-        const addButton = new Gtk.Button({
-            label: this.shortcutData ? _('Apply') : _('Add'),
-            halign: Gtk.Align.END,
-            css_classes: ['suggested-action'],
-        });
-
         if (this.shortcutData !== null) {
-            nameEntry.text = this.shortcutData.name ?? '';
-            iconEntry.text = this.shortcutData.icon ?? '';
-            cmdEntry.text = this.shortcutData.id ?? '';
+            this._nameEntry.text = this.shortcutData.name ?? '';
+            if (this.shortcutData.icon) {
+                this._iconImage.gicon = Gio.Icon.new_for_string(this.shortcutData.icon);
+                this._clearIconButton.sensitive = true;
+            }
+            this._cmdEntry.text = this.shortcutData.id ?? '';
         } else {
             this.shortcutData = {};
         }
 
-        addButton.connect('clicked', () => {
-            const name = nameEntry.get_text();
-            const icon = iconEntry.get_text();
-            const id = cmdEntry.get_text();
+        this._nameEntry.connect('changed', () => this._setActionButtonSensitive(true));
+        this._cmdEntry.connect('changed', () => this._setActionButtonSensitive(true));
+        this._iconImage.connect('notify::gicon', () => this._setActionButtonSensitive(true));
+    }
 
-            if (name.length)
-                this.shortcutData.name = name;
-            else if (this.shortcutData.name !== undefined)
-                delete this.shortcutData.name;
+    _onActionClicked() {
+        const name = this._nameEntry.get_text();
+        const icon = this._iconImage.gicon?.to_string() ?? '';
+        const id = this._cmdEntry.get_text();
 
-            if (icon.length)
-                this.shortcutData.icon = icon;
-            else if (this.shortcutData.icon !== undefined)
-                delete this.shortcutData.icon;
+        if (name.length)
+            this.shortcutData.name = name;
+        else if (this.shortcutData.name !== undefined)
+            delete this.shortcutData.name;
 
-            if (id.length)
-                this.shortcutData.id = id;
-            else if (this.shortcutData.id !== undefined)
-                delete this.shortcutData.id;
+        if (icon.length)
+            this.shortcutData.icon = icon;
+        else if (this.shortcutData.icon !== undefined)
+            delete this.shortcutData.icon;
 
-            this.emit('response', Gtk.ResponseType.APPLY);
+        if (id.length)
+            this.shortcutData.id = id;
+        else if (this.shortcutData.id !== undefined)
+            delete this.shortcutData.id;
+
+        super._onActionClicked();
+    }
+
+    _launchIconChooser() {
+        const dialog = new IconChooserDialog(this._settings, this.get_root());
+        dialog.connect('response', (_self, response) => {
+            if (response === Gtk.ResponseType.APPLY) {
+                this._clearIconButton.sensitive = true;
+                this._iconImage.gicon = Gio.Icon.new_for_string(dialog.iconString);
+            }
+
+            dialog.destroy();
         });
-
-        this.pageGroup.set_header_suffix(addButton);
+        dialog.show();
     }
 });

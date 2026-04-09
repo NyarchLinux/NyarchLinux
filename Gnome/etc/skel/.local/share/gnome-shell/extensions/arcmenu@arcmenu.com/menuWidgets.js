@@ -18,6 +18,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as Params from 'resource:///org/gnome/shell/misc/params.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import {showScreenshotUI} from 'resource:///org/gnome/shell/ui/screenshot.js';
+import * as ShellEntry from 'resource:///org/gnome/shell/ui/shellEntry.js';
 import * as SystemActions from 'resource:///org/gnome/shell/misc/systemActions.js';
 import * as Util from 'resource:///org/gnome/shell/misc/util.js';
 
@@ -33,7 +34,7 @@ const GDateMenu = Main.panel.statusArea.dateMenu;
 const GWeatherWidget = GDateMenu._weatherItem.constructor;
 const GWorldClocksWidget = GDateMenu._clocksItem.constructor;
 
-const INDICATOR_ICON_SIZE = 18;
+const INDICATOR_ICON_SIZE = 12;
 const USER_AVATAR_SIZE = 28;
 
 const TOOLTIP_SHOW_TIME = 150;
@@ -282,7 +283,7 @@ export class BaseMenuItem extends St.BoxLayout {
     _onPressed() {
         if (this._clickAction.pressed)
             this.add_style_pseudo_class('active');
-        else
+        else if (!this.isActiveCategory)
             this.remove_style_pseudo_class('active');
     }
 
@@ -403,9 +404,12 @@ export class BaseMenuItem extends St.BoxLayout {
         super.vfunc_key_focus_in();
         this.active = true;
 
-        // Ensure the new activeMenuItem is visible in scroll view
-        if (!this.hover)
-            Utils.ensureActorVisibleInScrollView(this);
+        const event = Clutter.get_current_event();
+        if (event?.type() !== Clutter.EventType.KEY_PRESS)
+            return;
+
+        // Ensure the item is visible in scroll view when using keyboard navigation
+        Utils.ensureActorVisibleInScrollView(this);
     }
 
     vfunc_key_focus_out() {
@@ -617,8 +621,8 @@ export class Tooltip extends St.Label {
         global.stage.add_child(this);
         this.hide();
 
-        this._useTooltips = !ArcMenuManager.settings.get_boolean('disable-tooltips');
-        ArcMenuManager.settings.connectObject('changed::disable-tooltips', this.disableTooltips.bind(this), this);
+        this._useTooltips = ArcMenuManager.settings.get_boolean('show-tooltips');
+        ArcMenuManager.settings.connectObject('changed::show-tooltips', this._showTooltipsChanged.bind(this), this);
         this.connect('destroy', () => this._onDestroy());
     }
 
@@ -644,8 +648,8 @@ export class Tooltip extends St.Label {
         this._setTooltipText(titleLabel, description, displayType);
     }
 
-    disableTooltips() {
-        this._useTooltips = !ArcMenuManager.settings.get_boolean('disable-tooltips');
+    _showTooltipsChanged() {
+        this._useTooltips = ArcMenuManager.settings.get_boolean('show-tooltips');
     }
 
     _setTooltipText(titleLabel, description, displayType) {
@@ -786,7 +790,7 @@ export class ArcMenuButtonItem extends BaseMenuItem {
         const iconSize = Utils.getIconSize(iconSizeEnum, this._menuLayout.buttons_icon_size);
 
         return new St.Icon({
-            gicon: this.gicon ? this.gicon : Gio.icon_new_for_string(this.iconName),
+            gicon: this.gicon ? this.gicon : Gio.Icon.new_for_string(this.iconName),
             icon_size: overrideIconSize ? overrideIconSize : iconSize,
             x_expand: true,
             x_align: Clutter.ActorAlign.CENTER,
@@ -896,7 +900,7 @@ export class LeaveButton extends BaseMenuItem {
         const iconSize = Utils.getIconSize(iconSizeEnum, defaultIconSize);
 
         return new St.Icon({
-            gicon: Gio.icon_new_for_string(this.iconName),
+            gicon: Gio.Icon.new_for_string(this.iconName),
             icon_size: overrideIconSize ? overrideIconSize : iconSize,
             x_expand: !this.showLabel,
             x_align: this.showLabel ? Clutter.ActorAlign.START : Clutter.ActorAlign.CENTER,
@@ -990,7 +994,7 @@ export class PowerButton extends ArcMenuButtonItem {
 
     constructor(menuLayout, powerType) {
         super(menuLayout, Constants.PowerOptions[powerType].NAME,
-            Constants.PowerOptions[powerType].ICON);
+            Constants.PowerOptions[powerType].IMAGE);
         this.powerType = powerType;
 
         const binding = bindPowerItemVisibility(this);
@@ -1034,7 +1038,7 @@ export class PowerMenuItem extends BaseMenuItem {
         const iconSize = Utils.getIconSize(iconSizeEnum, this._menuLayout.quicklinks_icon_size);
 
         return new St.Icon({
-            gicon: Gio.icon_new_for_string(Constants.PowerOptions[this.powerType].ICON),
+            gicon: Gio.Icon.new_for_string(Constants.PowerOptions[this.powerType].IMAGE),
             style_class: 'popup-menu-icon',
             icon_size: iconSize,
         });
@@ -1083,7 +1087,7 @@ export class NavigationButton extends ArcMenuButtonItem {
         const iconSize = Utils.getIconSize(iconSizeEnum, Constants.EXTRA_SMALL_ICON_SIZE);
 
         return new St.Icon({
-            gicon: this.gicon ? this.gicon : Gio.icon_new_for_string(this.iconName),
+            gicon: this.gicon ? this.gicon : Gio.Icon.new_for_string(this.iconName),
             icon_size: iconSize,
             x_expand: true,
             x_align: Clutter.ActorAlign.CENTER,
@@ -1181,6 +1185,12 @@ export class ViewAllAppsButton extends BaseMenuItem {
     constructor(menuLayout) {
         super(menuLayout);
 
+        this._iconBin = new St.Bin({
+            x_expand: false,
+            x_align: Clutter.ActorAlign.START,
+        });
+        this.add_child(this._iconBin);
+
         const label = new St.Label({
             text: _('All Apps'),
             x_expand: false,
@@ -1190,20 +1200,15 @@ export class ViewAllAppsButton extends BaseMenuItem {
         });
         this.add_child(label);
 
-        this._iconBin = new St.Bin({
-            x_expand: false,
-            x_align: Clutter.ActorAlign.START,
-        });
-        this.add_child(this._iconBin);
         this._updateIcon();
     }
 
     createIcon() {
-        const iconSizeEnum = ArcMenuManager.settings.get_enum('misc-item-icon-size');
-        const iconSize = Utils.getIconSize(iconSizeEnum, Constants.MISC_ICON_SIZE);
+        const iconSizeEnum = ArcMenuManager.settings.get_enum('menu-item-category-icon-size');
+        const iconSize = Utils.getIconSize(iconSizeEnum, Constants.MEDIUM_ICON_SIZE);
 
         return new St.Icon({
-            icon_name: 'go-next-symbolic',
+            icon_name: 'view-app-grid-symbolic',
             icon_size: iconSize,
             x_align: Clutter.ActorAlign.START,
             style_class: 'popup-menu-icon',
@@ -1264,7 +1269,7 @@ export class ShortcutMenuItem extends BaseMenuItem {
         }
 
         if (!name && this._app)
-            name = this._app.get_name();
+            name = Utils.getAppDisplayName(this._app);
         // -------------------------------------
 
         this.hasContextMenu = !!this._app;
@@ -1332,7 +1337,7 @@ export class ShortcutMenuItem extends BaseMenuItem {
 
         return new St.Icon({
             icon_name: this.iconName,
-            gicon: Gio.icon_new_for_string(this.iconName),
+            gicon: Gio.Icon.new_for_string(this.iconName),
             style_class: this._displayType === Constants.DisplayType.LIST ? 'popup-menu-icon' : '',
             icon_size: iconSize,
         });
@@ -1575,6 +1580,9 @@ export class DraggableMenuItem extends BaseMenuItem {
 
     _onDragMotion(dragEvent) {
         const parent = this.get_parent();
+        if (!parent)
+            return DND.DragMotionResult.NO_DROP;
+
         const layoutManager = parent.layout_manager;
 
         const [success, x, y] = parent.transform_stage_point(dragEvent.x, dragEvent.y);
@@ -1695,7 +1703,8 @@ export class DraggableMenuItem extends BaseMenuItem {
             this._dragMonitor = null;
         }
 
-        if (!this.movedToFolder)
+        // Pop Layout - if drag drop was accepted, this item will be destroyed
+        if (!this.dragDropAccepted)
             this.undoScaleAndFade();
     }
 
@@ -2271,8 +2280,8 @@ export class PinnedAppsMenuItem extends DraggableMenuItem {
         // Allows dragging the pinned app into the overview workspace thumbnail.
         this.app = this._app;
 
-        if (this._iconString === Constants.ShortcutCommands.ARCMENU_ICON || this._iconString === `${ArcMenuManager.extension.path}/icons/arcmenu-logo-symbolic.svg`)
-            this._iconString = `${ArcMenuManager.extension.path}/${Constants.ArcMenuLogoSymbolic}`;
+        if (this._iconString === Constants.ShortcutCommands.ARCMENU_ICON || this._iconString.includes(Constants.ArcMenuLogoSymbolic))
+            this._iconString = `${Constants.RESOURCE_PATH}/emblems/${Constants.ArcMenuLogoSymbolic}.svg`;
 
         if (this._app && this._iconString === '') {
             const appIcon = this._app.create_icon_texture(Constants.MEDIUM_ICON_SIZE);
@@ -2284,7 +2293,7 @@ export class PinnedAppsMenuItem extends DraggableMenuItem {
         }
 
         if (this._app && !this._name)
-            this._name = this._app.get_name();
+            this._name = Utils.getAppDisplayName(this._app);
 
         this.label.text = _(this._name);
         this._updateIcon();
@@ -2305,7 +2314,7 @@ export class PinnedAppsMenuItem extends DraggableMenuItem {
         }
 
         return new St.Icon({
-            gicon: Gio.icon_new_for_string(this._iconString),
+            gicon: Gio.Icon.new_for_string(this._iconString),
             icon_size: iconSize,
             style_class: this._displayType === Constants.DisplayType.GRID ? '' : 'popup-menu-icon',
         });
@@ -2327,7 +2336,7 @@ export class PinnedAppsMenuItem extends DraggableMenuItem {
 
     getDragActor() {
         const icon = new St.Icon({
-            gicon: Gio.icon_new_for_string(this._iconString),
+            gicon: Gio.Icon.new_for_string(this._iconString),
             style_class: 'popup-menu-icon',
             icon_size: this._iconBin.get_child().icon_size,
         });
@@ -2423,13 +2432,12 @@ export class ApplicationMenuItem extends BaseMenuItem {
         this.metaInfo = metaInfo || {};
         this.isContainedInCategory = isContainedInCategory;
 
-        this.searchType = this._menuLayout.search_display_type;
         this.hasContextMenu = !!this._app;
         this.isSearchResult = !!Object.keys(this.metaInfo).length;
 
         if (this._app) {
-            const disableRecentAppsIndicator = ArcMenuManager.settings.get_boolean('disable-recently-installed-apps');
-            if (!disableRecentAppsIndicator) {
+            const showRecentApps = ArcMenuManager.settings.get_boolean('show-recently-installed-apps');
+            if (showRecentApps) {
                 const recentApps = ArcMenuManager.settings.get_strv('recently-installed-apps');
                 this.isRecentlyInstalled = recentApps.some(appIter => appIter === this._app.get_id());
             }
@@ -2444,7 +2452,7 @@ export class ApplicationMenuItem extends BaseMenuItem {
         this._updateIcon();
 
         this.label = new St.Label({
-            text: this._app ? this._app.get_name() : this.metaInfo['name'],
+            text: this._app ? Utils.getAppDisplayName(this._app) : this.metaInfo['name'],
             x_expand: true,
             y_expand: true,
             x_align: Clutter.ActorAlign.FILL,
@@ -2904,8 +2912,8 @@ export class SubCategoryMenuItem extends BaseMenuItem {
 
     populateMenu() {
         this.appList.sort((a, b) => {
-            const nameA = a._app.get_name();
-            const nameB = b._app.get_name();
+            const nameA = Utils.getAppDisplayName(a._app);
+            const nameB = Utils.getAppDisplayName(b._app);
             return nameA.localeCompare(nameB);
         });
         this._subMenuPopup.populateMenu(this.appList);
@@ -3340,6 +3348,7 @@ export class SearchEntry extends St.Entry {
             style_class: 'arcmenu-search-entry',
         });
 
+        ShellEntry.addContextMenu(this);
         this.searchResults = menuLayout.searchResults;
         this._menuLayout = menuLayout;
 

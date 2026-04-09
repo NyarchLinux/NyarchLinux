@@ -4,158 +4,164 @@ import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import St from 'gi://St';
 
-import {ArcMenuManager} from './arcmenuManager.js';
+import {connectSettings, Debouncer} from './utils.js';
 
 Gio._promisify(Gio.File.prototype, 'replace_contents_bytes_async', 'replace_contents_finish');
 Gio._promisify(Gio.File.prototype, 'delete_async');
 
-const FileName = 'XXXXXX-arcmenu-stylesheet.css';
+export class CustomStylesheet {
+    constructor(settings) {
+        this._fileName = 'XXXXXX-arcmenu-stylesheet.css';
+        this._settings = settings;
+        this._stylesheet = null;
+        this._debouncer = new Debouncer();
 
-/**
- * Create and load a custom stylesheet file into global.stage St.Theme
- */
-export function createStylesheet() {
-    try {
-        const [file] = Gio.File.new_tmp(FileName);
-        ArcMenuManager.customStylesheet = file;
-        updateStylesheet();
-    } catch (e) {
-        console.log(`ArcMenu - Error creating custom stylesheet: ${e}`);
+        this._create();
+
+        connectSettings(
+            ['override-menu-theme', 'menu-background-color', 'menu-foreground-color', 'search-entry-border-radius',
+                'menu-border-color', 'menu-border-width', 'menu-border-radius', 'menu-font-size', 'menu-separator-color',
+                'menu-item-hover-bg-color', 'menu-item-hover-fg-color', 'menu-item-active-bg-color', 'menu-button-border-color',
+                'menu-item-active-fg-color', 'menu-button-fg-color', 'menu-button-bg-color', 'menu-arrow-rise',
+                'menu-button-hover-bg-color', 'menu-button-hover-fg-color', 'menu-button-active-bg-color',
+                'menu-button-active-fg-color', 'menu-button-border-radius', 'menu-button-border-width'],
+            this._onSettingsChanged.bind(this),
+            this
+        );
     }
-}
 
-/**
- * Unload the custom stylesheet from global.stage St.Theme
- */
-function unloadStylesheet() {
-    if (!ArcMenuManager.customStylesheet)
-        return;
+    _onSettingsChanged() {
+        this._debouncer.debounce('settingsChanged', () => this._update());
+    }
 
-    const theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
-    theme.unload_stylesheet(ArcMenuManager.customStylesheet);
-}
+    async _create() {
+        try {
+            const [file] = Gio.File.new_tmp(this._fileName);
+            this._stylesheet = file;
+            await this._update();
+        } catch (e) {
+            this._stylesheet = null;
+            console.log(`ArcMenu - Error creating custom stylesheet: ${e}`);
+        }
+    }
 
-/**
- * Delete and unload the custom stylesheet file from global.stage St.Theme
- */
-export async function deleteStylesheet() {
-    unloadStylesheet();
+    async _delete() {
+        if (!this._stylesheet)
+            return;
 
-    const stylesheet = ArcMenuManager.customStylesheet;
+        this._unload();
 
-    try {
-        if (stylesheet.query_exists(null))
-            await stylesheet.delete_async(GLib.PRIORITY_DEFAULT, null);
-    } catch (e) {
-        if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND))
+        try {
+            if (this._stylesheet.query_exists(null))
+                await this._stylesheet.delete_async(GLib.PRIORITY_DEFAULT, null);
+        } catch (e) {
             console.log(`ArcMenu - Error deleting custom stylesheet: ${e}`);
-    }
-}
-
-/**
- * Write theme data to custom stylesheet and reload into global.stage St.Theme
- */
-export async function updateStylesheet() {
-    const {settings} = ArcMenuManager;
-    const stylesheet = ArcMenuManager.customStylesheet;
-
-    if (!stylesheet) {
-        console.log('ArcMenu - Warning: Custom stylesheet not found! Unable to set contents of custom stylesheet.');
-        return;
+        } finally {
+            this._stylesheet = null;
+        }
     }
 
-    unloadStylesheet();
-
-    let customMenuThemeCSS = '';
-    let extraStylingCSS = '';
-
-    const menuBGColor = settings.get_string('menu-background-color');
-    const menuFGColor = settings.get_string('menu-foreground-color');
-    const menuBorderColor = settings.get_string('menu-border-color');
-    const menuBorderWidth = settings.get_int('menu-border-width');
-    const menuBorderRadius = settings.get_int('menu-border-radius');
-    const menuFontSize = settings.get_int('menu-font-size');
-    const menuSeparatorColor = settings.get_string('menu-separator-color');
-    const itemHoverBGColor = settings.get_string('menu-item-hover-bg-color');
-    const itemHoverFGColor = settings.get_string('menu-item-hover-fg-color');
-    const itemActiveBGColor = settings.get_string('menu-item-active-bg-color');
-    const itemActiveFGColor = settings.get_string('menu-item-active-fg-color');
-
-    const [menuRise, menuRiseValue] = settings.get_value('menu-arrow-rise').deep_unpack();
-
-    const [buttonFG, buttonFGColor] = settings.get_value('menu-button-fg-color').deep_unpack();
-    const [buttonBG, buttonBGColor] = settings.get_value('menu-button-bg-color').deep_unpack();
-    const [buttonHoverBG, buttonHoverBGColor] = settings.get_value('menu-button-hover-bg-color').deep_unpack();
-    const [buttonHoverFG, buttonHoverFGColor] = settings.get_value('menu-button-hover-fg-color').deep_unpack();
-    const [buttonActiveBG, buttonActiveBGColor] = settings.get_value('menu-button-active-bg-color').deep_unpack();
-    const [buttonActiveFG, buttonActiveFGColor] = settings.get_value('menu-button-active-fg-color').deep_unpack();
-    const [buttonRadius, buttonRadiusValue] = settings.get_value('menu-button-border-radius').deep_unpack();
-    const [buttonWidth, buttonWidthValue] = settings.get_value('menu-button-border-width').deep_unpack();
-    const [buttonBorder, buttonBorderColor] = settings.get_value('menu-button-border-color').deep_unpack();
-    const [searchBorder, searchBorderValue] = settings.get_value('search-entry-border-radius').deep_unpack();
-
-    if (buttonFG) {
-        extraStylingCSS += `.arcmenu-menu-button{
-                                color: ${buttonFGColor};
-                            }`;
-    }
-    if (buttonBG) {
-        extraStylingCSS += `.arcmenu-panel-menu{
-                                box-shadow: inset 0 0 0 100px transparent;
-                                background-color: ${buttonBGColor};
-                            }`;
-    }
-    if (buttonHoverBG) {
-        extraStylingCSS += `.arcmenu-panel-menu:hover{
-                                box-shadow: inset 0 0 0 100px transparent;
-                                background-color: ${buttonHoverBGColor};
-                            }`;
-    }
-    if (buttonHoverFG) {
-        extraStylingCSS += `.arcmenu-panel-menu:hover .arcmenu-menu-button{
-                                color: ${buttonHoverFGColor};
-                            }`;
-    }
-    if (buttonActiveFG) {
-        extraStylingCSS += `.arcmenu-menu-button:active{
-                                color: ${buttonActiveFGColor};
-                            }`;
-    }
-    if (buttonActiveBG) {
-        extraStylingCSS += `.arcmenu-panel-menu:active{
-                                box-shadow: inset 0 0 0 100px transparent;
-                                background-color: ${buttonActiveBGColor};
-                            }`;
-    }
-    if (buttonRadius) {
-        extraStylingCSS += `.arcmenu-panel-menu{
-                                border-radius: ${buttonRadiusValue}px;
-                            }`;
-    }
-    if (buttonWidth) {
-        extraStylingCSS += `.arcmenu-panel-menu{
-                                border-width: ${buttonWidthValue}px;
-                            }`;
-    }
-    if (buttonBorder) {
-        extraStylingCSS += `.arcmenu-panel-menu{
-                                border-color: ${buttonBorderColor};
-                            }`;
-    }
-    if (menuRise) {
-        extraStylingCSS += `.arcmenu-menu{
-                                -arrow-rise: ${menuRiseValue}px;
-                            }`;
-    }
-    if (searchBorder) {
-        extraStylingCSS += `#ArcMenuSearchEntry{
-                                border-radius: ${searchBorderValue}px;
-                            }`;
+    destroy() {
+        this._delete();
+        this._debouncer.destroy();
+        this._settings.disconnectObject(this);
+        this._fileName = null;
+        this._settings = null;
+        this._debouncer = null;
     }
 
-    if (settings.get_boolean('override-menu-theme')) {
-        customMenuThemeCSS = `
-        .arcmenu-menu{
+    _unload() {
+        if (!this._stylesheet)
+            return;
+
+        const theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
+        theme.unload_stylesheet(this._stylesheet);
+    }
+
+    async _update() {
+        if (!this._stylesheet) {
+            console.log('ArcMenu - Warning: Custom stylesheet not found! Unable to set contents of custom stylesheet.');
+            return;
+        }
+
+        this._unload();
+
+        const customThemeEnabled = this._settings.get_boolean('override-menu-theme');
+        const [menuRise, menuRiseValue] = this._settings.get_value('menu-arrow-rise').deep_unpack();
+        const [buttonFG, buttonFGColor] = this._settings.get_value('menu-button-fg-color').deep_unpack();
+        const [buttonBG, buttonBGColor] = this._settings.get_value('menu-button-bg-color').deep_unpack();
+        const [buttonHoverBG, buttonHoverBGColor] = this._settings.get_value('menu-button-hover-bg-color').deep_unpack();
+        const [buttonHoverFG, buttonHoverFGColor] = this._settings.get_value('menu-button-hover-fg-color').deep_unpack();
+        const [buttonActiveBG, buttonActiveBGColor] = this._settings.get_value('menu-button-active-bg-color').deep_unpack();
+        const [buttonActiveFG, buttonActiveFGColor] = this._settings.get_value('menu-button-active-fg-color').deep_unpack();
+        const [buttonRadius, buttonRadiusValue] = this._settings.get_value('menu-button-border-radius').deep_unpack();
+        const [buttonWidth, buttonWidthValue] = this._settings.get_value('menu-button-border-width').deep_unpack();
+        const [buttonBorder, buttonBorderColor] = this._settings.get_value('menu-button-border-color').deep_unpack();
+        const [searchBorder, searchBorderValue] = this._settings.get_value('search-entry-border-radius').deep_unpack();
+
+        let css = '';
+
+        if (buttonFG)
+            css += `.arcmenu-menu-button{ color: ${buttonFGColor}; }`;
+        if (buttonBG)
+            css += `.arcmenu-panel-menu{ box-shadow: inset 0 0 0 100px transparent; background-color: ${buttonBGColor}; }`;
+        if (buttonHoverBG)
+            css += `.arcmenu-panel-menu:hover{ box-shadow: inset 0 0 0 100px transparent; background-color: ${buttonHoverBGColor}; }`;
+        if (buttonHoverFG)
+            css += `.arcmenu-panel-menu:hover .arcmenu-menu-button{ color: ${buttonHoverFGColor}; }`;
+        if (buttonActiveFG)
+            css += `.arcmenu-menu-button:active{ color: ${buttonActiveFGColor}; }`;
+        if (buttonActiveBG)
+            css += `.arcmenu-panel-menu:active{ box-shadow: inset 0 0 0 100px transparent; background-color: ${buttonActiveBGColor}; }`;
+        if (buttonRadius)
+            css += `.arcmenu-panel-menu{ border-radius: ${buttonRadiusValue}px; }`;
+        if (buttonWidth)
+            css += `.arcmenu-panel-menu{ border-width: ${buttonWidthValue}px; }`;
+        if (buttonBorder)
+            css += `.arcmenu-panel-menu{ border-color: ${buttonBorderColor}; }`;
+        if (menuRise)
+            css += `.arcmenu-menu{ -arrow-rise: ${menuRiseValue}px; }`;
+        if (searchBorder)
+            css += `#ArcMenuSearchEntry{ border-radius: ${searchBorderValue}px; }`;
+
+        if (customThemeEnabled)
+            css += this._buildCustomCSS();
+
+        if (css.length === 0)
+            return;
+
+        try {
+            const bytes = new GLib.Bytes(css);
+
+            const [success, etag_] = await this._stylesheet.replace_contents_bytes_async(bytes, null, false,
+                Gio.FileCreateFlags.REPLACE_DESTINATION, null);
+
+            if (!success) {
+                console.log('ArcMenu - Failed to replace contents of custom stylesheet.');
+                return;
+            }
+
+            const theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
+            theme.load_stylesheet(this._stylesheet);
+        } catch (e) {
+            console.log(`ArcMenu - Error replacing contents of custom stylesheet: ${e}`);
+        }
+    }
+
+    _buildCustomCSS() {
+        const menuBGColor = this._settings.get_string('menu-background-color');
+        const menuFGColor = this._settings.get_string('menu-foreground-color');
+        const menuBorderColor = this._settings.get_string('menu-border-color');
+        const menuBorderWidth = this._settings.get_int('menu-border-width');
+        const menuBorderRadius = this._settings.get_int('menu-border-radius');
+        const menuFontSize = this._settings.get_int('menu-font-size');
+        const menuSeparatorColor = this._settings.get_string('menu-separator-color');
+        const itemHoverBGColor = this._settings.get_string('menu-item-hover-bg-color');
+        const itemHoverFGColor = this._settings.get_string('menu-item-hover-fg-color');
+        const itemActiveBGColor = this._settings.get_string('menu-item-active-bg-color');
+        const itemActiveFGColor = this._settings.get_string('menu-item-active-fg-color');
+
+        return `.arcmenu-menu{
             font-size: ${menuFontSize}pt;
             color: ${menuFGColor};
         }
@@ -173,13 +179,13 @@ export async function updateStylesheet() {
             border-radius: 8px;
         }
         .arcmenu-menu StScrollBar StButton#vhandle, .arcmenu-menu StScrollBar StButton#hhandle {
-            background-color: ${modifyColorLuminance(menuBGColor, 0.15)};
+            background-color: ${this._adjustLuminance(menuBGColor, 0.15)};
         }
         .arcmenu-menu StScrollBar StButton#vhandle:hover, .arcmenu-menu StScrollBar StButton#hhandle:hover {
-            background-color: ${modifyColorLuminance(menuBGColor, 0.20)};
+            background-color: ${this._adjustLuminance(menuBGColor, 0.20)};
         }
         .arcmenu-menu StScrollBar StButton#vhandle:active, .arcmenu-menu StScrollBar StButton#hhandle:active {
-            background-color: ${modifyColorLuminance(menuBGColor, 0.25)};
+            background-color: ${this._adjustLuminance(menuBGColor, 0.25)};
         }
         .arcmenu-menu .popup-menu-item {
             color: ${menuFGColor};
@@ -195,18 +201,18 @@ export async function updateStylesheet() {
             background-color: ${itemActiveBGColor};
         }
         .arcmenu-menu .popup-menu-item:insensitive{
-            color: ${modifyColorLuminance(menuFGColor, 0, 0.6)};
+            color: ${this._adjustLuminance(menuFGColor, 0, 0.6)};
             font-size: ${menuFontSize - 2}pt;
         }
         .arcmenu-menu .world-clocks-header, .arcmenu-menu .world-clocks-timezone,
         .arcmenu-menu .weather-header{
-            color: ${modifyColorLuminance(menuFGColor, 0, 0.6)};
+            color: ${this._adjustLuminance(menuFGColor, 0, 0.6)};
         }
         .arcmenu-menu .world-clocks-time, .arcmenu-menu .world-clocks-city{
             color: ${menuFGColor};
         }
         .arcmenu-menu .weather-forecast-time{
-            color: ${modifyColorLuminance(menuFGColor, 0.1)};
+            color: ${this._adjustLuminance(menuFGColor, 0.1)};
         }
         .arcmenu-menu .popup-separator-menu-item .popup-separator-menu-item-separator{
             background-color: ${menuSeparatorColor};
@@ -220,91 +226,53 @@ export async function updateStylesheet() {
         .arcmenu-menu StEntry{
             font-size: ${menuFontSize}pt;
             color: ${menuFGColor};
-            background-color: ${modifyColorLuminance(menuBGColor, 0.1, .4)};
+            background-color: ${this._adjustLuminance(menuBGColor, 0.1, .4)};
         }
         .arcmenu-menu StEntry:hover{
-            background-color: ${modifyColorLuminance(menuBGColor, 0.15, .4)};
+            background-color: ${this._adjustLuminance(menuBGColor, 0.15, .4)};
         }
         .arcmenu-menu StEntry:focus{
-            background-color: ${modifyColorLuminance(menuBGColor, 0.2, .4)};
+            background-color: ${this._adjustLuminance(menuBGColor, 0.2, .4)};
             box-shadow: inset 0 0 0 2px ${itemActiveBGColor};
         }
         .arcmenu-menu StLabel.hint-text{
-            color: ${modifyColorLuminance(menuFGColor, 0, 0.6)};
+            color: ${this._adjustLuminance(menuFGColor, 0, 0.6)};
         }
         #ArcMenu_Tooltip{
             font-size: ${menuFontSize}pt;
             color: ${menuFGColor};
-            background-color: ${modifyColorLuminance(menuBGColor, -0.125, 1)};
-            border: 1px solid ${modifyColorLuminance(menuBorderColor, 0.025)};
+            background-color: ${this._adjustLuminance(menuBGColor, -0.125, 1)};
+            border: 1px solid ${this._adjustLuminance(menuBorderColor, 0.025)};
         }
         .arcmenu-menu .user-icon{
-            border-color: ${modifyColorLuminance(menuFGColor, 0, .7)};
-        }
-        `;
+            border-color: ${this._adjustLuminance(menuFGColor, 0, .7)};
+        }`;
     }
 
-    const customStylesheetCSS = customMenuThemeCSS + extraStylingCSS;
-
-    if (customStylesheetCSS.length === 0)
-        return;
-
-    try {
-        const bytes = new GLib.Bytes(customStylesheetCSS);
-
-        const [success, etag_] = await stylesheet.replace_contents_bytes_async(bytes, null, false,
-            Gio.FileCreateFlags.REPLACE_DESTINATION, null);
-
-        if (!success) {
-            console.log('ArcMenu - Failed to replace contents of custom stylesheet.');
-            return;
+    _adjustLuminance(colorString, luminanceAdjustment, overrideAlpha = null) {
+        let color, hue, saturation, luminance;
+        if (Clutter.Color) {
+            color = Clutter.color_from_string(colorString)[1];
+            [hue, luminance, saturation] = color.to_hls();
+        } else {
+            color = Cogl.color_from_string(colorString)[1];
+            [hue, saturation, luminance] = color.to_hsl();
         }
+        const modifiedLuminance =
+        (luminance >= .85 && luminanceAdjustment > 0) ||
+        (luminance <= .15 && luminanceAdjustment < 0)
+            ? Math.max(Math.min(luminance - luminanceAdjustment, 1), 0)
+            : Math.max(Math.min(luminance + luminanceAdjustment, 1), 0);
 
-        ArcMenuManager.customStylesheet = stylesheet;
-        const theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
-        theme.load_stylesheet(ArcMenuManager.customStylesheet);
-    } catch (e) {
-        console.log(`ArcMenu - Error replacing contents of custom stylesheet: ${e}`);
+        let alpha = (color.alpha / 255).toPrecision(3);
+        if (overrideAlpha)
+            alpha = overrideAlpha;
+
+        const modifiedColor = Clutter.Color
+            ? Clutter.color_from_hls(hue, modifiedLuminance, saturation)
+            : Cogl.color_init_from_hsl(hue, saturation, modifiedLuminance);
+
+        return `rgba(${modifiedColor.red}, ${modifiedColor.green}, ${modifiedColor.blue}, ${alpha})`;
     }
 }
 
-/**
- *
- * @param {string} colorString the color to modify
- * @param {number} luminanceAdjustment luminance adjustment
- * @param {number} overrideAlpha change the color alpha to this value
- * @returns a string in rbga() format representing the new modified color
- */
-function modifyColorLuminance(colorString, luminanceAdjustment, overrideAlpha = null) {
-    let color, hue, saturation, luminance;
-
-    // GNOME 47 merged ClutterColor into CoglColor
-    if (Clutter.Color) {
-        color = Clutter.color_from_string(colorString)[1];
-        [hue, luminance, saturation] = color.to_hls();
-    } else {
-        color = Cogl.color_from_string(colorString)[1];
-        [hue, saturation, luminance] = color.to_hsl();
-    }
-
-    let modifiedLuminance;
-
-    if ((luminance >= .85 && luminanceAdjustment > 0) || (luminance <= .15 && luminanceAdjustment < 0))
-        modifiedLuminance = Math.max(Math.min(luminance - luminanceAdjustment, 1), 0);
-    else
-        modifiedLuminance = Math.max(Math.min(luminance + luminanceAdjustment, 1), 0);
-
-    let alpha = (color.alpha / 255).toPrecision(3);
-    if (overrideAlpha)
-        alpha = overrideAlpha;
-
-    let modifiedColor;
-
-    // GNOME 47 merged ClutterColor into CoglColor
-    if (Clutter.Color)
-        modifiedColor = Clutter.color_from_hls(hue, modifiedLuminance, saturation);
-    else
-        modifiedColor = Cogl.color_init_from_hsl(hue, saturation, modifiedLuminance);
-
-    return `rgba(${modifiedColor.red}, ${modifiedColor.green}, ${modifiedColor.blue}, ${alpha})`;
-}

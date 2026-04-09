@@ -1,46 +1,47 @@
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import Gio from 'gi://Gio';
-import GLib from 'gi://GLib';
 import Shell from 'gi://Shell';
 
-import * as Config from 'resource:///org/gnome/shell/misc/config.js';
 import {InputSourceManager} from 'resource:///org/gnome/shell/ui/status/keyboard.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import {ArcMenuManager} from './arcmenuManager.js';
 import * as Constants from './constants.js';
-import * as Keybinder from './keybinder.js';
+import {Keybinder} from './keybinder.js';
 import {MenuButton} from './menuButton.js';
-import * as Theming from './theming.js';
 import {StandaloneRunner} from './standaloneRunner.js';
 import * as Utils from './utils.js';
-
-const [ShellVersion] = Config.PACKAGE_VERSION.split('.').map(s => Number(s));
 
 export const MenuController = class {
     constructor(panelInfo, monitorIndex) {
         this.panelInfo = panelInfo;
         this.panel = panelInfo.panel;
         this.monitorIndex = monitorIndex;
-        this.isPrimaryPanel = panelInfo.isPrimaryPanel;
+        this.isFirstPanel = panelInfo.isFirstPanel;
+        this._debouncer = new Utils.Debouncer();
 
-        // Allow other extensions and DBus command to open/close ArcMenu
-        if (!global.toggleArcMenu && this.isPrimaryPanel) {
-            global.toggleArcMenu = () => this.toggleMenus();
+        // Allow other extensions and DBus command to open/close ArcMenu and Standalone Runner
+        if (!global.toggleArcMenu && this.isFirstPanel) {
+            global.toggleArcMenu = () => this._toggleArcMenu();
             this._service = new Utils.DBusService();
             this._service.ToggleArcMenu = () => {
-                this.toggleMenus();
+                this._toggleArcMenu();
+            };
+            this._service.ToggleStandaloneRunner = () => {
+                if (this._runnerMenu)
+                    this._toggleRunnerMenu();
             };
         }
 
         this._menuButton = new MenuButton(panelInfo, this.monitorIndex);
 
-        if (this.isPrimaryPanel) {
-            this._overrideOverlayKey = new Keybinder.OverrideOverlayKey();
-            this._customKeybinding = new Keybinder.CustomKeybinding();
+        if (this.isFirstPanel) {
+            this._keybinder = new Keybinder(ArcMenuManager.settings);
+            this._keybinder.toggleArcMenu = () => this._toggleArcMenu();
+            this._keybinder.toggleRunnerMenu = () => this._toggleRunnerMenu();
+            this._keybinder.connectObject('runner-menu-active', this._setRunnerMenuActive.bind(this), this);
             this._appSystem = Shell.AppSystem.get_default();
-            this._updateHotKeyBinder();
             this._initRecentAppsTracker();
             this._inputSourceManagerOverride();
         }
@@ -51,6 +52,10 @@ export const MenuController = class {
         this._setButtonIconSize();
         this._setButtonIconPadding();
         this._configureActivitiesButton();
+    }
+
+    get menuButton() {
+        return this._menuButton;
     }
 
     _inputSourceManagerOverride() {
@@ -93,94 +98,75 @@ export const MenuController = class {
 
     _getAllMenus() {
         const menus = [];
-        for (let i = 0; i < ArcMenuManager.menuControllers.length; i++) {
-            const menuButton = ArcMenuManager.menuControllers[i]._menuButton;
+        const {menuControllers} = ArcMenuManager;
+        for (let i = 0; i < menuControllers.length; i++) {
+            const {menuButton} = menuControllers[i];
             menus.push(menuButton.arcMenu);
         }
-        if (this.runnerMenu)
-            menus.push(this.runnerMenu.arcMenu);
+        if (this._runnerMenu)
+            menus.push(this._runnerMenu.arcMenu);
 
         return menus;
     }
 
-    _connectSettings(settings, callback) {
-        ArcMenuManager.settings.connectObject(
-            ...settings.flatMap(setting => [`changed::${setting}`, callback]),
+    connectSettingsEvents() {
+        Utils.connectSettings(
+            ['position-in-panel', 'menu-button-position-offset'],
+            this._setButtonPosition.bind(this),
             this
         );
-    }
 
-    connectSettingsEvents() {
-        this._connectSettings(
-            ['override-menu-theme', 'menu-background-color', 'menu-foreground-color', 'search-entry-border-radius',
-                'menu-border-color', 'menu-border-width', 'menu-border-radius', 'menu-font-size', 'menu-separator-color',
-                'menu-item-hover-bg-color', 'menu-item-hover-fg-color', 'menu-item-active-bg-color', 'menu-button-border-color',
-                'menu-item-active-fg-color', 'menu-button-fg-color', 'menu-button-bg-color', 'menu-arrow-rise',
-                'menu-button-hover-bg-color', 'menu-button-hover-fg-color', 'menu-button-active-bg-color',
-                'menu-button-active-fg-color', 'menu-button-border-radius', 'menu-button-border-width'],
-            this._overrideMenuTheme.bind(this));
-
-        this._connectSettings(['arcmenu-hotkey', 'runner-hotkey', 'arcmenu-hotkey-overlay-key-enabled', 'runner-hotkey-overlay-key-enabled'],
-            this._updateHotKeyBinder.bind(this));
-
-        this._connectSettings(['position-in-panel', 'menu-button-position-offset'],
-            this._setButtonPosition.bind(this));
-
-        this._connectSettings(['menu-button-icon', 'distro-icon', 'arc-menu-icon', 'custom-menu-button-icon'],
-            this._setButtonIcon.bind(this));
-
-        this._connectSettings(
+        Utils.connectSettings(
             ['directory-shortcuts', 'application-shortcuts', 'extra-categories', 'custom-grid-icon-size',
-                'power-options', 'show-external-devices', 'show-bookmarks', 'disable-user-avatar', 'runner-search-display-style',
+                'power-options', 'show-external-devices', 'show-bookmarks', 'show-user-avatar', 'runner-search-display-style',
                 'avatar-style', 'enable-activities-shortcut', 'enable-horizontal-flip', 'power-display-style',
                 'searchbar-default-bottom-location', 'searchbar-default-top-location', 'multi-lined-labels',
-                'apps-show-extra-details', 'show-search-result-details', 'search-provider-open-windows',
-                'search-provider-recent-files', 'misc-item-icon-size', 'windows-disable-pinned-apps',
-                'disable-scrollview-fade-effect', 'windows-disable-frequent-apps', 'default-menu-view',
+                'apps-show-extra-details', 'apps-show-generic-names', 'show-search-result-details', 'search-provider-open-windows',
+                'search-provider-recent-files', 'misc-item-icon-size', 'windows-show-pinned-apps',
+                'scrollview-fade-effect', 'windows-show-frequent-apps', 'default-menu-view',
                 'default-menu-view-tognee', 'group-apps-alphabetically-list-layouts', 'group-apps-alphabetically-grid-layouts',
                 'menu-item-grid-icon-size', 'menu-item-icon-size', 'button-item-icon-size', 'quicklinks-item-icon-size',
                 'menu-item-category-icon-size', 'category-icon-type', 'shortcut-icon-type', 'show-category-sub-menus',
                 'arcmenu-extra-categories-links', 'arcmenu-extra-categories-links-location', 'raven-search-display-style',
-                'runner-show-frequent-apps', 'default-menu-view-redmond', 'disable-recently-installed-apps', 'az-layout-merge-panels'],
-            this._recreateMenuLayout.bind(this));
+                'default-menu-view-redmond', 'show-recently-installed-apps', 'az-layout-merge-panels',
+                'scrollbars-visible', 'scrollbars-overlay'],
+            this._recreateMenuLayout.bind(this),
+            this
+        );
 
-        this._connectSettings(['left-panel-width', 'right-panel-width', 'menu-width-adjustment'],
-            this._updateMenuWidth.bind(this));
+        Utils.connectSettings(
+            ['left-panel-width', 'right-panel-width', 'menu-width-adjustment'],
+            this._updateMenuWidth.bind(this),
+            this
+        );
 
-        this._connectSettings(['pinned-apps', 'enable-weather-widget-unity', 'enable-clock-widget-unity',
-            'enable-weather-widget-raven', 'enable-clock-widget-raven'], this._updatePinnedApps.bind(this));
-
-        this._connectSettings(['menu-position-alignment'], this._setMenuPositionAlignment.bind(this));
-        this._connectSettings(['menu-button-appearance'], this._setButtonAppearance.bind(this));
-        this._connectSettings(['custom-menu-button-text'], this._setButtonText.bind(this));
-        this._connectSettings(['custom-menu-button-icon-size'], this._setButtonIconSize.bind(this));
-        this._connectSettings(['button-padding'], this._setButtonIconPadding.bind(this));
-        this._connectSettings(['menu-height'], this._updateMenuHeight.bind(this));
-        this._connectSettings(['enable-unity-homescreen'], this._setDefaultMenuView.bind(this));
-        this._connectSettings(['menu-layout'], this._changeMenuLayout.bind(this));
-        this._connectSettings(['runner-position'], this._updateLocation.bind(this));
-        this._connectSettings(['show-activities-button'], this._configureActivitiesButton.bind(this));
-        this._connectSettings(['force-menu-location'], this._forceMenuLocation.bind(this));
-    }
-
-    _overrideMenuTheme() {
-        if (!this.isPrimaryPanel)
-            return;
-
-        if (this._updateThemeDelayId)
-            GLib.source_remove(this._updateThemeDelayId);
-
-        this._updateThemeDelayId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300, () => {
-            Theming.updateStylesheet();
-            this._updateThemeDelayId = null;
-            return GLib.SOURCE_REMOVE;
-        });
+        Utils.connectSettings(['pinned-apps'], this._updatePinnedApps.bind(this), this);
+        Utils.connectSettings(['menu-position-alignment'], this._setMenuPositionAlignment.bind(this), this);
+        Utils.connectSettings(['menu-button-icon'], this._setButtonIcon.bind(this), this);
+        Utils.connectSettings(['menu-button-appearance'], this._setButtonAppearance.bind(this), this);
+        Utils.connectSettings(['menu-button-text'], this._setButtonText.bind(this), this);
+        Utils.connectSettings(['menu-button-icon-size'], this._setButtonIconSize.bind(this), this);
+        Utils.connectSettings(['menu-button-padding'], this._setButtonIconPadding.bind(this), this);
+        Utils.connectSettings(['menu-height'], this._updateMenuHeight.bind(this), this);
+        Utils.connectSettings(['menu-layout'], this._changeMenuLayout.bind(this), this);
+        Utils.connectSettings(['runner-position'], this._updateLocation.bind(this), this);
+        Utils.connectSettings(['show-activities-button'], this._configureActivitiesButton.bind(this), this);
+        Utils.connectSettings(['force-menu-location'], this._forceMenuLocation.bind(this), this);
     }
 
     _recreateMenuLayout() {
-        this._menuButton.createMenuLayout();
-        if (this.runnerMenu)
-            this.runnerMenu.createMenuLayout();
+        if (!this.isFirstPanel)
+            return;
+
+        this._debouncer.debounce('createMenuLayout', () => {
+            const {menuControllers} = ArcMenuManager;
+            for (let i = 0; i < menuControllers.length; i++) {
+                const {menuButton} = menuControllers[i];
+                menuButton.createMenuLayout();
+            }
+            if (this._runnerMenu)
+                this._runnerMenu.createMenuLayout();
+        });
     }
 
     _forceMenuLocation() {
@@ -193,8 +179,8 @@ export const MenuController = class {
     }
 
     _setRecentlyInstalledApps() {
-        const isDisabled = ArcMenuManager.settings.get_boolean('disable-recently-installed-apps');
-        if (isDisabled)
+        const showNewApps = ArcMenuManager.settings.get_boolean('show-recently-installed-apps');
+        if (!showNewApps)
             return;
 
         const appList = this._listAllApps();
@@ -225,64 +211,72 @@ export const MenuController = class {
 
     _updateLocation() {
         this._menuButton.updateLocation();
-        if (this.runnerMenu)
-            this.runnerMenu.updateLocation();
+        if (this._runnerMenu)
+            this._runnerMenu.updateLocation();
     }
 
     _changeMenuLayout() {
-        this._menuButton.createMenuLayout();
+        this._debouncer.debounce('createMenuLayout', () => {
+            this._menuButton.createMenuLayout();
+        });
     }
 
-    _setDefaultMenuView() {
-        this._menuButton.setDefaultMenuView();
-    }
-
-    toggleStandaloneRunner() {
-        this._closeAllArcMenus();
-        if (this.runnerMenu)
-            this.runnerMenu.toggleMenu();
-    }
-
-    toggleMenus() {
-        if (this.runnerMenu && this.runnerMenu.arcMenu.isOpen)
-            this.runnerMenu.toggleMenu();
-        if (global.dashToPanel || global.azTaskbar) {
-            const MultipleArcMenus = ArcMenuManager.menuControllers.length > 1;
-            const ShowArcMenuOnPrimaryMonitor = ArcMenuManager.settings.get_boolean('hotkey-open-primary-monitor');
-            if (MultipleArcMenus && ShowArcMenuOnPrimaryMonitor)
-                this._toggleMenuOnMonitor(Main.layoutManager.primaryMonitor);
-            else if (MultipleArcMenus && !ShowArcMenuOnPrimaryMonitor)
-                this._toggleMenuOnMonitor(Main.layoutManager.currentMonitor);
-            else
-                this._menuButton.toggleMenu();
-        } else {
-            this._menuButton.toggleMenu();
+    _setRunnerMenuActive(sender, enabled) {
+        if (enabled && !this._runnerMenu) {
+            this._runnerMenu = new StandaloneRunner();
+        } else if (!enabled && this._runnerMenu) {
+            this._runnerMenu.destroy();
+            this._runnerMenu = null;
         }
     }
 
+    _toggleRunnerMenu() {
+        this._closeAllArcMenus();
+        if (this._runnerMenu)
+            this._runnerMenu.toggleMenu();
+    }
+
+    _toggleArcMenu() {
+        if (this._runnerMenu?.isOpen)
+            this._runnerMenu.toggleMenu();
+
+        const multipleArcMenus = ArcMenuManager.menuControllers.length > 1;
+        if (multipleArcMenus) {
+            const openOnPrimaryMonitor = ArcMenuManager.settings.get_boolean('hotkey-open-primary-monitor');
+            const monitor = openOnPrimaryMonitor ? Main.layoutManager.primaryMonitor : Main.layoutManager.currentMonitor;
+            this._toggleMenuOnMonitor(monitor);
+            return;
+        }
+
+        this._menuButton.toggleMenu();
+    }
+
     _toggleMenuOnMonitor(monitor) {
-        let currentMonitorIndex = 0;
-        for (let i = 0; i < ArcMenuManager.menuControllers.length; i++) {
-            const menuButton = ArcMenuManager.menuControllers[i]._menuButton;
-            const {monitorIndex} = ArcMenuManager.menuControllers[i];
+        let menuButtonOnMonitor = null;
+        const {menuControllers} = ArcMenuManager;
+        for (let i = 0; i < menuControllers.length; i++) {
+            const {menuButton, monitorIndex} = menuControllers[i];
 
             if (monitor.index === monitorIndex) {
-                currentMonitorIndex = i;
+                menuButtonOnMonitor = menuButton;
             } else {
-                if (menuButton.arcMenu.isOpen)
+                if (menuButton.isOpen)
                     menuButton.toggleMenu();
                 menuButton.closeContextMenu();
             }
         }
 
-        // open the current monitors menu
-        ArcMenuManager.menuControllers[currentMonitorIndex]._menuButton.toggleMenu();
+        if (menuButtonOnMonitor)
+            menuButtonOnMonitor.toggleMenu();
+        else
+            this._menuButton.toggleMenu();
     }
 
     _closeAllArcMenus() {
-        for (let i = 0; i < ArcMenuManager.menuControllers.length; i++) {
-            const menuButton = ArcMenuManager.menuControllers[i]._menuButton;
-            if (menuButton.arcMenu.isOpen)
+        const {menuControllers} = ArcMenuManager;
+        for (let i = 0; i < menuControllers.length; i++) {
+            const {menuButton} = menuControllers[i];
+            if (menuButton.isOpen)
                 menuButton.toggleMenu();
             menuButton.closeContextMenu();
         }
@@ -298,89 +292,6 @@ export const MenuController = class {
 
     _updatePinnedApps() {
         this._menuButton.loadPinnedApps();
-    }
-
-    _updateHotKeyBinder() {
-        if (!this.isPrimaryPanel)
-            return;
-
-        if (this._updateHotkeyDelayId)
-            GLib.source_remove(this._updateHotkeyDelayId);
-
-        this._updateHotkeyDelayId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300, () => {
-            const runnerHotkeys = ArcMenuManager.settings.get_strv('runner-hotkey');
-            const arcmenuHotkeys = ArcMenuManager.settings.get_strv('arcmenu-hotkey');
-
-            this._customKeybinding.unbind('ToggleArcMenu');
-            this._customKeybinding.unbind('ToggleRunnerMenu');
-            this._overrideOverlayKey.disable();
-
-            if (arcmenuHotkeys.length > 0) {
-                const superKey = this._getSuperHotkey(arcmenuHotkeys, 'arcmenu');
-                if (superKey) {
-                    this._overrideOverlayKey.enable(superKey, () => this.toggleMenus());
-                    this._spliceSuperHotkeys(arcmenuHotkeys);
-                }
-
-                if (arcmenuHotkeys.length > 0)
-                    this._customKeybinding.bind('ToggleArcMenu', 'arcmenu-hotkey', () => this.toggleMenus());
-            }
-
-            if (runnerHotkeys.length > 0) {
-                if (!this.runnerMenu)
-                    this.runnerMenu = new StandaloneRunner();
-
-                // ArcMenu has priority of the overlay-key. If already enabled, skip for StandaloneRunner.
-                const superKey = this._getSuperHotkey(runnerHotkeys, 'runner');
-                if (superKey && !this._overrideOverlayKey.enabled) {
-                    this._overrideOverlayKey.enable(superKey, () => this.toggleStandaloneRunner());
-                    this._spliceSuperHotkeys(runnerHotkeys);
-                }
-
-                if (runnerHotkeys.length > 0)
-                    this._customKeybinding.bind('ToggleRunnerMenu', 'runner-hotkey', () => this.toggleStandaloneRunner());
-            } else if (this.runnerMenu) {
-                this.runnerMenu.destroy();
-                this.runnerMenu = null;
-            }
-
-            this._updateHotkeyDelayId = null;
-            return GLib.SOURCE_REMOVE;
-        });
-    }
-
-    _spliceSuperHotkeys(hotkeys) {
-        const hasSuperL = hotkeys.includes(Constants.SUPER_L);
-        const hasSuperR = hotkeys.includes(Constants.SUPER_R);
-
-        if (hasSuperL && hasSuperR && ShellVersion >= 48) {
-            hotkeys.splice(hotkeys.indexOf(Constants.SUPER_L), 1);
-            hotkeys.splice(hotkeys.indexOf(Constants.SUPER_R), 1);
-        } else if (hasSuperL || hasSuperR) {
-            const index = hotkeys.findIndex(key => key === Constants.SUPER_L || key === Constants.SUPER_R);
-            if (index !== -1)
-                hotkeys.splice(index, 1);
-        }
-    }
-
-    _getSuperHotkey(hotkeys, type) {
-        const useAsOverlayKey = ArcMenuManager.settings.get_boolean(`${type}-hotkey-overlay-key-enabled`);
-        if (!useAsOverlayKey)
-            return false;
-
-        if (hotkeys.includes(Constants.SUPER_L) && hotkeys.includes(Constants.SUPER_R)) {
-            // GNOME 48+ supports using 'Super' as the overlay-key, which allows both Super_L and Super_R
-            if (ShellVersion >= 48)
-                return Constants.SUPER;
-            else
-                return hotkeys.find(key => key === Constants.SUPER_L || key === Constants.SUPER_R);
-        } else if (hotkeys.includes(Constants.SUPER_L)) {
-            return Constants.SUPER_L;
-        } else if (hotkeys.includes(Constants.SUPER_R)) {
-            return Constants.SUPER_R;
-        } else {
-            return false;
-        }
     }
 
     _setButtonPosition() {
@@ -431,29 +342,34 @@ export const MenuController = class {
         const {menuButtonWidget} = this._menuButton;
         const label = menuButtonWidget.getPanelLabel();
 
-        const customTextLabel = ArcMenuManager.settings.get_string('custom-menu-button-text');
+        const customTextLabel = ArcMenuManager.settings.get_string('menu-button-text');
         label.set_text(customTextLabel);
     }
 
     _setButtonIcon() {
-        const path = ArcMenuManager.settings.get_string('custom-menu-button-icon');
         const {menuButtonWidget} = this._menuButton;
-        const stIcon = menuButtonWidget.getPanelIcon();
+        const paneIcon = menuButtonWidget.getPanelIcon();
+        paneIcon.gicon = this._getButtonIcon();
+    }
 
-        const iconString = Utils.getMenuButtonIcon(path);
-        stIcon.set_gicon(Gio.icon_new_for_string(iconString));
+    _getButtonIcon() {
+        const iconPath = ArcMenuManager.settings.get_string('menu-button-icon');
+        if (iconPath)
+            return Gio.Icon.new_for_string(iconPath);
+        else
+            return Gio.Icon.new_for_string('start-here-symbolic');
     }
 
     _setButtonIconSize() {
+        const iconSize = ArcMenuManager.settings.get_int('menu-button-icon-size');
+
         const {menuButtonWidget} = this._menuButton;
-        const stIcon = menuButtonWidget.getPanelIcon();
-        const iconSize = ArcMenuManager.settings.get_double('custom-menu-button-icon-size');
-        const size = iconSize;
-        stIcon.icon_size = size;
+        const paneIcon = menuButtonWidget.getPanelIcon();
+        paneIcon.icon_size = iconSize;
     }
 
     _setButtonIconPadding() {
-        const padding = ArcMenuManager.settings.get_int('button-padding');
+        const padding = ArcMenuManager.settings.get_int('menu-button-padding');
         if (padding > -1)
             this._menuButton.style = `-natural-hpadding: ${padding  * 2}px; -minimum-hpadding: ${padding}px;`;
         else
@@ -547,23 +463,16 @@ export const MenuController = class {
         }
         this._inputSourcesSettings = null;
 
-        if (this._updateThemeDelayId) {
-            GLib.source_remove(this._updateThemeDelayId);
-            this._updateThemeDelayId = null;
-        }
-
-        if (this._updateHotkeyDelayId) {
-            GLib.source_remove(this._updateHotkeyDelayId);
-            this._updateHotkeyDelayId = null;
-        }
+        this._debouncer.destroy();
+        this._debouncer = null;
 
         if (this._appSystem)
             this._appSystem.disconnectObject(this);
         this._appSystem = null;
 
-        if (this.runnerMenu) {
-            this.runnerMenu.destroy();
-            this.runnerMenu = null;
+        if (this._runnerMenu) {
+            this._runnerMenu.destroy();
+            this._runnerMenu = null;
         }
 
         ArcMenuManager.settings.disconnectObject(this);
@@ -573,16 +482,15 @@ export const MenuController = class {
         else
             this._menuButton.destroy();
 
-        if (this.isPrimaryPanel) {
-            this._overrideOverlayKey.destroy();
-            this._overrideOverlayKey = null;
-            this._customKeybinding.destroy();
-            this._customKeybinding = null;
+        if (this.isFirstPanel) {
+            this._keybinder.disconnectObject(this);
+            this._keybinder.destroy();
+            this._keybinder = null;
         }
 
         this._menuButton = null;
         this.panelInfo = null;
         this.panel = null;
-        this.isPrimaryPanel = null;
+        this.isFirstPanel = null;
     }
 };

@@ -23,11 +23,10 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as Config from 'resource:///org/gnome/shell/misc/config.js';
 import * as Signals from 'resource:///org/gnome/shell/misc/signals.js';
 
+import {Logger} from './logger.js';
 import {BaseStatusIcon} from './indicatorStatusIcon.js';
+import {BUS_ADDRESS_REGEX} from './dbusUtils.js';
 
-export const BUS_ADDRESS_REGEX = /([a-zA-Z0-9._-]+\.[a-zA-Z0-9.-]+)|(:[0-9]+\.[0-9]+)$/;
-
-Gio._promisify(Gio.DBusConnection.prototype, 'call');
 Gio._promisify(Gio._LocalFilePrototype, 'read');
 Gio._promisify(Gio.InputStream.prototype, 'read_bytes_async');
 
@@ -38,101 +37,6 @@ export function indicatorId(service, busName, objectPath) {
     return `${busName}@${objectPath}`;
 }
 
-export async function getUniqueBusName(bus, name, cancellable) {
-    if (name[0] === ':')
-        return name;
-
-    if (!bus)
-        bus = Gio.DBus.session;
-
-    const variantName = new GLib.Variant('(s)', [name]);
-    const [unique] = (await bus.call('org.freedesktop.DBus', '/', 'org.freedesktop.DBus',
-        'GetNameOwner', variantName, new GLib.VariantType('(s)'),
-        Gio.DBusCallFlags.NONE, -1, cancellable)).deep_unpack();
-
-    return unique;
-}
-
-export async function getBusNames(bus, cancellable) {
-    if (!bus)
-        bus = Gio.DBus.session;
-
-    const [names] = (await bus.call('org.freedesktop.DBus', '/', 'org.freedesktop.DBus',
-        'ListNames', null, new GLib.VariantType('(as)'), Gio.DBusCallFlags.NONE,
-        -1, cancellable)).deep_unpack();
-
-    const uniqueNames = new Map();
-    const requests = names.map(name => getUniqueBusName(bus, name, cancellable));
-    const results = await Promise.allSettled(requests);
-
-    for (let i = 0; i < results.length; i++) {
-        const result = results[i];
-        if (result.status === 'fulfilled') {
-            let namesForBus = uniqueNames.get(result.value);
-            if (!namesForBus) {
-                namesForBus = new Set();
-                uniqueNames.set(result.value, namesForBus);
-            }
-            namesForBus.add(result.value !== names[i] ? names[i] : null);
-        } else if (!result.reason.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED)) {
-            Logger.debug(`Impossible to get the unique name of ${names[i]}: ${result.reason}`);
-        }
-    }
-
-    return uniqueNames;
-}
-
-async function getProcessId(connectionName, cancellable = null, bus = Gio.DBus.session) {
-    const res = await bus.call('org.freedesktop.DBus', '/',
-        'org.freedesktop.DBus', 'GetConnectionUnixProcessID',
-        new GLib.Variant('(s)', [connectionName]),
-        new GLib.VariantType('(u)'),
-        Gio.DBusCallFlags.NONE,
-        -1,
-        cancellable);
-    const [pid] = res.deepUnpack();
-    return pid;
-}
-
-export async function getProcessName(connectionName, cancellable = null,
-    priority = GLib.PRIORITY_DEFAULT, bus = Gio.DBus.session) {
-    const pid = await getProcessId(connectionName, cancellable, bus);
-    const cmdFile = Gio.File.new_for_path(`/proc/${pid}/cmdline`);
-    const inputStream = await cmdFile.read_async(priority, cancellable);
-    const bytes = await inputStream.read_bytes_async(2048, priority, cancellable);
-    const textDecoder = new TextDecoder();
-    return textDecoder.decode(bytes.toArray().map(v => !v ? 0x20 : v));
-}
-
-export async function* introspectBusObject(bus, name, cancellable,
-    interfaces = undefined, path = undefined) {
-    if (!path)
-        path = '/';
-
-    const [introspection] = (await bus.call(name, path, 'org.freedesktop.DBus.Introspectable',
-        'Introspect', null, new GLib.VariantType('(s)'), Gio.DBusCallFlags.NONE,
-        5000, cancellable)).deep_unpack();
-
-    const nodeInfo = Gio.DBusNodeInfo.new_for_xml(introspection);
-
-    if (!interfaces || dbusNodeImplementsInterfaces(nodeInfo, interfaces))
-        yield {nodeInfo, path};
-
-    if (path === '/')
-        path = '';
-
-    for (const subNodeInfo of nodeInfo.nodes) {
-        const subPath = `${path}/${subNodeInfo.path}`;
-        yield* introspectBusObject(bus, name, cancellable, interfaces, subPath);
-    }
-}
-
-function dbusNodeImplementsInterfaces(nodeInfo, interfaces) {
-    if (!(nodeInfo instanceof Gio.DBusNodeInfo) || !Array.isArray(interfaces))
-        return false;
-
-    return interfaces.some(iface => nodeInfo.lookup_interface(iface));
-}
 
 export class NameWatcher extends Signals.EventEmitter {
     constructor(name) {
@@ -268,87 +172,7 @@ export async function waitForStartupCompletion(cancellable) {
         await Main.layoutManager.connect_once('startup-complete', cancellable);
 }
 
-/**
- * Helper class for logging stuff
- */
-export class Logger {
-    static _logStructured(logLevel, message, extraFields = {}) {
-        if (!Object.values(GLib.LogLevelFlags).includes(logLevel)) {
-            Logger._logStructured(GLib.LogLevelFlags.LEVEL_WARNING,
-                'logLevel is not a valid GLib.LogLevelFlags');
-            return;
-        }
-
-        if (!Logger._levels.includes(logLevel))
-            return;
-
-        let fields = {
-            'SYSLOG_IDENTIFIER': this.uuid,
-            'MESSAGE': `${message}`,
-        };
-
-        let thisFile = null;
-        const {stack} = new Error();
-        for (let stackLine of stack.split('\n')) {
-            stackLine = stackLine.replace('resource:///org/gnome/Shell/', '');
-            const [code, line] = stackLine.split(':');
-            const [func, file] = code.split(/@(.+)/);
-
-            if (!thisFile || thisFile === file) {
-                thisFile = file;
-                continue;
-            }
-
-            fields = Object.assign(fields, {
-                'CODE_FILE': file || '',
-                'CODE_LINE': line || '',
-                'CODE_FUNC': func || '',
-            });
-
-            break;
-        }
-
-        GLib.log_structured(Logger._domain, logLevel, Object.assign(fields, extraFields));
-    }
-
-    static init(extension) {
-        if (Logger._domain)
-            return;
-
-        const allLevels = Object.values(GLib.LogLevelFlags);
-        const domains = GLib.getenv('G_MESSAGES_DEBUG');
-        const {name: domain} = extension.metadata;
-        this.uuid = extension.metadata.uuid;
-        Logger._domain = domain.replaceAll(' ', '-');
-
-        if (domains === 'all' || (domains && domains.split(' ').includes(Logger._domain))) {
-            Logger._levels = allLevels;
-        } else {
-            Logger._levels = allLevels.filter(
-                l => l <= GLib.LogLevelFlags.LEVEL_WARNING);
-        }
-    }
-
-    static debug(message) {
-        Logger._logStructured(GLib.LogLevelFlags.LEVEL_DEBUG, message);
-    }
-
-    static message(message) {
-        Logger._logStructured(GLib.LogLevelFlags.LEVEL_MESSAGE, message);
-    }
-
-    static warn(message) {
-        Logger._logStructured(GLib.LogLevelFlags.LEVEL_WARNING, message);
-    }
-
-    static error(message) {
-        Logger._logStructured(GLib.LogLevelFlags.LEVEL_ERROR, message);
-    }
-
-    static critical(message) {
-        Logger._logStructured(GLib.LogLevelFlags.LEVEL_CRITICAL, message);
-    }
-}
+export {Logger};
 
 export function versionCheck(required) {
     const current = Config.PACKAGE_VERSION;

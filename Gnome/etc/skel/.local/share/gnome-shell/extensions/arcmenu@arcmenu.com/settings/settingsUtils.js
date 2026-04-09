@@ -7,6 +7,21 @@ import * as Constants from '../constants.js';
 
 /**
  *
+ * @param {Gio.Settings} settings The extensions GioSettings
+ * @param {string} settingName the setting name to reset
+ * @param {Adw.ComboRow} comboRow the comboRow to reset
+ */
+export function resetSetting(settings, settingName, comboRow = null) {
+    settings.reset(settingName);
+
+    // can't bind setting enums properly, so manually set the ComboRow to default
+    if (comboRow) {
+        const value = settings.get_enum(settingName);
+        comboRow.selected = value;
+    }
+}
+/**
+ *
  * @param {Constants.MenuLayout} menuLayout menulayout enum
  * @returns 'name of menu layout'
  */

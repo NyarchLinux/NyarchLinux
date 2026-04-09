@@ -11,7 +11,7 @@ import {BaseMenuLayout} from './baseMenuLayout.js';
 import * as Constants from '../constants.js';
 import * as MW from '../menuWidgets.js';
 import * as PlaceDisplay from '../placeDisplay.js';
-import {getScrollViewAdjustments, getOrientationProp} from '../utils.js';
+import {getScrollViewAdjustments, getOrientationProp, getAppDisplayName} from '../utils.js';
 
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
@@ -324,7 +324,7 @@ export class Layout extends BaseMenuLayout {
         super.setDefaultMenuView();
 
         this.displayAllApps();
-        if (!ArcMenuManager.settings.get_boolean('windows-disable-pinned-apps'))
+        if (ArcMenuManager.settings.get_boolean('windows-show-pinned-apps'))
             this.displayPinnedApps();
 
         const {vadjustment} = getScrollViewAdjustments(this.pinnedAppsScrollBox);
@@ -365,7 +365,7 @@ export class Layout extends BaseMenuLayout {
     displayAllApps() {
         this._clearActorsFromBox();
 
-        if (!ArcMenuManager.settings.get_boolean('windows-disable-frequent-apps'))
+        if (ArcMenuManager.settings.get_boolean('windows-show-frequent-apps'))
             this.displayFrequentApps();
 
         const appList = [];
@@ -373,8 +373,8 @@ export class Layout extends BaseMenuLayout {
             appList.push(key);
         });
         appList.sort((a, b) => {
-            const nameA = a.get_name();
-            const nameB = b.get_name();
+            const nameA = getAppDisplayName(a);
+            const nameB = getAppDisplayName(b);
             return nameA.localeCompare(nameB);
         });
         this.display_type = Constants.DisplayType.LIST;

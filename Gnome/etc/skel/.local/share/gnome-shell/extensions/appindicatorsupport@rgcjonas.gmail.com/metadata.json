@@ -9,9 +9,10 @@
     "46",
     "47",
     "48",
-    "49"
+    "49",
+    "50"
   ],
   "url": "https://github.com/ubuntu/gnome-shell-extension-appindicator",
   "uuid": "appindicatorsupport@rgcjonas.gmail.com",
-  "version": 61
+  "version": 64
 }

@@ -1,4 +1,5 @@
 import Adw from 'gi://Adw';
+import Gio from 'gi://Gio';
 import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk';
 
@@ -177,7 +178,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         avatarStyles.append(_('Round'));
         avatarStyles.append(_('Square'));
         const avatarStyleRow = new Adw.ComboRow({
-            title: _('Avatar Icon Shape'),
+            title: _('Avatar Shape'),
             model: avatarStyles,
             selected: this._settings.get_enum('avatar-style'),
         });
@@ -225,20 +226,17 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         return horizontalFlipRow;
     }
 
-    _disableAvatarRow() {
-        const disableAvatarSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER,
+    _createAvatarExpanderRow() {
+        const expanderRow = new Adw.ExpanderRow({
+            title: _('Show User Avatar'),
+            show_enable_switch: true,
+            expanded: this._settings.get_boolean('scrollbars-visible'),
         });
-        disableAvatarSwitch.set_active(this._settings.get_boolean('disable-user-avatar'));
-        disableAvatarSwitch.connect('notify::active', widget => {
-            this._settings.set_boolean('disable-user-avatar', widget.get_active());
-        });
-        const disableAvatarRow = new Adw.ActionRow({
-            title: _('Disable User Avatar'),
-            activatable_widget: disableAvatarSwitch,
-        });
-        disableAvatarRow.add_suffix(disableAvatarSwitch);
-        return disableAvatarRow;
+        this._settings.bind('show-user-avatar', expanderRow, 'enable_expansion', Gio.SettingsBindFlags.DEFAULT);
+
+        const comboRow = this._createAvatarShapeRow();
+        expanderRow.add_row(comboRow);
+        return expanderRow;
     }
 
     _loadEnterpriseTweaks() {
@@ -293,19 +291,19 @@ class ArcMenuLayoutTweaksPage extends SubPage {
 
     _loadElevenTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
-        const disableFrequentAppsSwitch = new Gtk.Switch({
+        const showFrequentAppsSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER,
         });
-        disableFrequentAppsSwitch.set_active(this._settings.get_boolean('eleven-disable-frequent-apps'));
-        disableFrequentAppsSwitch.connect('notify::active', widget => {
-            this._settings.set_boolean('eleven-disable-frequent-apps', widget.get_active());
+        showFrequentAppsSwitch.set_active(this._settings.get_boolean('eleven-show-frequent-apps'));
+        showFrequentAppsSwitch.connect('notify::active', widget => {
+            this._settings.set_boolean('eleven-show-frequent-apps', widget.get_active());
         });
-        const disableFrequentAppsRow = new Adw.ActionRow({
-            title: _('Disable Frequent Apps'),
-            activatable_widget: disableFrequentAppsSwitch,
+        const showFrequentAppsRow = new Adw.ActionRow({
+            title: _('Show Frequent Apps'),
+            activatable_widget: showFrequentAppsSwitch,
         });
-        disableFrequentAppsRow.add_suffix(disableFrequentAppsSwitch);
-        tweaksGroup.add(disableFrequentAppsRow);
+        showFrequentAppsRow.add_suffix(showFrequentAppsSwitch);
+        tweaksGroup.add(showFrequentAppsRow);
         this.add(tweaksGroup);
 
         const extraShortcutsGroup = new Adw.PreferencesGroup();
@@ -402,12 +400,12 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         const frequentAppsSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER,
         });
-        frequentAppsSwitch.set_active(this._settings.get_boolean('windows-disable-frequent-apps'));
+        frequentAppsSwitch.set_active(this._settings.get_boolean('windows-show-frequent-apps'));
         frequentAppsSwitch.connect('notify::active', widget => {
-            this._settings.set_boolean('windows-disable-frequent-apps', widget.get_active());
+            this._settings.set_boolean('windows-show-frequent-apps', widget.get_active());
         });
         const frequentAppsRow = new Adw.ActionRow({
-            title: _('Disable Frequent Apps'),
+            title: _('Show Frequent Apps'),
             activatable_widget: frequentAppsSwitch,
         });
         frequentAppsRow.add_suffix(frequentAppsSwitch);
@@ -416,12 +414,12 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         const pinnedAppsSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER,
         });
-        pinnedAppsSwitch.set_active(this._settings.get_boolean('windows-disable-pinned-apps'));
+        pinnedAppsSwitch.set_active(this._settings.get_boolean('windows-show-pinned-apps'));
         pinnedAppsSwitch.connect('notify::active', widget => {
-            this._settings.set_boolean('windows-disable-pinned-apps', widget.get_active());
+            this._settings.set_boolean('windows-show-pinned-apps', widget.get_active());
         });
         const pinnedAppsRow = new Adw.ActionRow({
-            title: _('Disable Pinned Apps'),
+            title: _('Show Pinned Apps'),
             activatable_widget: pinnedAppsSwitch,
         });
         pinnedAppsRow.add_suffix(pinnedAppsSwitch);
@@ -508,6 +506,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
 
     _loadRunnerMenuTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
+        this.add(tweaksGroup);
         const runnerPositions = new Gtk.StringList();
         runnerPositions.append(_('Top'));
         runnerPositions.append(_('Centered'));
@@ -536,6 +535,24 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         });
         tweaksGroup.add(runnerSearchStyleRow);
 
+        const searchbarLocations = new Gtk.StringList();
+        searchbarLocations.append(_('Bottom'));
+        searchbarLocations.append(_('Top'));
+
+        const searchbarLocationRow = new Adw.ComboRow({
+            title: _('Searchbar Location'),
+            model: searchbarLocations,
+            selected: this._settings.get_enum('runner-searchbar-location'),
+        });
+
+        searchbarLocationRow.connect('notify::selected', widget => {
+            this._settings.set_enum('runner-searchbar-location', widget.selected);
+        });
+        tweaksGroup.add(searchbarLocationRow);
+
+        const sizeGroup = new Adw.PreferencesGroup();
+        this.add(sizeGroup);
+
         const runnerWidthScale = new Gtk.SpinButton({
             orientation: Gtk.Orientation.HORIZONTAL,
             adjustment: new Gtk.Adjustment({
@@ -557,7 +574,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
             activatable_widget: runnerWidthScale,
         });
         runnerWidthRow.add_suffix(runnerWidthScale);
-        tweaksGroup.add(runnerWidthRow);
+        sizeGroup.add(runnerWidthRow);
 
         const runnerHeightScale = new Gtk.SpinButton({
             orientation: Gtk.Orientation.HORIZONTAL,
@@ -580,7 +597,13 @@ class ArcMenuLayoutTweaksPage extends SubPage {
             activatable_widget: runnerHeightScale,
         });
         runnerHeightRow.add_suffix(runnerHeightScale);
-        tweaksGroup.add(runnerHeightRow);
+        sizeGroup.add(runnerHeightRow);
+
+        const staticHeightSwitch = new PW.SwitchRow(this._settings, {
+            setting_name: 'runner-menu-height-static',
+            title: _('Static Height'),
+        });
+        sizeGroup.add(staticHeightSwitch);
 
         const runnerFontSizeScale = new Gtk.SpinButton({
             orientation: Gtk.Orientation.HORIZONTAL,
@@ -604,23 +627,30 @@ class ArcMenuLayoutTweaksPage extends SubPage {
             activatable_widget: runnerFontSizeScale,
         });
         runnerFontSizeRow.add_suffix(runnerFontSizeScale);
-        tweaksGroup.add(runnerFontSizeRow);
+        sizeGroup.add(runnerFontSizeRow);
 
-        const frequentAppsSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER,
-        });
-        frequentAppsSwitch.set_active(this._settings.get_boolean('runner-show-frequent-apps'));
-        frequentAppsSwitch.connect('notify::active', widget => {
-            this._settings.set_boolean('runner-show-frequent-apps', widget.get_active());
-        });
-        const frequentAppsRow = new Adw.ActionRow({
-            title: _('Show Frequent Apps'),
-            activatable_widget: frequentAppsSwitch,
-        });
-        frequentAppsRow.add_suffix(frequentAppsSwitch);
-        tweaksGroup.add(frequentAppsRow);
+        const miscGroup = new Adw.PreferencesGroup();
+        this.add(miscGroup);
 
-        this.add(tweaksGroup);
+        const defaulViews = new Gtk.StringList();
+        defaulViews.append(_('Default'));
+        defaulViews.append(_('Pinned Apps'));
+        defaulViews.append(_('Frequent Apps'));
+        const defaultViewRow = new Adw.ComboRow({
+            title: _('Default View'),
+            model: defaulViews,
+            selected: this._settings.get_enum('default-menu-view-runner'),
+        });
+        defaultViewRow.connect('notify::selected', widget => {
+            this._settings.set_enum('default-menu-view-runner', widget.selected);
+        });
+        miscGroup.add(defaultViewRow);
+
+        const showSettingsSwitch = new PW.SwitchRow(this._settings, {
+            setting_name: 'runner-show-settings-button',
+            title: _('Show Configure Runner Button'),
+        });
+        miscGroup.add(showSettingsSwitch);
     }
 
     _loadUnityTweaks() {
@@ -775,10 +805,9 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         });
         tweaksGroup.add(defaultViewRow);
 
-        tweaksGroup.add(this._createAvatarShapeRow());
+        tweaksGroup.add(this._createAvatarExpanderRow());
         tweaksGroup.add(this._createSearchBarLocationRow());
         tweaksGroup.add(this._createFlipHorizontalRow());
-        tweaksGroup.add(this._disableAvatarRow());
         tweaksGroup.add(this._createVertSeparatorRow());
 
         this.add(tweaksGroup);
@@ -820,8 +849,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
     _loadInsiderMenuTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
         tweaksGroup.add(this._createVertSeparatorRow());
-        tweaksGroup.add(this._createAvatarShapeRow());
-        tweaksGroup.add(this._disableAvatarRow());
+        tweaksGroup.add(this._createAvatarExpanderRow());
         this.add(tweaksGroup);
 
         const extraShortcutsGroup = new Adw.PreferencesGroup();
@@ -931,10 +959,9 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         tweaksGroup.add(allAppsButtonActionRow);
 
         const searchBarBottomDefault = true;
-        tweaksGroup.add(this._createAvatarShapeRow());
+        tweaksGroup.add(this._createAvatarExpanderRow());
         tweaksGroup.add(this._createSearchBarLocationRow(searchBarBottomDefault));
         tweaksGroup.add(this._createFlipHorizontalRow());
-        tweaksGroup.add(this._disableAvatarRow());
         tweaksGroup.add(this._createVertSeparatorRow());
         this.add(tweaksGroup);
 
@@ -1002,10 +1029,11 @@ class ArcMenuLayoutTweaksPage extends SubPage {
     _loadZestTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
         this.add(tweaksGroup);
+        const searchBarBottomDefault = true;
         tweaksGroup.add(this._createActivateOnHoverRow());
-        tweaksGroup.add(this._createAvatarShapeRow());
+        tweaksGroup.add(this._createAvatarExpanderRow());
+        tweaksGroup.add(this._createSearchBarLocationRow(searchBarBottomDefault));
         tweaksGroup.add(this._createFlipHorizontalRow());
-        tweaksGroup.add(this._disableAvatarRow());
         tweaksGroup.add(this._createVertSeparatorRow());
 
         const extraShortcutsGroup = new Adw.PreferencesGroup();

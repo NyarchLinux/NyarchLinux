@@ -140,6 +140,7 @@ export class Layout extends BaseMenuLayout {
                 shortcutMenuItem.destroy();
         }
 
+        ArcMenuManager.settings.connectObject('changed::enable-unity-homescreen', () => this.setDefaultMenuView(), this);
         ArcMenuManager.settings.connectObject('changed::unity-layout-extra-shortcuts', () => this._createExtraButtons(), this);
         ArcMenuManager.settings.connectObject('changed::enable-clock-widget-unity', () => this._updateWidgets(), this);
         ArcMenuManager.settings.connectObject('changed::enable-weather-widget-unity', () => this._updateWidgets(), this);

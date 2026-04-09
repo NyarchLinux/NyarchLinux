@@ -38,6 +38,10 @@ export const StandaloneRunner = class ArcMenuStandaloneRunner {
         this.createMenuLayout();
     }
 
+    get isOpen() {
+        return this.arcMenu?.isOpen;
+    }
+
     createMenuLayout() {
         this.clearTooltipShowingId();
         this.hideTooltip(true);
@@ -105,7 +109,7 @@ export const StandaloneRunner = class ArcMenuStandaloneRunner {
     }
 
     hideTooltip(instant) {
-        this._tooltip.hide(instant);
+        this._tooltip?.hide(instant);
     }
 
     destroy() {
