@@ -22,7 +22,7 @@ _findmount () {
 # Test for EFI boot and either run grub-install for EFI or move to findmount
 
 if [ -d "/sys/firmware/efi" ]; then
-  grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ezarcher --recheck
+  grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=Nyarch --recheck
   grub-mkconfig -o /boot/grub/grub.cfg
 else
   _findmount
