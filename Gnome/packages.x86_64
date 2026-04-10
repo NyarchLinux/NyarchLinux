@@ -360,15 +360,10 @@ nekoplay
 #timeshift-autosnap
 tuned-ppd
 
-# Chaotic
-chaotic-mirrorlist
-chaotic-keyring
 
-# From chaotic
 webapp-manager
 extension-manager
 shortwave
-pamac
 komikku
 
 # Noto CJK Fonts for better Chinese/Japanese/Korean rendering
