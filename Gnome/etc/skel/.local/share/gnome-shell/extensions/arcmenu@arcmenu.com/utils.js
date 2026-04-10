@@ -20,6 +20,7 @@ const [ShellVersion] = Config.PACKAGE_VERSION.split('.').map(s => Number(s));
 const InterfaceXml = `<node>
   <interface name="com.Extensions.ArcMenu">
     <method name="ToggleArcMenu"/>
+    <method name="ToggleStandaloneRunner"/>
   </interface>
 </node>`;
 
@@ -27,6 +28,7 @@ export const DBusService = class {
     constructor() {
         this._exported = false;
         this.ToggleArcMenu = () => {};
+        this.ToggleStandaloneRunner = () => {};
 
         this._dbusExportedObject = Gio.DBusExportedObject.wrapJSObject(InterfaceXml, this);
 
@@ -59,6 +61,7 @@ export const DBusService = class {
         this._dbusExportedObject = null;
         this._exported = null;
         this.ToggleArcMenu = null;
+        this.ToggleStandaloneRunner  = null;
     }
 };
 
@@ -112,6 +115,78 @@ export function canHibernateOrSleep(callName, asyncCallback) {
         else
             asyncCallback(result[0] === 'yes');
     });
+}
+
+/**
+ * Helper function to monitor 'changed' events on a variable number of GSettings keys using
+ * the same callback and binding object. It connects each key's `changed::${key}` signal to
+ * the provided callback via `connectObject`.
+ *
+ * @param {string[]} settingNamesArray Array of GSettings key names to monitor for changes.
+ * @param {Function} callback The callback function to invoke on any monitored setting change.
+ * @param {object} object The object to bind as `this` context for the callback connections.
+ */
+export function connectSettings(settingNamesArray, callback, object) {
+    ArcMenuManager.settings.connectObject(
+        ...settingNamesArray.flatMap(setting => [`changed::${setting}`, callback]),
+        object
+    );
+}
+
+/**
+ * A utility for debouncing callbacks using GLib timeouts.
+ * Useful for rapid GSetting key changes to prevent excessive callbacks.
+ * Schedules executions after a delay, canceling and rescheduling on repeated calls per ID.
+ * Supports multiple independent debouncers keyed by unique IDs.
+ */
+export class Debouncer {
+    constructor(delay = 300) {
+        this._delay = delay;
+        this._timers = new Map();
+        this._idles = new Map();
+    }
+
+    debounce(id, callback) {
+        this._cancel(id);
+
+        const timeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, this._delay, () => {
+            const idleId = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+                callback();
+                this._idles.delete(id);
+                return GLib.SOURCE_REMOVE;
+            });
+            this._idles.set(id, idleId);
+            this._timers.delete(id);
+            return GLib.SOURCE_REMOVE;
+        });
+
+        this._timers.set(id, timeoutId);
+    }
+
+    _cancel(id) {
+        if (this._timers.has(id)) {
+            const timeoutId = this._timers.get(id);
+            GLib.source_remove(timeoutId);
+            this._timers.delete(id);
+        }
+        if (this._idles.has(id)) {
+            const timeoutId = this._idles.get(id);
+            GLib.source_remove(timeoutId);
+            this._idles.delete(id);
+        }
+    }
+
+    destroy() {
+        for (const id of this._timers.values())
+            GLib.source_remove(id);
+        for (const id of this._idles.values())
+            GLib.source_remove(id);
+
+        this._idles.clear();
+        this._idles = null;
+        this._timers.clear();
+        this._timers = null;
+    }
 }
 
 export function convertToButton(item) {
@@ -218,26 +293,23 @@ export function getGridIconSize(iconSizeEnum, defaultIconSize) {
 }
 
 export function getCategoryDetails(iconTheme, currentCategory) {
-    const extensionPath = ArcMenuManager.extension.path;
-
     let name = null, gicon = null, fallbackIcon = null;
 
     for (const entry of Constants.Categories) {
         if (entry.CATEGORY === currentCategory) {
             name = entry.NAME;
-            gicon = Gio.icon_new_for_string(entry.ICON);
+            gicon = Gio.Icon.new_for_string(entry.IMAGE);
             return [name, gicon, fallbackIcon];
         }
     }
 
     if (currentCategory === Constants.CategoryType.HOME_SCREEN) {
         name = _('Home');
-        gicon = Gio.icon_new_for_string('computer-symbolic');
+        gicon = Gio.Icon.new_for_string('computer-symbolic');
         return [name, gicon, fallbackIcon];
     } else {
         name = currentCategory.get_name();
         const categoryIcon = currentCategory.get_icon();
-        const fallbackIconDirectory = `${extensionPath}/icons/category-icons/`;
 
         if (!categoryIcon)
             return [name, gicon, fallbackIcon];
@@ -252,16 +324,16 @@ export function getCategoryDetails(iconTheme, currentCategory) {
         if (categoryIconType === Constants.CategoryIconType.SYMBOLIC) {
             const icon = iconTheme.lookup_icon(symbolicName, 26, St.IconLookupFlags.FORCE_SYMBOLIC);
             if (icon) {
-                gicon = Gio.icon_new_for_string(symbolicName);
+                gicon = Gio.Icon.new_for_string(symbolicName);
             } else {
-                const filePath = `${fallbackIconDirectory}${symbolicIconFile}`;
-                const file = Gio.File.new_for_path(filePath);
+                const filePath = `${Constants.RESOURCE_PATH}/categories/${symbolicIconFile}`;
+                const file = Gio.File.new_for_uri(filePath);
                 if (file.query_exists(null))
-                    gicon = Gio.icon_new_for_string(`${fallbackIconDirectory}${symbolicIconFile}`);
+                    gicon = Gio.Icon.new_for_string(`${Constants.RESOURCE_PATH}/categories/${symbolicIconFile}`);
             }
         }
 
-        fallbackIcon = Gio.icon_new_for_string(`${fallbackIconDirectory}${symbolicIconFile}`);
+        fallbackIcon = Gio.Icon.new_for_string(`${Constants.RESOURCE_PATH}/categories/${symbolicIconFile}`);
         return [name, gicon, fallbackIcon];
     }
 }
@@ -287,36 +359,6 @@ export function getPowerTypeFromShortcutCommand(command) {
     default:
         return Constants.PowerType.POWER_OFF;
     }
-}
-
-export function getMenuButtonIcon(path) {
-    const extensionPath = ArcMenuManager.extension.path;
-    const {settings} = ArcMenuManager;
-
-    const iconType = settings.get_enum('menu-button-icon');
-    const iconDirectory = `${extensionPath}/icons/hicolor/16x16/actions/`;
-
-    if (iconType === Constants.MenuIconType.CUSTOM) {
-        if (path && GLib.file_test(path, GLib.FileTest.IS_REGULAR))
-            return path;
-        else
-            return path;
-    } else if (iconType === Constants.MenuIconType.DISTRO_ICON) {
-        const iconEnum = settings.get_int('distro-icon');
-        const iconPath = `${iconDirectory + Constants.DistroIcons[iconEnum].PATH}.svg`;
-        if (GLib.file_test(iconPath, GLib.FileTest.IS_REGULAR))
-            return iconPath;
-    } else {
-        const iconEnum = settings.get_int('arc-menu-icon');
-        const iconPath = `${iconDirectory + Constants.MenuIcons[iconEnum].PATH}.svg`;
-        if (Constants.MenuIcons[iconEnum].PATH === 'view-app-grid-symbolic')
-            return 'view-app-grid-symbolic';
-        else if (GLib.file_test(iconPath, GLib.FileTest.IS_REGULAR))
-            return iconPath;
-    }
-
-    console.log('ArcMenu Error - Failed to set menu button icon. Set to System Default.');
-    return 'start-here-symbolic';
 }
 
 export function findSoftwareManager() {
@@ -386,6 +428,31 @@ export function getCategories(info) {
     return categoriesStr.split(';');
 }
 
+/**
+ * Returns the display name for an application.
+ * If 'apps-show-generic-names' is enabled, returns GenericName (falls back to Name).
+ *
+ * @param {Shell.App} app
+ * @returns {*|string}
+ */
+export function getAppDisplayName(app) {
+    if (!app)
+        return '';
+
+    const showGenericNames = ArcMenuManager.settings.get_boolean('apps-show-generic-names');
+
+    if (showGenericNames) {
+        const appInfo = app.get_app_info();
+        if (appInfo) {
+            const genericName = appInfo.get_generic_name();
+            if (genericName && genericName.length > 0)
+                return genericName;
+        }
+    }
+
+    return app.get_name();
+}
+
 export function findBestFolderName(apps) {
     const appInfos = apps.map(app => app.get_app_info());
 
@@ -425,20 +492,26 @@ export function openPrefs(uuid) {
 }
 
 export function createPanActionScrollView(menuButton, params) {
+    const {settings} = ArcMenuManager;
+    const showScrollbars = settings.get_boolean('scrollbars-visible');
+    const overlayScrollbars = settings.get_boolean('scrollbars-overlay');
+
     const scrollView = new St.ScrollView({
         ...params,
         clip_to_allocation: true,
         hscrollbar_policy: St.PolicyType.NEVER,
-        vscrollbar_policy: St.PolicyType.AUTOMATIC,
-        overlay_scrollbars: true,
+        vscrollbar_policy: showScrollbars ? St.PolicyType.AUTOMATIC : St.PolicyType.EXTERNAL,
+        overlay_scrollbars: overlayScrollbars,
     });
 
     // With overlay_scrollbars = true, the scrollbar appears behind the menu items
     // Maybe a bug in GNOME? Fix it with this.
-    scrollView.get_children().forEach(child => {
-        if (child instanceof St.ScrollBar)
-            child.z_position = 1;
-    });
+    if (overlayScrollbars) {
+        scrollView.get_children().forEach(child => {
+            if (child instanceof St.ScrollBar)
+                child.z_position = 1;
+        });
+    }
 
     const onPanFunc = (a, mb, sv) => {
         mb.clearTooltipShowingId();

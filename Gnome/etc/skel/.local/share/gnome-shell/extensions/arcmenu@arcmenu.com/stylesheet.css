@@ -38,6 +38,7 @@
 }
 
 .arcmenu-search-entry{
+    width: 1px; /* prevents natural growth */
     min-height: 0px;
     border-width: 1px;
     padding: 7px 9px;

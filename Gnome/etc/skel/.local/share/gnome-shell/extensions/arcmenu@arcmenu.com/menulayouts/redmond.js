@@ -11,6 +11,11 @@ import {getOrientationProp} from '../utils.js';
 
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
+const MenuView = {
+    ALL_PROGRAMS: 0,
+    PINNED_APPS: 1,
+};
+
 export class Layout extends BaseMenuLayout {
     static {
         GObject.registerClass(this);
@@ -70,12 +75,12 @@ export class Layout extends BaseMenuLayout {
         mainBox.add_child(this.navBox);
 
         const defaultMenuView = ArcMenuManager.settings.get_enum('default-menu-view-redmond');
-        if (defaultMenuView === Constants.DefaultMenuViewRedmond.PINNED_APPS) {
+        if (defaultMenuView === MenuView.PINNED_APPS) {
             this.backButton = this._createNavigationRow(_('All Apps'), Constants.Direction.GO_PREVIOUS,
                 _('Back'), () => this.setDefaultMenuView());
             this._viewAllAppsButton = this._createNavigationRow(_('Pinned'), Constants.Direction.GO_NEXT,
                 _('All Apps'), () => this.displayAllApps());
-        } else if (defaultMenuView === Constants.DefaultMenuViewRedmond.ALL_PROGRAMS) {
+        } else if (defaultMenuView === MenuView.ALL_PROGRAMS) {
             this.backButton = this._createNavigationRow(_('Pinned'), Constants.Direction.GO_PREVIOUS,
                 _('Back'), () => this.setDefaultMenuView());
             this._viewAllAppsButton = this._createNavigationRow(_('All Apps'), Constants.Direction.GO_NEXT,
@@ -111,8 +116,8 @@ export class Layout extends BaseMenuLayout {
             mainBox.add_child(this.searchEntry);
         }
 
-        const userAvatar = ArcMenuManager.settings.get_boolean('disable-user-avatar');
-        if (!userAvatar) {
+        const userAvatar = ArcMenuManager.settings.get_boolean('show-user-avatar');
+        if (userAvatar) {
             const avatarMenuItem = new MW.AvatarMenuItem(this, Constants.DisplayType.LIST);
             this.rightBox.add_child(avatarMenuItem);
             const separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.SHORT,
@@ -221,18 +226,18 @@ export class Layout extends BaseMenuLayout {
         this.backButton.hide();
 
         const defaultMenuView = ArcMenuManager.settings.get_enum('default-menu-view-redmond');
-        if (defaultMenuView === Constants.DefaultMenuViewRedmond.PINNED_APPS)
+        if (defaultMenuView === MenuView.PINNED_APPS)
             this.displayPinnedApps();
-        else if (defaultMenuView === Constants.DefaultMenuViewRedmond.ALL_PROGRAMS)
+        else if (defaultMenuView === MenuView.ALL_PROGRAMS)
             this.displayAllApps();
     }
 
     displayPinnedApps() {
         const defaultMenuView = ArcMenuManager.settings.get_enum('default-menu-view-redmond');
-        if (defaultMenuView === Constants.DefaultMenuViewRedmond.PINNED_APPS) {
+        if (defaultMenuView === MenuView.PINNED_APPS) {
             this._viewAllAppsButton.show();
             this.backButton.hide();
-        } else if (defaultMenuView === Constants.DefaultMenuViewRedmond.ALL_PROGRAMS) {
+        } else if (defaultMenuView === MenuView.ALL_PROGRAMS) {
             this._viewAllAppsButton.hide();
             this.backButton.show();
         }
@@ -244,10 +249,10 @@ export class Layout extends BaseMenuLayout {
         super.displayAllApps();
 
         const defaultMenuView = ArcMenuManager.settings.get_enum('default-menu-view-redmond');
-        if (defaultMenuView === Constants.DefaultMenuViewRedmond.PINNED_APPS) {
+        if (defaultMenuView === MenuView.PINNED_APPS) {
             this._viewAllAppsButton.hide();
             this.backButton.show();
-        } else if (defaultMenuView === Constants.DefaultMenuViewRedmond.ALL_PROGRAMS) {
+        } else if (defaultMenuView === MenuView.ALL_PROGRAMS) {
             this._viewAllAppsButton.show();
             this.backButton.hide();
         }

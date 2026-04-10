@@ -27,7 +27,7 @@ export class Layout extends BaseMenuLayout {
             category_icon_size: Constants.MEDIUM_ICON_SIZE,
             apps_icon_size: Constants.MEDIUM_ICON_SIZE,
             quicklinks_icon_size: Constants.MEDIUM_ICON_SIZE,
-            buttons_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
+            buttons_icon_size: Constants.MEDIUM_ICON_SIZE,
             pinned_apps_icon_size: Constants.MEDIUM_ICON_SIZE,
         });
         this.arcMenu.box.style = 'padding: 0px; margin: 0px;';
@@ -40,8 +40,8 @@ export class Layout extends BaseMenuLayout {
             clip_to_allocation: true,
         });
 
-        const userAvatar = ArcMenuManager.settings.get_boolean('disable-user-avatar');
-        if (!userAvatar) {
+        const userAvatar = ArcMenuManager.settings.get_boolean('show-user-avatar');
+        if (userAvatar) {
             const userMenuBox = new St.BoxLayout({
                 x_expand: true,
                 y_expand: false,
@@ -87,14 +87,11 @@ export class Layout extends BaseMenuLayout {
             y_align: Clutter.ActorAlign.FILL,
         });
 
-        const topSeparator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MAX,
-            Constants.SeparatorAlignment.HORIZONTAL);
-        topSeparator.style = 'padding: 0px; margin: 0px;';
         this.searchEntry.style = 'margin: 12px;';
-        this.searchEntry.bind_property('visible', topSeparator, 'visible', GObject.BindingFlags.SYNC_CREATE);
-
-        this._rightPanelBox.add_child(this.searchEntry);
-        this._rightPanelBox.add_child(topSeparator);
+        const separator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MEDIUM,
+            Constants.SeparatorAlignment.HORIZONTAL);
+        separator.style = 'padding: 0px; margin: 0px;';
+        this.searchEntry.bind_property('visible', separator, 'visible', GObject.BindingFlags.SYNC_CREATE);
 
         this._applicationsBox = new St.BoxLayout({
             ...getOrientationProp(false),
@@ -142,25 +139,36 @@ export class Layout extends BaseMenuLayout {
         this._applicationsBox.add_child(this.leftBox);
         this._applicationsBox.add_child(verticalSeparator);
         this._applicationsBox.add_child(this.rightBox);
-        this._rightPanelBox.add_child(this._applicationsBox);
 
-        const bottomSeparator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.MAX,
-            Constants.SeparatorAlignment.HORIZONTAL);
-        bottomSeparator.style = 'padding: 0px; margin: 0px;';
-
-        this._rightPanelBox.add_child(bottomSeparator);
-
-        let powerOptionsItem;
+        let powerOptionsDisplay;
         const powerDisplayStyle = ArcMenuManager.settings.get_enum('power-display-style');
-        if (powerDisplayStyle === Constants.PowerDisplayStyle.MENU)
-            powerOptionsItem = new MW.LeaveButton(this, true);
-        else
-            powerOptionsItem = new MW.PowerOptionsBox(this);
+        if (powerDisplayStyle === Constants.PowerDisplayStyle.MENU) {
+            powerOptionsDisplay = new MW.LeaveButton(this);
+        } else {
+            powerOptionsDisplay = new MW.PowerOptionsBox(this);
+            powerOptionsDisplay.set({
+                x_expand: true,
+                x_align: Clutter.ActorAlign.CENTER,
+            });
+        }
 
-        powerOptionsItem.x_align = horizontalFlip ? Clutter.ActorAlign.START : Clutter.ActorAlign.END;
-        powerOptionsItem.x_expand = false;
-        powerOptionsItem.style = 'margin: 12px;';
-        this._rightPanelBox.add_child(powerOptionsItem);
+        powerOptionsDisplay.set({
+            y_expand: true,
+            y_align: Clutter.ActorAlign.END,
+        });
+
+        this._leftPanelBox.add_child(powerOptionsDisplay);
+
+        const searchbarLocation = ArcMenuManager.settings.get_enum('searchbar-default-bottom-location');
+        if (searchbarLocation === Constants.SearchbarLocation.TOP) {
+            this._rightPanelBox.add_child(this.searchEntry);
+            this._rightPanelBox.add_child(separator);
+            this._rightPanelBox.add_child(this._applicationsBox);
+        } else if (searchbarLocation === Constants.SearchbarLocation.BOTTOM) {
+            this._rightPanelBox.add_child(this._applicationsBox);
+            this._rightPanelBox.add_child(separator);
+            this._rightPanelBox.add_child(this.searchEntry);
+        }
 
         this.add_child(horizontalFlip ? this._rightPanelBox : this._leftPanelBox);
         this.add_child(horizontalFlip ? this._leftPanelBox : this._rightPanelBox);

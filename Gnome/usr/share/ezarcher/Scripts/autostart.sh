@@ -12,7 +12,7 @@ if [ "$USER" = "$LIVEUSER" ]; then
    sleep 2
    sh -c "pkexec calamares"
 else
-    flatpak run moe.nyarchlinux.tour
+    nyarchtour
     rm -rf ~/.config/autostart/start.desktop
 fi
 

@@ -324,6 +324,7 @@ nvidia-settings
 envycontrol
 
 # Nyarch
+nyancat
 fastfetch
 fragments
 lollypop
@@ -347,25 +348,22 @@ flatseal
 nyarch-keyring
 nyarch-mirrorlist
 # Nyarch Apps
+python-materialyoucolor3
 nyarchassistant
 nyarchtour
 nyarchcustomize
 nyarchscript
+nyarchwizard
 catgirldownloader
 nyarchupdater
 nekoplay
 #timeshift-autosnap
 tuned-ppd
 
-# Chaotic
-chaotic-mirrorlist
-chaotic-keyring
 
-# From chaotic
 webapp-manager
 extension-manager
 shortwave
-pamac
 komikku
 
 # Noto CJK Fonts for better Chinese/Japanese/Korean rendering

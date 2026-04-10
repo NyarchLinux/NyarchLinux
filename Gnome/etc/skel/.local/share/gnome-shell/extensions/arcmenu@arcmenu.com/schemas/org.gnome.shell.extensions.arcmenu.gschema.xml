@@ -62,11 +62,6 @@
         <value value="0" nick="Round"/>
         <value value="1" nick="Square"/>
     </enum>
-    <enum id='org.gnome.shell.extensions.arcmenu.menu-button-icon'>
-        <value value="0" nick="Menu_Icon"/>
-        <value value="1" nick="Distro_Icon"/>
-        <value value="2" nick="Custom_Icon"/>
-    </enum>
     <enum id='org.gnome.shell.extensions.arcmenu.default-menu-view'>
         <value value="0" nick="Pinned_Apps"/>
         <value value="1" nick="Categories_List"/>
@@ -89,6 +84,11 @@
     <enum id='org.gnome.shell.extensions.arcmenu.default-menu-view-az'>
         <value value="0" nick="Pinned_Apps"/>
         <value value="1" nick="Frequent Apps"/>
+    </enum>
+    <enum id='org.gnome.shell.extensions.arcmenu.default-menu-view-runner'>
+        <value value="0" nick="Default"/>
+        <value value="1" nick="Pinned_Apps"/>
+        <value value="2" nick="Frequent Apps"/>
     </enum>
     <enum id='org.gnome.shell.extensions.arcmenu.runner-position'>
         <value value="0" nick="Top"/>
@@ -303,13 +303,26 @@
       <default>'Symbolic'</default>
       <summary>Shortcut icon type. Full_Color or Symbolic</summary>
     </key>
-    <key type="b" name="disable-scrollview-fade-effect">
-      <default>false</default>
-      <summary>disable the fade effect on scrollviews</summary>
+    <key type="b" name="scrollview-fade-effect">
+      <default>true</default>
+      <summary>Enable the fade effect on scrollviews</summary>
+    </key>
+    <key type="b" name="scrollbars-visible">
+      <default>true</default>
+      <summary>Show/hide scrollbars on scrollviews</summary>
+    </key>
+    <key type="b" name="scrollbars-overlay">
+      <default>true</default>
+      <summary>Enable/disable overlay scrollbars</summary>
     </key>
     <key type="b" name="apps-show-extra-details">
       <default>false</default>
       <summary>Show a larger icon and extra app details</summary>
+    </key>
+    <key type="b" name="apps-show-generic-names">
+      <default>false</default>
+      <summary>Show generic application names</summary>
+      <description>Show GenericName instead of Name. Falls back to Name if GenericName is unavailable.</description>
     </key>
     <key type="b" name="search-hidden">
       <default>false</default>
@@ -347,13 +360,13 @@
       <default>false</default>
       <summary>Activate Categories on Hover</summary>
     </key>
-    <key type="b" name="disable-recently-installed-apps">
-      <default>false</default>
-      <summary>disable recently installed apps</summary>
+    <key type="b" name="show-recently-installed-apps">
+      <default>true</default>
+      <summary>Recently installed apps</summary>
     </key>
-    <key type="b" name="disable-tooltips">
-      <default>false</default>
-      <summary>disable tooltips</summary>
+    <key type="b" name="show-tooltips">
+      <default>true</default>
+      <summary>Tooltips</summary>
     </key>
       <key type="b" name="show-category-sub-menus">
       <default>false</default>
@@ -399,9 +412,9 @@
       <default>true</default>
       <summary>Set Unity layout to display "Home Screen" as default</summary>
     </key>
-    <key type="b" name="disable-user-avatar">
-      <default>false</default>
-      <summary>Disable the user avatar icon from the menu</summary>
+    <key type="b" name="show-user-avatar">
+      <default>true</default>
+      <summary>Show the user avatar icon from the menu</summary>
     </key>
     <key type="b" name="enable-activities-shortcut">
       <default>false</default>
@@ -423,13 +436,13 @@
       <default>'Categories_List'</default>
       <summary>ArcMenu layout - 'All Apps' button action</summary>
     </key>
-    <key type="b" name="windows-disable-frequent-apps">
-      <default>false</default>
-      <summary>Windows layout - disable frequent apps</summary>
+    <key type="b" name="windows-show-frequent-apps">
+      <default>true</default>
+      <summary>Windows layout - show frequent apps</summary>
     </key>
-    <key type="b" name="windows-disable-pinned-apps">
-      <default>false</default>
-      <summary>Windows layout - disable pinned apps</summary>
+    <key type="b" name="windows-show-pinned-apps">
+      <default>true</default>
+      <summary>Windows layout - show pinned apps</summary>
     </key>
     <key type="b" name="gnome-dash-show-applications">
       <default>false</default>
@@ -439,13 +452,17 @@
       <default>true</default>
       <summary>Plasma Menu Hover to activate item</summary>
     </key>
-    <key type="b" name="runner-show-frequent-apps">
-      <default>false</default>
-      <summary>Runner layout - show frequent apps</summary>
+    <key type="b" name="runner-show-settings-button">
+      <default>true</default>
+      <summary>Runner layout - show settings button</summary>
     </key>
     <key type="i" name="runner-menu-height">
       <default>400</default>
       <summary>Runner layout - menu height</summary>
+    </key>
+    <key type="b" name="runner-menu-height-static">
+      <default>false</default>
+      <summary>Runner layout - menu height will not grow with search results, rather always stay the set 'runner-menu-height'</summary>
     </key>
     <key type="i" name="runner-menu-width">
       <default>500</default>
@@ -455,9 +472,17 @@
       <default>0</default>
       <summary>Runner layout - font size</summary>
     </key>
-    <key type="b" name="eleven-disable-frequent-apps">
-      <default>false</default>
-      <summary>Eleven Layout - disable frequent apps</summary>
+    <key enum="org.gnome.shell.extensions.arcmenu.searchbar-location" name="runner-searchbar-location">
+      <default>'Top'</default>
+      <summary>Searchbar location for runner layout</summary>
+    </key>
+    <key enum="org.gnome.shell.extensions.arcmenu.default-menu-view-runner" name="default-menu-view-runner">
+      <default>'Default'</default>
+      <summary>Set Runner Layout Default View</summary>
+    </key>
+    <key type="b" name="eleven-show-frequent-apps">
+      <default>true</default>
+      <summary>Eleven Layout - show frequent apps</summary>
     </key>
     <key type="b" name="vert-separator">
       <default>false</default>
@@ -583,18 +608,17 @@
       <default>false</default>
       <summary>Hide overview on startup</summary>
     </key>
+    <key type="b" name="hide-overview-on-arcmenu-open">
+      <default>false</default>
+      <summary>Hide overview when ArcMenu opens</summary>
+    </key>
     <key type="b" name="activate-on-launch">
       <default>false</default>
       <summary>Activate existing window instead of opening new one on application launch.</summary>
     </key>
-    <key type="s" name="custom-menu-button-text">
-      <default>'Apps'</default>
-      <summary>Text of the menu button.</summary>
-    </key>
-    <key name="menu-button-icon" enum="org.gnome.shell.extensions.arcmenu.menu-button-icon">
-      <default>'Menu_Icon'</default>
-      <summary>Icon type for the menu button.</summary>
-    </key>
+
+    <!--Deprecated-->
+    <!--Use new settings 'menu-button-text', 'menu-button-icon', 'menu-button-icon-size', 'menu-button-padding'-->
     <key name="arc-menu-icon" type="i">
       <default>0</default>
       <summary>Icon integer value for the menu button.</summary>
@@ -602,6 +626,10 @@
     <key name="distro-icon" type="i">
       <default>0</default>
       <summary>Distro icon integer value for the menu button.</summary>
+    </key>
+    <key type="s" name="custom-menu-button-text">
+      <default>'Apps'</default>
+      <summary>Text of the menu button.</summary>
     </key>
     <key type="s" name="custom-menu-button-icon">
       <default>''</default>
@@ -612,6 +640,28 @@
       <summary>Size of the menu buton icon.</summary>
     </key>
     <key type="i" name="button-padding">
+      <default>-1</default>
+      <summary>Menu Button Padding.</summary>
+    </key>
+    <!--End Deprecated-->
+
+    <key type="s" name="menu-button-text">
+      <default>'Apps'</default>
+      <summary>Text of the menu button.</summary>
+    </key>
+    <key type="s" name="menu-button-icon">
+      <default>'resource:///org/gnome/shell/extensions/arcmenu/icons/scalable/actions/icon-arcmenu-logo-symbolic.svg'</default>
+      <summary>ArcMenu button icon</summary>
+      <description>
+        Can be a file path, a resource:/// URI (for bundled icons), or a symbolic icon name.
+        Bundled icons can be referenced via resource:/// - see data/resources.gresource.xml
+      </description>
+    </key>
+    <key type="i" name="menu-button-icon-size">
+      <default>20</default>
+      <summary>Size of the menu buton icon.</summary>
+    </key>
+    <key type="i" name="menu-button-padding">
       <default>-1</default>
       <summary>Menu Button Padding.</summary>
     </key>

@@ -4,7 +4,6 @@ import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk';
 
 import * as Constants from '../../constants.js';
-import * as PW from '../../prefsWidgets.js';
 import {SubPage} from './subPage.js';
 
 import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
@@ -70,7 +69,7 @@ class ArcMenuLayoutsPage extends SubPage {
                     const newMenuLayoutInfo = this.getMenuLayoutInfo(this.selectedMenuLayout);
 
                     currentLayoutBoxRow.label.label = newMenuLayoutInfo.TITLE;
-                    currentLayoutBoxRow.image.gicon = Gio.icon_new_for_string(newMenuLayoutInfo.IMAGE);
+                    currentLayoutBoxRow.image.gicon = Gio.Icon.new_for_string(newMenuLayoutInfo.IMAGE);
 
                     this.expandedRow.expanded = false;
                     this.emit('response', Gtk.ResponseType.APPLY);
@@ -97,14 +96,22 @@ class ArcMenuLayoutsPage extends SubPage {
     }
 });
 
-var LayoutsBox = GObject.registerClass({
+const LayoutsBox = GObject.registerClass({
     Signals: {
         'menu-selected': {param_types: [GObject.TYPE_INT]},
     },
-},  class ArcMenuLayoutsBox extends PW.IconGrid {
+},  class ArcMenuLayoutsBox extends Gtk.FlowBox {
     _init(settings, tile) {
-        super._init();
-
+        super._init({
+            max_children_per_line: 15,
+            row_spacing: 4,
+            column_spacing: 4,
+            valign: Gtk.Align.START,
+            halign: Gtk.Align.CENTER,
+            homogeneous: true,
+            selection_mode: Gtk.SelectionMode.SINGLE,
+        });
+        this.childrenCount = 0;
         this._settings = settings;
         this.layoutStyle = tile.layout;
         this.styles = tile.layout;
@@ -112,7 +119,8 @@ var LayoutsBox = GObject.registerClass({
         // clamp max children per line. min = 1, max = 3;
         this.max_children_per_line = Math.min(Math.max(tile.layout.length, 1), 3);
 
-        this.connect('child-activated', () => {
+        this.connect('child-activated', (_self, child) => {
+            this.setActiveChild(child);
             const currentMenuLayout = this._settings.get_enum('menu-layout');
             const selectedChildren = this.get_selected_children();
             const selectedLayout = selectedChildren[0];
@@ -128,7 +136,7 @@ var LayoutsBox = GObject.registerClass({
 
         this.styles.forEach(style => {
             const currentMenuLayout = this._settings.get_enum('menu-layout');
-            const layoutTile = new PW.MenuLayoutTile(style);
+            const layoutTile = new MenuLayoutTile(style);
             this.add(layoutTile);
 
             if (currentMenuLayout === style.LAYOUT) {
@@ -150,9 +158,36 @@ var LayoutsBox = GObject.registerClass({
         if (this.selectedLayout)
             this.select_child(this.selectedLayout);
     }
+
+    setActiveChild(child) {
+        if (this._previousSelectedChild)
+            this._previousSelectedChild.setActive(false);
+
+        child.setActive(true);
+        this._previousSelectedChild = child;
+    }
+
+    unselect_all() {
+        if (this._previousSelectedChild)
+            this._previousSelectedChild.setActive(false);
+        super.unselect_all();
+    }
+
+    select_child(child) {
+        this.setActiveChild(child);
+        super.select_child(child);
+    }
+
+    add(widget) {
+        widget.margin_top = widget.margin_bottom =
+                widget.margin_start = widget.margin_end = 4;
+
+        this.append(widget);
+        this.childrenCount++;
+    }
 });
 
-var CurrentLayoutRow = GObject.registerClass(
+const CurrentLayoutRow = GObject.registerClass(
 class ArcMenuMenuLayoutRow extends Gtk.Box {
     _init(title, imagePath, layout) {
         super._init({
@@ -178,7 +213,7 @@ class ArcMenuMenuLayoutRow extends Gtk.Box {
         this.image = new Gtk.Image({
             hexpand: false,
             halign: Gtk.Align.CENTER,
-            gicon: Gio.icon_new_for_string(imagePath),
+            gicon: Gio.Icon.new_for_string(imagePath),
             pixel_size: 145,
         });
 
@@ -197,3 +232,54 @@ class ArcMenuMenuLayoutRow extends Gtk.Box {
         this.append(box);
     }
 });
+
+const MenuLayoutTile = GObject.registerClass(class ArcMenuMenuLayoutTile extends Gtk.FlowBoxChild {
+    _init(styleInfo) {
+        super._init({
+            css_classes: ['card', 'activatable'],
+            margin_top: 4,
+            margin_bottom: 4,
+            margin_start: 4,
+            margin_end: 4,
+            halign: Gtk.Align.FILL,
+            hexpand: true,
+        });
+
+        const box = new Gtk.Box({
+            orientation: Gtk.Orientation.VERTICAL,
+            margin_top: 4,
+            margin_bottom: 4,
+            margin_start: 8,
+            margin_end: 8,
+        });
+        this.set_child(box);
+
+        this.name = styleInfo.TITLE;
+        this.layout = styleInfo.LAYOUT;
+
+        this._image = new Gtk.Image({
+            gicon: Gio.Icon.new_for_string(styleInfo.IMAGE),
+            pixel_size: 145,
+        });
+
+        this._label = new Gtk.Label({
+            label: _(this.name),
+            hexpand: true,
+            css_classes: ['caption'],
+        });
+
+        box.append(this._image);
+        box.append(this._label);
+    }
+
+    setActive(active) {
+        if (active) {
+            this._image.css_classes = ['accent'];
+            this._label.css_classes = ['caption', 'accent'];
+        } else {
+            this._image.css_classes = [];
+            this._label.css_classes = ['caption'];
+        }
+    }
+});
+

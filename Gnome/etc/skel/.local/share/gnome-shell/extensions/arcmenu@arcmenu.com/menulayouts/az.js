@@ -11,6 +11,11 @@ import {getOrientationProp} from '../utils.js';
 
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
+const MenuView = {
+    PINNED_APPS: 0,
+    FREQUENT_APPS: 1,
+};
+
 export class Layout extends BaseMenuLayout {
     static {
         GObject.registerClass(this);
@@ -222,10 +227,10 @@ export class Layout extends BaseMenuLayout {
         super.setDefaultMenuView();
 
         const defaultMenuView = ArcMenuManager.settings.get_enum('default-menu-view-az');
-        if (defaultMenuView === Constants.DefaultMenuViewAz.PINNED_APPS) {
+        if (defaultMenuView === MenuView.PINNED_APPS) {
             this.allAppsButton.label.text = _('Pinned');
             this.displayPinnedApps();
-        } else if (defaultMenuView === Constants.DefaultMenuViewAz.FREQUENT_APPS) {
+        } else if (defaultMenuView === MenuView.FREQUENT_APPS) {
             this.allAppsButton.label.text = _('Frequent');
             this.displayFrequentApps();
         }

@@ -8,9 +8,10 @@
     "46",
     "47",
     "48",
-    "49"
+    "49",
+    "50"
   ],
-  "url": "https://github.com/RaphaelRochet/arch-update",
+  "url": "https://codeberg.org/RaphaelRochet/arch-update",
   "uuid": "arch-update@RaphaelRochet",
-  "version": 65
+  "version": 66
 }

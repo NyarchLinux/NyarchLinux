@@ -364,7 +364,7 @@ class ArcMenuAboutPage extends Adw.PreferencesPage {
         });
 
         const goNextImage = new Gtk.Image({
-            gicon: Gio.icon_new_for_string('go-next-symbolic'),
+            gicon: Gio.Icon.new_for_string('go-next-symbolic'),
             halign: Gtk.Align.END,
             valign: Gtk.Align.CENTER,
             hexpand: false,

@@ -1,6 +1,6 @@
 #!/bin/bash
 EMPTY=""
-if [ "$KITTY_WINDOW_ID" != "$EMPTY" ]; then
+if [ "$KITTY_WINDOW_ID" != "$EMPTY" ] || [ "$KONSOLE_VERSION" != "$EMPTY" ]; then
         if [ $(tput cols) -gt "105" ]; then
             fastfetch --config ~/.config/fastfetch/config_extended.jsonc
         else

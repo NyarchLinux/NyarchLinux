@@ -40,8 +40,8 @@ export class Layout extends BaseMenuLayout {
         this.arcMenu.box.style = 'padding: 0px; margin: 0px; border-radius: 0px;';
         this.searchEntry.style = 'margin: 10px 10px 10px 10px;';
 
+        ArcMenuManager.settings.connectObject('changed::enable-unity-homescreen', () => this.setDefaultMenuView(), this);
         ArcMenuManager.settings.connectObject('changed::raven-position', () => this._updatePosition(), this);
-
         ArcMenuManager.settings.connectObject('changed::enable-clock-widget-raven', () => this._updateWidgets(), this);
         ArcMenuManager.settings.connectObject('changed::enable-weather-widget-raven', () => this._updateWidgets(), this);
 

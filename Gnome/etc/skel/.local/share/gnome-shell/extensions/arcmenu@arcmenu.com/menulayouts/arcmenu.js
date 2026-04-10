@@ -109,8 +109,8 @@ export class Layout extends BaseMenuLayout {
         mainBox.add_child(verticalSeparator);
         mainBox.add_child(horizontalFlip ? this.leftBox : this.rightBox);
 
-        const userAvatar = ArcMenuManager.settings.get_boolean('disable-user-avatar');
-        if (!userAvatar) {
+        const userAvatar = ArcMenuManager.settings.get_boolean('show-user-avatar');
+        if (userAvatar) {
             const avatarMenuItem = new MW.AvatarMenuItem(this, Constants.DisplayType.LIST);
             this.rightBox.add_child(avatarMenuItem);
             const userAvatarSeparator = new MW.ArcMenuSeparator(this, Constants.SeparatorStyle.SHORT,

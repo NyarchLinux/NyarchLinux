@@ -12,7 +12,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 function createIcon(mimeType, size) {
     const symbolicIcon = mimeType ? Gio.content_type_get_symbolic_icon(mimeType)?.to_string() : null;
     return symbolicIcon
-        ? new St.Icon({gicon: Gio.icon_new_for_string(symbolicIcon), icon_size: size})
+        ? new St.Icon({gicon: Gio.Icon.new_for_string(symbolicIcon), icon_size: size})
         : new St.Icon({icon_name: 'icon-missing', icon_size: size});
 }
 
@@ -29,7 +29,7 @@ export const RecentFilesSearchProvider = class {
             get_description: () => _('Recent Files'),
             get_name: () => _('Recent Files'),
             get_id: () => 'arcmenu.recent-files',
-            get_icon: () => Gio.icon_new_for_string('document-open-recent-symbolic'),
+            get_icon: () => Gio.Icon.new_for_string('document-open-recent-symbolic'),
         };
     }
 

@@ -48,7 +48,9 @@ Thank you for using ArcMenu! If you enjoy it and would like to help support its 
 * The 'ArcMenu' layout design is insipired by the Zorin OS menu extension.
 * ArcMenu utilizes various code from GNOME Shell and the GNOME Shell extensions package.
 * ArcMenu Logo and other ArcMenu icon assets created by [AndyC](https://gitlab.com/LinxGem33). Licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
-* Fallback category icons included in ArcMenu are copied from [Ubuntu Yaru Icons](https://github.com/ubuntu/yaru) and licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
+* Fallback Category Icons
+    * [Ubuntu Yaru Icons](https://github.com/ubuntu/yaru) licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
+    * [MoreWaita](https://github.com/somepaulo/MoreWaita) [GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
 -----
 
@@ -72,6 +74,8 @@ In 2017, ArcMenu _started_ as a fork of the Zorin menu extension by Zorin OS. As
 
 **@[Balló György](https://gitlab.com/City-busz) !189, !215, !226, !241, !242**
 
+**@[RunasSudo](https://gitlab.com/RunasSudo) !271** | **@[innovisus](https://gitlab.com/innovisus) !273** | **@[morgan9e](https://gitlab.com/morgan9e) !274**
+
 -----
 
 ### Translators
@@ -91,13 +95,13 @@ In 2017, ArcMenu _started_ as a fork of the Zorin menu extension by Zorin OS. As
 | **German** | **@[Etamuk](https://gitlab.com/Etamuk), @[daPhipz](https://gitlab.com/daPhipz), @[RaceTheMaSe](https://gitlab.com/RaceTheMaSe)**|
 | **Hebrew** | **@[omeritzics](https://gitlab.com/omeritzics)** |
 | **Hungarian** | **@[stevendobay](https://gitlab.com/stevendobay), @[Balázs Meskó](https://gitlab.com/meskobalazs)** |
-| **Italian** | **@[Vombato](https://gitlab.com/Vombato), @[matguidi](https://gitlab.com/matguidi)** |
+| **Italian** | **@[Vombato](https://gitlab.com/Vombato), @[matguidi](https://gitlab.com/matguidi), @[Nicola C.](https://gitlab.com/nico9889)** |
 | **Japanese** | **@[Hayao0819](https://gitlab.com/Hayao0819), @[Umoxfo](https://gitlab.com/Umoxfo)** |
 | **Korean** | **@[HyeonWol](https://gitlab.com/hyeonwol123)** |
 | **Norwegian** | **@[sigbjokj](https://gitlab.com/sigbjokj), @[sssandum](https://gitlab.com/sssandum)** |
 | **Occitan** | **@[Mejans](https://gitlab.com/Mejans), @[Quentin](https://gitlab.com/quenty_occitania)** |
 | **Polish** | **@[alex4401](https://gitlab.com/alex4401), @[Karpfly](https://gitlab.com/MacKarp), @[Piotr Strebski](https://gitlab.com/strebski), @[Adam Lewicki](https://gitlab.com/a.lewicki95)** |
-| **Russian** | **@[Ivan](https://gitlab.com/vantu5z), @[Ser82-png](https://gitlab.com/Ser82-png)** |
+| **Russian** | **@[Ivan](https://gitlab.com/vantu5z), @[Ser82-png](https://gitlab.com/Ser82-png), @[innovisus](https://gitlab.com/innovisus)** |
 | **Silesian** | **@[gkkulik](https://gitlab.com/gkkulik)** |
 | **Simplified Chinese** | **@[skygmin](https://gitlab.com/skygmin), @[doufu3344](https://gitlab.com/doufu3344), @[wxtewx](https://gitlab.com/wxtewx), @[Anduin2017](https://gitlab.com/Anduin2017)** |
 | **Sinhalese** | **@[sayuri](https://gitlab.com/sayuri-), @[helabasa](https://gitlab.com/helabasa)** |

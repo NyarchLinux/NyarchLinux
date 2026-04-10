@@ -58,8 +58,8 @@ export class Layout extends BaseMenuLayout {
         });
         this.add_child(this._mainBox);
 
-        const userAvatar = ArcMenuManager.settings.get_boolean('disable-user-avatar');
-        if (!userAvatar) {
+        const userAvatar = ArcMenuManager.settings.get_boolean('show-user-avatar');
+        if (userAvatar) {
             const userMenuBox = new St.BoxLayout({
                 x_expand: true,
                 y_expand: true,

@@ -10,6 +10,11 @@ import {getOrientationProp} from '../utils.js';
 
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
+const MenuView = {
+    CATEGORIES_LIST: 0,
+    ALL_PROGRAMS: 1,
+};
+
 export class Layout extends BaseMenuLayout {
     static {
         GObject.registerClass(this);
@@ -213,9 +218,9 @@ export class Layout extends BaseMenuLayout {
         super.setDefaultMenuView();
 
         const defaultMenuView = ArcMenuManager.settings.get_enum('default-menu-view-tognee');
-        if (defaultMenuView === Constants.DefaultMenuViewTognee.CATEGORIES_LIST)
+        if (defaultMenuView === MenuView.CATEGORIES_LIST)
             this.displayCategories();
-        else if (defaultMenuView === Constants.DefaultMenuViewTognee.ALL_PROGRAMS)
+        else if (defaultMenuView === MenuView.ALL_PROGRAMS)
             this.displayAllApps();
     }
 

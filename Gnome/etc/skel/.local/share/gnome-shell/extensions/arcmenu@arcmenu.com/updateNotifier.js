@@ -6,10 +6,10 @@ import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
 
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-import {SettingsPage} from './constants.js';
+import {RESOURCE_PATH, SettingsPage} from './constants.js';
 
 const PROJECT_NAME = 'ArcMenu';
-const PROJECT_ICON = '/icons/hicolor/16x16/actions/settings-arcmenu-logo.svg';
+const PROJECT_ICON = 'emblems/settings-arcmenu-logo.svg';
 
 const [ShellVersion] = Config.PACKAGE_VERSION.split('.').map(s => Number(s));
 
@@ -30,7 +30,7 @@ export class UpdateNotification {
 
         this._version = metadata.version ?? 0;
         this._versionName = metadata['version-name'] ?? this._version.toString();
-        this._iconPath = `${extension.path}/${PROJECT_ICON}`;
+        this._iconPath = `${RESOURCE_PATH}${PROJECT_ICON}`;
 
         this._maybeShowNotification();
     }
@@ -74,7 +74,7 @@ export class UpdateNotification {
         else
             body = _('Thank you for using %s! If you enjoy it and would like to help support its continued development, please consider making a donation.').format(PROJECT_NAME);
 
-        const gicon = Gio.icon_new_for_string(this._iconPath);
+        const gicon = Gio.Icon.new_for_string(this._iconPath);
 
         const source = this._getSource(PROJECT_NAME, 'application-x-addon-symbolic');
         Main.messageTray.add(source);

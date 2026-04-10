@@ -109,7 +109,7 @@ export class BaseMenuLayout extends St.BoxLayout {
 
         this.hasPinnedApps = false;
         this.activeCategoryType = -1;
-        this._disableFadeEffect = ArcMenuManager.settings.get_boolean('disable-scrollview-fade-effect');
+        this._disableFadeEffect = !ArcMenuManager.settings.get_boolean('scrollview-fade-effect');
         this.iconTheme = new St.IconTheme();
         this.appSys = Shell.AppSystem.get_default();
         this._tree = new GMenu.Tree({menu_basename: 'applications.menu'});
@@ -278,8 +278,8 @@ export class BaseMenuLayout extends St.BoxLayout {
             appList.push(key);
         });
         appList.sort((a, b) => {
-            const nameA = a.get_name();
-            const nameB = b.get_name();
+            const nameA = Utils.getAppDisplayName(a);
+            const nameB = Utils.getAppDisplayName(b);
             return nameA.localeCompare(nameB);
         });
         return appList;
@@ -343,7 +343,7 @@ export class BaseMenuLayout extends St.BoxLayout {
     }
 
     _loadCategory(categoryMenuItem, dir) {
-        const showNewAppsIndicator = !ArcMenuManager.settings.get_boolean('disable-recently-installed-apps');
+        const showNewApps = ArcMenuManager.settings.get_boolean('show-recently-installed-apps');
         const iter = dir.iter();
         let nextType;
         while ((nextType = iter.next()) !== GMenu.TreeItemType.INVALID) {
@@ -378,7 +378,7 @@ export class BaseMenuLayout extends St.BoxLayout {
                 }
                 categoryMenuItem.appList.push(app);
 
-                if (showNewAppsIndicator && item.isRecentlyInstalled)
+                if (showNewApps && item.isRecentlyInstalled)
                     categoryMenuItem.setNewAppIndicator(true);
             } else if (nextType === GMenu.TreeItemType.DIRECTORY) {
                 const subdir = iter.get_directory();
@@ -407,8 +407,8 @@ export class BaseMenuLayout extends St.BoxLayout {
             categoryMenuItem.populateMenu();
         } else {
             categoryMenuItem.appList.sort((a, b) => {
-                const nameA = a.get_name();
-                const nameB = b.get_name();
+                const nameA = Utils.getAppDisplayName(a);
+                const nameB = Utils.getAppDisplayName(b);
                 return nameA.localeCompare(nameB);
             });
         }
@@ -416,8 +416,8 @@ export class BaseMenuLayout extends St.BoxLayout {
     }
 
     setNewAppIndicator() {
-        const disabled = ArcMenuManager.settings.get_boolean('disable-recently-installed-apps');
-        if (!disabled && this.categoryDirectories) {
+        const showNewApps = ArcMenuManager.settings.get_boolean('show-recently-installed-apps');
+        if (showNewApps && this.categoryDirectories) {
             for (const categoryMenuItem of this.categoryDirectories.values()) {
                 categoryMenuItem.setNewAppIndicator(false);
                 for (let i = 0; i < categoryMenuItem.appList.length; i++) {
@@ -934,7 +934,7 @@ export class BaseMenuLayout extends St.BoxLayout {
                 parent.remove_child(item);
 
             if (groupAllAppsAlphabetically && category === Constants.CategoryType.ALL_PROGRAMS) {
-                const appNameFirstChar = app.get_name().charAt(0).toLowerCase();
+                const appNameFirstChar = Utils.getAppDisplayName(app).charAt(0).toLowerCase();
                 if (currentCharacter !== appNameFirstChar) {
                     currentCharacter = appNameFirstChar;
 
