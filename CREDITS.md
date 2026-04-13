@@ -10,5 +10,5 @@
 - [Arch Linux](https://archlinux.org/)
 
 ## Mirror hosters 
-- [Mousecorp Open Source Labs](https://mousecorp.xyz), Mirroring service for nyarch origin mirror across the world on their CDN.
+- [Mousecorp Open Source Labs](https://mousecorp.xyz), Mirroring service for nyarch origin mirror across the world on their CDN operated by NetByte.
 - Hiroki, package hosting in France.
