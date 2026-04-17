@@ -8,3 +8,7 @@
 ## Projects that helped us or we rely on
 - Ezarcher [Sourceforge](https://sourceforge.net/projects/ezarch/), main Arch Linux install script and ISO creation
 - [Arch Linux](https://archlinux.org/)
+
+## Mirror hosters 
+- [Mousecorp Open Source Labs](https://mousecorp.xyz), Mirroring service for nyarch origin mirror across the world on their CDN.
+- Hiroki, package hosting in France.
