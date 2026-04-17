@@ -8,7 +8,7 @@
 - Default wallpaper: upscaled version of [this wallpaper by RakhaKun](https://wallhaven.cc/w/mpg7qk).
 - Other wallpapers: [Nyarch logo wallpapers](https://www.reddit.com/r/LinuxFurries/comments/p27nww/i_created_wallpapers_for_nyarch_and_debinyan/) [The other catgirl wallpaper](https://www.wallpaperflare.com/anime-girls-picture-in-picture-cat-girl-blonde-animal-ears-wallpaper-uithg) [24.04 wallpaper](https://www.pixiv.net/en/users/14801956)
 - Calamares background: modified version of [this](https://www.reddit.com/r/fatestaynight/comments/ctjw8u/adorable_penguin/)
-
+- Grub theme mascot: [Acchan by RavioliMavioli](https://krita-artists.org/t/archlinux-chan/49206)
 
 ## Projects that helped us or we rely on
 - [Gnome Project](https://www.gnome.org/) for desktop environment
