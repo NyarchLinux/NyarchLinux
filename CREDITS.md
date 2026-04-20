@@ -5,6 +5,7 @@
 [Also take a look at Gnome spin specific credits](https://github.com/NyarchLinux/NyarchLinux/blob/main/Gnome/CREDITS.md)
 ## Art contributors
 - Logo and and distribution name: [Reddit Post](https://www.reddit.com/r/linuxmasterrace/comments/lxfg9j/someone_posted_uwuntu_so_i_made_nyarch/)
+- Plymouth theme adaptation: [Cloveian](https://github.com/Cloveian)
 ## Projects that helped us or we rely on
 - Ezarcher [Sourceforge](https://sourceforge.net/projects/ezarch/), main Arch Linux install script and ISO creation
 - [Arch Linux](https://archlinux.org/)
