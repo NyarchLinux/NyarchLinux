@@ -1,6 +1,6 @@
 [Plymouth Theme]
-Name=Arch Logo New
-Description=A theme that features a blank background with a logo.
+Name=nyarch-logo
+Description=Nyarch Linux boot splash with face-cycling logo and paw print password
 ModuleName=script
 
 [script]

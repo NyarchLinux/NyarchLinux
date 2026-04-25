@@ -5,11 +5,15 @@
 [Also take a look at Gnome spin specific credits](https://github.com/NyarchLinux/NyarchLinux/blob/main/Gnome/CREDITS.md)
 ## Art contributors
 - Logo and and distribution name: [Reddit Post](https://www.reddit.com/r/linuxmasterrace/comments/lxfg9j/someone_posted_uwuntu_so_i_made_nyarch/)
+
 - GRUB theme mascot: [Acchan by RavioliMavioli](https://krita-artists.org/t/archlinux-chan/49206)
+
+- Plymouth theme adaptation: [Cloveian](https://github.com/Cloveian)
+
 ## Projects that helped us or we rely on
 - Ezarcher [Sourceforge](https://sourceforge.net/projects/ezarch/), main Arch Linux install script and ISO creation
 - [Arch Linux](https://archlinux.org/)
 
--## Mirror hosters 
--- [Mousecorp Open Source Labs](https://mousecorp.xyz), Mirroring service for nyarch origin mirror across the world on their CDN.
--- Hiroki, package hosting in France.
+## Mirror hosters 
+- [Mousecorp Open Source Labs](https://mousecorp.xyz), Mirroring service for nyarch origin mirror across the world on their CDN.
+- Hiroki, package hosting in France.
