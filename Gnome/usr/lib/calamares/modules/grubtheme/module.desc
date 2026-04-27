@@ -1,0 +1,6 @@
+---
+type: job
+name: grubtheme
+interface: python
+script: main.py
+noconfig: true
