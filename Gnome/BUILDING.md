@@ -23,6 +23,8 @@ And you will find the ISO in ./out
 - Every package in packages.x86_64 will be installed
 - Also take a look at ./etc directory for configuration files
 ### Adding custom packages
+**Outdated**: The information here is outdated. We now use [Nyarch Repo](https://github.com/NyarchLinux/nyarch-repo) for custom packages.
+
 - You can install flatpaks by just installing it on your system
 - First of all you need a PKGBUILD file, write it or download it from the internet, you can download them from [Arch User Repository](https://aur.archlinux.org/). Pay attention to some broken packages though.
 - Put it into a folder and run `makepkg` 

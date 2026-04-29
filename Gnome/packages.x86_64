@@ -310,6 +310,7 @@ gdm
 # Calamares dependencies (not listed elsewhere)
 calamares
 ckbcomp
+kcrash
 # AUR
 yay-bin
 # Flatpak
