@@ -33,4 +33,5 @@ Please note that we want to make the different spins as coherent as possible, so
 For example, in the Gnome spin Komikku, a GTK application to read mangas, is preinstalled. In a KDE Plasma spin, if there is a similar application written using QT, it should be included.
 
 ## Mirror lists: 
-[Ezmirror](https://ezmirror.xyz/nyarch/) Tier 0 
+[germany](https://git.nerdvpn.de/meowl/NyarchLinux) Tier 0 
+[us](https://git.prometheus.systems/meowl/NyarchLinux) tier 0
