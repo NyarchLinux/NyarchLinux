@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
+SPDX-License-Identifier: CC0-1.0
+-->
+
+<schemalist>
+
+  <schema path="/org/gnome/shell/extensions/desktop-cube/" id="org.gnome.shell.extensions.desktop-cube">
+
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    <!-- general settings                                                              -->
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+
+    <key name="window-parallax" type="d">
+      <default>0.5</default>
+      <summary>Window Parallax</summary>
+      <description>The strength of the parallax effect of windows.</description>
+    </key>
+
+    <key name="last-first-gap" type="b">
+      <default>true</default>
+      <summary>Last First Gap</summary>
+      <description>Add a gap between last and first workspace.</description>
+    </key>
+
+    <key name="do-explode" type="b">
+      <default>true</default>
+      <summary>Do Explode</summary>
+      <description>Explode the cube on vertical rotations.</description>
+    </key>
+
+    <key name="per-monitor-perspective" type="b">
+      <default>true</default>
+      <summary>Per Monitor Perspective</summary>
+      <description>Tweak the projection matrices for better multi-monitor support.</description>
+    </key>
+
+    <key name="background-panorama" type="s">
+      <default>""</default>
+      <summary>Background Panorama</summary>
+      <description>The texture used for the skybox.</description>
+    </key>
+
+    <key name="edge-switch-pressure" type="i">
+      <default>200</default>
+      <summary>Edge Switch Pressure</summary>
+      <description>The amount of pressure required to switch workspaces when dragging a window.</description>
+    </key>
+
+    <key name="mouse-rotation-speed" type="d">
+      <default>2.0</default>
+      <summary>Mouse Rotation Speed</summary>
+      <description>A multiplier for the desktop cube rotation when dragged.</description>
+    </key>
+
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    <!-- desktop cube settings                                                         -->
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+
+    <key name="enable-desktop-dragging" type="b">
+      <default>true</default>
+      <summary>Enable Desktop Dragging</summary>
+      <description>Desktop: Rotate the cube with the left mouse button.</description>
+    </key>
+
+    <key name="enable-panel-dragging" type="b">
+      <default>true</default>
+      <summary>Enable Panel Dragging</summary>
+      <description>Panel: Rotate the cube with the left mouse button.</description>
+    </key>
+
+    <key name="enable-desktop-edge-switch" type="b">
+      <default>true</default>
+      <summary>Enable Desktop Edge Drag Switch</summary>
+      <description>Switch workspaces when dragging a window over the desktop's edge.</description>
+    </key>
+
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    <!-- overview cube settings                                                        -->
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+
+    <key name="enable-overview-dragging" type="b">
+      <default>true</default>
+      <summary>Enable Overview Dragging</summary>
+      <description>Overview: Rotate the cube with the left mouse button.</description>
+    </key>
+
+    <key name="enable-overview-edge-switch" type="b">
+      <default>true</default>
+      <summary>Enable Overview Edge Drag Switch</summary>
+      <description>Switch workspaces when dragging a window over the overview's edge.</description>
+    </key>
+
+    <key name="workpace-separation" type="i">
+      <default>80</default>
+      <summary>Workspace Separation</summary>
+      <description>The pixel gap between adjacent workspaces.</description>
+    </key>
+
+    <key name="horizontal-stretch" type="i">
+      <default>80</default>
+      <summary>Horizontal Stretch</summary>
+      <description>The widening factor which ensures that cube sides are visible from the front.</description>
+    </key>
+
+    <key name="active-workpace-opacity" type="i">
+      <default>255</default>
+      <summary>Active Workspace Opacity</summary>
+      <description>The opacity of the front facing workspace.</description>
+    </key>
+
+    <key name="inactive-workpace-opacity" type="i">
+      <default>200</default>
+      <summary>Inactive Workspace Opacity</summary>
+      <description>The opacity of the cube sides.</description>
+    </key>
+
+  </schema>
+</schemalist>

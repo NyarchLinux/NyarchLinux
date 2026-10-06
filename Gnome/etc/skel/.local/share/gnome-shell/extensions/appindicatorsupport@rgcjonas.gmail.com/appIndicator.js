@@ -19,6 +19,7 @@ import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import GdkPixbuf from 'gi://GdkPixbuf';
 import Gio from 'gi://Gio';
+import Shell from 'gi://Shell';
 import St from 'gi://St';
 
 import * as Params from 'resource:///org/gnome/shell/misc/params.js';
@@ -128,6 +129,9 @@ class AppIndicatorProxy extends DBusProxy {
     }
 
     destroy() {
+        delete this._appInfo;
+        delete this._fakeAppInfo;
+
         const cachedProperties = this.get_cached_property_names();
         if (cachedProperties) {
             cachedProperties.forEach(propertyName =>
@@ -170,6 +174,15 @@ class AppIndicatorProxy extends DBusProxy {
                     return v ? v.deep_unpack() : null;
                 },
             });
+
+            const value = this.get_cached_property(name);
+            if (value) {
+                this._queuePropertyUpdate(name, value,
+                    {skipEqualityCheck: true}).catch(e => {
+                    if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
+                        logError(e);
+                });
+            }
         }
 
         this._propertiesList.push(name);
@@ -186,8 +199,16 @@ class AppIndicatorProxy extends DBusProxy {
 
     // The Author of the spec didn't like the PropertiesChanged signal, so he invented his own
     async _refreshOwnProperties(prop) {
+        const props = [prop, `${prop}Name`, `${prop}Pixmap`,
+            `${prop}AccessibleDesc`];
+
+        // NewIconThemePath is not a standard signal, so on icon update we need
+        // to also refresh the theme path.
+        if (prop.endsWith('Icon'))
+            props.unshift('IconThemePath');
+
         await Promise.all(
-            [prop, `${prop}Name`, `${prop}Pixmap`, `${prop}AccessibleDesc`].filter(p =>
+            props.filter(p =>
                 this._propertiesList.includes(p)).map(async p => {
                 try {
                     await this.refreshProperty(p, {
@@ -214,7 +235,7 @@ class AppIndicatorProxy extends DBusProxy {
             return;
 
         if (this.status === SNIStatus.PASSIVE &&
-            ![...AppIndicator.NEEDED_PROPERTIES, 'Status'].includes(property)) {
+            !AppIndicator.NEEDED_PROPERTIES.includes(property)) {
             this._accumulatedProperties.add(property);
             return;
         }
@@ -405,7 +426,7 @@ class AppIndicatorProxy extends DBusProxy {
  */
 export class AppIndicator extends Signals.EventEmitter {
     static get NEEDED_PROPERTIES() {
-        return ['Id', 'Menu'];
+        return ['Id', 'Menu', 'Status'];
     }
 
     constructor(service, busName, object) {
@@ -413,6 +434,7 @@ export class AppIndicator extends Signals.EventEmitter {
 
         this.isReady = false;
         this.busName = busName;
+        this._service = service;
         this._uniqueId = Util.indicatorId(service, busName, object);
 
         this._cancellable = new Gio.Cancellable();
@@ -423,10 +445,11 @@ export class AppIndicator extends Signals.EventEmitter {
         Util.connectSmart(this._proxy, 'g-properties-changed', this, this._onPropertiesChanged);
         Util.connectSmart(this._proxy, 'notify::g-name-owner', this, this._nameOwnerChanged);
 
-        if (this.uniqueId === service) {
-            this._nameWatcher = new Util.NameWatcher(service);
-            Util.connectSmart(this._nameWatcher, 'changed', this, this._nameOwnerChanged);
-        }
+        const appSystem = global.get_app_system();
+        Util.connectSmart(appSystem, 'installed-changed', this,
+            () => this._updateAppInfo(this._cancellable));
+        Util.connectSmart(appSystem, 'app-state-changed', this,
+            () => this._updateAppInfo(this._cancellable));
     }
 
     async _setupProxy() {
@@ -435,13 +458,16 @@ export class AppIndicator extends Signals.EventEmitter {
         try {
             await this._proxy.initAsync(cancellable);
             this._checkIfReady();
-            await this._checkNeededProperties();
+            await this._proxy.refreshAllProperties();
         } catch (e) {
             if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED)) {
                 logError(e, `While initalizing proxy for ${this._uniqueId}`);
                 this.destroy();
             }
         }
+
+        if (cancellable.is_cancelled())
+            return;
 
         // We try to lookup the activate method to see if the app supports it
         try {
@@ -461,15 +487,42 @@ export class AppIndicator extends Signals.EventEmitter {
                     `${this.uniqueId}, check for Activation support: ${e.message}`);
             }
         }
+    }
 
+    async _updateAppInfo(cancellable) {
+        delete this._fakeAppInfo;
+
+        if (!this.hasNameOwner) {
+            delete this._appInfo;
+            return;
+        } else if (this._appInfo) {
+            return;
+        }
+
+        let commandLine;
         try {
-            this._commandLine = await DBusUtils.getProcessName(this.busName,
-                cancellable, GLib.PRIORITY_LOW);
-        } catch (e) {
-            if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED)) {
-                Util.Logger.debug(
-                    `${this.uniqueId}, failed getting command line: ${e.message}`);
+            const pid = await DBusUtils.getProcessId(this.busName, cancellable);
+            this._appInfo =
+                Shell.WindowTracker.get_default().get_app_from_pid(pid)?.appInfo;
+
+            if (!this._appInfo) {
+                commandLine = await DBusUtils.getProcessNameForPid(pid,
+                    cancellable, GLib.PRIORITY_LOW);
             }
+        } catch (e) {
+            if (e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
+                return;
+
+            Util.Logger.debug(
+                `${this.uniqueId}, failed getting command line: ${e.message}\n${e.stack}`);
+        }
+
+        if (this._appInfo) {
+            this.emit('accessible-name');
+        } else {
+            this._fakeAppInfo = Gio.AppInfo.create_from_commandline(
+                commandLine ?? 'true', this.title ?? this.id,
+                Gio.AppInfoCreateFlags.SUPPORTS_STARTUP_NOTIFICATION);
         }
     }
 
@@ -495,12 +548,11 @@ export class AppIndicator extends Signals.EventEmitter {
         return false;
     }
 
-    async _checkNeededProperties() {
+    async _checkNeededProperties(cancellable) {
         if (this.id && this.menuPath)
             return true;
 
         const MAX_RETRIES = 3;
-        const cancellable = this._cancellable;
         for (let checks = 0; checks < MAX_RETRIES; ++checks) {
             this._delayCheck = new PromiseUtils.TimeoutSecondsPromise(1,
                 GLib.PRIORITY_DEFAULT_IDLE, cancellable);
@@ -529,18 +581,26 @@ export class AppIndicator extends Signals.EventEmitter {
     }
 
     async _nameOwnerChanged() {
+        const cancellable = this._cancellable;
+
         if (!this.hasNameOwner) {
             this._checkIfReady();
         } else {
             try {
-                await this._checkNeededProperties();
+                await this._checkNeededProperties(cancellable);
             } catch (e) {
                 if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED)) {
                     Util.Logger.warn(`${this.uniqueId}, Impossible to get basic properties: ${e}`);
-                    this.checkAlive();
+                    this.checkAlive().catch(err =>
+                        Util.Logger.warn(`${this.uniqueId}, Failed to check if alive: ${err}`));
                 }
             }
         }
+
+        if (cancellable.is_cancelled())
+            return;
+
+        this._updateAppInfo(cancellable).catch(logError);
 
         this.emit('name-owner-changed');
     }
@@ -558,6 +618,10 @@ export class AppIndicator extends Signals.EventEmitter {
         return this._uniqueId;
     }
 
+    get service() {
+        return this._service;
+    }
+
     get status() {
         return this._proxy.Status;
     }
@@ -568,9 +632,10 @@ export class AppIndicator extends Signals.EventEmitter {
 
     get accessibleName() {
         const accessibleDesc = this.status === SNIStatus.NEEDS_ATTENTION
-            ? this._proxy.AccessibleDesc : this._proxy.IconAccessibleDesc;
+            ? this._proxy.AttentionAccessibleDesc : this._proxy.IconAccessibleDesc;
 
-        return accessibleDesc || this.title;
+        return (accessibleDesc || undefined) ?? this.label ??
+            this._appInfo?.get_display_name() ?? this.title;
     }
 
     get menuPath() {
@@ -611,9 +676,7 @@ export class AppIndicator extends Signals.EventEmitter {
     }
 
     get hasNameOwner() {
-        if (this._nameWatcher && !this._nameWatcher.nameOnBus)
-            return false;
-        return !!this._proxy.g_name_owner;
+        return !!this._proxy?.g_name_owner;
     }
 
     get cancellable() {
@@ -696,8 +759,10 @@ export class AppIndicator extends Signals.EventEmitter {
             }
 
             // the label will be handled elsewhere
-            if (property === 'XAyatanaLabel')
+            if (property === 'XAyatanaLabel') {
                 signalsToEmit.add('label');
+                signalsToEmit.add('accessible-name');
+            }
 
             if (property === 'Menu') {
                 if (!checkIfReadyChanged() && this.isReady)
@@ -733,11 +798,8 @@ export class AppIndicator extends Signals.EventEmitter {
         this._cancellable.cancel();
         this._invalidatedPixmapsIcons.clear();
 
-        if (this._nameWatcher)
-            this._nameWatcher.destroy();
         delete this._cancellable;
         delete this._proxy;
-        delete this._nameWatcher;
     }
 
     _getPixmapProperty(iconType) {
@@ -766,10 +828,14 @@ export class AppIndicator extends Signals.EventEmitter {
 
     _getActivationToken(timestamp) {
         const launchContext = global.create_app_launch_context(timestamp, -1);
-        const fakeAppInfo = Gio.AppInfo.create_from_commandline(
-            this._commandLine || 'true', this.id,
-            Gio.AppInfoCreateFlags.SUPPORTS_STARTUP_NOTIFICATION);
-        return [launchContext, launchContext.get_startup_notify_id(fakeAppInfo, [])];
+        // Prevent busy cursor, null appInfo is supported by mutter 49 and onwards
+        const appInfo = Util.versionCheck(49)
+            ? null : this._appInfo ?? this._fakeAppInfo;
+
+        const startupNotifyID = appInfo !== undefined
+            ? launchContext.get_startup_notify_id(appInfo, []) : null;
+
+        return [launchContext, startupNotifyID];
     }
 
     async provideActivationToken(timestamp) {
@@ -777,6 +843,9 @@ export class AppIndicator extends Signals.EventEmitter {
             return;
 
         const [launchContext, activationToken] = this._getActivationToken(timestamp);
+        if (!activationToken)
+            return;
+
         try {
             await this._proxy.ProvideXdgActivationTokenAsync(activationToken,
                 this._cancellable);
@@ -786,7 +855,7 @@ export class AppIndicator extends Signals.EventEmitter {
 
             if (e.matches(Gio.DBusError, Gio.DBusError.UNKNOWN_METHOD))
                 this._hasProvideXdgActivationToken = false;
-            else
+            else if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
                 Util.Logger.warn(`${this.id}, failed to provide activation token: ${e.message}`);
         }
     }
@@ -1088,8 +1157,10 @@ class AppIndicatorsIconActor extends St.Icon {
         const id = `${iconType}:${iconName}@${iconSize * iconScaling}:${themePath || ''}`;
         let gicon = this._iconCache.get(id);
 
-        if (gicon)
+        if (gicon) {
+            this._cancelLoadingByType(iconType);
             return gicon;
+        }
 
         const iconData = this._getIconData(iconName, themePath, iconSize, iconScaling);
         const loadingId = iconData.file ? iconData.file.get_path() : id;

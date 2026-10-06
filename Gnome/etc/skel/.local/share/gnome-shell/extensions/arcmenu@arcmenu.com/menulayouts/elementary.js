@@ -21,15 +21,14 @@ export class Layout extends BaseMenuLayout {
             search_results_spacing: 4,
             column_spacing: 15,
             row_spacing: 15,
-            default_menu_width: 750,
-            icon_grid_size: Constants.GridIconSize.LARGE,
+            default_menu_width: 765,
             ...getOrientationProp(true),
-            category_icon_size: Constants.MEDIUM_ICON_SIZE,
-            apps_icon_size: Constants.EXTRA_LARGE_ICON_SIZE,
-            quicklinks_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
-            buttons_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
-            pinned_apps_icon_size: Constants.MEDIUM_ICON_SIZE,
         });
+
+        this.iconSizeGrid = Constants.GridIconSizes.LARGE;
+        this.iconSizeApps = Constants.IconSizes.LARGE;
+        this.iconSizeShortcuts = Constants.IconSizes.SMALL;
+        this.iconSizeButtons = Constants.IconSizes.SMALL;
 
         this.applicationsBox = new St.BoxLayout({
             ...getOrientationProp(true),

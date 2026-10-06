@@ -1,4 +1,4 @@
-#!/usr/bin/env gjs
+#!/usr/bin/env -S gjs -m
 
 /* DING: Desktop Icons New Generation for GNOME Shell
  *
@@ -17,11 +17,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+// SPDX-License-Identifier: GPL-3.0-only
 'use strict';
-imports.gi.versions.Gtk = '3.0';
-const Gtk = imports.gi.Gtk;
-const Gio = imports.gi.Gio;
-const GLib = imports.gi.GLib;
+import Gdk from 'gi://Gdk?version=4.0';
+import Gtk from 'gi://Gtk?version=4.0';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import Adw from 'gi://Adw?version=1';
 
 let desktops = [];
 let lastCommand = null;
@@ -29,6 +31,10 @@ let codePath = '.';
 let errorFound = false;
 let asDesktop = false;
 let primaryIndex = 0;
+
+const fileProto = imports.system.version >= 17200
+    ? Gio.File.prototype : Gio._LocalFilePrototype;
+Gio._promisify(fileProto, 'load_bytes_async');
 
 /**
  *
@@ -55,13 +61,13 @@ function printUsage() {
 
 /**
  *
- * @param argv
+ * @param {Array} argv
  */
 function parseCommandLine(argv) {
     desktops = [];
     let data;
-    for (let arg of argv) {
-        if (lastCommand == null) {
+    for (const arg of argv) {
+        if (lastCommand === null) {
             switch (arg) {
             case '-h':
             case '-H':
@@ -84,16 +90,16 @@ function parseCommandLine(argv) {
             }
             continue;
         }
-        if (errorFound) {
+        if (errorFound)
             break;
-        }
+
         switch (lastCommand) {
         case '-P':
             codePath = arg;
             break;
         case '-D':
             data = arg.split(':');
-            if (data.length != 10) {
+            if (data.length !== 10) {
                 print('Incorrect number of parameters for -D\n');
                 printUsage();
                 errorFound = true;
@@ -116,6 +122,10 @@ function parseCommandLine(argv) {
                 marginLeft: parseInt(data[7]),
                 marginRight: parseInt(data[8]),
                 monitorIndex: parseInt(data[9]),
+                windowMarginTop: 0,
+                windowMarginBottom: 0,
+                windowMarginLeft: 0,
+                windowMarginRight: 0,
             });
             break;
         case '-M':
@@ -124,15 +134,45 @@ function parseCommandLine(argv) {
         }
         lastCommand = null;
     }
-    if ((desktops.length == 0) && !asDesktop) {
+    if ((desktops.length === 0) && !asDesktop) {
         /* if no desktop list is provided, like when launching the program in stand-alone mode,
          * configure a 1280x720 desktop
          */
-        desktops.push({x: 0, y: 0, width: 1280, height: 720, zoom: 1, marginTop: 0, marginBottom: 0, marginLeft: 0, marginRight: 0, monitorIndex: 0});
+        desktops.push({
+            x: 0,
+            y: 0,
+            width: 1900,
+            height: 1000,
+            zoom: 1,
+            marginTop: 0,
+            marginBottom: 0,
+            marginLeft: 0,
+            marginRight: 0,
+            monitorIndex: 0,
+            windowMarginTop: 0,
+            windowMarginBottom: 0,
+            windowMarginLeft: 0,
+            windowMarginRight: 0,
+        });
+        desktops.push({
+            x: 0,
+            y: 0,
+            width: 1800,
+            height: 1000,
+            zoom: 1,
+            marginTop: 0,
+            marginBottom: 0,
+            marginLeft: 0,
+            marginRight: 0,
+            monitorIndex: 1,
+            windowMarginTop: 0,
+            windowMarginBottom: 0,
+            windowMarginLeft: 0,
+            windowMarginRight: 0,
+        });
     }
-    for (let desktop of desktops) {
+    for (const desktop of desktops)
         desktop.primaryMonitor = primaryIndex;
-    }
 }
 
 parseCommandLine(ARGV);
@@ -141,10 +181,10 @@ parseCommandLine(ARGV);
 
 imports.searchPath.unshift(codePath);
 
-const DBusUtils = imports.dbusUtils;
-const Prefs = imports.preferences;
+import * as DBusUtils from './dbusUtils.js';
+import * as Prefs from './preferences.js';
 const Gettext = imports.gettext;
-const PromiseUtils = imports.promiseUtils;
+import * as PromiseUtils from './promiseUtils.js';
 
 PromiseUtils._promisify({keepOriginal: true}, Gio.FileEnumerator.prototype, 'close_async');
 PromiseUtils._promisify({keepOriginal: true}, Gio.FileEnumerator.prototype, 'next_files_async');
@@ -153,30 +193,37 @@ PromiseUtils._promisify({keepOriginal: true}, Gio._LocalFilePrototype, 'enumerat
 PromiseUtils._promisify({keepOriginal: true}, Gio._LocalFilePrototype, 'make_directory_async');
 PromiseUtils._promisify({keepOriginal: true}, Gio._LocalFilePrototype, 'query_info_async');
 PromiseUtils._promisify({keepOriginal: true}, Gio._LocalFilePrototype, 'set_attributes_async');
+PromiseUtils._promisify({keepOriginal: true}, Gdk.Drop.prototype, 'read_async');
+PromiseUtils._promisify({keepOriginal: true}, Gdk.Drop.prototype, 'read_value_async');
+PromiseUtils._promisify({keepOriginal: true}, Gdk.Clipboard.prototype, 'read_async');
 
-let localePath = GLib.build_filenamev([codePath, '..', 'locale']);
-if (Gio.File.new_for_path(localePath).query_exists(null)) {
+const localePath = GLib.build_filenamev([codePath, '..', 'locale']);
+if (Gio.File.new_for_path(localePath).query_exists(null))
     Gettext.bindtextdomain('ding', localePath);
-}
 
-const DesktopManager = imports.desktopManager;
+
+import * as DesktopManager from './desktopManager.js';
 
 var desktopManager = null;
 var dbusManager = null;
 
 // Use different AppIDs to allow to test it from a command line while the main desktop is also running from the extension
-const dingApp = new Gtk.Application({
+const dingApp = new Adw.Application({
     application_id: asDesktop ? 'com.rastersoft.ding' : 'com.rastersoft.dingtest',
     flags: Gio.ApplicationFlags.HANDLES_COMMAND_LINE | Gio.ApplicationFlags.REPLACE,
 });
 
 dingApp.connect('startup', () => {
     Prefs.init(codePath);
-    dbusManager = DBusUtils.init();
+    dbusManager = DBusUtils.init(dingApp);
 });
 
 dingApp.connect('activate', () => {
     if (!desktopManager) {
+        const iconsPath = GLib.build_filenamev([codePath, 'icons']);
+        const display = Gdk.Display.get_default();
+        const iconsTheme = Gtk.IconTheme.get_for_display(display);
+        iconsTheme.add_search_path(iconsPath);
         desktopManager = new DesktopManager.DesktopManager(dingApp,
             dbusManager,
             desktops,
@@ -191,23 +238,25 @@ dingApp.connect('command-line', (app, commandLine) => {
     argv = commandLine.get_arguments();
     parseCommandLine(argv);
     if (!errorFound) {
-        if (commandLine.get_is_remote()) {
+        if (commandLine.get_is_remote())
             desktopManager.updateGridWindows(desktops);
-        } else {
+        else
             dingApp.activate();
-        }
+
         commandLine.set_exit_status(0);
     } else {
         commandLine.set_exit_status(1);
     }
 });
 
-if (!errorFound) {
+if (!errorFound)
     dingApp.run(ARGV);
-}
 
-if (!errorFound) {
+
+if (!errorFound)
+    // eslint-disable-next-line
     0;
-} else {
+else
+    // eslint-disable-next-line
     1;
-}
+

@@ -30,6 +30,7 @@ const TransparencyMode = {
 
 const Labels = Object.freeze({
     TRANSPARENCY: Symbol('transparency'),
+    THEME_CHANGED: Symbol('theme-changed'),
 });
 
 export const PositionStyleClass = Object.freeze([
@@ -55,11 +56,6 @@ export class ThemeManager {
         this._transparency = new Transparency(dock);
 
         this._signalsHandler.add([
-            // When theme changes re-obtain default background color
-            St.ThemeContext.get_for_stage(global.stage),
-            'changed',
-            this.updateCustomTheme.bind(this),
-        ], [
             // update :overview pseudoclass
             Main.overview,
             'showing',
@@ -70,7 +66,32 @@ export class ThemeManager {
             this._onOverviewHiding.bind(this),
         ]);
 
-        this._updateCustomStyleClasses();
+        this._signalsHandler.addWithLabel(Labels.THEME_CHANGED,
+            St.ThemeContext.get_for_stage(global.stage), 'changed',
+            () => this._queueUpdateCustomTheme(),
+            Utils.SignalsHandlerFlags.CONNECT_AFTER);
+
+        const maybeUpdateCustomTheme = () => {
+            if (this._actor.mapped) {
+                this._signalsHandler.unblockWithLabel(Labels.THEME_CHANGED);
+                this._queueUpdateCustomTheme();
+            } else {
+                this._dequeueUpdateCustomTheme();
+                this._signalsHandler.blockWithLabel(Labels.THEME_CHANGED);
+            }
+        };
+
+        this._signalsHandler.add(this._actor, 'notify::mapped',
+            () => maybeUpdateCustomTheme(),
+            Utils.SignalsHandlerFlags.CONNECT_AFTER);
+
+        maybeUpdateCustomTheme();
+
+        // Set the initial overview pseudo-class state.
+        if (Main.overview.visible)
+            this._onOverviewShowing();
+        else
+            this._onOverviewHiding();
 
         // destroy themeManager when the managed actor is destroyed (e.g. extension unload)
         // in order to disconnect signals
@@ -80,7 +101,25 @@ export class ThemeManager {
     destroy() {
         this.emit('destroy');
         this._transparency.destroy();
-        this._destroyed = true;
+        this._dequeueUpdateCustomTheme();
+    }
+
+    _queueUpdateCustomTheme() {
+        if (this._updateLater)
+            return;
+
+        this._updateLater = Utils.laterAdd(Meta.LaterType.BEFORE_REDRAW, () => {
+            this._updateLater = 0;
+            this.updateCustomTheme();
+        });
+    }
+
+    _dequeueUpdateCustomTheme() {
+        if (!this._updateLater)
+            return;
+
+        Utils.laterRemove(this._updateLater);
+        delete this._updateLater;
     }
 
     _onOverviewShowing() {
@@ -122,11 +161,6 @@ export class ThemeManager {
     }
 
     _getDefaultColors() {
-        // Prevent shell crash if the actor is not on the stage.
-        // It happens enabling/disabling repeatedly the extension
-        if (!this._dash._background.get_stage())
-            return [null, null];
-
         // Remove custom style
         const oldStyle = this._dash._background.get_style();
         this._dash._background.set_style(null);
@@ -224,8 +258,9 @@ export class ThemeManager {
     }
 
     updateCustomTheme() {
-        if (this._destroyed)
-            throw new Error(`Impossible to update a destroyed ${this.constructor.name}`);
+        if (!this._actor.mapped)
+            return;
+
         this._updateCustomStyleClasses();
         this._updateDashOpacity();
         this._updateDashColor();
@@ -237,11 +272,6 @@ export class ThemeManager {
      * Reimported back and adapted from atomdock
      */
     _adjustTheme() {
-        // Prevent shell crash if the actor is not on the stage.
-        // It happens enabling/disabling repeatedly the extension
-        if (!this._dash._background.get_stage())
-            return;
-
         const {settings} = Docking.DockManager;
 
         // Remove prior style edits
@@ -307,7 +337,7 @@ export class ThemeManager {
             'extend-height',
             'force-straight-corner'];
 
-        this._signalsHandler.add(...keys.map(key => [
+        this._signalsHandler.addWithLabel(Labels.THEME_CHANGED, ...keys.map(key => [
             Docking.DockManager.settings,
             `changed::${key}`,
             () => this.updateCustomTheme(),
@@ -479,7 +509,7 @@ class Transparency {
          * */
         let factor = 0;
         if (!Docking.DockManager.settings.dockFixed &&
-            this._dock.getDockState() === Docking.State.HIDDEN)
+            this._dock.dockState === Docking.State.HIDDEN)
             factor = 1;
         const [leftCoord, topCoord] = this._actor.get_transformed_position();
         let threshold;

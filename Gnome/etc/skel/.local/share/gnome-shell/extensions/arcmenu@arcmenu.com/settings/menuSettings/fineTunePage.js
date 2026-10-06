@@ -11,8 +11,8 @@ import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions
 
 export const FineTunePage = GObject.registerClass(
 class ArcMenuFineTunePage extends SubPage {
-    _init(settings, params) {
-        super._init(settings, params);
+    _init(extension, settings, params) {
+        super._init(extension, settings, params);
 
         // Store settings used on this page to reset to default values.
         const settingsData = [];
@@ -57,6 +57,10 @@ class ArcMenuFineTunePage extends SubPage {
             _('Launching an app activates its existing window if one is open; otherwise, it launches a new instance. Hold Ctrl while launching or middle-click to open a new window.'));
         miscGroup.add(activateOnLaunchRow);
 
+        const keepOpenCtrlClickRow = createSwitchRow('keep-open-on-ctrl-click', _('Keep ArcMenu Open on Ctrl+Click'),
+            _('Prevents the menu from closing when activating items while holding Ctrl.'));
+        miscGroup.add(keepOpenCtrlClickRow);
+
         const scrollviewGroup = new Adw.PreferencesGroup({
             title: _('Scrollview Options'),
         });
@@ -86,35 +90,48 @@ class ArcMenuFineTunePage extends SubPage {
         iconTypes.append(_('Full Color'));
         iconTypes.append(_('Symbolic'));
         const categoryIconTypeRow = new Adw.ComboRow({
-            title: _('Category Icon Type'),
-            subtitle: _('Some icon themes may not include selected icon type'),
+            title: _('Category Icons'),
             model: iconTypes,
-            selected: this._settings.get_enum('category-icon-type'),
+            selected: this._settings.get_enum('icon-style-categories'),
         });
         categoryIconTypeRow.connect('notify::selected', widget => {
-            this._settings.set_enum('category-icon-type', widget.selected);
+            this._settings.set_enum('icon-style-categories', widget.selected);
         });
         iconStyleGroup.add(categoryIconTypeRow);
 
         settingsData.push({
-            key: 'category-icon-type',
+            key: 'icon-style-categories',
             widget: categoryIconTypeRow,
         });
 
         const shortcutsIconTypeRow = new Adw.ComboRow({
-            title: _('Shortcuts Icon Type'),
-            subtitle: _('Some icon themes may not include selected icon type'),
+            title: _('Shortcut Icons'),
             model: iconTypes,
-            selected: this._settings.get_enum('shortcut-icon-type'),
+            selected: this._settings.get_enum('icon-style-shortcuts'),
         });
         shortcutsIconTypeRow.connect('notify::selected', widget => {
-            this._settings.set_enum('shortcut-icon-type', widget.selected);
+            this._settings.set_enum('icon-style-shortcuts', widget.selected);
         });
         iconStyleGroup.add(shortcutsIconTypeRow);
 
         settingsData.push({
-            key: 'shortcut-icon-type',
+            key: 'icon-style-shortcuts',
             widget: shortcutsIconTypeRow,
+        });
+
+        const buttonsIconTypeRow = new Adw.ComboRow({
+            title: _('Button Icons'),
+            model: iconTypes,
+            selected: this._settings.get_enum('icon-style-buttons'),
+        });
+        buttonsIconTypeRow.connect('notify::selected', widget => {
+            this._settings.set_enum('icon-style-buttons', widget.selected);
+        });
+        iconStyleGroup.add(buttonsIconTypeRow);
+
+        settingsData.push({
+            key: 'icon-style-buttons',
+            widget: buttonsIconTypeRow,
         });
 
         const recentAppsGroup = new Adw.PreferencesGroup({

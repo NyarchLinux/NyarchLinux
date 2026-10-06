@@ -9,8 +9,8 @@ import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions
 
 export const SearchOptionsPage = GObject.registerClass(
 class ArcMenuSearchOptionsPage extends SubPage {
-    _init(settings, params) {
-        super._init(settings, params);
+    _init(extension, settings, params) {
+        super._init(extension, settings, params);
 
         const searchOptionsFrame = new Adw.PreferencesGroup({
             title: _('Search Options'),

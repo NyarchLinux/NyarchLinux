@@ -14,10 +14,10 @@ import {StandaloneRunner} from './standaloneRunner.js';
 import * as Utils from './utils.js';
 
 export const MenuController = class {
-    constructor(panelInfo, monitorIndex) {
+    constructor(monitor, panelInfo) {
+        this._monitor = monitor;
         this.panelInfo = panelInfo;
         this.panel = panelInfo.panel;
-        this.monitorIndex = monitorIndex;
         this.isFirstPanel = panelInfo.isFirstPanel;
         this._debouncer = new Utils.Debouncer();
 
@@ -34,7 +34,7 @@ export const MenuController = class {
             };
         }
 
-        this._menuButton = new MenuButton(panelInfo, this.monitorIndex);
+        this._menuButton = new MenuButton(monitor, panelInfo);
 
         if (this.isFirstPanel) {
             this._keybinder = new Keybinder(ArcMenuManager.settings);
@@ -56,6 +56,10 @@ export const MenuController = class {
 
     get menuButton() {
         return this._menuButton;
+    }
+
+    get monitor() {
+        return this._monitor;
     }
 
     _inputSourceManagerOverride() {
@@ -117,16 +121,14 @@ export const MenuController = class {
         );
 
         Utils.connectSettings(
-            ['directory-shortcuts', 'application-shortcuts', 'extra-categories', 'custom-grid-icon-size',
-                'power-options', 'show-external-devices', 'show-bookmarks', 'show-user-avatar', 'runner-search-display-style',
+            ['directory-shortcuts', 'application-shortcuts', 'extra-categories', 'power-options',
+                'show-external-devices', 'show-bookmarks', 'show-user-avatar', 'runner-search-display-style',
                 'avatar-style', 'enable-activities-shortcut', 'enable-horizontal-flip', 'power-display-style',
                 'searchbar-default-bottom-location', 'searchbar-default-top-location', 'multi-lined-labels',
                 'apps-show-extra-details', 'apps-show-generic-names', 'show-search-result-details', 'search-provider-open-windows',
-                'search-provider-recent-files', 'misc-item-icon-size', 'windows-show-pinned-apps',
+                'search-provider-recent-files', 'windows-show-pinned-apps', 'show-category-sub-menus',
                 'scrollview-fade-effect', 'windows-show-frequent-apps', 'default-menu-view',
                 'default-menu-view-tognee', 'group-apps-alphabetically-list-layouts', 'group-apps-alphabetically-grid-layouts',
-                'menu-item-grid-icon-size', 'menu-item-icon-size', 'button-item-icon-size', 'quicklinks-item-icon-size',
-                'menu-item-category-icon-size', 'category-icon-type', 'shortcut-icon-type', 'show-category-sub-menus',
                 'arcmenu-extra-categories-links', 'arcmenu-extra-categories-links-location', 'raven-search-display-style',
                 'default-menu-view-redmond', 'show-recently-installed-apps', 'az-layout-merge-panels',
                 'scrollbars-visible', 'scrollbars-overlay'],
@@ -223,7 +225,7 @@ export const MenuController = class {
 
     _setRunnerMenuActive(sender, enabled) {
         if (enabled && !this._runnerMenu) {
-            this._runnerMenu = new StandaloneRunner();
+            this._runnerMenu = new StandaloneRunner(this._monitor);
         } else if (!enabled && this._runnerMenu) {
             this._runnerMenu.destroy();
             this._runnerMenu = null;
@@ -252,22 +254,22 @@ export const MenuController = class {
     }
 
     _toggleMenuOnMonitor(monitor) {
-        let menuButtonOnMonitor = null;
+        let menuButtonTarget = null;
         const {menuControllers} = ArcMenuManager;
         for (let i = 0; i < menuControllers.length; i++) {
-            const {menuButton, monitorIndex} = menuControllers[i];
+            const {menuButton: mcMenuButton, monitor: mcMonitor} = menuControllers[i];
 
-            if (monitor.index === monitorIndex) {
-                menuButtonOnMonitor = menuButton;
+            if (monitor === mcMonitor) {
+                menuButtonTarget = mcMenuButton;
             } else {
-                if (menuButton.isOpen)
-                    menuButton.toggleMenu();
-                menuButton.closeContextMenu();
+                if (mcMenuButton.isOpen)
+                    mcMenuButton.toggleMenu();
+                mcMenuButton.closeContextMenu();
             }
         }
 
-        if (menuButtonOnMonitor)
-            menuButtonOnMonitor.toggleMenu();
+        if (menuButtonTarget)
+            menuButtonTarget.toggleMenu();
         else
             this._menuButton.toggleMenu();
     }
@@ -371,7 +373,7 @@ export const MenuController = class {
     _setButtonIconPadding() {
         const padding = ArcMenuManager.settings.get_int('menu-button-padding');
         if (padding > -1)
-            this._menuButton.style = `-natural-hpadding: ${padding  * 2}px; -minimum-hpadding: ${padding}px;`;
+            this._menuButton.style = `-natural-hpadding: ${padding * 2}px; -minimum-hpadding: ${padding}px;`;
         else
             this._menuButton.style = null;
 

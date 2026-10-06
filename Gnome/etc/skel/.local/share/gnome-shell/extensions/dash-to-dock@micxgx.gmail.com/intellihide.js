@@ -3,7 +3,6 @@
 import {
     GLib,
     Meta,
-    Shell,
 } from './dependencies/gi.js';
 
 import {
@@ -57,7 +56,6 @@ export class Intellihide {
         this._monitorIndex = monitorIndex;
 
         this._signalsHandler = new Utils.GlobalSignalsHandler();
-        this._tracker = Shell.WindowTracker.get_default();
         this._focusApp = null; // The application whose window is focused.
         this._topApp = null; // The application whose window is on top on the monitor with the dock.
 
@@ -85,7 +83,7 @@ export class Intellihide {
         ], [
             // when windows are alwasy on top, the focus window can change
             // without the windows being restacked. Thus monitor window focus change.
-            this._tracker,
+            Docking.DockManager.windowTracker,
             'notify::focus-app',
             this._checkOverlap.bind(this),
         ], [
@@ -135,14 +133,17 @@ export class Intellihide {
     _addWindowSignals(wa) {
         if (!this._handledWindow(wa))
             return;
-        const signalId = wa.connect('notify::allocation', this._checkOverlap.bind(this));
-        this._trackedWindows.set(wa, signalId);
-        wa.connect('destroy', this._removeWindowSignals.bind(this));
+
+        this._trackedWindows.set(wa, [
+            wa.connect('notify::allocation', () => this._checkOverlap()),
+            wa.connect('destroy', () => this._removeWindowSignals(wa)),
+        ]);
     }
 
     _removeWindowSignals(wa) {
-        if (this._trackedWindows.get(wa)) {
-            wa.disconnect(this._trackedWindows.get(wa));
+        const signalIds = this._trackedWindows.get(wa);
+        if (signalIds) {
+            signalIds.forEach(id => wa.disconnect(id));
             this._trackedWindows.delete(wa);
         }
     }
@@ -211,9 +212,10 @@ export class Intellihide {
             }
 
             if (topWindow) {
-                this._topApp = this._tracker.get_window_app(topWindow);
+                const {windowTracker} = Docking.DockManager;
+                this._topApp = windowTracker.get_window_app(topWindow);
                 // If there isn't a focused app, use that of the window on top
-                this._focusApp = this._tracker.focus_app || this._topApp;
+                this._focusApp = windowTracker.focus_app || this._topApp;
 
                 windows = windows.filter(this._intellihideFilterInteresting, this);
 
@@ -266,7 +268,8 @@ export class Intellihide {
                 if (metaWin.get_wm_class() === 'DropDownTerminalWindow')
                     return true;
 
-                const currentApp = this._tracker.get_window_app(metaWin);
+                const {windowTracker} = Docking.DockManager;
+                const currentApp = windowTracker.get_window_app(metaWin);
                 const focusWindow = global.display.get_focus_window();
 
                 // Consider half maximized windows side by side

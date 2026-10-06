@@ -27,14 +27,13 @@ export class Layout extends BaseMenuLayout {
             column_spacing: 10,
             row_spacing: 10,
             default_menu_width: 525,
-            icon_grid_size: Constants.GridIconSize.SMALL,
             ...getOrientationProp(false),
-            category_icon_size: Constants.MEDIUM_ICON_SIZE,
-            apps_icon_size: Constants.LARGE_ICON_SIZE,
-            quicklinks_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
-            buttons_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
-            pinned_apps_icon_size: Constants.MEDIUM_ICON_SIZE,
         });
+
+        this.iconSizeGrid = Constants.GridIconSizes.SMALL;
+        this.iconSizeApps = Constants.IconSizes.LARGE;
+        this.iconSizeShortcuts = Constants.IconSizes.SMALL;
+        this.iconSizeButtons = Constants.IconSizes.SMALL;
 
         this.actionsBox = new St.BoxLayout({
             x_expand: false,
@@ -68,7 +67,7 @@ export class Layout extends BaseMenuLayout {
                 ...getOrientationProp(true),
                 style: 'padding-bottom: 6px;',
             });
-            const avatarMenuIcon = new MW.AvatarMenuIcon(this, 75, true);
+            const avatarMenuIcon = new MW.AvatarMenuIcon(this, 74, true);
             avatarMenuIcon.label.set({
                 x_align: Clutter.ActorAlign.CENTER,
                 y_align: Clutter.ActorAlign.CENTER,

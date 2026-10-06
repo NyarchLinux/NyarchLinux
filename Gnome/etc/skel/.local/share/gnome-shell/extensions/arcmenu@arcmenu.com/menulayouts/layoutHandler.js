@@ -1,4 +1,3 @@
-import {MenuLayout} from '../constants.js';
 import {Layout as ArcMenuLayout} from './arcmenu.js';
 import {Layout as AzLayout} from './az.js';
 import {Layout as BriskLayout} from './brisk.js';
@@ -25,40 +24,41 @@ import {Layout as ZestLayout} from './zest.js';
 /**
  *
  * @param {PanelMenu.Button} menuButton
- * @param {MenuLayout} layoutEnum
+ * @param {string} layoutId
  * @param {boolean} isStandaloneRunner
  */
-export function createMenuLayout(menuButton, layoutEnum, isStandaloneRunner) {
-    if (layoutEnum === MenuLayout.GNOME_OVERVIEW)
+export function createMenuLayout(menuButton, layoutId, isStandaloneRunner) {
+    if (layoutId === 'gnome-overview')
         return null;
 
     // Map each layout to its corresponding Layout class from static imports
-    const layoutMap = {
-        [MenuLayout.ARCMENU]: ArcMenuLayout,
-        [MenuLayout.AZ]: AzLayout,
-        [MenuLayout.BRISK]: BriskLayout,
-        [MenuLayout.BUDGIE]: BudgieLayout,
-        [MenuLayout.CHROMEBOOK]: ChromebookLayout,
-        [MenuLayout.ELEMENTARY]: ElementaryLayout,
-        [MenuLayout.ELEVEN]: ElevenLayout,
-        [MenuLayout.ENTERPRISE]: EnterpriseLayout,
-        [MenuLayout.GNOME_MENU]: GnomeMenuLayout,
-        [MenuLayout.INSIDER]: InsiderLayout,
-        [MenuLayout.MINT]: MintLayout,
-        [MenuLayout.PLASMA]: PlasmaLayout,
-        [MenuLayout.POP]: PopLayout,
-        [MenuLayout.RAVEN]: RavenLayout,
-        [MenuLayout.REDMOND]: RedmondLayout,
-        [MenuLayout.RUNNER]: RunnerLayout,
-        [MenuLayout.SLEEK]: SleekLayout,
-        [MenuLayout.TOGNEE]: TogneeLayout,
-        [MenuLayout.UNITY]: UnityLayout,
-        [MenuLayout.WHISKER]: WhiskerLayout,
-        [MenuLayout.WINDOWS]: WindowsLayout,
-        [MenuLayout.ZEST]: ZestLayout,
-    };
+    const layoutClassMap = new Map([
+        ['arcmenu', ArcMenuLayout],
+        ['az', AzLayout],
+        ['brisk', BriskLayout],
+        ['budgie', BudgieLayout],
+        ['chromebook', ChromebookLayout],
+        ['elementary', ElementaryLayout],
+        ['11', ElevenLayout],
+        ['enterprise', EnterpriseLayout],
+        ['gnome-menu', GnomeMenuLayout],
+        ['insider', InsiderLayout],
+        ['mint', MintLayout],
+        ['plasma', PlasmaLayout],
+        ['pop', PopLayout],
+        ['raven', RavenLayout],
+        ['redmond', RedmondLayout],
+        ['runner', RunnerLayout],
+        ['sleek', SleekLayout],
+        ['tognee', TogneeLayout],
+        ['unity', UnityLayout],
+        ['whisker', WhiskerLayout],
+        ['windows', WindowsLayout],
+        ['zest', ZestLayout],
+    ]);
 
-    const LayoutClass = layoutMap[layoutEnum] || ArcMenuLayout; // Default to ArcMenu if layout isn't found
+    // Default to ArcMenu if layout isn't found
+    const LayoutClass = layoutClassMap.get(layoutId) || ArcMenuLayout;
 
     try {
         return new LayoutClass(menuButton, isStandaloneRunner);

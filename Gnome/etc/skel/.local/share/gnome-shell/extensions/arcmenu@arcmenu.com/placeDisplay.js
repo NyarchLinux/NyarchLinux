@@ -165,7 +165,7 @@ export class RootInfo extends PlaceInfo {
     }
 }
 
-var PlaceDeviceInfo = class ArcMenuPlaceDeviceInfo extends PlaceInfo {
+const PlaceDeviceInfo = class ArcMenuPlaceDeviceInfo extends PlaceInfo {
     _init(kind, mount) {
         this._mount = mount;
         super._init(kind, mount.get_root(), mount.get_name());
@@ -225,7 +225,7 @@ var PlaceDeviceInfo = class ArcMenuPlaceDeviceInfo extends PlaceInfo {
     }
 };
 
-var PlaceVolumeInfo = class ArcMenuPlaceVolumeInfo extends PlaceInfo {
+const PlaceVolumeInfo = class ArcMenuPlaceVolumeInfo extends PlaceInfo {
     _init(kind, volume) {
         this._volume = volume;
         super._init(kind, volume.get_activation_root(), volume.get_name());
@@ -439,7 +439,6 @@ export const PlacesManager = class ArcMenuPlacesManager extends EventEmitter {
 
         for (let i = 0; i < networkMounts.length; i++)
             this._addMount('network', networkMounts[i]);
-
 
         this.emit('devices-updated');
         this.emit('network-updated');

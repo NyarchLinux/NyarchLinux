@@ -1,20 +1,36 @@
+/* DING: Desktop Icons New Generation for GNOME Shell
+ *
+ * Copyright (C) 2020 Sergio Costas (rastersoft@gmail.com)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+// SPDX-License-Identifier: GPL-3.0-only
 'use strict';
-const GObject = imports.gi.GObject;
+import GObject from 'gi://GObject';
 const Gettext = imports.gettext;
-const Gio = imports.gi.Gio;
+import Gio from 'gi://Gio';
 const GioSSS = Gio.SettingsSchemaSource;
-const GLib = imports.gi.GLib;
+import GLib from 'gi://GLib';
+import Gtk from 'gi://Gtk?version=4.0';
 
 var _ = Gettext.domain('ding').gettext;
 
-var Gtk;
-
 /**
  *
- * @param path
- * @param schema
+ * @param {string} path
+ * @param {string} schema
  */
-function get_schema(path, schema) {
+export function getSchema(path, schema) {
     // check if this extension was built with "make zip-file", and thus
     // has the schema files in a subfolder
     // otherwise assume that extension has been installed in the
@@ -26,30 +42,27 @@ function get_schema(path, schema) {
         schemaSource = GioSSS.new_from_directory(GLib.build_filenamev([path, 'schemas']), GioSSS.get_default(), false);
     } else {
         schemaFile = Gio.File.new_for_path(GLib.build_filenamev([path, '..', 'schemas', 'gschemas.compiled']));
-        if (schemaFile.query_exists(null)) {
+        if (schemaFile.query_exists(null))
             schemaSource = GioSSS.new_from_directory(GLib.build_filenamev([path, '..', 'schemas']), GioSSS.get_default(), false);
-        } else {
+        else
             schemaSource = GioSSS.get_default();
-        }
     }
-    let schemaObj = schemaSource.lookup(schema, true);
-    if (!schemaObj) {
-        throw new Error(`Schema ${schema} could not be found for extension ` + '. Please check your installation.');
-    }
+    const schemaObj = schemaSource.lookup(schema, true);
+    if (!schemaObj)
+        throw new Error(`Schema ${schema} could not be found for extension. Please check your installation.`);
+
 
     return new Gio.Settings({settings_schema: schemaObj});
 }
 
 /**
  *
- * @param _Gtk
- * @param desktopSettings
- * @param nautilusSettings
- * @param gtkSettings
+ * @param {GLib.Schema} desktopSettings
+ * @param {GLib.Schema} nautilusSettings
+ * @param {GLib.Schema} gtkSettings
  */
-function preferencesFrame(_Gtk, desktopSettings, nautilusSettings, gtkSettings) {
-    Gtk = _Gtk;
-    let frame = new Gtk.Box({
+export function preferencesFrame(desktopSettings, nautilusSettings, gtkSettings) {
+    const frame = new Gtk.Box({
         orientation: Gtk.Orientation.VERTICAL,
         spacing: 10,
         margin_top: 10,
@@ -57,9 +70,9 @@ function preferencesFrame(_Gtk, desktopSettings, nautilusSettings, gtkSettings) 
         margin_start: 10,
         margin_end: 10,
     });
-    if (!frame.add) {
+    if (!frame.add)
         frame.add = frame.append;
-    }
+
 
     frame.add(buildSelector(desktopSettings, 'icon-size', _('Size for the desktop icons'), {'tiny': _('Tiny'), 'small': _('Small'), 'standard': _('Standard'), 'large': _('Large')}));
     frame.add(buildSwitcher(desktopSettings, 'show-home', _('Show the personal folder in the desktop')));
@@ -87,12 +100,12 @@ function preferencesFrame(_Gtk, desktopSettings, nautilusSettings, gtkSettings) 
 
 
     // Nautilus options
-    let frameLabel = new Gtk.Label({
+    const frameLabel = new Gtk.Label({
         label: `<b>${_('Settings shared with Nautilus')}</b>`,
         use_markup: true,
     });
-    let nautilusFrame = new Gtk.Frame({label_widget: frameLabel});
-    let nautilusBox = new Gtk.Box({
+    const nautilusFrame = new Gtk.Frame({label_widget: frameLabel});
+    const nautilusBox = new Gtk.Box({
         orientation: Gtk.Orientation.VERTICAL,
         margin_top: 5,
         margin_bottom: 5,
@@ -100,16 +113,16 @@ function preferencesFrame(_Gtk, desktopSettings, nautilusSettings, gtkSettings) 
         margin_end: 5,
         spacing: 10,
     });
-    if (nautilusFrame.add) {
+    if (nautilusFrame.add)
         nautilusFrame.add(nautilusBox);
-    } else {
+    else
         nautilusFrame.set_child(nautilusBox);
-    }
+
     frame.add(nautilusFrame);
 
-    if (!nautilusBox.add) {
+    if (!nautilusBox.add)
         nautilusBox.add = nautilusBox.append;
-    }
+
     nautilusBox.add(buildSelector(nautilusSettings, 'click-policy', _('Click type for open files'), {'single': _('Single click'), 'double': _('Double click')}));
     nautilusBox.add(buildSwitcher(gtkSettings, 'show-hidden', _('Show hidden files')));
     nautilusBox.add(buildSwitcher(nautilusSettings, 'show-delete-permanently', _('Show a context menu item to delete permanently')));
@@ -122,7 +135,7 @@ function preferencesFrame(_Gtk, desktopSettings, nautilusSettings, gtkSettings) 
                 'launch': _('Launch the file'),
                 'ask': _('Ask what to do'),
             }));
-    } catch (e) {
+    } catch {
     }
     nautilusBox.add(buildSelector(nautilusSettings,
         'show-image-thumbnails',
@@ -136,27 +149,26 @@ function preferencesFrame(_Gtk, desktopSettings, nautilusSettings, gtkSettings) 
 
 /**
  *
- * @param settings
- * @param key
- * @param labelText
+ * @param {GLib.Schema} settings
+ * @param {string} key
+ * @param {string} labelText
  */
-function buildSwitcher(settings, key, labelText) {
-    let hbox = new Gtk.Box({orientation: Gtk.Orientation.HORIZONTAL, spacing: 10});
-    let label = new Gtk.Label({label: labelText, xalign: 0});
-    if (settings) {
-        var status = settings.get_boolean(key);
-    } else {
-        var status = false;
-    }
-    let switcher = new Gtk.Switch({active: status});
+export function buildSwitcher(settings, key, labelText) {
+    const hbox = new Gtk.Box({orientation: Gtk.Orientation.HORIZONTAL, spacing: 10});
+    const label = new Gtk.Label({label: labelText, xalign: 0});
+    let status = false;
+    if (settings)
+        status = settings.get_boolean(key);
+
+    const switcher = new Gtk.Switch({active: status});
     label.set_hexpand(true);
     switcher.set_hexpand(false);
     switcher.set_halign(Gtk.Align.END);
-    if (settings) {
+    if (settings)
         settings.bind(key, switcher, 'active', 3);
-    } else {
+    else
         switcher.sensitive = false;
-    }
+
     if (hbox.pack_start) {
         hbox.pack_start(label, true, true, 0);
         hbox.add(switcher);
@@ -169,41 +181,41 @@ function buildSwitcher(settings, key, labelText) {
 
 /**
  *
- * @param settings
- * @param key
- * @param labelText
- * @param elements
+ * @param {GLib.Schema} settings
+ * @param {string} key
+ * @param {string} labelText
+ * @param {Dictionary} elements
  */
-function buildSelector(settings, key, labelText, elements) {
-    let listStore = new Gtk.ListStore();
+export function buildSelector(settings, key, labelText, elements) {
+    const listStore = new Gtk.ListStore();
     listStore.set_column_types([GObject.TYPE_STRING, GObject.TYPE_STRING]);
     if (settings) {
-        let schemaKey = settings.settings_schema.get_key(key);
-        let values = schemaKey.get_range().get_child_value(1).get_child_value(0).get_strv();
-        for (let val of values) {
-            let iter = listStore.append();
+        const schemaKey = settings.settings_schema.get_key(key);
+        const values = schemaKey.get_range().get_child_value(1).get_child_value(0).get_strv();
+        for (const val of values) {
+            const iter = listStore.append();
             let visibleText = val;
-            if (visibleText in elements) {
+            if (visibleText in elements)
                 visibleText = elements[visibleText];
-            }
+
             listStore.set(iter, [0, 1], [visibleText, val]);
         }
     }
-    let hbox = new Gtk.Box({orientation: Gtk.Orientation.HORIZONTAL, spacing: 10});
-    let label = new Gtk.Label({label: labelText, xalign: 0});
-    let combo = new Gtk.ComboBox({model: listStore});
-    let rendererText = new Gtk.CellRendererText();
+    const hbox = new Gtk.Box({orientation: Gtk.Orientation.HORIZONTAL, spacing: 10});
+    const label = new Gtk.Label({label: labelText, xalign: 0});
+    const combo = new Gtk.ComboBox({model: listStore});
+    const rendererText = new Gtk.CellRendererText();
     combo.pack_start(rendererText, false);
     combo.add_attribute(rendererText, 'text', 0);
     combo.set_id_column(1);
     label.set_hexpand(true);
     combo.set_hexpand(false);
     combo.set_halign(Gtk.Align.END);
-    if (settings) {
+    if (settings)
         settings.bind(key, combo, 'active-id', 3);
-    } else {
+    else
         combo.sensitive = false;
-    }
+
     if (hbox.pack_start) {
         hbox.pack_start(label, true, true, 0);
         hbox.add(combo);

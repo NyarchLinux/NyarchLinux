@@ -14,31 +14,32 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
+// SPDX-License-Identifier: GPL-3.0-only
 'use strict';
 
-var SignalManager = class {
+export var SignalManager = class {
     constructor() {
         this._signal_list = [];
     }
 
-    connectSignal(obj, signal_name, cb, {destroyCb, after}={destroyCb:null, after: false}) {
+    connectSignal(obj, signalName, cb, {destroyCb, after} = {destroyCb: null, after: false}) {
+        let signalId = null;
         if (after)
-            var signal_id = obj.connect_after(signal_name, cb);
+            signalId = obj.connect_after(signalName, cb);
         else
-            var signal_id = obj.connect(signal_name, cb);
-        let handler = {
-            signal_id,
+            signalId = obj.connect(signalName, cb);
+        const handler = {
+            signalId,
             obj,
-            destroyCb
-        }
+            destroyCb,
+        };
         this._signal_list.push(handler);
         return handler;
     }
 
     disconnectAllSignals() {
-        this._signal_list.forEach((item) => {
-            item.obj.disconnect(item.signal_id);
+        this._signal_list.forEach(item => {
+            item.obj.disconnect(item.signalId);
             if (item.destroyCb)
                 item.destroyCb();
         });
@@ -47,11 +48,11 @@ var SignalManager = class {
 
     disconnectSignal(handler) {
         const idx = this._signal_list.indexOf(handler);
-        if (idx == -1)
+        if (idx === -1)
             return;
         delete this._signal_list[idx];
-        handler.obj.disconnect(handler.signal_id);
+        handler.obj.disconnect(handler.signalId);
         if (handler.destroyCb)
             handler.destroyCb();
     }
-}
+};

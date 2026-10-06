@@ -63,10 +63,33 @@ export const PanelBlur = class PanelBlur {
         // the blur when a window is near a panel
         this.connect_to_windows_and_overview();
 
-        // connect to workareas change
-        this.connections.connect(global.display, 'workareas-changed',
-            _ => this.reset()
+        // connect to monitors change, and set a dirty flag to tell the extension that it should be
+        // reset on 'workareas-changed' signal
+        this._dirty = false;
+        this.connections.connect(Main.layoutManager, 'monitors-changed',
+            _ => this._dirty = true
         );
+
+        this.connections.connect(global.display, 'workareas-changed', _ => {
+            if (this._dirty) {
+                // the monitors chaned
+                this.reset();
+                this._dirty = false;
+            }
+            else {
+                // blur panels created by extension multi-monitors-bar@frederykabryan
+                // I would like to connect directly to Main.uiGroup 'child-added' but it seems
+                // like the name is updated too late...
+                Main.uiGroup.get_children().forEach(child => {
+                    if (child.get_name() === "panelBox" &&
+                        child != Main.layoutManager.panelBox &&
+                        child.get_n_children() == 1
+                    ) {
+                        this.maybe_blur_panel(child.get_child_at_index(0));
+                    }
+                });
+            }
+        })
 
         this.enabled = true;
     }
@@ -95,8 +118,18 @@ export const PanelBlur = class PanelBlur {
             if (this.settings.dash_to_panel.BLUR_ORIGINAL_PANEL && isMainPanelAlive)
                 this.maybe_blur_panel(Main.panel);
         } else {
-            // if no dash-to-panel, blur the main and only panel
-            this.maybe_blur_panel(Main.panel);
+            // if no dash-to-panel, blur the main panel
+            if (isMainPanelAlive)
+                this.maybe_blur_panel(Main.panel);
+
+            // blur panels already created by extension multi-monitors-bar@frederykabryan
+            Main.uiGroup.get_children().forEach(actor => {
+                if (actor.get_name() === "panelBox" && actor.get_n_children() === 1) {
+                    let multi_monitor_panel = actor.get_child_at_index(0);
+                    if (isMainPanelAlive && multi_monitor_panel != Main.panel)
+                        this.maybe_blur_panel(multi_monitor_panel);
+                }
+            })
         }
     }
 
@@ -385,10 +418,8 @@ export const PanelBlur = class PanelBlur {
 
     /// Update the css classname of the panel for light theme
     update_light_text_classname(disable = false) {
-        if (!isMainPanelAlive) {
-            this._log("cannot update light text classname, Main.panel is not alive");
+        if (!isMainPanelAlive)
             return;
-        }
 
         if (this.settings.panel.FORCE_LIGHT_TEXT && !disable)
             Main.panel.add_style_class_name("panel-light-text");
@@ -560,6 +591,8 @@ export const PanelBlur = class PanelBlur {
         const immutable_actors_list = [...this.actors_list];
         immutable_actors_list.forEach(actors => this.destroy_blur(actors, false));
         this.actors_list = [];
+
+        this._dirty = true;
 
         this.connections.disconnect_all();
 

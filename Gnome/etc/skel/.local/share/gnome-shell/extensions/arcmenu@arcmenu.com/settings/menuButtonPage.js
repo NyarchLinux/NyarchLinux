@@ -11,12 +11,13 @@ import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions
 
 export const MenuButtonPage = GObject.registerClass(
 class ArcMenuMenuButtonPage extends Adw.PreferencesPage {
-    _init(settings) {
+    _init(extension, settings) {
         super._init({
             title: _('Menu Button'),
             icon_name: 'icon-arcmenu-logo-symbolic',
             name: 'MenuButtonPage',
         });
+        this._extension = extension;
         this._settings = settings;
 
         const restoreDefaultsButton = new Gtk.Button({
@@ -157,7 +158,7 @@ class ArcMenuMenuButtonPage extends Adw.PreferencesPage {
             valign: Gtk.Align.CENTER,
         });
         menuButtonIconButton.connect('clicked', () => {
-            const dialog = new IconChooserDialog(this._settings, this);
+            const dialog = new IconChooserDialog(this._extension, this._settings, this);
             dialog.show();
             dialog.connect('response', (_self, response) => {
                 if (response === Gtk.ResponseType.APPLY)

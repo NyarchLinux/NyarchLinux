@@ -28,12 +28,13 @@ const forbiddenKeyvals = [
 
 export const GeneralPage = GObject.registerClass(
 class ArcMenuGeneralPage extends Adw.PreferencesPage {
-    _init(settings, window) {
+    _init(extension, settings, window) {
         super._init({
             title: _('General'),
             icon_name: 'go-home-symbolic',
             name: 'GeneralPage',
         });
+        this._extension = extension;
         this._settings = settings;
         this._window = window;
 
@@ -229,11 +230,11 @@ class ArcMenuGeneralPage extends Adw.PreferencesPage {
                 valign: Gtk.Align.CENTER,
             });
             configureButton.connect('clicked', () => {
-                const runnerTweaksPage = new LayoutTweaksPage(this._settings, {
+                const runnerTweaksPage = new LayoutTweaksPage(this._extension, this._settings, {
                     title: _('%s Layout Tweaks').format(_('Runner')),
                 });
                 this._window.push_subpage(runnerTweaksPage);
-                runnerTweaksPage.setActiveLayout(Constants.MenuLayout.RUNNER);
+                runnerTweaksPage.setActiveLayout('runner');
                 runnerTweaksPage.resetScrollAdjustment();
             });
             customHotkeyRow.add_prefix(configureButton);
@@ -258,7 +259,7 @@ class ArcMenuGeneralPage extends Adw.PreferencesPage {
     }
 });
 
-var HotkeyDialog = GObject.registerClass({
+const HotkeyDialog = GObject.registerClass({
     Signals: {
         'response': {param_types: [GObject.TYPE_INT]},
     },

@@ -25,6 +25,7 @@ import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as Signals from 'resource:///org/gnome/shell/misc/signals.js';
 
 import * as DBusInterfaces from './interfaces.js';
+import * as MenuUtils from './menuUtils.js';
 import * as PromiseUtils from './promiseUtils.js';
 import * as Util from './util.js';
 import {DBusProxy} from './dbusProxy.js';
@@ -180,7 +181,7 @@ export class DbusMenuItem extends Signals.EventEmitter {
         if (oldPos !== newPos) {
             this._children_ids.splice(oldPos, 1);
             this._children_ids.splice(newPos, 0, childId);
-            this.emit('child-moved', oldPos, newPos, this._client.getItem(childId));
+            this.emit('child-moved', this._client.getItem(childId), oldPos, newPos);
         }
     }
 
@@ -676,11 +677,17 @@ const MenuItemFactory = {
 
     _onActivate(_item, event) {
         const timestamp = event.get_time();
-        if (timestamp && this._dbusClient.indicator)
-            this._dbusClient.indicator.provideActivationToken(timestamp);
+        const handleEvent = () =>
+            this._dbusItem.handleEvent('clicked', GLib.Variant.new('i', 0),
+                timestamp).catch(logError);
 
-        this._dbusItem.handleEvent('clicked', GLib.Variant.new('i', 0),
-            timestamp).catch(logError);
+        if (timestamp && this._dbusClient.indicator) {
+            this._dbusClient.indicator.provideActivationToken(
+                timestamp).catch(logError).finally(handleEvent);
+            return;
+        }
+
+        handleEvent();
     },
 
     _onPropertyChanged(dbusItem, prop, _value) {
@@ -811,33 +818,6 @@ const MenuItemFactory = {
     },
 };
 
-/**
- * Utility functions not necessarily belonging into the item factory
- */
-const MenuUtils = {
-    moveItemInMenu(menu, dbusItem, newpos) {
-        // HACK: we're really getting into the internals of the PopupMenu implementation
-
-        // First, find our wrapper. Children tend to lie. We do not trust the old positioning.
-        const family = menu._getMenuItems();
-        for (let i = 0; i < family.length; ++i) {
-            if (family[i]._dbusItem === dbusItem) {
-                // now, remove it
-                menu.box.remove_child(family[i]);
-
-                // and add it again somewhere else
-                if (newpos < family.length && family[newpos] !== family[i])
-                    menu.box.insert_child_below(family[i], family[newpos]);
-                else
-                    menu.box.add(family[i]);
-
-                // skip the rest
-                return;
-            }
-        }
-    },
-};
-
 
 /**
  * Processes DBus events, creates the menu items and handles the actions
@@ -931,7 +911,7 @@ export class Client extends Signals.EventEmitter {
         }).catch(e => {
             if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
                 logError(e);
-        }).finally(() => this._itemsBeingAdded.delete(child));
+        }).finally(() => this._itemsBeingAdded?.delete(child));
     }
 
     _onRootChildRemoved(dbusItem, child) {
@@ -947,7 +927,7 @@ export class Client extends Signals.EventEmitter {
     }
 
     _onRootChildMoved(dbusItem, child, oldpos, newpos) {
-        MenuUtils.moveItemInMenu(this._rootMenu, dbusItem, newpos);
+        MenuUtils.moveItemInMenu(this._rootMenu, child, newpos);
     }
 
     _onMenuOpenStateChanged(menu, state) {
@@ -977,6 +957,8 @@ export class Client extends Signals.EventEmitter {
 
     destroy() {
         this.emit('destroy');
+
+        this.cancellable.cancel();
 
         if (this._client)
             this._client.destroy();

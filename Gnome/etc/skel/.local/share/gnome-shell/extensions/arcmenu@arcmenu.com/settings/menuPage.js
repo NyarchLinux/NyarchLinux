@@ -19,12 +19,13 @@ import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions
 
 export const MenuPage = GObject.registerClass(
 class ArcMenuMenuPage extends Adw.PreferencesPage {
-    _init(settings, window) {
+    _init(extension, settings, window) {
         super._init({
             title: _('Menu'),
             icon_name: 'settings-settings-symbolic',
             name: 'MenuPage',
         });
+        this._extension = extension;
         this._settings = settings;
         this._window = window;
 
@@ -45,8 +46,9 @@ class ArcMenuMenuPage extends Adw.PreferencesPage {
         });
         this.layoutRow.settingPage.connect('response', (_w, response) => {
             if (response === Gtk.ResponseType.APPLY) {
-                const layoutName = SettingsUtils.getMenuLayoutName(this._settings.get_enum('menu-layout'));
-                this.tweaksRow.title = _('%s Layout Tweaks').format(_(layoutName));
+                const layoutId = this._settings.get_string('menu-layout');
+                const layoutInfo = SettingsUtils.getMenuLayoutInfo(layoutId);
+                this.tweaksRow.title = _('%s Layout Tweaks').format(_(layoutInfo.name));
             }
         });
         menuLooksGroup.add(this.layoutRow);
@@ -86,9 +88,10 @@ class ArcMenuMenuPage extends Adw.PreferencesPage {
         });
         this.add(whatToShowGroup);
 
-        const layoutName = SettingsUtils.getMenuLayoutName(this._settings.get_enum('menu-layout'));
+        const layoutId = this._settings.get_string('menu-layout');
+        const layoutInfo = SettingsUtils.getMenuLayoutInfo(layoutId);
         this.tweaksRow = new PW.SettingRow({
-            title: _('%s Layout Tweaks').format(_(layoutName)),
+            title: _('%s Layout Tweaks').format(_(layoutInfo.name)),
             subtitle: _('Settings specific to the current menu layout'),
             icon_name: 'applications-system-symbolic',
         });
@@ -179,16 +182,16 @@ class ArcMenuMenuPage extends Adw.PreferencesPage {
         });
         contextMenuGroup.add(contextMenuRow);
 
-        SettingsUtils.setVisibleRows(visibleRow, this._settings.get_enum('menu-layout'));
+        SettingsUtils.setVisibleRows(visibleRow, this._settings.get_string('menu-layout'));
         this._settings.connect('changed::menu-layout', () =>
-            SettingsUtils.setVisibleRows(visibleRow, this._settings.get_enum('menu-layout')));
+            SettingsUtils.setVisibleRows(visibleRow, this._settings.get_string('menu-layout')));
     }
 
     _addSubPageToRow(row, pageParams) {
         const PageClass = pageParams.pageClass;
         const pageClassParams = pageParams.pageClassParams ?? 0;
 
-        const settingPage = new PageClass(this._settings, {
+        const settingPage = new PageClass(this._extension, this._settings, {
             title: _(row.title),
             list_type: pageClassParams,
         });
@@ -198,7 +201,7 @@ class ArcMenuMenuPage extends Adw.PreferencesPage {
             this._window.push_subpage(settingPage);
 
             if (settingPage.setActiveLayout)
-                settingPage.setActiveLayout(this._settings.get_enum('menu-layout'));
+                settingPage.setActiveLayout(this._settings.get_string('menu-layout'));
 
             settingPage.resetScrollAdjustment();
         });
@@ -215,7 +218,7 @@ class ArcMenuMenuPage extends Adw.PreferencesPage {
         } else if (subpage === Constants.SettingsPage.RUNNER_TWEAKS) {
             const row = this.tweaksRow;
             this._window.push_subpage(row.settingPage);
-            row.settingPage.setActiveLayout(Constants.MenuLayout.RUNNER);
+            row.settingPage.setActiveLayout('runner');
         }
     }
 });

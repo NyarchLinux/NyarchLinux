@@ -5,9 +5,6 @@
 //
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-// -*- mode: js2; indent-tabs-mode: nil; js2-basic-offset: 4 -*-
-// Load shell theme from ~/.local/share/themes/name/gnome-shell
-
 import Gio from 'gi://Gio';
 
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
@@ -36,7 +33,7 @@ export default class ThemeManager extends Extension {
 
     _changeTheme() {
         let stylesheet = null;
-        let themeName = this._settings.get_string(SETTINGS_KEY);
+        const themeName = this._settings.get_string(SETTINGS_KEY);
 
         if (themeName) {
             const stylesheetPaths = getThemeDirs()
@@ -46,7 +43,7 @@ export default class ThemeManager extends Extension {
                 .map(dir => `${dir}/${themeName}.css`));
 
             stylesheet = stylesheetPaths.find(path => {
-                let file = Gio.file_new_for_path(path);
+                const file = Gio.file_new_for_path(path);
                 return file.query_exists(null);
             });
         }

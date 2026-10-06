@@ -4,31 +4,34 @@ import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk';
 
 import * as Constants from '../../constants.js';
-import * as PW from '../../prefsWidgets.js';
 import {SubPage} from './subPage.js';
 
 import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
+function createSpinButton(lower, upper, value, stepIncrement = 1, pageIncrement = 1, climbRate = 1) {
+    return new Gtk.SpinButton({
+        adjustment: new Gtk.Adjustment({
+            lower, upper, step_increment: stepIncrement, page_increment: pageIncrement, page_size: 0,
+        }),
+        climb_rate: climbRate,
+        digits: 0,
+        numeric: true,
+        valign: Gtk.Align.CENTER,
+        value,
+    });
+}
+
 export const VisualSettingsPage = GObject.registerClass(
 class ArcMenuVisualSettingsPage extends SubPage {
-    _init(settings, params) {
-        super._init(settings, params);
+    _init(extension, settings, params) {
+        super._init(extension, settings, params);
 
         const menuSizeFrame = new Adw.PreferencesGroup({
             title: _('Menu Size'),
         });
         this.add(menuSizeFrame);
 
-        const heightSpinButton = new Gtk.SpinButton({
-            adjustment: new Gtk.Adjustment({
-                lower: 300, upper: 4320, step_increment: 25, page_increment: 50, page_size: 0,
-            }),
-            climb_rate: 25,
-            digits: 0,
-            numeric: true,
-            valign: Gtk.Align.CENTER,
-        });
-        heightSpinButton.set_value(this._settings.get_int('menu-height'));
+        const heightSpinButton = createSpinButton(300, 4320, this._settings.get_int('menu-height'), 25, 50, 25);
         heightSpinButton.connect('value-changed', widget => {
             this._settings.set_int('menu-height', widget.get_value());
         });
@@ -39,16 +42,7 @@ class ArcMenuVisualSettingsPage extends SubPage {
         heightRow.add_suffix(heightSpinButton);
         menuSizeFrame.add(heightRow);
 
-        const menuWidthSpinButton = new Gtk.SpinButton({
-            adjustment: new Gtk.Adjustment({
-                lower: 175, upper: 2500, step_increment: 25, page_increment: 50, page_size: 0,
-            }),
-            climb_rate: 25,
-            digits: 0,
-            numeric: true,
-            valign: Gtk.Align.CENTER,
-        });
-        menuWidthSpinButton.set_value(this._settings.get_int('left-panel-width'));
+        const menuWidthSpinButton = createSpinButton(175, 2500, this._settings.get_int('left-panel-width'), 25, 50, 25);
         menuWidthSpinButton.connect('value-changed', widget => {
             this._settings.set_int('left-panel-width', widget.get_value());
         });
@@ -60,16 +54,7 @@ class ArcMenuVisualSettingsPage extends SubPage {
         menuWidthRow.add_suffix(menuWidthSpinButton);
         menuSizeFrame.add(menuWidthRow);
 
-        const rightPanelWidthSpinButton = new Gtk.SpinButton({
-            adjustment: new Gtk.Adjustment({
-                lower: 200, upper: 2500, step_increment: 25, page_increment: 50, page_size: 0,
-            }),
-            climb_rate: 25,
-            valign: Gtk.Align.CENTER,
-            digits: 0,
-            numeric: true,
-        });
-        rightPanelWidthSpinButton.set_value(this._settings.get_int('right-panel-width'));
+        const rightPanelWidthSpinButton = createSpinButton(200, 2500, this._settings.get_int('right-panel-width'), 25, 50, 25);
         rightPanelWidthSpinButton.connect('value-changed', widget => {
             this._settings.set_int('right-panel-width', widget.get_value());
         });
@@ -81,16 +66,7 @@ class ArcMenuVisualSettingsPage extends SubPage {
         rightPanelWidthRow.add_suffix(rightPanelWidthSpinButton);
         menuSizeFrame.add(rightPanelWidthRow);
 
-        const widthSpinButton = new Gtk.SpinButton({
-            adjustment: new Gtk.Adjustment({
-                lower: -350, upper: 5000, step_increment: 25, page_increment: 50, page_size: 0,
-            }),
-            valign: Gtk.Align.CENTER,
-            climb_rate: 25,
-            digits: 0,
-            numeric: true,
-        });
-        widthSpinButton.set_value(this._settings.get_int('menu-width-adjustment'));
+        const widthSpinButton = createSpinButton(-350, 5000, this._settings.get_int('menu-width-adjustment'), 25, 50, 25);
         widthSpinButton.connect('value-changed', widget => {
             this._settings.set_int('menu-width-adjustment', widget.get_value());
         });
@@ -141,19 +117,9 @@ class ArcMenuVisualSettingsPage extends SubPage {
             else
                 menuArrowRiseSpinButton.set_sensitive(false);
         });
-        const menuArrowRiseSpinButton = new Gtk.SpinButton({
-            adjustment: new Gtk.Adjustment({
-                lower: -50,
-                upper: 50,
-                step_increment: 1,
-            }),
-            climb_rate: 1,
-            digits: 0,
-            numeric: true,
-            valign: Gtk.Align.CENTER,
-            value: menuArrowRiseValue,
-            sensitive: menuArrowRiseEnabled,
-        });
+
+        const menuArrowRiseSpinButton = createSpinButton(-50, 50, menuArrowRiseValue);
+        menuArrowRiseSpinButton.sensitive = menuArrowRiseEnabled;
         menuArrowRiseSpinButton.connect('value-changed', widget => {
             const [oldEnabled, oldValue_] = this._settings.get_value('menu-arrow-rise').deep_unpack();
             this._settings.set_value('menu-arrow-rise', new GLib.Variant('(bi)', [oldEnabled, widget.get_value()]));
@@ -175,82 +141,157 @@ class ArcMenuVisualSettingsPage extends SubPage {
         generalSettingsFrame.add(menuArrowRiseRow);
 
         const iconsSizeFrame = new Adw.PreferencesGroup({
-            title: _('Override Icon Sizes'),
-            description: _('Override the icon size of various menu items'),
+            title: _('Override Menu Item Icon Sizes'),
         });
         this.add(iconsSizeFrame);
 
-        const iconSizes = new Gtk.StringList();
-        iconSizes.append(_('Off'));
-        iconSizes.append(`${_('Small')} - ${_('Square')}`);
-        iconSizes.append(`${_('Medium')} - ${_('Square')}`);
-        iconSizes.append(`${_('Large')} - ${_('Square')}`);
-        iconSizes.append(`${_('Small')} - ${_('Wide')}`);
-        iconSizes.append(`${_('Medium')} - ${_('Wide')}`);
-        iconSizes.append(`${_('Large')} - ${_('Wide')}`);
-        iconSizes.append(_('Custom'));
-        const gridIconsSizeRow = new Adw.ComboRow({
-            title: `${_('Grid Menu Items')} <i><span size="small">(${_('Non-Traditional Layouts')})</span></i>`,
-            subtitle: _('Apps, Pinned Apps, Shortcuts, Grid Search Results'),
-            model: iconSizes,
-            selected: this._settings.get_enum('menu-item-grid-icon-size'),
-        });
-        gridIconsSizeRow.use_markup = true;
-        gridIconsSizeRow.connect('notify::selected', widget => {
-            customGridIconButton.visible = widget.selected === Constants.GridIconSize.CUSTOM;
-            this._settings.set_enum('menu-item-grid-icon-size', widget.selected);
+        const sizeEntries = [
+            [_('Small'), Constants.GridIconSizes.SMALL],
+            [_('Medium'), Constants.GridIconSizes.MEDIUM],
+            [_('Large'), Constants.GridIconSizes.LARGE],
+            [_('Extra Large'), Constants.GridIconSizes.XL],
+            [_('Small Wide'), Constants.GridIconSizes.SMALL_RECT],
+            [_('Medium Wide'), Constants.GridIconSizes.MEDIUM_RECT],
+            [_('Large Wide'), Constants.GridIconSizes.LARGE_RECT],
+        ];
+
+        let isUpdating = false;
+        const updateGridIconSetting = value => {
+            if (isUpdating)
+                return;
+
+            isUpdating = true;
+
+            const isDefault = value.width === Constants.GridIconSizes.DEFAULT.width &&
+                value.height === Constants.GridIconSizes.DEFAULT.height &&
+                value.size === Constants.GridIconSizes.DEFAULT.size;
+            menuButton.visible = !isDefault;
+
+            iconSizeGridWidth.value = value.width;
+            iconSizeGridHeight.value = value.height;
+            iconSizeGridIconSize.value = value.size;
+            this._settings.set_value('icon-size-grid', new GLib.Variant('a{si}', value));
+            isUpdating = false;
+        };
+        const iconSizeGrid = this._settings.get_value('icon-size-grid').deepUnpack();
+        const isDefault = iconSizeGrid.width === Constants.GridIconSizes.DEFAULT.width &&
+            iconSizeGrid.height === Constants.GridIconSizes.DEFAULT.height &&
+            iconSizeGrid.size === Constants.GridIconSizes.DEFAULT.size;
+
+        const gridIconsSizeRow = new Adw.ExpanderRow({
+            title: _('Grid Menu Items'),
+            subtitle: _('Menu items displayed in grid style'),
+            use_markup: true,
+            show_enable_switch: true,
+            expanded: !isDefault,
+            enable_expansion: !isDefault,
         });
         iconsSizeFrame.add(gridIconsSizeRow);
-
-        const customGridIconButton = new Gtk.Button({
-            icon_name: 'applications-system-symbolic',
-            valign: Gtk.Align.CENTER,
-            visible: gridIconsSizeRow.selected === Constants.GridIconSize.CUSTOM,
+        gridIconsSizeRow.connect('notify::enable-expansion', widget => {
+            const value = widget.enable_expansion ? Constants.GridIconSizes.MEDIUM : Constants.GridIconSizes.DEFAULT;
+            updateGridIconSetting(value);
         });
-        gridIconsSizeRow.add_suffix(customGridIconButton);
-        customGridIconButton.connect('clicked', () => {
-            const dialog = new CustomGridIconDialogWindow(this._settings, this);
-            dialog.show();
-            dialog.connect('response', (_w, response) => {
-                if (response === Gtk.ResponseType.APPLY) {
-                    this._settings.set_value('custom-grid-icon-size', new GLib.Variant('a{si}',
-                        {'width': dialog.iconWidth, 'height': dialog.iconHeight, 'iconSize': dialog.iconSize}));
-                }
-                dialog.destroy();
+
+        const popoverBox = new Gtk.ListBox();
+        sizeEntries.forEach(([label, value]) => {
+            const row = new Gtk.ListBoxRow({
+                child: new Gtk.Label({
+                    label,
+                    halign: Gtk.Align.START,
+                }),
+            });
+            row.iconSize = value;
+
+            popoverBox.append(row);
+        });
+        popoverBox.connect('row-activated', (_widget, row) => {
+            updateGridIconSetting(row.iconSize);
+            popover.popdown();
+        });
+
+        const popover = new Gtk.Popover({
+            child: popoverBox,
+            has_arrow: false,
+            css_classes: ['menu'],
+        });
+        popover.set_offset(0, 6);
+        const menuButton = new Gtk.MenuButton({
+            popover,
+            label: _('Presets'),
+            valign: Gtk.Align.CENTER,
+            visible: !isDefault,
+        });
+        gridIconsSizeRow.add_suffix(menuButton);
+
+        const iconSizeGridRow = new Adw.ActionRow({
+            title: _('Grid Icon Size'),
+            subtitle: _('Width, Height, Icon Size'),
+        });
+        gridIconsSizeRow.add_row(iconSizeGridRow);
+
+        const iconSizeGridWidth = createSpinButton(60, 250, iconSizeGrid.width);
+        iconSizeGridWidth.connect('value-changed', widget => {
+            const current = this._settings.get_value('icon-size-grid').deepUnpack();
+            updateGridIconSetting({
+                width: widget.value,
+                height: current.height,
+                size: current.size,
             });
         });
+        iconSizeGridRow.add_suffix(iconSizeGridWidth);
+
+        const iconSizeGridHeight = createSpinButton(60, 250, iconSizeGrid.height);
+        iconSizeGridHeight.connect('value-changed', widget => {
+            const current = this._settings.get_value('icon-size-grid').deepUnpack();
+            updateGridIconSetting({
+                width: current.width,
+                height: widget.value,
+                size: current.size,
+            });
+        });
+        iconSizeGridRow.add_suffix(iconSizeGridHeight);
+
+        const iconSizeGridIconSize = createSpinButton(16, 96, iconSizeGrid.size);
+        iconSizeGridIconSize.connect('value-changed', widget => {
+            const current = this._settings.get_value('icon-size-grid').deepUnpack();
+            updateGridIconSetting({
+                width: current.width,
+                height: current.height,
+                size: widget.value,
+            });
+        });
+        iconSizeGridRow.add_suffix(iconSizeGridIconSize);
 
         const menuItemIconSizeRow = this.createIconSizeRow({
             title: _('Applications'),
-            subtitle: _('Apps, Pinned Apps, Items within Category, List Search Results'),
-            setting: 'menu-item-icon-size',
+            subtitle: _('Applications, pinned apps, and search results'),
+            setting: 'icon-size-apps',
         });
         iconsSizeFrame.add(menuItemIconSizeRow);
 
         const quickLinksIconSizeRow = this.createIconSizeRow({
             title: _('Shortcuts'),
-            subtitle: _('Directory / Application / Other Shortcuts, Power Menu'),
-            setting: 'quicklinks-item-icon-size',
+            subtitle: _('Menu items found in side panels on various layouts'),
+            setting: 'icon-size-shortcuts',
         });
         iconsSizeFrame.add(quickLinksIconSizeRow);
 
         const menuCategoryIconSizeRow = this.createIconSizeRow({
-            title: _('Application Categories'),
-            setting: 'menu-item-category-icon-size',
+            title: _('Categories'),
+            setting: 'icon-size-categories',
         });
         iconsSizeFrame.add(menuCategoryIconSizeRow);
 
         const buttonIconSizeRow = this.createIconSizeRow({
-            title: _('Button Widgets'),
-            subtitle: _('Power Buttons, Unity Bottom Bar, Mint Side Bar, etc'),
-            setting: 'button-item-icon-size',
+            title: _('Buttons'),
+            setting: 'icon-size-buttons',
         });
         iconsSizeFrame.add(buttonIconSizeRow);
 
         const miscIconSizeRow = this.createIconSizeRow({
             title: _('Miscellaneous'),
-            subtitle: _('Avatar, Search, Navigation Icons'),
-            setting: 'misc-item-icon-size',
+            subtitle: _('Avatar, search icons, navigation icons'),
+            setting: 'icon-size-misc',
         });
         iconsSizeFrame.add(miscIconSizeRow);
 
@@ -259,7 +300,6 @@ class ArcMenuVisualSettingsPage extends SubPage {
             widthSpinButton.set_value(this._settings.get_default_value('menu-width-adjustment').unpack());
             menuWidthSpinButton.set_value(this._settings.get_default_value('left-panel-width').unpack());
             rightPanelWidthSpinButton.set_value(this._settings.get_default_value('right-panel-width').unpack());
-            gridIconsSizeRow.selected = 0;
             menuItemIconSizeRow.selected = 0;
             menuCategoryIconSizeRow.selected = 0;
             buttonIconSizeRow.selected = 0;
@@ -274,109 +314,120 @@ class ArcMenuVisualSettingsPage extends SubPage {
     }
 
     createIconSizeRow(rowDetails) {
-        const iconSizes = new Gtk.StringList();
-        iconSizes.append(_('Off'));
-        iconSizes.append(_('Extra Small'));
-        iconSizes.append(_('Small'));
-        iconSizes.append(_('Medium'));
-        iconSizes.append(_('Large'));
-        iconSizes.append(_('Extra Large'));
+        const sizeEntries = [
+            [_('Small'), Constants.IconSizes.SMALL],
+            [_('Medium'), Constants.IconSizes.MEDIUM],
+            [_('Large'), Constants.IconSizes.LARGE],
+            [_('Extra Large'), Constants.IconSizes.XL],
+        ];
 
-        if (rowDetails.setting === 'menu-item-category-icon-size')
-            iconSizes.append(_('Hidden'));
+        const currentValue = this._settings.get_int(rowDetails.setting);
+        const showHideOption = rowDetails.setting === 'icon-size-categories';
+        const isDefault = currentValue === Constants.IconSizes.DEFAULT;
+        const isHidden = currentValue === Constants.IconSizes.HIDDEN;
 
-        const iconsSizeRow = new Adw.ComboRow({
+        const expanderRow = new Adw.ExpanderRow({
             title: _(rowDetails.title),
             subtitle: rowDetails.subtitle ? _(rowDetails.subtitle) : null,
-            model: iconSizes,
-            selected: this._settings.get_enum(rowDetails.setting),
+            use_markup: true,
+            show_enable_switch: true,
+            expanded: !isDefault,
+            enable_expansion: !isDefault,
         });
-        iconsSizeRow.use_markup = true;
-        iconsSizeRow.connect('notify::selected', widget => {
-            this._settings.set_enum(rowDetails.setting, widget.selected);
+        expanderRow.connect('notify::enable-expansion', widget => {
+            const value = widget.enable_expansion ? Constants.IconSizes.MEDIUM : Constants.IconSizes.DEFAULT;
+            updateSetting(value);
         });
-        return iconsSizeRow;
-    }
-});
 
-var CustomGridIconDialogWindow = GObject.registerClass(
-class ArcMenuCustomGridIconDialogWindow extends PW.DialogWindow {
-    _init(settings, parent) {
-        super._init(_('Custom Grid Icon Size'), parent);
-        this.set_default_size(600, 325);
-        this.search_enabled = false;
-        this._settings = settings;
-        const {width, height, iconSize} = this._settings.get_value('custom-grid-icon-size').deep_unpack();
-        this.iconWidth = width;
-        this.iconHeight = height;
-        this.iconSize = iconSize;
+        const popoverBox = new Gtk.ListBox();
+        sizeEntries.forEach(([label, value]) => {
+            const row = new Gtk.ListBoxRow({
+                child: new Gtk.Label({
+                    label,
+                    halign: Gtk.Align.START,
+                }),
+            });
+            row.iconSize = value;
 
-        const widthRow = new Adw.ActionRow({
-            title: _('Width'),
+            popoverBox.append(row);
         });
-        const widthSpinButton = new Gtk.SpinButton({
-            adjustment: new Gtk.Adjustment({
-                lower: 60, upper: 250, step_increment: 1, page_increment: 50, page_size: 0,
-            }),
-            climb_rate: 1,
-            digits: 0,
-            numeric: true,
+        popoverBox.connect('row-activated', (_widget, row) => {
+            updateSetting(row.iconSize);
+            popover.popdown();
+        });
+
+        const popover = new Gtk.Popover({
+            child: popoverBox,
+            has_arrow: false,
+            css_classes: ['menu'],
+        });
+        popover.set_offset(0, 6);
+        const menuButton = new Gtk.MenuButton({
+            popover,
+            label: _('Presets'),
             valign: Gtk.Align.CENTER,
+            visible: !isDefault,
         });
-        widthSpinButton.set_value(this.iconWidth);
-        widthSpinButton.connect('value-changed', widget => {
-            this.iconWidth = widget.get_value();
-        });
-        widthRow.add_suffix(widthSpinButton);
-        this.pageGroup.add(widthRow);
+        expanderRow.add_suffix(menuButton);
 
-        const heightRow = new Adw.ActionRow({
-            title: _('Height'),
+        const spinButton = createSpinButton(10, 64, currentValue);
+        spinButton.connect('value-changed', widget => {
+            updateSetting(widget.value);
         });
-        const heightSpinButton = new Gtk.SpinButton({
-            adjustment: new Gtk.Adjustment({
-                lower: 60, upper: 250, step_increment: 1, page_increment: 50, page_size: 0,
-            }),
-            climb_rate: 1,
-            digits: 0,
-            numeric: true,
-            valign: Gtk.Align.CENTER,
-        });
-        heightSpinButton.set_value(this.iconHeight);
-        heightSpinButton.connect('value-changed', widget => {
-            this.iconHeight = widget.get_value();
-        });
-        heightRow.add_suffix(heightSpinButton);
-        this.pageGroup.add(heightRow);
 
-        const sizeRow = new Adw.ActionRow({
+        const hiddenLabel = new Gtk.Label({
+            label: _('Hidden'),
+            visible: false,
+        });
+        const iconsSizeRow = new Adw.ActionRow({
             title: _('Icon Size'),
+            activatable_widget: spinButton,
         });
-        const sizeSpinButton = new Gtk.SpinButton({
-            adjustment: new Gtk.Adjustment({
-                lower: 24, upper: 250, step_increment: 1, page_increment: 50, page_size: 0,
-            }),
-            climb_rate: 1,
-            digits: 0,
-            numeric: true,
-            valign: Gtk.Align.CENTER,
-        });
-        sizeSpinButton.set_value(this.iconSize);
-        sizeSpinButton.connect('value-changed', widget => {
-            this.iconSize = widget.get_value();
-        });
-        sizeRow.add_suffix(sizeSpinButton);
-        this.pageGroup.add(sizeRow);
+        iconsSizeRow.add_suffix(spinButton);
+        iconsSizeRow.add_suffix(hiddenLabel);
+        expanderRow.add_row(iconsSizeRow);
 
-        const applyButton = new Gtk.Button({
-            label: _('Apply'),
-            halign: Gtk.Align.END,
-            css_classes: ['suggested-action'],
-        });
+        let hideIconRow = null;
+        if (showHideOption) {
+            hideIconRow = new Adw.SwitchRow({
+                title: _('Hide Icon'),
+                active: isHidden,
+            });
+            hideIconRow.connect('notify::active', widget => {
+                const value = widget.active ? Constants.IconSizes.HIDDEN : Constants.IconSizes.MEDIUM;
+                updateSetting(value);
+            });
+            expanderRow.add_row(hideIconRow);
+        }
 
-        applyButton.connect('clicked', () => {
-            this.emit('response', Gtk.ResponseType.APPLY);
-        });
-        this.pageGroup.set_header_suffix(applyButton);
+        let isUpdating = false;
+        const updateSetting = value => {
+            if (isUpdating)
+                return;
+
+            isUpdating = true;
+
+            // eslint-disable-next-line no-shadow
+            const isDefault = value === Constants.IconSizes.DEFAULT;
+            // eslint-disable-next-line no-shadow
+            const isHidden = value === Constants.IconSizes.HIDDEN;
+
+            spinButton.visible = !isHidden;
+            menuButton.visible = !isDefault;
+            hiddenLabel.visible = isHidden;
+
+            if (hideIconRow)
+                hideIconRow.active = isHidden;
+
+            if (!isDefault && !isHidden)
+                spinButton.set_value(value);
+
+            this._settings.set_int(rowDetails.setting, value);
+            isUpdating = false;
+        };
+
+        updateSetting(currentValue);
+
+        return expanderRow;
     }
 });

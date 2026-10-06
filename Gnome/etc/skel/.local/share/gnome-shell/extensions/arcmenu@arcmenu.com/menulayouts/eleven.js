@@ -27,13 +27,13 @@ export class Layout extends BaseMenuLayout {
             row_spacing: 0,
             ...getOrientationProp(true),
             default_menu_width: 650,
-            icon_grid_size: Constants.GridIconSize.MEDIUM_RECT,
-            category_icon_size: Constants.LARGE_ICON_SIZE,
-            apps_icon_size: Constants.LARGE_ICON_SIZE,
-            quicklinks_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
-            buttons_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
-            pinned_apps_icon_size: Constants.LARGE_ICON_SIZE,
         });
+
+        this.iconSizeCategories = Constants.IconSizes.LARGE;
+        this.iconSizeApps = Constants.IconSizes.LARGE;
+        this.iconSizeShortcuts = Constants.IconSizes.SMALL;
+        this.iconSizeButtons = Constants.IconSizes.SMALL;
+        this.iconSizePinnedApps = Constants.IconSizes.LARGE;
 
         this.connect('button-press-event', (actor, event) => {
             if (this.backButton.visible && event.get_button() === 8)

@@ -34,6 +34,13 @@ import { SettingsData } from './settings_data.js';
 export default class Prefs extends ExtensionPreferences {
 
     fillPreferencesWindow(window) {
+        let fields = {
+            effectComboBox: null,
+            durationSlider: null,
+            xTilesSlider: null,
+            yTilesSlider: null
+        };
+
         const settingsData = new SettingsData(this.getSettings());
 
         const width = 750;
@@ -43,21 +50,21 @@ export default class Prefs extends ExtensionPreferences {
         const page = Adw.PreferencesPage.new();
 
         const group1 = Adw.PreferencesGroup.new();
-        this.effectComboBox = this.addComboBox(group1, "Effect", settingsData.EFFECT);
-        this.durationSlider = this.addSlider(group1, "Duration (ms)", settingsData.DURATION, 100.0, 1000.0, 0);
+        fields.effectComboBox = this.addComboBox(group1, "Effect", settingsData.EFFECT);
+        fields.durationSlider = this.addSlider(group1, "Duration (ms)", settingsData.DURATION, 100.0, 1000.0, 0);
         page.add(group1);
         
         const group2 = Adw.PreferencesGroup.new();
-        this.xTilesSlider = this.addSlider(group2, "X Tiles", settingsData.X_TILES, 3.0, 50.0, 0);
-        this.yTilesSlider = this.addSlider(group2, "Y Tiles", settingsData.Y_TILES, 3.0, 50.0, 0);
+        fields.xTilesSlider = this.addSlider(group2, "X Tiles", settingsData.X_TILES, 3.0, 50.0, 0);
+        fields.yTilesSlider = this.addSlider(group2, "Y Tiles", settingsData.Y_TILES, 3.0, 50.0, 0);
         page.add(group2);
 
-        this.addResetButton(window, settingsData);
+        this.addResetButton(fields, window, settingsData);
 
         window.add(page);
     }
 
-    addResetButton(window, settingsData) {
+    addResetButton(fields, window, settingsData) {
         const button = new Gtk.Button({vexpand: true, valign: Gtk.Align.END});
         button.set_icon_name('edit-clear');
 
@@ -67,10 +74,10 @@ export default class Prefs extends ExtensionPreferences {
             settingsData.X_TILES.set(15.0);
             settingsData.Y_TILES.set(20.0);
 
-            this.effectComboBox.set_active(0);
-            this.durationSlider.set_value(settingsData.DURATION.get());
-            this.xTilesSlider.set_value(settingsData.X_TILES.get());
-            this.yTilesSlider.set_value(settingsData.Y_TILES.get());
+            fields.effectComboBox.set_active(0);
+            fields.durationSlider.set_value(settingsData.DURATION.get());
+            fields.xTilesSlider.set_value(settingsData.X_TILES.get());
+            fields.yTilesSlider.set_value(settingsData.Y_TILES.get());
         });
 
         const header = this.findWidgetByType(window.get_content(), Adw.HeaderBar);

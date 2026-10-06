@@ -26,7 +26,6 @@
 import Meta from 'gi://Meta';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import { SettingsData } from './settings_data.js';
@@ -39,6 +38,21 @@ export default class CompizWindowsEffectExtension extends Extension {
 
     enable() {
         this.settingsData = new SettingsData(this.getSettings());
+        if (this.settingsData.PRESET.get() === 'P' &&
+            this.settingsData.FRICTION.get() === 3.5 && 
+            this.settingsData.SPRING_K.get() === 3.8 && 
+            this.settingsData.SPEEDUP_FACTOR.get() === 12.0 && 
+            this.settingsData.MASS.get() === 70.0) 
+        {
+            this.settingsData.PRESET.set('R');
+        }
+        
+        let currentVersion = this.metadata.version;
+        let lastVersion = this.settingsData.LAST_VERSION.get();
+        if (lastVersion < currentVersion) {
+            console.log(`[CompizWindowsEffectExtension] version updated: ${lastVersion} -> ${currentVersion}`);
+        }
+        this.settingsData.LAST_VERSION.set(currentVersion);
 
         this.allowedResizeOp = [Meta.GrabOp.RESIZING_W, Meta.GrabOp.RESIZING_E, Meta.GrabOp.RESIZING_S, Meta.GrabOp.RESIZING_N, Meta.GrabOp.RESIZING_NW, Meta.GrabOp.RESIZING_NE, Meta.GrabOp.RESIZING_SE, Meta.GrabOp.RESIZING_SW];
 
@@ -108,23 +122,24 @@ export default class CompizWindowsEffectExtension extends Extension {
                 return;
             }
 
-            let sourceRect = this.resizedActor.sourceRect;
-            let targetRect = actor.meta_window.get_frame_rect();
+            const sourceRect = this.resizedActor.sourceRect;
+            const targetRect = actor.meta_window.get_frame_rect();
 
             this.resizedActor = null;
-            
-            if (actor.metaWindow.get_maximize_flags()) {
+
+            const metaWindowMaximized = actor.metaWindow.get_maximize_flags();
+            if (metaWindowMaximized) {
                 this.destroyActorEffect(actor);
 
                 if (!this.settingsData.MAXIMIZE_EFFECT.get()) {
                     return;
                 }
 
-                let monitor = Main.layoutManager.monitors[actor.meta_window.get_monitor()];
+                const monitor = Main.layoutManager.monitors[actor.meta_window.get_monitor()];
                 
-                if (actor.metaWindow.get_maximize_flags() === Meta.MaximizeFlags.BOTH || 
+                if (metaWindowMaximized === Meta.MaximizeFlags.BOTH || 
                         (
-                            actor.metaWindow.get_maximize_flags() === Meta.MaximizeFlags.VERTICAL && 
+                            metaWindowMaximized === Meta.MaximizeFlags.VERTICAL && 
                             (
                                 (sourceRect.y != targetRect.y) || 
                                 (sourceRect.y + sourceRect.height != targetRect.y + targetRect.height) || 

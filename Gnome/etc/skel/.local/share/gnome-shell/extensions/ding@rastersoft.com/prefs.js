@@ -16,15 +16,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+// SPDX-License-Identifier: GPL-3.0-only
 'use strict';
-import Gio from 'gi://Gio'
+import Gio from 'gi://Gio';
 import Adw from 'gi://Adw';
 
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 export default class DingPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
-        let mainAppControl = Gio.DBusActionGroup.get(
+        const mainAppControl = Gio.DBusActionGroup.get(
             Gio.DBus.session,
             'com.rastersoft.ding',
             '/com/rastersoft/ding'
@@ -34,6 +35,8 @@ export default class DingPreferences extends ExtensionPreferences {
         const page = new Adw.PreferencesPage();
 
         window.add(page);
-        window.connect_after('show', ()=>{window.close();});
+        window.connect_after('show', () => {
+            window.close();
+        });
     }
 }

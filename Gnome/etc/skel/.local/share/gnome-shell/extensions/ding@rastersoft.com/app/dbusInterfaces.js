@@ -15,8 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 /* exported DBusInterfaces */
+// SPDX-License-Identifier: GPL-3.0-only
 'use strict';
-var DBusInterfaces = {
+export var DBusInterfaces = {
     // net.haddes.SwitcherooControl
     'net.hadess.SwitcherooControl': `<node>
     <interface name="net.hadess.SwitcherooControl">
@@ -119,12 +120,13 @@ var DBusInterfaces = {
   </node>`,
 
     // org.gnome.NautilusPreviewer
-    'org.gnome.NautilusPreviewer': `<node>
-    <interface name='org.gnome.NautilusPreviewer'>
+    'org.gnome.NautilusPreviewer2': `<node>
+    <interface name='org.gnome.NautilusPreviewer2'>
       <method name='ShowFile'>
         <arg name='FileUri' type='s' direction='in'/>
-        <arg name='ParentXid' type='i' direction='in'/>
-        <arg name='CloseIfShown' type='b' direction='in'/>
+        <arg name='WindowHandle' type='s' direction='in'/>
+        <arg name='CloseIfAlreadyShown' type='b' direction='in'/>
+        <arg name='ActivationToken' type='s' direction='in'/>
       </method>
     </interface>
   </node>`,

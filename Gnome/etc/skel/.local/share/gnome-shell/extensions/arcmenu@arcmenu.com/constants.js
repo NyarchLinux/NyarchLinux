@@ -80,11 +80,11 @@ export const SoftwareManagerIDs = ['org.manjaro.pamac.manager.desktop', 'pamac-m
     'org.gnome.Software.desktop', 'tr.org.pardus.software.desktop'];
 
 export const Categories = [
-    {CATEGORY: CategoryType.FAVORITES, NAME: _('Favorites'), IMAGE: 'emote-love-symbolic'},
-    {CATEGORY: CategoryType.FREQUENT_APPS, NAME: _('Frequent Apps'), IMAGE: 'user-bookmarks-symbolic'},
-    {CATEGORY: CategoryType.ALL_PROGRAMS, NAME: _('All Apps'), IMAGE: 'view-app-grid-symbolic'},
-    {CATEGORY: CategoryType.PINNED_APPS, NAME: _('Pinned Apps'), IMAGE: 'view-pin-symbolic'},
-    {CATEGORY: CategoryType.RECENT_FILES, NAME: _('Recent Files'), IMAGE: 'document-open-recent-symbolic'},
+    {id: CategoryType.FAVORITES, name: _('Favorites'), icon: 'emote-love-symbolic'},
+    {id: CategoryType.FREQUENT_APPS, name: _('Frequent Apps'), icon: 'user-bookmarks-symbolic'},
+    {id: CategoryType.ALL_PROGRAMS, name: _('All Apps'), icon: 'view-app-grid-symbolic'},
+    {id: CategoryType.PINNED_APPS, name: _('Pinned Apps'), icon: 'view-pin-symbolic'},
+    {id: CategoryType.RECENT_FILES, name: _('Recent Files'), icon: 'document-open-recent-symbolic'},
 ];
 
 export const TooltipLocation = {
@@ -120,7 +120,7 @@ export const CaretPosition = {
     MIDDLE: 2,
 };
 
-export const CategoryIconType = {
+export const IconStyle = {
     FULL_COLOR: 0,
     SYMBOLIC: 1,
 };
@@ -138,45 +138,25 @@ export const MenuLocation = {
     MONITOR_CENTERED: 9,
 };
 
-export const IconSize = {
-    DEFAULT: 0,
-    EXTRA_SMALL: 1,
-    SMALL: 2,
-    MEDIUM: 3,
-    LARGE: 4,
-    EXTRA_LARGE: 5,
-    HIDDEN: 6,
+export const IconSizes = {
+    DEFAULT: -1,
+    HIDDEN: 0,
+    SMALL: 16,
+    MEDIUM: 24,
+    LARGE: 32,
+    XL: 48,
 };
 
-export const GridIconSize = {
-    DEFAULT: 0,
-    SMALL: 1,
-    MEDIUM: 2,
-    LARGE: 3,
-    SMALL_RECT: 4,
-    MEDIUM_RECT: 5,
-    LARGE_RECT: 6,
-    CUSTOM: 7,
-    EXTRA_LARGE: 8,
+export const GridIconSizes = {
+    DEFAULT:     {width: -1, height: -1, size: -1},
+    SMALL:       {width: 80, height: 80, size: 32},
+    MEDIUM:      {width: 90, height: 90, size: 48},
+    LARGE:       {width: 100, height: 100, size: 48},
+    XL:          {width: 145, height: 145, size: 64},
+    SMALL_RECT:  {width: 85, height: 70, size: 32},
+    MEDIUM_RECT: {width: 97, height: 80, size: 32},
+    LARGE_RECT:  {width: 109, height: 90, size: 48},
 };
-
-export const GridIconInfo = [
-    {ENUM: GridIconSize.SMALL, WIDTH: 80, HEIGHT: 80, ICON_SIZE: 36},
-    {ENUM: GridIconSize.MEDIUM, WIDTH: 87, HEIGHT: 87, ICON_SIZE: 42},
-    {ENUM: GridIconSize.LARGE, WIDTH: 95, HEIGHT: 95, ICON_SIZE: 52},
-    {ENUM: GridIconSize.SMALL_RECT, WIDTH: 85, HEIGHT: 70, ICON_SIZE: 28},
-    {ENUM: GridIconSize.MEDIUM_RECT, WIDTH: 92, HEIGHT: 78, ICON_SIZE: 34},
-    {ENUM: GridIconSize.LARGE_RECT, WIDTH: 95, HEIGHT: 85, ICON_SIZE: 42},
-    {ENUM: GridIconSize.EXTRA_LARGE, WIDTH: 148, HEIGHT: 148, ICON_SIZE: 68},
-];
-
-export const ICON_HIDDEN = 0;
-export const EXTRA_SMALL_ICON_SIZE = 16;
-export const SMALL_ICON_SIZE = 20;
-export const MEDIUM_ICON_SIZE = 25;
-export const LARGE_ICON_SIZE = 30;
-export const EXTRA_LARGE_ICON_SIZE = 35;
-export const MISC_ICON_SIZE = 24;
 
 export const SUPER_L = 'Super_L';
 export const SUPER_R = 'Super_R';
@@ -255,301 +235,48 @@ export const PowerDisplayStyle = {
 };
 
 export const PowerOptions = [
-    {TYPE: PowerType.LOGOUT, IMAGE: 'system-log-out-symbolic', NAME: _('Log Out...')},
-    {TYPE: PowerType.LOCK, IMAGE: 'changes-prevent-symbolic', NAME: _('Lock')},
-    {TYPE: PowerType.RESTART, IMAGE: 'system-reboot-symbolic', NAME: _('Restart...')},
-    {TYPE: PowerType.POWER_OFF, IMAGE: 'system-shutdown-symbolic', NAME: _('Power Off...')},
-    {TYPE: PowerType.SUSPEND, IMAGE: 'media-playback-pause-symbolic', NAME: _('Suspend')},
-    {TYPE: PowerType.HYBRID_SLEEP, IMAGE: 'weather-clear-night-symbolic', NAME: _('Hybrid Sleep')},
-    {TYPE: PowerType.HIBERNATE, IMAGE: 'document-save-symbolic', NAME: _('Hibernate')},
-    {TYPE: PowerType.SWITCH_USER, IMAGE: 'system-switch-user-symbolic', NAME: _('Switch User')},
+    {id: PowerType.LOGOUT, icon: 'system-log-out-symbolic', name: _('Log Out...')},
+    {id: PowerType.LOCK, icon: 'changes-prevent-symbolic', name: _('Lock')},
+    {id: PowerType.RESTART, icon: 'system-reboot-symbolic', name: _('Restart...')},
+    {id: PowerType.POWER_OFF, icon: 'system-shutdown-symbolic', name: _('Power Off...')},
+    {id: PowerType.SUSPEND, icon: 'media-playback-pause-symbolic', name: _('Suspend')},
+    {id: PowerType.HYBRID_SLEEP, icon: 'weather-clear-night-symbolic', name: _('Hybrid Sleep')},
+    {id: PowerType.HIBERNATE, icon: 'document-save-symbolic', name: _('Hibernate')},
+    {id: PowerType.SWITCH_USER, icon: 'system-switch-user-symbolic', name: _('Switch User')},
 ];
 
-// Deprecated - icons are now packaged in GResource.
-export const MenuIcons = [
-    {IMAGE: 'icon-arcmenu-logo-symbolic'},
-    {IMAGE: 'icon-arcmenu-logo-alt-symbolic'},
-    {IMAGE: 'icon-arcmenu-old-symbolic'},
-    {IMAGE: 'icon-arcmenu-old-alt-symbolic'},
-    {IMAGE: 'icon-arcmenu-oldest-symbolic'},
-    {IMAGE: 'icon-curved-a-symbolic'},
-    {IMAGE: 'icon-focus-symbolic'},
-    {IMAGE: 'icon-triple-dash-symbolic'},
-    {IMAGE: 'icon-whirl-symbolic'},
-    {IMAGE: 'icon-whirl-circle-symbolic'},
-    {IMAGE: 'icon-sums-symbolic'},
-    {IMAGE: 'icon-arrow-symbolic'},
-    {IMAGE: 'icon-lins-symbolic'},
-    {IMAGE: 'icon-diamond-square-symbolic'},
-    {IMAGE: 'icon-octo-maze-symbolic'},
-    {IMAGE: 'icon-search-glass-symbolic'},
-    {IMAGE: 'icon-transform-symbolic'},
-    {IMAGE: 'icon-toxic2-symbolic'},
-    {IMAGE: 'icon-alien-symbolic'},
-    {IMAGE: 'icon-cloud-symbolic'},
-    {IMAGE: 'icon-dragon-symbolic'},
-    {IMAGE: 'icon-fly-symbolic'},
-    {IMAGE: 'icon-pacman-symbolic'},
-    {IMAGE: 'icon-peaks-symbolic'},
-    {IMAGE: 'icon-pie-symbolic'},
-    {IMAGE: 'icon-pointer-symbolic'},
-    {IMAGE: 'icon-toxic-symbolic'},
-    {IMAGE: 'icon-tree-symbolic'},
-    {IMAGE: 'icon-zegon-symbolic'},
-    {IMAGE: 'icon-apps-symbolic'},
-    {IMAGE: 'icon-bug-symbolic'},
-    {IMAGE: 'icon-cita-symbolic'},
-    {IMAGE: 'icon-dragonheart-symbolic'},
-    {IMAGE: 'icon-eclipse-symbolic'},
-    {IMAGE: 'icon-football-symbolic'},
-    {IMAGE: 'icon-heddy-symbolic'},
-    {IMAGE: 'icon-helmet-symbolic'},
-    {IMAGE: 'icon-paint-palette-symbolic'},
-    {IMAGE: 'icon-peeks-symbolic'},
-    {IMAGE: 'icon-record-symbolic'},
-    {IMAGE: 'icon-saucer-symbolic'},
-    {IMAGE: 'icon-step-symbolic'},
-    {IMAGE: 'icon-vancer-symbolic'},
-    {IMAGE: 'icon-vibe-symbolic'},
-    {IMAGE: 'icon-start-box-symbolic'},
-    {IMAGE: 'icon-dimond-win-symbolic'},
-    {IMAGE: 'icon-dolphin-symbolic'},
-    {IMAGE: 'icon-dota-symbolic'},
-    {IMAGE: 'icon-football2-symbolic'},
-    {IMAGE: 'icon-loveheart-symbolic'},
-    {IMAGE: 'icon-pyrimid-symbolic'},
-    {IMAGE: 'icon-rewind-symbolic'},
-    {IMAGE: 'icon-snap-symbolic'},
-    {IMAGE: 'icon-time-symbolic'},
-    {IMAGE: 'icon-3d-symbolic'},
-    {IMAGE: 'icon-a-symbolic'},
-    {IMAGE: 'icon-app-launcher-symbolic'},
-    {IMAGE: 'icon-bat-symbolic'},
-    {IMAGE: 'icon-dra-symbolic'},
-    {IMAGE: 'icon-equal-symbolic'},
-    {IMAGE: 'icon-gnacs-symbolic'},
-    {IMAGE: 'icon-groove-symbolic'},
-    {IMAGE: 'icon-kaaet-symbolic'},
-    {IMAGE: 'icon-launcher-symbolic'},
-    {IMAGE: 'icon-pac-symbolic'},
-    {IMAGE: 'icon-robots-symbolic'},
-    {IMAGE: 'icon-sheild-symbolic'},
-    {IMAGE: 'icon-somnia-symbolic'},
-    {IMAGE: 'icon-utool-symbolic'},
-    {IMAGE: 'icon-swirl-symbolic'},
-    {IMAGE: 'icon-round-symbolic'},
-    {IMAGE: 'view-app-grid-symbolic'},
-];
-// Deprecated - icons are now packaged in GResource.
-export const DistroIcons = [
-    {IMAGE: 'distro-gnome-symbolic'},
-    {IMAGE: 'distro-debian-symbolic'},
-    {IMAGE: 'distro-fedora-symbolic'},
-    {IMAGE: 'distro-manjaro-symbolic'},
-    {IMAGE: 'distro-pop-os-symbolic'},
-    {IMAGE: 'distro-ubuntu-symbolic'},
-    {IMAGE: 'distro-arch-symbolic'},
-    {IMAGE: 'distro-opensuse-symbolic'},
-    {IMAGE: 'distro-raspbian-symbolic'},
-    {IMAGE: 'distro-kali-linux-symbolic'},
-    {IMAGE: 'distro-pureos-symbolic'},
-    {IMAGE: 'distro-solus-symbolic'},
-    {IMAGE: 'distro-budgie-symbolic'},
-    {IMAGE: 'distro-gentoo-symbolic'},
-    {IMAGE: 'distro-mx-symbolic'},
-    {IMAGE: 'distro-redhat-symbolic'},
-    {IMAGE: 'distro-voyager-symbolic'},
-    {IMAGE: 'distro-zorin-symbolic'},
-    {IMAGE: 'distro-endeavour-symbolic'},
-    {IMAGE: 'distro-nobara-symbolic'},
-    {IMAGE: 'distro-pardus-symbolic'},
-    {IMAGE: 'distro-cachyos-symbolic'},
-    {IMAGE: 'distro-nixos-symbolic'},
-    {IMAGE: 'distro-oreon-symbolic'},
+export const LayoutCategoriesInfo = [
+    {id: 'traditional', name: _('Traditional'), icon: 'menustyle-traditional-symbolic'},
+    {id: 'modern', name: _('Modern'), icon: 'menustyle-modern-symbolic'},
+    {id: 'touch', name: _('Touch'), icon: 'menustyle-touch-symbolic'},
+    {id: 'launcher', name: _('Launcher'), icon: 'menustyle-launcher-symbolic'},
+    {id: 'alternative', name: _('Alternative'), icon: 'menustyle-alternative-symbolic'},
 ];
 
-export const MenuLayout = {
-    ARCMENU: 0,
-    BRISK: 1,
-    WHISKER: 2,
-    GNOME_MENU: 3,
-    MINT: 4,
-    ELEMENTARY: 5,
-    GNOME_OVERVIEW: 6,
-    REDMOND: 7,
-    UNITY: 8,
-    BUDGIE: 9,
-    INSIDER: 10,
-    RUNNER: 11,
-    CHROMEBOOK: 12,
-    RAVEN: 13,
-    TOGNEE: 14,
-    PLASMA: 15,
-    WINDOWS: 16,
-    ELEVEN: 17,
-    AZ: 18,
-    ENTERPRISE: 19,
-    POP: 20,
-    SLEEK: 21,
-    ZEST: 22,
-};
-
-export const TraditionalMenus = [
-    {
-        LAYOUT: MenuLayout.ARCMENU,
-        TITLE: _('ArcMenu'),
-        IMAGE: 'menu-arcmenu-symbolic',
-    },
-    {
-        LAYOUT: MenuLayout.BRISK,
-        TITLE: _('Brisk'),
-        IMAGE: 'menu-brisk-symbolic',
-    },
-    {
-        LAYOUT: MenuLayout.WHISKER,
-        TITLE: _('Whisker'),
-        IMAGE: 'menu-whisker-symbolic',
-    },
-    {
-        LAYOUT: MenuLayout.GNOME_MENU,
-        TITLE: _('GNOME Menu'),
-        IMAGE: 'menu-gnomemenu-symbolic',
-    },
-    {
-        LAYOUT: MenuLayout.MINT,
-        TITLE: _('Mint'),
-        IMAGE: 'menu-mint-symbolic',
-    },
-    {
-        LAYOUT: MenuLayout.BUDGIE,
-        TITLE: _('Budgie'),
-        IMAGE: 'menu-budgie-symbolic',
-    },
-];
-
-export const ModernMenus = [
-    {
-        LAYOUT: MenuLayout.UNITY,
-        TITLE: _('Unity'),
-        IMAGE: 'menu-unity-symbolic',
-    },
-    {
-        LAYOUT: MenuLayout.PLASMA,
-        TITLE: _('Plasma'),
-        IMAGE: 'menu-plasma-symbolic',
-    },
-    {
-        LAYOUT: MenuLayout.TOGNEE,
-        TITLE: _('tognee'),
-        IMAGE: 'menu-tognee-symbolic',
-    },
-    {
-        LAYOUT: MenuLayout.INSIDER,
-        TITLE: _('Insider'),
-        IMAGE: 'menu-insider-symbolic',
-    },
-    {
-        LAYOUT: MenuLayout.REDMOND,
-        TITLE: _('Redmond'),
-        IMAGE: 'menu-redmond-symbolic',
-    },
-    {
-        LAYOUT: MenuLayout.WINDOWS,
-        TITLE: _('Windows'),
-        IMAGE: 'menu-windows-symbolic',
-    },
-    {
-        LAYOUT: MenuLayout.ELEVEN,
-        TITLE: _('11'),
-        IMAGE: 'menu-eleven-symbolic',
-    },
-    {
-        LAYOUT: MenuLayout.AZ,
-        TITLE: _('a.z.'),
-        IMAGE: 'menu-az-symbolic',
-    },
-    {
-        LAYOUT: MenuLayout.ENTERPRISE,
-        TITLE: _('Enterprise'),
-        IMAGE: 'menu-enterprise-symbolic',
-    },
-    {
-        LAYOUT: MenuLayout.POP,
-        TITLE: _('Pop'),
-        IMAGE: 'menu-pop-symbolic',
-    },
-    {
-        LAYOUT: MenuLayout.SLEEK,
-        TITLE: _('Sleek'),
-        IMAGE: 'menu-sleek-symbolic',
-    },
-    {
-        LAYOUT: MenuLayout.ZEST,
-        TITLE: _('Zest'),
-        IMAGE: 'menu-zest-symbolic',
-    },
-];
-
-export const TouchMenus = [
-    {
-        LAYOUT: MenuLayout.ELEMENTARY,
-        TITLE: _('Elementary'),
-        IMAGE: 'menu-elementary-symbolic',
-    },
-    {
-        LAYOUT: MenuLayout.CHROMEBOOK,
-        TITLE: _('Chromebook'),
-        IMAGE: 'menu-chromebook-symbolic',
-    },
-];
-
-export const LauncherMenus = [
-    {
-        LAYOUT: MenuLayout.RUNNER,
-        TITLE: _('Runner'),
-        IMAGE: 'menu-runner-symbolic',
-    },
-    {
-        LAYOUT: MenuLayout.GNOME_OVERVIEW,
-        TITLE: _('GNOME Overview'),
-        IMAGE: 'menu-gnomeoverview-symbolic',
-    },
-];
-
-export const AlternativeMenus = [
-    {
-        LAYOUT: MenuLayout.RAVEN,
-        TITLE: _('Raven'),
-        IMAGE: 'menu-raven-symbolic',
-    },
-];
-
-export const MenuStyles = [
-    {
-        MENU_TYPE: TraditionalMenus,
-        TITLE: _('Traditional'),
-        IMAGE: 'menustyle-traditional-symbolic',
-    },
-    {
-        MENU_TYPE: ModernMenus,
-        TITLE: _('Modern'),
-        IMAGE: 'menustyle-modern-symbolic',
-    },
-    {
-        MENU_TYPE: TouchMenus,
-        TITLE: _('Touch'),
-        IMAGE: 'menustyle-touch-symbolic',
-    },
-    {
-        MENU_TYPE: LauncherMenus,
-        TITLE: _('Launcher'),
-        IMAGE: 'menustyle-launcher-symbolic',
-    },
-    {
-        MENU_TYPE: AlternativeMenus,
-        TITLE: _('Alternative'),
-        IMAGE: 'menustyle-alternative-symbolic',
-    },
+export const MenuLayoutsInfo = [
+    {id: 'arcmenu', name: _('ArcMenu'), category: 'traditional'},
+    {id: 'brisk', name: _('Brisk'), category: 'traditional'},
+    {id: 'budgie', name: _('Budgie'), category: 'traditional'},
+    {id: 'gnome-menu', name: _('GNOME Menu'), category: 'traditional'},
+    {id: 'mint', name: _('Mint'), category: 'traditional'},
+    {id: 'whisker', name: _('Whisker'), category: 'traditional'},
+    {id: '11', name: _('11'), category: 'modern'},
+    {id: 'az', name: _('a.z.'), category: 'modern'},
+    {id: 'enterprise', name: _('Enterprise'), category: 'modern'},
+    {id: 'insider', name: _('Insider'), category: 'modern'},
+    {id: 'plasma', name: _('Plasma'), category: 'modern'},
+    {id: 'pop', name: _('Pop'), category: 'modern'},
+    {id: 'redmond', name: _('Redmond'), category: 'modern'},
+    {id: 'sleek', name: _('Sleek'), category: 'modern'},
+    {id: 'tognee', name: _('tognee'), category: 'modern'},
+    {id: 'unity', name: _('Unity'), category: 'modern'},
+    {id: 'windows', name: _('Windows'), category: 'modern'},
+    {id: 'zest', name: _('Zest'), category: 'modern'},
+    {id: 'chromebook', name: _('Chromebook'), category: 'touch'},
+    {id: 'elementary', name: _('Elementary'), category: 'touch'},
+    {id: 'gnome-overview', name: _('GNOME Overview'), category: 'launcher'},
+    {id: 'runner', name: _('Runner'), category: 'launcher'},
+    {id: 'raven', name: _('Raven'), category: 'alternative'},
 ];
 
 export const ArcMenuLogoSymbolic = 'arcmenu-logo-symbolic';

@@ -24,12 +24,8 @@ export class Layout extends BaseMenuLayout {
             row_spacing: 0,
             supports_category_hover_activation: true,
             ...getOrientationProp(false),
-            category_icon_size: Constants.MEDIUM_ICON_SIZE,
-            apps_icon_size: Constants.MEDIUM_ICON_SIZE,
-            quicklinks_icon_size: Constants.MEDIUM_ICON_SIZE,
-            buttons_icon_size: Constants.MEDIUM_ICON_SIZE,
-            pinned_apps_icon_size: Constants.MEDIUM_ICON_SIZE,
         });
+
         this.arcMenu.box.style = 'padding: 0px; margin: 0px;';
         const horizontalFlip = ArcMenuManager.settings.get_boolean('enable-horizontal-flip');
 
@@ -50,7 +46,7 @@ export class Layout extends BaseMenuLayout {
                 ...getOrientationProp(true),
                 style: 'padding: 10px 0px; spacing: 4px;',
             });
-            const avatarMenuIcon = new MW.AvatarMenuIcon(this, 75, true);
+            const avatarMenuIcon = new MW.AvatarMenuIcon(this, 74, true);
             avatarMenuIcon.label.set({
                 x_align: Clutter.ActorAlign.CENTER,
                 y_align: Clutter.ActorAlign.CENTER,

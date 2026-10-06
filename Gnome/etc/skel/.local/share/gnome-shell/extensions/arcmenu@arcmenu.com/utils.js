@@ -61,7 +61,7 @@ export const DBusService = class {
         this._dbusExportedObject = null;
         this._exported = null;
         this.ToggleArcMenu = null;
-        this.ToggleStandaloneRunner  = null;
+        this.ToggleStandaloneRunner = null;
     }
 };
 
@@ -192,31 +192,46 @@ export class Debouncer {
 export function convertToButton(item) {
     item.tooltipLocation = Constants.TooltipLocation.BOTTOM_CENTERED;
     item.remove_child(item.label);
+
+    item.remove_style_class_name('arcmenu-menu-item');
+    item.add_style_class_name('arcmenu-button');
+
     item.set({
         x_expand: false,
         x_align: Clutter.ActorAlign.CENTER,
         y_expand: false,
         y_align: Clutter.ActorAlign.CENTER,
-        style_class: 'popup-menu-item arcmenu-button',
     });
 }
 
-export function convertToGridLayout(item) {
+export function updateGridIconSize(item) {
     const menuLayout = item._menuLayout;
-    const icon = item._iconBin;
-
     const {settings} = ArcMenuManager;
 
-    const iconSizeEnum = settings.get_enum('menu-item-grid-icon-size');
-    const defaultIconSize = menuLayout.icon_grid_size;
-    const {width, height, iconSize_} = getGridIconSize(iconSizeEnum, defaultIconSize);
+    let width, height;
+    const iconSizeSetting = settings.get_value('icon-size-grid').deepUnpack();
+    const defaultIconSize = menuLayout.iconSizeGrid;
+    if (iconSizeSetting.size === Constants.IconSizes.DEFAULT) {
+        width = defaultIconSize.width;
+        height = defaultIconSize.height;
+    } else {
+        width = iconSizeSetting.width;
+        height = iconSizeSetting.height;
+    }
+    item.style = `width: ${width}px; height: ${height}px;`;
+}
+
+export function convertToGridLayout(item) {
+    const icon = item._iconBin;
+    const {settings} = ArcMenuManager;
+
+    updateGridIconSize(item);
 
     item.add_style_class_name('ArcMenuIconGrid');
     item.set({
         ...getOrientationProp(true),
         x_align: Clutter.ActorAlign.CENTER,
         tooltipLocation: Constants.TooltipLocation.BOTTOM_CENTERED,
-        style: `width: ${width}px; height: ${height}px;`,
     });
 
     icon?.set({
@@ -246,61 +261,23 @@ export function convertToGridLayout(item) {
     clutterText.set({
         line_wrap: true,
         line_wrap_mode: Pango.WrapMode.WORD_CHAR,
+        ellipsize: Pango.EllipsizeMode.END,
     });
 }
 
-export function getIconSize(iconSizeEnum, defaultIconSize) {
-    switch (iconSizeEnum) {
-    case Constants.IconSize.DEFAULT:
-        return defaultIconSize;
-    case Constants.IconSize.EXTRA_SMALL:
-        return Constants.EXTRA_SMALL_ICON_SIZE;
-    case Constants.IconSize.SMALL:
-        return Constants.SMALL_ICON_SIZE;
-    case Constants.IconSize.MEDIUM:
-        return Constants.MEDIUM_ICON_SIZE;
-    case Constants.IconSize.LARGE:
-        return Constants.LARGE_ICON_SIZE;
-    case Constants.IconSize.EXTRA_LARGE:
-        return Constants.EXTRA_LARGE_ICON_SIZE;
-    case Constants.IconSize.HIDDEN:
-        return Constants.ICON_HIDDEN;
-    default:
-        return defaultIconSize;
-    }
-}
-
-export function getGridIconSize(iconSizeEnum, defaultIconSize) {
-    const {settings} = ArcMenuManager;
-
-    if (iconSizeEnum === Constants.GridIconSize.CUSTOM) {
-        const {width, height, iconSize} = settings.get_value('custom-grid-icon-size').deep_unpack();
-        return {width, height, iconSize};
-    }
-
-    if (iconSizeEnum === Constants.GridIconSize.DEFAULT)
-        iconSizeEnum = defaultIconSize;
-
-    let width, height, iconSize;
-    Constants.GridIconInfo.forEach(info => {
-        if (iconSizeEnum === info.ENUM) {
-            width = info.WIDTH;
-            height = info.HEIGHT;
-            iconSize = info.ICON_SIZE;
-        }
-    });
-    return {width, height, iconSize};
+export function getIconSize(iconSizeSetting, defaultIconSize) {
+    const isDefault = iconSizeSetting === Constants.IconSizes.DEFAULT;
+    return isDefault ? defaultIconSize : iconSizeSetting;
 }
 
 export function getCategoryDetails(iconTheme, currentCategory) {
-    let name = null, gicon = null, fallbackIcon = null;
+    let name, gicon = null, fallbackIcon = null;
 
-    for (const entry of Constants.Categories) {
-        if (entry.CATEGORY === currentCategory) {
-            name = entry.NAME;
-            gicon = Gio.Icon.new_for_string(entry.IMAGE);
-            return [name, gicon, fallbackIcon];
-        }
+    const extraCategory = Constants.Categories.find(catData => catData.id === currentCategory);
+    if (extraCategory) {
+        name = extraCategory.name;
+        gicon = Gio.Icon.new_for_string(extraCategory.icon);
+        return [name, gicon, fallbackIcon];
     }
 
     if (currentCategory === Constants.CategoryType.HOME_SCREEN) {
@@ -320,8 +297,8 @@ export function getCategoryDetails(iconTheme, currentCategory) {
 
         gicon = categoryIcon;
 
-        const categoryIconType = ArcMenuManager.settings.get_enum('category-icon-type');
-        if (categoryIconType === Constants.CategoryIconType.SYMBOLIC) {
+        const iconStyle = ArcMenuManager.settings.get_enum('icon-style-categories');
+        if (iconStyle === Constants.IconStyle.SYMBOLIC) {
             const icon = iconTheme.lookup_icon(symbolicName, 26, St.IconLookupFlags.FORCE_SYMBOLIC);
             if (icon) {
                 gicon = Gio.Icon.new_for_string(symbolicName);

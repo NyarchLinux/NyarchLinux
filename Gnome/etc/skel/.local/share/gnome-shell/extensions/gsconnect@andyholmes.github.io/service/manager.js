@@ -352,10 +352,7 @@ const Manager = GObject.registerClass({
         info.menu = Gio.DBus.session.export_menu_model(objectPath, device.menu);
 
         // Export the Device interface
-        info.interface = new DBus.Interface({
-            g_instance: device,
-            g_interface_info: DEVICE_IFACE,
-        });
+        info.interface = DBus.wrapObject(DEVICE_IFACE, device);
         info.object.add_interface(info.interface);
 
         this._exported.set(device, info);
@@ -394,8 +391,8 @@ const Manager = GObject.registerClass({
     }
 
     /**
-     * Return a device for @packet, creating it and adding it to the list of
-     * of known devices if it doesn't exist.
+     * Return a device for {@link packet}, creating it and adding it
+     * to the list of of known devices if it doesn't exist.
      *
      * @param {Core.Packet} packet - An identity packet for the device
      * @returns {Device} A device object

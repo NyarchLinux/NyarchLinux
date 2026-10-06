@@ -1,3 +1,8 @@
+/*
+ *SPDX-FileCopyrightText: 2018 Sergio Costas Rodriguez <rastersoft@gmail.com>
+ *
+ * SPDX-License-Identifier: GPL-3.0-only
+ */
 .file-label, label.file-label:backdrop {
     text-shadow: 0px 0px 3px black;
     color: white;
@@ -8,9 +13,16 @@
     color: black;
 }
 
+.icon-item {
+    padding: 4px;
+}
+
 .file-item {
-    padding: 2px;
-    border-radius: 5px;
+    padding: 1px;
+    border-radius: 10px;
+    border-style: solid;
+    border-width: 3px;
+    border-color: rgba(0, 0, 0, 0);
 }
 
 .file-item-hover {
@@ -21,10 +33,22 @@
     color: rgb(255, 0, 0);
 }
 
+/* Must put some alpha, never zero, to ensure that Gtk4 doesn't
+   ignore a "fully empty and transparent window" */
 window.desktopwindow {
-    background-color: rgba(0, 0, 0, 0);
+    background-color: rgba(0, 0, 0, 0.005);
 }
 
 window.testwindow {
-    background-color: rgba(0, 0, 0, 100);
+    background-color: rgba(0, 0, 0, 1);
+}
+
+.desktop-icons-selected {
+    background-color: alpha(@desktop_icons_bg_color, 0.5);
+    border-color: alpha(@desktop_icons_bg_color, 0.0);
+}
+
+.desktop-icons-selected-keyboard:not(:backdrop) {
+    background-color: alpha(@desktop_icons_bg_color, 0.5);
+    border-color: alpha(@desktop_icons_bg_color, 0.8);
 }

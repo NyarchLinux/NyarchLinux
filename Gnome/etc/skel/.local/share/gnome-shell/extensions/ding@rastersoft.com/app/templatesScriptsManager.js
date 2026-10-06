@@ -14,29 +14,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+// SPDX-License-Identifier: GPL-3.0-only
 'use strict';
-const Gio = imports.gi.Gio;
-const GLib = imports.gi.GLib;
-const Gtk = imports.gi.Gtk;
-const Enums = imports.enums;
-const DesktopIconsUtil = imports.desktopIconsUtil;
-const SignalManager = imports.signalManager;
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import * as Enums from './enums.js';
+import * as DesktopIconsUtil from './desktopIconsUtil.js';
+import * as SignalManager from './signalManager.js';
 
-var TemplatesScriptsManagerFlags = {
+export var TemplatesScriptsManagerFlags = {
     'NONE': 0,
     'ONLY_EXECUTABLE': 1,
     'HIDE_EXTENSIONS': 2,
 };
 
-var TemplatesScriptsManager = class extends SignalManager.SignalManager {
-    constructor(baseFolder, flags, activatedCB) {
+export var TemplatesScriptsManager = class extends SignalManager.SignalManager {
+    constructor(baseFolder, flags) {
         super();
         // Too many templates can result in resource exhaustion, crashing
         // the desktop. To avoid this, we limit the number of templates to 100.
         // It can happen if the Templates folder points to the wrong folder,
         // or if there is a loop due to a symlink to an already added folder.
-        this._maxNumberOfTemplates = 100;
-        this._activatedCB = activatedCB;
+        this._maxNumberOfSubfolders = 100;
         this._entries = [];
         this._entriesEnumerateCancellable = null;
         this._readingEntries = false;
@@ -45,13 +44,13 @@ var TemplatesScriptsManager = class extends SignalManager.SignalManager {
         this._flags = flags;
         this._entriesDirSignals = new SignalManager.SignalManager();
 
-        if (this._entriesDir == GLib.get_home_dir()) {
+        if (this._entriesDir === GLib.get_home_dir())
             this._entriesDir = null;
-        }
+
         if (this._entriesDir !== null) {
             this._monitorDir = baseFolder.monitor_directory(Gio.FileMonitorFlags.WATCH_MOVES, null);
             this._monitorDir.set_rate_limit(1000);
-            this.connectSignal(this._monitorDir, 'changed', (obj, file, otherFile, eventType) => {
+            this.connectSignal(this._monitorDir, 'changed', () => {
                 this._updateEntries().catch(e => {
                     print(`Exception while updating entries in monitor: ${e.message}\n${e.stack}`);
                 });
@@ -88,6 +87,7 @@ var TemplatesScriptsManager = class extends SignalManager.SignalManager {
                 entriesList = null;
                 break;
             }
+            // eslint-disable-next-line
             entriesList = await this._processDirectory(this._entriesDir);
         } while ((entriesList === null) || this._entriesFolderChanged);
 
@@ -97,48 +97,49 @@ var TemplatesScriptsManager = class extends SignalManager.SignalManager {
 
     async _processDirectory(directory) {
         this._processedEntries++;
-        if (this._processedEntries >= this._maxNumberOfTemplates) {
+        if (this._processedEntries >= this._maxNumberOfSubfolders)
             return [];
-        }
+
         if (directory !== this._entriesDir) {
-            let monitorDir = directory.monitor_directory(Gio.FileMonitorFlags.WATCH_MOVES, null);
+            const monitorDir = directory.monitor_directory(Gio.FileMonitorFlags.WATCH_MOVES, null);
             monitorDir.set_rate_limit(1000);
-            this._entriesDirSignals.connectSignal(monitorDir, 'changed', (obj, file, otherFile, eventType) => {
+            this._entriesDirSignals.connectSignal(monitorDir, 'changed', () => {
                 this._updateEntries();
             });
         }
 
+        let files = null;
         try {
-            var files = await this._readDirectory(directory);
-        } catch (e) {
+            files = await this._readDirectory(directory);
+        } catch {
             return null;
         }
 
-        if (files === null) {
+        if (files === null)
             return null;
-        }
-        let output = [];
-        for (let file of files) {
+
+        const output = [];
+        for (const file of files) {
             if (file[2] === null) {
                 output.push(file);
                 continue;
             }
+            // eslint-disable-next-line
             file[2] = await this._processDirectory(file[1]);
-            if (file[2] === null) {
+            if (file[2] === null)
                 return null;
-            }
-            if (file[2].length != 0) {
+
+            if (file[2].length !== 0)
                 output.push(file);
-            }
         }
         return output;
     }
 
     _readDirectory(directory) {
         return new Promise((resolve, reject) => {
-            if (this._entriesEnumerateCancellable) {
+            if (this._entriesEnumerateCancellable)
                 this._entriesEnumerateCancellable.cancel();
-            }
+
             this._entriesEnumerateCancellable = new Gio.Cancellable();
             directory.enumerate_children_async(
                 Enums.DEFAULT_ATTRIBUTES,
@@ -147,27 +148,23 @@ var TemplatesScriptsManager = class extends SignalManager.SignalManager {
                 this._entriesEnumerateCancellable,
                 (source, result) => {
                     this._entriesEnumerateCancellable = null;
-                    let fileList = [];
+                    const fileList = [];
                     try {
-                        let fileEnum = source.enumerate_children_finish(result);
+                        const fileEnum = source.enumerate_children_finish(result);
                         if (this._entriesFolderChanged) {
                             resolve(null);
                             return;
                         }
                         let info;
                         while ((info = fileEnum.next_file(null))) {
-                            let isDir = info.get_file_type() == Gio.FileType.DIRECTORY;
+                            const isDir = info.get_file_type() === Gio.FileType.DIRECTORY;
                             if ((this._flags & TemplatesScriptsManagerFlags.ONLY_EXECUTABLE) &&
                                 !isDir &&
-                                !info.get_attribute_boolean('access::can-execute')) {
+                                !info.get_attribute_boolean('access::can-execute'))
                                 continue;
-                            }
-                            let child = fileEnum.get_child(info);
+
+                            const child = fileEnum.get_child(info);
                             fileList.push([info.get_name(), isDir ? child : child.get_path(), isDir ? [] : null]);
-                            this._processedEntries++;
-                            if (this._processedEntries >= this._maxNumberOfTemplates) {
-                                break;
-                            }
                         }
                     } catch (e) {
                         if (e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED)) {
@@ -197,33 +194,27 @@ var TemplatesScriptsManager = class extends SignalManager.SignalManager {
     }
 
     _createTemplatesScriptsSubMenu(scriptsList) {
-        if ((scriptsList == null) || (scriptsList.length == 0)) {
+        if ((scriptsList === null) || (scriptsList.length === 0))
             return null;
-        }
-        let scriptSubMenu = new Gtk.Menu();
-        for (let fileItem of scriptsList) {
+
+        const scriptSubMenu = new Gio.Menu();
+        for (const fileItem of scriptsList) {
             let menuItemName = fileItem[0];
-            if (this._flags & TemplatesScriptsManagerFlags.HIDE_EXTENSIONS) {
+            if (this._flags & TemplatesScriptsManagerFlags.HIDE_EXTENSIONS)
                 menuItemName = DesktopIconsUtil.getFileExtensionOffset(menuItemName, false).basename;
-            }
-            let menuItemPath = fileItem[1];
-            let subDirs = fileItem[2];
+
+            const menuItemPath = fileItem[1];
+            const subDirs = fileItem[2];
             if (subDirs === null) {
-                let menuItem = new Gtk.MenuItem({label: menuItemName});
-                this.connectSignal(menuItem, 'activate', () => {
-                    this._activatedCB(menuItemPath);
-                });
-                scriptSubMenu.add(menuItem);
+                const menuItem = Gio.MenuItem.new(menuItemName, null);
+                menuItem.set_action_and_target_value('app.create-template', GLib.Variant.new_string(menuItemPath));
+                scriptSubMenu.append_item(menuItem);
             } else {
-                let subMenu = this._createTemplatesScriptsSubMenu(subDirs);
-                if (subMenu !== null) {
-                    let menuItem = new Gtk.MenuItem({label: menuItemName});
-                    menuItem.set_submenu(subMenu);
-                    scriptSubMenu.add(menuItem);
-                }
+                const subMenu = this._createTemplatesScriptsSubMenu(subDirs);
+                if (subMenu !== null)
+                    scriptSubMenu.append_submenu(menuItemName, subMenu);
             }
         }
-        scriptSubMenu.show_all();
         return scriptSubMenu;
     }
 };

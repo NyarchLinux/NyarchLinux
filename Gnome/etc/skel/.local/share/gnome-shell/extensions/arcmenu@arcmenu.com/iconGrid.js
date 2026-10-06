@@ -64,8 +64,14 @@ export const IconGridLayout = GObject.registerClass({
             GObject.ParamFlags.READWRITE,
             Clutter.ActorAlign.$gtype,
             Clutter.ActorAlign.FILL),
+        'first-row-align': GObject.ParamSpec.enum('first-row-align',
+            'First row align', 'First row align',
+            GObject.ParamFlags.READWRITE,
+            Clutter.ActorAlign.$gtype,
+            Clutter.ActorAlign.START),
+
     },
-}, class IconGridLayout extends Clutter.LayoutManager {
+}, class ArcMenuIconGridLayout extends Clutter.LayoutManager {
     _init(params = {}) {
         super._init(params);
 
@@ -100,7 +106,17 @@ export const IconGridLayout = GObject.registerClass({
         if (this.halign !== Clutter.ActorAlign.CENTER)
             return 0;
 
-        const nColumns = this.columns;
+        let columns;
+        if (this.firstRowAlign === Clutter.ActorAlign.CENTER) {
+            const visibleChildren = this._visibleChildren;
+            // if the amount of visiblechildren is less than the amount of columns
+            // set columns to visiblechildren.length in order to center the items
+            columns = visibleChildren.length < this.columns ? visibleChildren.length : this.columns;
+        } else {
+            columns = this.columns;
+        }
+
+        const nColumns = columns;
         const usedWidth = childWidth * nColumns;
         const columnSpacing = this.columnSpacing * (nColumns - 1);
 
@@ -216,8 +232,8 @@ export const IconGridLayout = GObject.registerClass({
         let y = 0;
         let column = 0;
         let rtlColumn;
-        let naturalWidth = 0;
-        let naturalHeight = 0;
+        let naturalWidth;
+        let naturalHeight;
 
         for (let i = 0; i < children.length; i += 1) {
             const child = children[i];
@@ -440,7 +456,7 @@ export const IconGridLayout = GObject.registerClass({
 });
 
 export const IconGrid = GObject.registerClass(
-class IconGrid extends St.Widget {
+class ArcMenuIconGrid extends St.Widget {
     _init(layoutParams = {}) {
         const acceptDrop = layoutParams.accept_drop;
         delete layoutParams.accept_drop;
@@ -451,6 +467,7 @@ class IconGrid extends St.Widget {
             row_spacing: 0,
             force_columns: 0,
             halign: Clutter.ActorAlign.FILL,
+            first_row_align: Clutter.ActorAlign.START,
         });
 
         const layoutManager = new IconGridLayout(layoutParams);
@@ -501,6 +518,7 @@ class IconGrid extends St.Widget {
         const sourceData = source.pinnedAppData;
 
         source.cancelActions();
+        source.dragDropAccepted = true;
 
         // remove app from folder pinned app list
         const parent = source.get_parent();

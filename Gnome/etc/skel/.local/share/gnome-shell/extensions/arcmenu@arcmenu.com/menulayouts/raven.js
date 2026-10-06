@@ -27,15 +27,15 @@ export class Layout extends BaseMenuLayout {
             column_spacing: 10,
             row_spacing: 10,
             default_menu_width: 415,
-            icon_grid_size: Constants.GridIconSize.SMALL,
             ...getOrientationProp(false),
             supports_category_hover_activation: true,
-            category_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
-            apps_icon_size: Constants.LARGE_ICON_SIZE,
-            quicklinks_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
-            buttons_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
-            pinned_apps_icon_size: Constants.MEDIUM_ICON_SIZE,
         });
+
+        this.iconSizeGrid = Constants.GridIconSizes.SMALL;
+        this.iconSizeCategories = Constants.IconSizes.SMALL;
+        this.iconSizeApps = Constants.IconSizes.LARGE;
+        this.iconSizeShortcuts = Constants.IconSizes.SMALL;
+        this.iconSizeButtons = Constants.IconSizes.SMALL;
 
         this.arcMenu.box.style = 'padding: 0px; margin: 0px; border-radius: 0px;';
         this.searchEntry.style = 'margin: 10px 10px 10px 10px;';
@@ -324,10 +324,15 @@ export class Layout extends BaseMenuLayout {
     }
 
     _onDestroy() {
-        if (this._clocksItem)
+        if (this._clocksItem) {
             this._clocksItem.destroy();
-        if (this._weatherItem)
+            this._clocksItem = null;
+        }
+
+        if (this._weatherItem) {
             this._weatherItem.destroy();
+            this._weatherItem = null;
+        }
 
         if (this.arcMenu) {
             this.arcMenu.actor.style = null;

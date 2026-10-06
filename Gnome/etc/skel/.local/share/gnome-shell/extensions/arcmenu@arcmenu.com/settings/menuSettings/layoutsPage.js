@@ -4,6 +4,7 @@ import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk';
 
 import * as Constants from '../../constants.js';
+import {getMenuLayoutInfo} from '../settingsUtils.js';
 import {SubPage} from './subPage.js';
 
 import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
@@ -14,8 +15,8 @@ export const LayoutsPage = GObject.registerClass({
     },
 },
 class ArcMenuLayoutsPage extends SubPage {
-    _init(settings, params) {
-        super._init(settings, params);
+    _init(extension, settings, params) {
+        super._init(extension, settings, params);
 
         this.restoreDefaultsButton.visible = false;
 
@@ -23,10 +24,9 @@ class ArcMenuLayoutsPage extends SubPage {
             title: _('Current Menu Layout'),
         });
 
-        const menuLayoutInfo = this.getMenuLayoutInfo(this._settings.get_enum('menu-layout'));
-
-        const currentLayoutName = menuLayoutInfo.TITLE;
-        const currentLayoutImagePath = menuLayoutInfo.IMAGE;
+        const layoutInfo = getMenuLayoutInfo(this._settings.get_string('menu-layout'));
+        const currentLayoutName = layoutInfo.name;
+        const currentLayoutImagePath = `menu-${layoutInfo.id}-symbolic`;
 
         const currentLayoutBoxRow = new CurrentLayoutRow(currentLayoutName, currentLayoutImagePath);
         currentLayoutGroup.add(currentLayoutBoxRow);
@@ -38,18 +38,19 @@ class ArcMenuLayoutsPage extends SubPage {
         });
         this.add(menuLayoutGroup);
 
-        Constants.MenuStyles.forEach(style => {
+        Constants.LayoutCategoriesInfo.forEach(layoutCategory => {
+            const layoutsInfo = Constants.MenuLayoutsInfo.filter(layout => layout.category === layoutCategory.id);
+
             const tile = new Adw.ExpanderRow({
-                title: _('%s Menu Layouts').format(_(style.TITLE)),
-                icon_name: style.IMAGE,
+                title: _('%s Menu Layouts').format(_(layoutCategory.name)),
+                icon_name: layoutCategory.icon,
             });
-            tile.layout = style.MENU_TYPE;
 
             menuLayoutGroup.add(tile);
 
-            const layoutsBox = new LayoutsBox(this._settings, tile);
+            const layoutsBox = new LayoutCategoryBox(this._settings, layoutsInfo);
 
-            if (layoutsBox.selectedLayout)
+            if (layoutsBox.selectedChild)
                 this.activeLayoutBox = layoutsBox;
 
             const row = new Gtk.ListBoxRow({
@@ -59,17 +60,16 @@ class ArcMenuLayoutsPage extends SubPage {
             row.set_child(layoutsBox);
             layoutsBox.connect('menu-selected', (widget, response) => {
                 if (response === Gtk.ResponseType.OK) {
-                    this._settings.set_enum('menu-layout', widget.menuLayout);
+                    this._settings.set_string('menu-layout', widget.menuLayout);
                     this.activeLayoutBox.clearSelection();
 
                     this.activeLayoutBox = widget;
                     this.activeLayoutBox.applySelection();
                     this.selectedMenuLayout = widget.menuLayout;
 
-                    const newMenuLayoutInfo = this.getMenuLayoutInfo(this.selectedMenuLayout);
-
-                    currentLayoutBoxRow.label.label = newMenuLayoutInfo.TITLE;
-                    currentLayoutBoxRow.image.gicon = Gio.Icon.new_for_string(newMenuLayoutInfo.IMAGE);
+                    const newLayoutInfo = getMenuLayoutInfo(this.selectedMenuLayout);
+                    currentLayoutBoxRow.label.label = newLayoutInfo.name;
+                    currentLayoutBoxRow.image.gicon = Gio.Icon.new_for_string(`menu-${newLayoutInfo.id}-symbolic`);
 
                     this.expandedRow.expanded = false;
                     this.emit('response', Gtk.ResponseType.APPLY);
@@ -84,24 +84,14 @@ class ArcMenuLayoutsPage extends SubPage {
             tile.add_row(row);
         });
     }
-
-    getMenuLayoutInfo(index) {
-        for (const styles of Constants.MenuStyles) {
-            for (const style of styles.MENU_TYPE) {
-                if (style.LAYOUT === index)
-                    return style;
-            }
-        }
-        return null;
-    }
 });
 
-const LayoutsBox = GObject.registerClass({
+const LayoutCategoryBox = GObject.registerClass({
     Signals: {
         'menu-selected': {param_types: [GObject.TYPE_INT]},
     },
-},  class ArcMenuLayoutsBox extends Gtk.FlowBox {
-    _init(settings, tile) {
+}, class ArcMenuLayoutCategoryBox extends Gtk.FlowBox {
+    _init(settings, layoutsInfo) {
         super._init({
             max_children_per_line: 15,
             row_spacing: 4,
@@ -111,52 +101,49 @@ const LayoutsBox = GObject.registerClass({
             homogeneous: true,
             selection_mode: Gtk.SelectionMode.SINGLE,
         });
-        this.childrenCount = 0;
         this._settings = settings;
-        this.layoutStyle = tile.layout;
-        this.styles = tile.layout;
 
         // clamp max children per line. min = 1, max = 3;
-        this.max_children_per_line = Math.min(Math.max(tile.layout.length, 1), 3);
+        this.max_children_per_line = Math.min(Math.max(layoutsInfo.length, 1), 3);
 
         this.connect('child-activated', (_self, child) => {
             this.setActiveChild(child);
-            const currentMenuLayout = this._settings.get_enum('menu-layout');
+            const menuLayout = this._settings.get_string('menu-layout');
             const selectedChildren = this.get_selected_children();
-            const selectedLayout = selectedChildren[0];
+            const selectedChild = selectedChildren[0];
 
-            if (currentMenuLayout === selectedLayout.layout)
+            if (menuLayout === selectedChild.layoutId)
                 return;
 
-            this.selectedLayout = selectedLayout;
-            this.menuLayout = selectedLayout.layout;
+            this.selectedChild = selectedChild;
+            this.menuLayout = selectedChild.layoutId;
 
             this.emit('menu-selected', Gtk.ResponseType.OK);
         });
 
-        this.styles.forEach(style => {
-            const currentMenuLayout = this._settings.get_enum('menu-layout');
-            const layoutTile = new MenuLayoutTile(style);
+        layoutsInfo.forEach(layout => {
+            const menuLayout = this._settings.get_string('menu-layout');
+            const layoutTile = new MenuLayoutTile(layout);
             this.add(layoutTile);
 
-            if (currentMenuLayout === style.LAYOUT) {
-                this.selectedLayout = layoutTile;
+            if (menuLayout === layout.id) {
+                this.selectedChild = layoutTile;
                 this.applySelection();
             }
         });
     }
 
     clearSelection() {
-        const currentMenuLayout = this._settings.get_enum('menu-layout');
+        const menuLayout = this._settings.get_string('menu-layout');
         this.unselect_all();
 
-        if (this.selectedLayout && currentMenuLayout !== this.selectedLayout.layout)
-            this.selectedLayout = null;
+        if (this.selectedChild && menuLayout !== this.selectedChild.layoutId)
+            this.selectedChild = null;
     }
 
     applySelection() {
-        if (this.selectedLayout)
-            this.select_child(this.selectedLayout);
+        if (this.selectedChild)
+            this.select_child(this.selectedChild);
     }
 
     setActiveChild(child) {
@@ -183,13 +170,12 @@ const LayoutsBox = GObject.registerClass({
                 widget.margin_start = widget.margin_end = 4;
 
         this.append(widget);
-        this.childrenCount++;
     }
 });
 
 const CurrentLayoutRow = GObject.registerClass(
 class ArcMenuMenuLayoutRow extends Gtk.Box {
-    _init(title, imagePath, layout) {
+    _init(title, imagePath) {
         super._init({
             orientation: Gtk.Orientation.VERTICAL,
             css_classes: ['card'],
@@ -197,9 +183,6 @@ class ArcMenuMenuLayoutRow extends Gtk.Box {
             spacing: 0,
             halign: Gtk.Align.CENTER,
         });
-
-        if (layout)
-            this.layout = layout.MENU_TYPE;
 
         const box = new Gtk.Box({
             margin_start: 15,
@@ -234,7 +217,7 @@ class ArcMenuMenuLayoutRow extends Gtk.Box {
 });
 
 const MenuLayoutTile = GObject.registerClass(class ArcMenuMenuLayoutTile extends Gtk.FlowBoxChild {
-    _init(styleInfo) {
+    _init(layoutInfo) {
         super._init({
             css_classes: ['card', 'activatable'],
             margin_top: 4,
@@ -245,6 +228,8 @@ const MenuLayoutTile = GObject.registerClass(class ArcMenuMenuLayoutTile extends
             hexpand: true,
         });
 
+        this.layoutId = layoutInfo.id;
+
         const box = new Gtk.Box({
             orientation: Gtk.Orientation.VERTICAL,
             margin_top: 4,
@@ -254,16 +239,13 @@ const MenuLayoutTile = GObject.registerClass(class ArcMenuMenuLayoutTile extends
         });
         this.set_child(box);
 
-        this.name = styleInfo.TITLE;
-        this.layout = styleInfo.LAYOUT;
-
         this._image = new Gtk.Image({
-            gicon: Gio.Icon.new_for_string(styleInfo.IMAGE),
+            gicon: Gio.Icon.new_for_string(`menu-${this.layoutId}-symbolic`),
             pixel_size: 145,
         });
 
         this._label = new Gtk.Label({
-            label: _(this.name),
+            label: _(layoutInfo.name),
             hexpand: true,
             css_classes: ['caption'],
         });

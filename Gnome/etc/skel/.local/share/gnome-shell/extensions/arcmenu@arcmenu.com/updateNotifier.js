@@ -30,7 +30,7 @@ export class UpdateNotification {
 
         this._version = metadata.version ?? 0;
         this._versionName = metadata['version-name'] ?? this._version.toString();
-        this._iconPath = `${RESOURCE_PATH}${PROJECT_ICON}`;
+        this._iconPath = `${RESOURCE_PATH}/${PROJECT_ICON}`;
 
         this._maybeShowNotification();
     }

@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+SPDX-FileCopyrightText: 2014 Red Hat, Inc.
+
+SPDX-License-Identifier: GPL-2.0-or-later
+-->
+
 <schemalist gettext-domain="background-logo-extension">
   <enum id="org.fedorahosted.background-logo-extension.Position">
     <value nick="center" value="0"/>

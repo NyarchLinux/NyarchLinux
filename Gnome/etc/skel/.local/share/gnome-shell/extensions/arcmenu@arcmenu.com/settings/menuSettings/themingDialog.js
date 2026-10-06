@@ -289,7 +289,7 @@ const SaveLoadType = {
     LOAD: 1,
 };
 
-var SaveLoadThemesPage = GObject.registerClass({
+const SaveLoadThemesPage = GObject.registerClass({
     Properties: {
         'selected-themes': GObject.ParamSpec.int(
             'selected-themes', 'selected-themes', 'selected-themes',

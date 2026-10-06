@@ -3,11 +3,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 import Gio from 'gi://Gio';
-import GjsPrivate from 'gi://GjsPrivate';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 
 import Meta from 'gi://Meta';
+
+import * as DBus from '../service/utils/dbus.js';
 
 
 /*
@@ -63,12 +64,16 @@ const TEXT_MIMETYPES = [
  */
 export const Clipboard = GObject.registerClass({
     GTypeName: 'GSConnectShellClipboard',
-}, class GSConnectShellClipboard extends GjsPrivate.DBusImplementation {
+    Signals: {
+        'OwnerChange': {
+            flags: GObject.SignalFlags.RUN_FIRST,
+            param_types: [],
+        },
+    },
+}, class GSConnectShellClipboard extends GObject.Object {
 
     _init(params = {}) {
-        super._init({
-            g_interface_info: DBUS_INFO,
-        });
+        super._init();
 
         this._transferring = false;
 
@@ -80,10 +85,7 @@ export const Clipboard = GObject.registerClass({
         );
 
         // Prepare DBus interface
-        this._handleMethodCallId = this.connect(
-            'handle-method-call',
-            this._onHandleMethodCall.bind(this)
-        );
+        this._dbus = DBus.wrapObject(DBUS_INFO, this);
 
         this._nameId = Gio.DBus.own_name(
             Gio.BusType.SESSION,
@@ -114,7 +116,7 @@ export const Clipboard = GObject.registerClass({
          * we'll end up with the previous selection's content.
          */
         GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
-            this.emit_signal('OwnerChange', null);
+            this.emit('OwnerChange');
             this._transferring = false;
 
             return GLib.SOURCE_REMOVE;
@@ -123,7 +125,7 @@ export const Clipboard = GObject.registerClass({
 
     _onBusAcquired(connection, name) {
         try {
-            this.export(connection, DBUS_PATH);
+            this._dbus.export(connection, DBUS_PATH);
         } catch (e) {
             logError(e);
         }
@@ -131,52 +133,9 @@ export const Clipboard = GObject.registerClass({
 
     _onNameLost(connection, name) {
         try {
-            this.unexport();
+            this._dbus.unexport();
         } catch (e) {
             logError(e);
-        }
-    }
-
-    async _onHandleMethodCall(iface, name, parameters, invocation) {
-        let retval;
-
-        try {
-            const args = parameters.recursiveUnpack();
-
-            retval = await this[name](...args);
-        } catch (e) {
-            if (e instanceof GLib.Error) {
-                invocation.return_gerror(e);
-            } else {
-                if (!e.name.includes('.'))
-                    e.name = `org.gnome.gjs.JSError.${e.name}`;
-
-                invocation.return_dbus_error(e.name, e.message);
-            }
-
-            return;
-        }
-
-        if (retval === undefined)
-            retval = new GLib.Variant('()', []);
-
-        try {
-            if (!(retval instanceof GLib.Variant)) {
-                const args = DBUS_INFO.lookup_method(name).out_args;
-                retval = new GLib.Variant(
-                    `(${args.map(arg => arg.signature).join('')})`,
-                    (args.length === 1) ? [retval] : retval
-                );
-            }
-
-            invocation.return_value(retval);
-
-        // Without a response, the client will wait for timeout
-        } catch {
-            invocation.return_dbus_error(
-                'org.gnome.gjs.JSError.ValueError',
-                'Service implementation returned an incorrect value type'
-            );
         }
     }
 
@@ -267,7 +226,7 @@ export const Clipboard = GObject.registerClass({
     }
 
     /**
-     * Get the content of the clipboard with the type @mimetype.
+     * Get the content of the clipboard with the type {@link mimetype}.
      *
      * @param {string} mimetype - the mimetype to request
      * @returns {Promise<Uint8Array>} The content of the clipboard
@@ -296,7 +255,8 @@ export const Clipboard = GObject.registerClass({
     }
 
     /**
-     * Set the content of the clipboard to @value with the type @mimetype.
+     * Set the content of the clipboard to {@link value} with the type
+     * {@link mimetype}.
      *
      * @param {Uint8Array} value - the value to set
      * @param {string} mimetype - the mimetype of the value
@@ -329,10 +289,10 @@ export const Clipboard = GObject.registerClass({
             this._nameId = 0;
         }
 
-        if (this._handleMethodCallId > 0) {
-            this.disconnect(this._handleMethodCallId);
-            this._handleMethodCallId = 0;
-            this.unexport();
+        try {
+            this._dbus.unexport();
+        } catch (e) {
+            logError(e);
         }
     }
 });

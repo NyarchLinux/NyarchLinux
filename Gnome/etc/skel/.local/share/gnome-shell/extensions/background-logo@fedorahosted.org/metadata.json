@@ -4,9 +4,10 @@
   "name": "Background Logo",
   "settings-schema": "org.fedorahosted.background-logo-extension",
   "shell-version": [
-    "49"
+    "50"
   ],
-  "url": "https://pagure.io/background-logo-extension",
+  "url": "https://forge.fedoraproject.org/workstation/background-logo-extension",
   "uuid": "background-logo@fedorahosted.org",
-  "version": 3
+  "version": 9,
+  "version-name": "50.1"
 }

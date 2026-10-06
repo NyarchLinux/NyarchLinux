@@ -31,13 +31,10 @@ export class Layout extends BaseMenuLayout {
             row_spacing: 0,
             default_menu_width: 450,
             ...getOrientationProp(true),
-            category_icon_size: Constants.MEDIUM_ICON_SIZE,
-            apps_icon_size: Constants.MEDIUM_ICON_SIZE,
-            quicklinks_icon_size: Constants.MEDIUM_ICON_SIZE,
-            buttons_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
-            pinned_apps_icon_size: Constants.MEDIUM_ICON_SIZE,
             can_hide_search: false,
         });
+
+        this.iconSizeButtons = Constants.IconSizes.SMALL;
 
         // Some menu items might not be on the menu at the time of destroy();
         // Track them here.
@@ -67,7 +64,7 @@ export class Layout extends BaseMenuLayout {
             style: 'padding: 0px; margin: 0px; spacing: 0px;',
         });
 
-        const avatarMenuIcon = new MW.AvatarMenuIcon(this, 55, true);
+        const avatarMenuIcon = new MW.AvatarMenuIcon(this, 48, true);
         avatarMenuIcon.set({
             x_expand: false,
             y_expand: true,
@@ -436,10 +433,8 @@ export class Layout extends BaseMenuLayout {
         for (const obj of this._destroyableObjects)
             obj.destroy();
 
-
         for (const item of this.applicationShortcuts)
             item.destroy();
-
 
         super._onDestroy();
     }
@@ -485,7 +480,7 @@ class PlasmaMenuItem extends MW.BaseMenuItem {
     createIcon() {
         return new St.Icon({
             gicon: Gio.Icon.new_for_string(this.iconPath),
-            icon_size: Constants.MEDIUM_ICON_SIZE,
+            icon_size: Constants.IconSizes.MEDIUM,
         });
     }
 

@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2014 Red Hat, Inc.
+//
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 import Adw from 'gi://Adw';
 import Gdk from 'gi://Gdk';
 import GdkPixbuf from 'gi://GdkPixbuf';
@@ -6,7 +10,6 @@ import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import GnomeDesktop from 'gi://GnomeDesktop?version=4.0';
 import Gtk from 'gi://Gtk';
-const ByteArray = imports.byteArray;
 
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
@@ -17,8 +20,8 @@ const PREVIEW_WIDTH = 400;
 
 const PreviewGroup = GObject.registerClass(
 class PreviewGroup extends Adw.PreferencesGroup {
-    _init(settings) {
-        super._init();
+    constructor(settings) {
+        super();
 
         this._settings = settings;
         this._settings.connect('changed', (s, key) => {
@@ -73,7 +76,7 @@ class PreviewGroup extends Adw.PreferencesGroup {
             return Gio.File.new_for_commandline_arg(filename1);
         } else {
             const [, contents] = file.load_contents(null);
-            const str = ByteArray.toString(contents);
+            const str = new TextDecoder().decode(contents);
             const [, filename1] = str.match(/<file>(.*)<\/file>/);
             return Gio.File.new_for_commandline_arg(filename1);
         }
@@ -145,15 +148,15 @@ const LogoPosition = GObject.registerClass({
             null),
     },
 }, class LogoPosition extends GObject.Object {
-    _init(name, value) {
-        super._init({name, value});
+    constructor(name, value) {
+        super({name, value});
     }
 });
 
 const LogoGroup = GObject.registerClass(
 class LogoGroup extends Adw.PreferencesGroup {
-    _init(settings) {
-        super._init({title: 'Logo'});
+    constructor(settings) {
+        super({title: 'Logo'});
 
         this._settings = settings;
         this._fileChooserKey = '';
@@ -293,8 +296,8 @@ class LogoGroup extends Adw.PreferencesGroup {
 
 const OptionsGroup = GObject.registerClass(
 class OptionsGroup extends Adw.PreferencesGroup {
-    _init(settings) {
-        super._init({title: 'Options'});
+    constructor(settings) {
+        super({title: 'Options'});
 
         this._settings = settings;
         const alwaysShowSwitch = new Gtk.Switch({
@@ -315,8 +318,8 @@ class OptionsGroup extends Adw.PreferencesGroup {
 
 const BackgroundLogoPrefsWidget = GObject.registerClass(
 class BackgroundLogoPrefsWidget extends Adw.PreferencesPage {
-    _init(settings) {
-        super._init();
+    constructor(settings) {
+        super();
 
         this.add(new PreviewGroup(settings));
         this.add(new LogoGroup(settings));

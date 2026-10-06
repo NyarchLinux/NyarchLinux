@@ -1,18 +1,12 @@
-<b><span size="large">v69.0</span></b>
+<b><span size="large">v70.0</span></b>
 
-- Add GNOME 50 support.
-- Zest Layout
-    - Move power buttons to the left panel.
-    - Move searchbar to bottom by default.
-    - Add tweak to change searchbar location.
-- Runner Layout: Add option to show pinned apps.
-- Search
-    - Use more async functions, handle errors and fix cancellable handling.
-    - Show spinner while searching.
-- Ensure hotkeys and DBus methods are registered only once.
-- Add option to show generic application names.
-- Fix search bar growing on long input.
-- Add new applications-accessories-symbolic icon.
-- IconGrid: remove first-row-align property.
-    - All rows are now strictly left-aligned.
-- Search Entry: add context menu.
+- Add GNOME 51 support.
+- Standardize menu item icon sizes and support integer-based custom sizing.
+    - Use standard icon sizes (16px, 24px, 32px, etc.) as defaults.
+    - Allow custom integer values for menu item icon size settings.
+- Add an Icon Style option for button icons.
+- Add Bucket Jump List for grouped All Apps views.
+- ArcMenu Layout: Add "Max Frequent Apps" option for the "Frequent Apps" default view.
+- Improve the behavior of Max Frequent Apps filtering.
+- Settings: Fix a rendering issue affecting a few bundled menu icons.
+- Settings: Fix a bug that caused the icon chooser dialog to fail to open.

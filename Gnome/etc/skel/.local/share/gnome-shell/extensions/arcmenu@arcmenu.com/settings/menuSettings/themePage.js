@@ -13,8 +13,8 @@ import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions
 
 export const ThemePage = GObject.registerClass(
 class ArcMenuThemePage extends SubPage {
-    _init(settings, params) {
-        super._init(settings, params);
+    _init(extension, settings, params) {
+        super._init(extension, settings, params);
         this.restoreDefaultsButton.visible = false;
 
         const overrideThemeGroup = new Adw.PreferencesGroup();

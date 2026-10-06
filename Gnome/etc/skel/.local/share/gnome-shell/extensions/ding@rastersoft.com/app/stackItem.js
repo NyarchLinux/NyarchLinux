@@ -18,11 +18,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+// SPDX-License-Identifier: GPL-3.0-only
 'use strict';
-const Gdk = imports.gi.Gdk;
-const desktopIconItem = imports.desktopIconItem;
+import Gtk from 'gi://Gtk?version=4.0';
+import Gio from 'gi://Gio';
 
-const Prefs = imports.preferences;
+import * as desktopIconItem from './desktopIconItem.js';
+import * as Prefs from './preferences.js';
+import * as Enums from './enums.js';
 
 const Signals = imports.signals;
 const Gettext = imports.gettext.domain('ding');
@@ -30,7 +33,7 @@ const Gettext = imports.gettext.domain('ding');
 const _ = Gettext.gettext;
 
 
-var stackItem = class extends desktopIconItem.desktopIconItem {
+export var stackItem = class extends desktopIconItem.desktopIconItem {
     constructor(desktopManager, file, attributeContentType, fileExtra) {
         super(desktopManager, fileExtra);
         this._isSpecial = false;
@@ -40,33 +43,62 @@ var stackItem = class extends desktopIconItem.desktopIconItem {
         this._size = null;
         this._modifiedTime = null;
         this._attributeContentType = attributeContentType;
-        this._createIconActor();
+        this._createIconActor(Gtk.AccessibleRole.TOGGLE_BUTTON);
         this._createStackTopIcon();
         this._setLabelName(this._file);
+        this.setAccessibleName(this._getVisibleName());
+    }
+
+    _getEmblems() {
+        if (!this.stackUnique) {
+            const emblem = Prefs.getUnstackList().includes(this._attributeContentType) ? 'close-stack' : 'open-stack';
+            return [
+                {
+                    icon: Gio.ThemedIcon.new(emblem),
+                    size: 3,
+                    position: Enums.EmblemPosition.TOP_LEFT,
+                },
+                {
+                    icon: Gio.content_type_get_icon(this._attributeContentType),
+                    size: 2,
+                    position: Enums.EmblemPosition.BOTTOM_RIGHT,
+                },
+            ];
+        }
+        return null;
     }
 
     _createStackTopIcon() {
-        const scale = this._icon.get_scale_factor();
-        let pixbuf;
         let folder = 'folder';
-        if (Prefs.getUnstackList().includes(this._attributeContentType)) {
+        if (Prefs.getUnstackList().includes(this._attributeContentType))
             folder = 'folder-open';
-        }
-        pixbuf = this._createEmblemedIcon(null, `${folder}`);
-        let surface = Gdk.cairo_surface_create_from_pixbuf(pixbuf, scale, null);
-        this._icon.set_from_surface(surface);
+
+        this._icon.set_paintable(this._createEmblemedIcon(null, folder));
     }
 
-    _doButtonOnePressed(event, shiftPressed, controlPressed) {
+    doOpen() {
+        this._desktopManager.onToggleStackUnstackThisTypeClicked(this.attributeContentType);
+    }
+
+    _doButtonOnePressed() {
         this._desktopManager.onToggleStackUnstackThisTypeClicked(this.attributeContentType);
     }
 
     setSelected() {
-
     }
 
     updateIcon() {
         this._createStackTopIcon();
+    }
+
+    _getVisibleName() {
+        return this._currentFileName;
+    }
+
+    setAccessibleName(filename) {
+        const isExpanded = Prefs.getUnstackList().includes(this.attributeContentType);
+        this._accessibleBox.update_property([Gtk.AccessibleProperty.LABEL, Gtk.AccessibleProperty.DESCRIPTION], [filename, '']);
+        this._accessibleBox.update_state([Gtk.AccessibleState.CHECKED], [isExpanded ? Gtk.AccessibleTristate.TRUE : Gtk.AccessibleTristate.FALSE]);
     }
 
     /** *********************

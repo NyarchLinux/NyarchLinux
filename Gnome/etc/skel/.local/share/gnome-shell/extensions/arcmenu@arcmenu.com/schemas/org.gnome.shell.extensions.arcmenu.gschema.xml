@@ -1,145 +1,103 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="arcmenu">
-    <enum id='org.gnome.shell.extensions.arcmenu.menulayout'>
-        <value value='0' nick='Default'/>
-        <value value='1' nick='Brisk'/>
-        <value value='2' nick='Whisker'/>
-        <value value='3' nick='GnomeMenu'/>
-        <value value='4' nick='Mint'/>
-        <value value='5' nick='Elementary'/>
-        <value value='6' nick='GnomeOverview'/>
-        <value value='7' nick='Redmond'/>
-        <value value='8' nick='Unity'/>
-        <value value='9' nick='Budgie'/>
-        <value value='10' nick='Insider'/>
-        <value value='11' nick='Runner'/>
-        <value value='12' nick='Chromebook'/>
-        <value value='13' nick='Raven'/>
-        <value value='14' nick='Tognee'/>
-        <value value='15' nick='Plasma'/>
-        <value value='16' nick='Windows'/>
-        <value value='17' nick='Eleven'/>
-        <value value='18' nick='AZ'/>
-        <value value='19' nick='Enterprise'/>
-        <value value='20' nick='Pop'/>
-        <value value='21' nick='Sleek'/>
-        <value value='22' nick='Zest'/>
-    </enum>
-    <enum id='org.gnome.shell.extensions.arcmenu.forcemenulocation'>
-        <value value='0' nick='Off'/>
-        <value value='1' nick='TopCentered'/>
-        <value value='2' nick='TopLeft'/>
-        <value value='3' nick='TopRight'/>
-        <value value='4' nick='BottomCentered'/>
-        <value value='5' nick='BottomLeft'/>
-        <value value='6' nick='BottomRight'/>
-        <value value='7' nick='LeftCentered'/>
-        <value value='8' nick='RightCentered'/>
-        <value value='9' nick='MonitorCentered'/>
-    </enum>
-    <enum id='org.gnome.shell.extensions.arcmenu.menu-position'>
-        <value value="0" nick="Left"/>
-        <value value="1" nick="Center"/>
-        <value value="2" nick="Right"/>
-    </enum>
-    <enum id='org.gnome.shell.extensions.arcmenu.menu-button-click-action'>
-        <value value="0" nick="ArcMenu"/>
-        <value value="1" nick="ContextMenu"/>
-        <value value="2" nick="None"/>
-    </enum>
-    <enum id='org.gnome.shell.extensions.arcmenu.raven-position'>
-        <value value="0" nick="Left"/>
-        <value value="1" nick="Right"/>
-    </enum>
-    <enum id='org.gnome.shell.extensions.arcmenu.menu-button-appearance'>
-        <value value="0" nick="Icon"/>
-        <value value="1" nick="Text"/>
-        <value value="2" nick="Icon_Text"/>
-        <value value="3" nick="Text_Icon"/>
-        <value value="4" nick="None"/>
-    </enum>
-    <enum id='org.gnome.shell.extensions.arcmenu.avatar-style'>
-        <value value="0" nick="Round"/>
-        <value value="1" nick="Square"/>
-    </enum>
-    <enum id='org.gnome.shell.extensions.arcmenu.default-menu-view'>
-        <value value="0" nick="Pinned_Apps"/>
-        <value value="1" nick="Categories_List"/>
-        <value value="2" nick="Frequent_Apps"/>
-        <value value="3" nick="All_Programs"/>
-        <value value="4" nick="Pinned_And_Frequent_Apps"/>
-    </enum>
-    <enum id='org.gnome.shell.extensions.arcmenu.all-apps-button-action'>
-        <value value="0" nick="Categories_List"/>
-        <value value="1" nick="All_Programs"/>
-    </enum>
-    <enum id='org.gnome.shell.extensions.arcmenu.default-menu-view-tognee'>
-        <value value="0" nick="Categories_List"/>
-        <value value="1" nick="All_Programs"/>
-    </enum>
-    <enum id='org.gnome.shell.extensions.arcmenu.default-menu-view-redmond'>
-        <value value="0" nick="All_Programs"/>
-        <value value="1" nick="Pinned_Apps"/>
-    </enum>
-    <enum id='org.gnome.shell.extensions.arcmenu.default-menu-view-az'>
-        <value value="0" nick="Pinned_Apps"/>
-        <value value="1" nick="Frequent Apps"/>
-    </enum>
-    <enum id='org.gnome.shell.extensions.arcmenu.default-menu-view-runner'>
-        <value value="0" nick="Default"/>
-        <value value="1" nick="Pinned_Apps"/>
-        <value value="2" nick="Frequent Apps"/>
-    </enum>
-    <enum id='org.gnome.shell.extensions.arcmenu.runner-position'>
-        <value value="0" nick="Top"/>
-        <value value="1" nick="Centered"/>
-    </enum>
-    <enum id='org.gnome.shell.extensions.arcmenu.search-display-style'>
-        <value value="0" nick="List"/>
-        <value value="1" nick="Grid"/>
-    </enum>
-    <enum id='org.gnome.shell.extensions.arcmenu.searchbar-location'>
-        <value value="0" nick="Bottom"/>
-        <value value="1" nick="Top"/>
-    </enum>
-    <enum id='org.gnome.shell.extensions.arcmenu.menuitem-location'>
-        <value value="0" nick="Bottom"/>
-        <value value="1" nick="Top"/>
-    </enum>
-    <enum id='org.gnome.shell.extensions.arcmenu.power-display-style'>
-        <value value="0" nick="Default"/>
-        <value value="1" nick="In_Line"/>
-        <value value="2" nick="Menu"/>
-    </enum>
-    <enum id='org.gnome.shell.extensions.arcmenu.icon-sizes'>
-        <value value="0" nick="Default"/>
-        <value value="1" nick="ExtraSmall"/>
-        <value value="2" nick="Small"/>
-        <value value="3" nick="Medium"/>
-        <value value="4" nick="Large"/>
-        <value value="5" nick="Extralarge"/>
-        <value value="6" nick="Hidden"/>
-    </enum>
-    <enum id='org.gnome.shell.extensions.arcmenu.grid-icon-sizes'>
-        <value value="0" nick="Default"/>
-        <value value="1" nick="Small"/>
-        <value value="2" nick="Medium"/>
-        <value value="3" nick="Large"/>
-        <value value="4" nick="Small_Rect"/>
-        <value value="5" nick="Medium_Rect"/>
-        <value value="6" nick="Large_Rect"/>
-        <value value="7" nick="Custom"/>
-    </enum>
-    <enum id='org.gnome.shell.extensions.arcmenu.category-icon-type'>
-        <value value="0" nick="Full_Color"/>
-        <value value="1" nick="Symbolic"/>
-    </enum>
+  <enum id='org.gnome.shell.extensions.arcmenu.forcemenulocation'>
+      <value value='0' nick='Off'/>
+      <value value='1' nick='TopCentered'/>
+      <value value='2' nick='TopLeft'/>
+      <value value='3' nick='TopRight'/>
+      <value value='4' nick='BottomCentered'/>
+      <value value='5' nick='BottomLeft'/>
+      <value value='6' nick='BottomRight'/>
+      <value value='7' nick='LeftCentered'/>
+      <value value='8' nick='RightCentered'/>
+      <value value='9' nick='MonitorCentered'/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.arcmenu.menu-position'>
+      <value value="0" nick="Left"/>
+      <value value="1" nick="Center"/>
+      <value value="2" nick="Right"/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.arcmenu.menu-button-click-action'>
+      <value value="0" nick="ArcMenu"/>
+      <value value="1" nick="ContextMenu"/>
+      <value value="2" nick="None"/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.arcmenu.raven-position'>
+      <value value="0" nick="Left"/>
+      <value value="1" nick="Right"/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.arcmenu.menu-button-appearance'>
+      <value value="0" nick="Icon"/>
+      <value value="1" nick="Text"/>
+      <value value="2" nick="Icon_Text"/>
+      <value value="3" nick="Text_Icon"/>
+      <value value="4" nick="None"/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.arcmenu.avatar-style'>
+      <value value="0" nick="Round"/>
+      <value value="1" nick="Square"/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.arcmenu.default-menu-view'>
+      <value value="0" nick="Pinned_Apps"/>
+      <value value="1" nick="Categories_List"/>
+      <value value="2" nick="Frequent_Apps"/>
+      <value value="3" nick="All_Programs"/>
+      <value value="4" nick="Pinned_And_Frequent_Apps"/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.arcmenu.all-apps-button-action'>
+      <value value="0" nick="Categories_List"/>
+      <value value="1" nick="All_Programs"/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.arcmenu.default-menu-view-tognee'>
+      <value value="0" nick="Categories_List"/>
+      <value value="1" nick="All_Programs"/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.arcmenu.default-menu-view-redmond'>
+      <value value="0" nick="All_Programs"/>
+      <value value="1" nick="Pinned_Apps"/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.arcmenu.default-menu-view-az'>
+      <value value="0" nick="Pinned_Apps"/>
+      <value value="1" nick="Frequent Apps"/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.arcmenu.default-menu-view-runner'>
+      <value value="0" nick="Default"/>
+      <value value="1" nick="Pinned_Apps"/>
+      <value value="2" nick="Frequent Apps"/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.arcmenu.runner-position'>
+      <value value="0" nick="Top"/>
+      <value value="1" nick="Centered"/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.arcmenu.search-display-style'>
+      <value value="0" nick="List"/>
+      <value value="1" nick="Grid"/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.arcmenu.searchbar-location'>
+      <value value="0" nick="Bottom"/>
+      <value value="1" nick="Top"/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.arcmenu.menuitem-location'>
+      <value value="0" nick="Bottom"/>
+      <value value="1" nick="Top"/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.arcmenu.power-display-style'>
+      <value value="0" nick="Default"/>
+      <value value="1" nick="In_Line"/>
+      <value value="2" nick="Menu"/>
+  </enum>
+  <enum id='org.gnome.shell.extensions.arcmenu.menu-item-icon-style'>
+      <value value="0" nick="Full_Color"/>
+      <value value="1" nick="Symbolic"/>
+  </enum>
+
   <schema id="org.gnome.shell.extensions.arcmenu.pinned-apps-folders">
     <key name="pinned-apps" type="aa{ss}">
       <default>[]</default>
       <summary>Pinned Apps in the folder</summary>
     </key>
   </schema>
+
   <schema path="/org/gnome/shell/extensions/arcmenu/" id="org.gnome.shell.extensions.arcmenu">
     <key type="i" name="update-notifier-project-version">
       <default>0</default>
@@ -153,10 +111,36 @@
       <default>50</default>
       <summary>Menu position alignment</summary>
     </key>
-    <key name="menu-layout" enum="org.gnome.shell.extensions.arcmenu.menulayout">
-      <default>'Default'</default>
-      <summary>menu layout</summary>
+    <key type='s' name="menu-layout">
+      <default>'arcmenu'</default>
+      <summary>Menu layout</summary>
+      <choices>
+        <choice value='11'/>
+        <choice value='arcmenu'/>
+        <choice value='az'/>
+        <choice value='brisk'/>
+        <choice value='budgie'/>
+        <choice value='chromebook'/>
+        <choice value='elementary'/>
+        <choice value='enterprise'/>
+        <choice value='gnome-menu'/>
+        <choice value='gnome-overview'/>
+        <choice value='insider'/>
+        <choice value='mint'/>
+        <choice value='plasma'/>
+        <choice value='pop'/>
+        <choice value='raven'/>
+        <choice value='redmond'/>
+        <choice value='runner'/>
+        <choice value='sleek'/>
+        <choice value='tognee'/>
+        <choice value='unity'/>
+        <choice value='whisker'/>
+        <choice value='windows'/>
+        <choice value='zest'/>
+      </choices>
     </key>
+    <!-- #region Override Menu Theme -->
     <key type="b" name="override-menu-theme">
       <default>false</default>
       <summary>Override ArcMenu theme</summary>
@@ -205,10 +189,8 @@
       <default>"rgb(255,255,255)"</default>
       <summary>ArcMenu menu item active fg color. Active when 'override-menu-theme' enabled.</summary>
     </key>
-    <key type="(bi)" name="menu-arrow-rise">
-      <default>(false, 6)</default>
-      <summary>ArcMenu distance from panel and screen edge.</summary>
-    </key>
+    <!-- #endregion -->
+    <!-- #region Menu Button Customization -->
     <key type="(bs)" name="menu-button-fg-color">
       <default>(false, "rgb(242,242,242)")</default>
       <summary>ArcMenu menu button fg color.</summary>
@@ -245,6 +227,7 @@
       <default>(false, "rgb(242,242,242)")</default>
       <summary>ArcMenu menu button active fg color.</summary>
     </key>
+    <!-- #endregion -->
     <key name="menu-themes" type="aas">
     <!--Order of elements in a theme:
         [Theme Name, menuBGColor, menuFGColor, menuBorderColor, menuBorderWidth, menuBorderRadius,
@@ -258,6 +241,10 @@
                 ['Light Blue', 'rgb(245,247,250)', 'rgb(18,51,84)', 'rgba(18,51,84,0.2)', '1', '14', '11',
                     'rgba(18,51,84,0.15)', 'rgba(18,51,84,0.08)', 'rgb(18,51,84)', 'rgba(18,51,84,0.15)', 'rgb(18,51,84)']]</default>
       <summary>List of color-themes</summary>
+    </key>
+    <key type="(bi)" name="menu-arrow-rise">
+      <default>(false, 6)</default>
+      <summary>ArcMenu distance from panel and screen edge.</summary>
     </key>
     <key name="force-menu-location" enum="org.gnome.shell.extensions.arcmenu.forcemenulocation">
       <default>'Off'</default>
@@ -295,13 +282,17 @@
       <default>false</default>
       <summary>Enable Clocks Widget Unity layout</summary>
     </key>
-    <key enum="org.gnome.shell.extensions.arcmenu.category-icon-type" name="category-icon-type">
+    <key enum="org.gnome.shell.extensions.arcmenu.menu-item-icon-style" name="icon-style-categories">
       <default>'Symbolic'</default>
-      <summary>Category icon type. Full_Color or Symbolic</summary>
+      <summary>Categories icon style. Full_Color or Symbolic</summary>
     </key>
-    <key enum="org.gnome.shell.extensions.arcmenu.category-icon-type" name="shortcut-icon-type">
+    <key enum="org.gnome.shell.extensions.arcmenu.menu-item-icon-style" name="icon-style-shortcuts">
       <default>'Symbolic'</default>
-      <summary>Shortcut icon type. Full_Color or Symbolic</summary>
+      <summary>Shortcuts icon style. Full_Color or Symbolic</summary>
+    </key>
+    <key enum="org.gnome.shell.extensions.arcmenu.menu-item-icon-style" name="icon-style-buttons">
+      <default>'Symbolic'</default>
+      <summary>Buttons icon style. Full_Color or Symbolic</summary>
     </key>
     <key type="b" name="scrollview-fade-effect">
       <default>true</default>
@@ -368,7 +359,7 @@
       <default>true</default>
       <summary>Tooltips</summary>
     </key>
-      <key type="b" name="show-category-sub-menus">
+    <key type="b" name="show-category-sub-menus">
       <default>false</default>
       <summary>Show category sub menus.</summary>
     </key>
@@ -489,7 +480,7 @@
       <summary>Enable a vertical separator</summary>
     </key>
     <key type="i" name="menu-height">
-      <default>550</default>
+      <default>600</default>
       <summary>Menu Height</summary>
     </key>
     <key type="i" name="menu-width-adjustment">
@@ -572,34 +563,38 @@
       <default>'Round'</default>
       <summary>Appearance of the avatar icon.</summary>
     </key>
-    <key name="menu-item-icon-size" enum="org.gnome.shell.extensions.arcmenu.icon-sizes">
-      <default>'Default'</default>
-      <summary>Size of the menu items icon.</summary>
+    <!-- #region Icon Sizes -->
+    <key type="i" name="icon-size-apps">
+      <default>-1</default>
+      <summary>Icon size of application menu items.</summary>
+      <description>-1 uses the layout default. Any positive value sets the icon size in pixels.</description>
     </key>
-    <key name="menu-item-category-icon-size" enum="org.gnome.shell.extensions.arcmenu.icon-sizes">
-      <default>'Default'</default>
-      <summary>Size of the category icons.</summary>
+    <key type="i" name="icon-size-shortcuts">
+      <default>-1</default>
+      <summary>Icon size of shortcut menu items.</summary>
+      <description>-1 uses the layout default. Any positive value sets the icon size in pixels.</description>
     </key>
-    <key name="menu-item-grid-icon-size" enum="org.gnome.shell.extensions.arcmenu.grid-icon-sizes">
-      <default>'Default'</default>
-      <summary>Size of the menu grid icons.</summary>
+    <key type="i" name="icon-size-categories">
+      <default>-1</default>
+      <summary>Icon size of category menu items.</summary>
+      <description>-1 uses the layout default. 0 hides the icon. Any positive value sets the icon size in pixels.</description>
     </key>
-    <key name="custom-grid-icon-size" type="a{si}">
-      <default>{'width': 108, 'height': 108, 'iconSize': 62}</default>
-      <summary>Custom "grid icon" size (width, height, iconSize).</summary>
+    <key type="i" name="icon-size-buttons">
+      <default>-1</default>
+      <summary>Icon size of button menu items.</summary>
+      <description>-1 uses the layout default. Any positive value sets the icon size in pixels.</description>
     </key>
-    <key name="button-item-icon-size" enum="org.gnome.shell.extensions.arcmenu.icon-sizes">
-      <default>'Default'</default>
-      <summary>Size of the button items in ArcMenu.</summary>
+    <key type="i" name="icon-size-misc">
+      <default>-1</default>
+      <summary>Icon size of search and navigation icons.</summary>
+      <description>-1 uses the layout default. Any positive value sets the icon size in pixels.</description>
     </key>
-    <key name="misc-item-icon-size" enum="org.gnome.shell.extensions.arcmenu.icon-sizes">
-      <default>'Default'</default>
-      <summary>Size of misc items in ArcMenu.</summary>
+    <key name="icon-size-grid" type="a{si}">
+      <default>{'width': -1, 'height': -1, 'size': -1}</default>
+      <summary>Icon size of application grid items.</summary>
+      <description>Dictionary with keys 'width', 'height', 'size'. -1 uses the layout default. Any positive value sets the size in pixels.</description>
     </key>
-    <key name="quicklinks-item-icon-size" enum="org.gnome.shell.extensions.arcmenu.icon-sizes">
-      <default>'Default'</default>
-      <summary>Size of quicklink items in ArcMenu.</summary>
-    </key>
+    <!-- #endregion -->
     <key type="b" name="dash-to-panel-standalone">
       <default>false</default>
       <summary>Force placement of ArcMenu on GNOME top panel.</summary>
@@ -616,35 +611,10 @@
       <default>false</default>
       <summary>Activate existing window instead of opening new one on application launch.</summary>
     </key>
-
-    <!--Deprecated-->
-    <!--Use new settings 'menu-button-text', 'menu-button-icon', 'menu-button-icon-size', 'menu-button-padding'-->
-    <key name="arc-menu-icon" type="i">
-      <default>0</default>
-      <summary>Icon integer value for the menu button.</summary>
+    <key type="b" name="keep-open-on-ctrl-click">
+      <default>true</default>
+      <summary>Keep ArcMenu open when activating an item with Ctrl pressed.</summary>
     </key>
-    <key name="distro-icon" type="i">
-      <default>0</default>
-      <summary>Distro icon integer value for the menu button.</summary>
-    </key>
-    <key type="s" name="custom-menu-button-text">
-      <default>'Apps'</default>
-      <summary>Text of the menu button.</summary>
-    </key>
-    <key type="s" name="custom-menu-button-icon">
-      <default>''</default>
-      <summary>File path of the custom icon for the menu button.</summary>
-    </key>
-    <key type="d" name="custom-menu-button-icon-size">
-      <default>20</default>
-      <summary>Size of the menu buton icon.</summary>
-    </key>
-    <key type="i" name="button-padding">
-      <default>-1</default>
-      <summary>Menu Button Padding.</summary>
-    </key>
-    <!--End Deprecated-->
-
     <key type="s" name="menu-button-text">
       <default>'Apps'</default>
       <summary>Text of the menu button.</summary>

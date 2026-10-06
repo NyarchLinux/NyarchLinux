@@ -7,6 +7,7 @@ import Shell from 'gi://Shell';
 import St from 'gi://St';
 
 import * as AppFavorites from 'resource:///org/gnome/shell/ui/appFavorites.js';
+import * as Config from 'resource:///org/gnome/shell/misc/config.js';
 
 import {ArcMenuManager} from '../arcmenuManager.js';
 import * as Constants from '../constants.js';
@@ -15,8 +16,9 @@ import * as PlaceDisplay from '../placeDisplay.js';
 import {RecentFilesManager} from '../recentFilesManager.js';
 import {SearchResults} from '../search.js';
 import * as Utils from '../utils.js';
-
 import {IconGrid} from '../iconGrid.js';
+
+const [ShellVersion] = Config.PACKAGE_VERSION.split('.').map(s => Number(s));
 
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
@@ -43,7 +45,7 @@ export class BaseMenuLayout extends St.BoxLayout {
             GObject.ParamFlags.READWRITE, 0, GLib.MAXINT32, 0),
         'search-results-spacing': GObject.ParamSpec.uint(
             'search-results-spacing', 'search-results-spacing',
-            'search-results-spacing',  GObject.ParamFlags.READWRITE,
+            'search-results-spacing', GObject.ParamFlags.READWRITE,
             0, GLib.MAXINT32, 0),
         'is_dual_panel': GObject.ParamSpec.boolean(
             'is_dual_panel', 'is_dual_panel', 'is_dual_panel',
@@ -60,24 +62,6 @@ export class BaseMenuLayout extends St.BoxLayout {
             GObject.ParamFlags.READWRITE, 0, GLib.MAXINT32, 0),
         'default-menu-width': GObject.ParamSpec.uint(
             'default-menu-width', 'default-menu-width', 'default-menu-width',
-            GObject.ParamFlags.READWRITE, 0, GLib.MAXINT32, 0),
-        'icon-grid-size': GObject.ParamSpec.uint(
-            'icon-grid-size', 'icon-grid-size', 'icon-grid-size',
-            GObject.ParamFlags.READWRITE, 0, GLib.MAXINT32, 5),
-        'category-icon-size': GObject.ParamSpec.uint(
-            'category-icon-size', 'category-icon-size', 'category-icon-size',
-            GObject.ParamFlags.READWRITE, 0, GLib.MAXINT32, 0),
-        'apps-icon-size': GObject.ParamSpec.uint(
-            'apps-icon-size', 'apps-icon-size', 'apps-icon-size',
-            GObject.ParamFlags.READWRITE, 0, GLib.MAXINT32, 0),
-        'quicklinks-icon-size': GObject.ParamSpec.uint(
-            'quicklinks-icon-size', 'quicklinks-icon-size', 'quicklinks-icon-size',
-            GObject.ParamFlags.READWRITE, 0, GLib.MAXINT32, 0),
-        'buttons-icon-size': GObject.ParamSpec.uint(
-            'buttons-icon-size', 'buttons-icon-size', 'buttons-icon-size',
-            GObject.ParamFlags.READWRITE, 0, GLib.MAXINT32, 0),
-        'pinned-apps-icon-size': GObject.ParamSpec.uint(
-            'pinned-apps-icon-size', 'pinned-apps-icon-size', 'pinned-apps-icon-size',
             GObject.ParamFlags.READWRITE, 0, GLib.MAXINT32, 0),
         'can_hide_search': GObject.ParamSpec.boolean(
             'can_hide_search', 'can_hide_search', 'can_hide_search',
@@ -107,6 +91,13 @@ export class BaseMenuLayout extends St.BoxLayout {
         if (this.arcMenu === null)
             throw new Error('ArcMenu null');
 
+        this.iconSizeGrid = Constants.GridIconSizes.MEDIUM_RECT;
+        this.iconSizeCategories = Constants.IconSizes.MEDIUM;
+        this.iconSizeApps = Constants.IconSizes.MEDIUM;
+        this.iconSizeShortcuts = Constants.IconSizes.MEDIUM;
+        this.iconSizeButtons = Constants.IconSizes.MEDIUM;
+        this.iconSizePinnedApps = Constants.IconSizes.MEDIUM;
+
         this.hasPinnedApps = false;
         this.activeCategoryType = -1;
         this._disableFadeEffect = !ArcMenuManager.settings.get_boolean('scrollview-fade-effect');
@@ -116,6 +107,8 @@ export class BaseMenuLayout extends St.BoxLayout {
 
         this.searchResults = new SearchResults(this);
         this.searchEntry = new MW.SearchEntry(this);
+
+        this._bucketJumpListDialog = new MW.BucketJumpListDialog(this);
 
         this.applicationsGrid = new IconGrid({
             halign: this.display_type === Constants.DisplayType.LIST ? Clutter.ActorAlign.FILL
@@ -136,13 +129,12 @@ export class BaseMenuLayout extends St.BoxLayout {
         this.connect('key-press-event', this._onMainBoxKeyPress.bind(this));
         this.connect('destroy', () => this._onDestroy());
         this.searchEntry.connectObject('search-changed', this._onSearchEntryChanged.bind(this), this);
-        this.searchEntry.connectObject('entry-key-press', this._onSearchEntryKeyPress.bind(this), this);
         ArcMenuManager.settings.connectObject('changed::search-hidden', () => this._onSearchHiddenChanged(), this);
     }
 
     _connectAppChangedEvents() {
-        this._tree.connectObject('changed', () => this.reloadApplications(), this);
-        ArcMenuManager.settings.connectObject('changed::recently-installed-apps', () => this.reloadApplications(), this);
+        this._tree.connectObject('changed', () => this._reloadApplications(), this);
+        ArcMenuManager.settings.connectObject('changed::recently-installed-apps', () => this._reloadApplications(), this);
         AppFavorites.getAppFavorites().connectObject('changed', () => {
             if (this.categoryDirectories) {
                 const categoryMenuItem = this.categoryDirectories.get(Constants.CategoryType.FAVORITES);
@@ -158,6 +150,19 @@ export class BaseMenuLayout extends St.BoxLayout {
 
     get menuButton() {
         return this._menuButton;
+    }
+
+    closeArcMenu() {
+        const event = Clutter.get_current_event();
+        const state = event ? event.get_state() : 0;
+        const isCtrlPressed = (state & Clutter.ModifierType.CONTROL_MASK) !== 0;
+        const keepOpen = ArcMenuManager.settings.get_boolean('keep-open-on-ctrl-click');
+
+        if (isCtrlPressed && keepOpen)
+            return;
+
+        if (this.arcMenu.isOpen)
+            this.arcMenu.toggle();
     }
 
     setDefaultMenuView() {
@@ -206,9 +211,14 @@ export class BaseMenuLayout extends St.BoxLayout {
 
     getIconWidthFromSetting() {
         const gridIconPadding = 10;
-        const iconSizeEnum = ArcMenuManager.settings.get_enum('menu-item-grid-icon-size');
+        let width;
+        const iconSizeSetting = ArcMenuManager.settings.get_value('icon-size-grid').deepUnpack();
+        const defaultIconSize = this.iconSizeGrid;
+        if (iconSizeSetting.size === Constants.IconSizes.DEFAULT)
+            width = defaultIconSize.width;
+        else
+            width = iconSizeSetting.width;
 
-        const {width, height_, iconSize_} = Utils.getGridIconSize(iconSizeEnum, this.icon_grid_size);
         return width + gridIconPadding;
     }
 
@@ -232,24 +242,27 @@ export class BaseMenuLayout extends St.BoxLayout {
         });
     }
 
-    _disconnectReloadApps() {
-        if (this._reloadAppsOnMenuClosedID) {
-            this.arcMenu.disconnect(this._reloadAppsOnMenuClosedID);
-            this._reloadAppsOnMenuClosedID = null;
+    _disconnectMenuClosed() {
+        if (this._onMenuClosedID) {
+            this.arcMenu.disconnect(this._onMenuClosedID);
+            this._onMenuClosedID = null;
         }
     }
 
-    reloadApplications() {
+    _reloadApplications() {
         // Only reload applications if the menu is closed.
         if (this.arcMenu.isOpen) {
             this.reloadQueued = true;
-            if (!this._reloadAppsOnMenuClosedID) {
-                this._reloadAppsOnMenuClosedID = this.arcMenu.connect('menu-closed', () => {
-                    this.reloadApplications();
-                    this.reloadQueued = false;
-                    this._disconnectReloadApps();
-                });
-            }
+
+            if (this._onMenuClosedID)
+                return;
+
+            this._onMenuClosedID = this.arcMenu.connect('menu-closed', () => {
+                this._reloadApplications('menu-closed');
+                this.reloadQueued = false;
+                this._disconnectMenuClosed();
+            });
+
             return;
         }
 
@@ -439,7 +452,7 @@ export class BaseMenuLayout extends St.BoxLayout {
 
         this._clearActorsFromBox(categoriesBox);
 
-        this._futureActiveItem = false;
+        this.activeMenuItem = null;
         let hasExtraCategory = false;
         let separatorAdded = false;
 
@@ -458,11 +471,9 @@ export class BaseMenuLayout extends St.BoxLayout {
             }
 
             categoriesBox.add_child(categoryMenuItem);
-            if (!this._futureActiveItem)
-                this._futureActiveItem = categoryMenuItem;
+            if (!this.activeMenuItem)
+                this.activeMenuItem = categoryMenuItem;
         }
-
-        this.activeMenuItem = this._futureActiveItem;
     }
 
     _loadGnomeFavorites(categoryMenuItem) {
@@ -487,7 +498,7 @@ export class BaseMenuLayout extends St.BoxLayout {
 
     displayRecentFiles(box = this.applicationsBox) {
         this._clearActorsFromBox(box);
-        this._futureActiveItem = false;
+        this.activeMenuItem = null;
 
         const recentFiles = this.recentFilesManager.getRecentFiles();
 
@@ -514,7 +525,7 @@ export class BaseMenuLayout extends St.BoxLayout {
                 const filePath = recentFile.get_path();
                 const name = recentFile.get_basename();
                 const mimeType = this.recentFilesManager.getMimeType(fileUri);
-                const icon = Gio.content_type_get_symbolic_icon(mimeType)?.to_string();
+                const icon = mimeType ? Gio.content_type_get_symbolic_icon(mimeType)?.to_string() : null;
                 const isContainedInCategory = true;
 
                 const placeMenuItem = this.createMenuItem({name, icon, 'id': filePath},
@@ -525,7 +536,7 @@ export class BaseMenuLayout extends St.BoxLayout {
                     try {
                         this.recentFilesManager.removeItem(placeMenuItem.fileUri);
                     } catch (err) {
-                        log(err);
+                        console.warn(err);
                     }
                     box.remove_child(placeMenuItem);
                     box.queue_relayout();
@@ -535,11 +546,9 @@ export class BaseMenuLayout extends St.BoxLayout {
                 else
                     box.add_child(placeMenuItem);
 
-                if (!this._futureActiveItem) {
-                    this._futureActiveItem = placeMenuItem;
-                    this.activeMenuItem = this._futureActiveItem;
-                }
-            }).catch(error => log(error));
+                if (!this.activeMenuItem)
+                    this.activeMenuItem = placeMenuItem;
+            }).catch(error => console.warn(error));
         }
     }
 
@@ -679,10 +688,7 @@ export class BaseMenuLayout extends St.BoxLayout {
 
         const schemaObj = schemaSource.lookup(schema, true);
         if (!schemaObj) {
-            log(
-                `Schema ${schema} could not be found for extension ${
-                    ArcMenuManager.extension.metadata.uuid}. Please check your installation.`
-            );
+            console.warn(`Schema ${schema} could not be found for ArcMenu. Please check your installation.`);
             return null;
         }
 
@@ -849,7 +855,7 @@ export class BaseMenuLayout extends St.BoxLayout {
 
     setActiveCategory(categoryItem, setActive = true) {
         if (this.activeCategoryItem) {
-            this.activeCategoryItem.isActiveCategory = false;
+            this.activeCategoryItem.keepActiveStyle = false;
             this.activeCategoryItem.remove_style_pseudo_class('active');
             this.activeCategoryItem = null;
         }
@@ -858,7 +864,7 @@ export class BaseMenuLayout extends St.BoxLayout {
             return;
 
         this.activeCategoryItem = categoryItem;
-        this.activeCategoryItem.isActiveCategory = true;
+        this.activeCategoryItem.keepActiveStyle = true;
         this.activeCategoryItem.add_style_pseudo_class('active');
     }
 
@@ -872,6 +878,7 @@ export class BaseMenuLayout extends St.BoxLayout {
     }
 
     _clearActorsFromBox(box) {
+        this._bucketJumpListDialog?.close();
         this.blockHoverState = true;
         this.recentFilesManager?.cancelCurrentQueries();
         if (!box) {
@@ -901,7 +908,7 @@ export class BaseMenuLayout extends St.BoxLayout {
         else
             grid.remove_all_children();
 
-        this._futureActiveItem = false;
+        this.activeMenuItem = null;
         let currentCharacter;
 
         const groupAllAppsListView = ArcMenuManager.settings.get_boolean('group-apps-alphabetically-list-layouts');
@@ -909,7 +916,11 @@ export class BaseMenuLayout extends St.BoxLayout {
         const isGrid = this.display_type === Constants.DisplayType.GRID;
         const isList = this.display_type === Constants.DisplayType.LIST;
 
-        const groupAllAppsAlphabetically = (groupAllAppsListView && isList) || (groupAllAppsGridView && isGrid);
+        const groupAllAppsAlphabetically = ((groupAllAppsListView && isList) || (groupAllAppsGridView && isGrid)) &&
+            category === Constants.CategoryType.ALL_PROGRAMS;
+
+        if (groupAllAppsAlphabetically)
+            this._bucketJumpListDialog.clearAll();
 
         this._setGridColumns(grid);
 
@@ -933,26 +944,30 @@ export class BaseMenuLayout extends St.BoxLayout {
             if (parent)
                 parent.remove_child(item);
 
-            if (groupAllAppsAlphabetically && category === Constants.CategoryType.ALL_PROGRAMS) {
-                const appNameFirstChar = Utils.getAppDisplayName(app).charAt(0).toLowerCase();
-                if (currentCharacter !== appNameFirstChar) {
-                    currentCharacter = appNameFirstChar;
+            if (groupAllAppsAlphabetically) {
+                const appName = Utils.getAppDisplayName(app);
+                const firstCharUpper = appName.charAt(0).toUpperCase();
+                if (currentCharacter !== firstCharUpper) {
+                    currentCharacter = firstCharUpper;
 
-                    const label = this._createLabelWithSeparator(currentCharacter.toUpperCase());
+                    const label = this._createLabelWithSeparator(currentCharacter);
+                    label.enableClickGesture();
+                    this._bucketJumpListDialog.addBucketChar(currentCharacter, label);
                     grid.appendItem(label);
                 }
             }
 
             grid.appendItem(item);
 
-            if (!this._futureActiveItem && grid === this.applicationsGrid)
-                this._futureActiveItem = item;
+            if (!this.activeMenuItem && grid === this.applicationsGrid)
+                this.activeMenuItem = item;
         }
+
+        if (groupAllAppsAlphabetically)
+            this._bucketJumpListDialog.populateMenu();
 
         if (this.applicationsBox && grid === this.applicationsGrid && !this.applicationsBox.contains(this.applicationsGrid))
             this.applicationsBox.add_child(this.applicationsGrid);
-        if (this._futureActiveItem)
-            this.activeMenuItem = this._futureActiveItem;
     }
 
     displayAllApps() {
@@ -1020,59 +1035,9 @@ export class BaseMenuLayout extends St.BoxLayout {
         }
     }
 
-    _onSearchEntryKeyPress(searchEntry, event) {
-        const symbol = event.get_key_symbol();
-        switch (symbol) {
-        case Clutter.KEY_Up:
-        case Clutter.KEY_Down:
-        case Clutter.KEY_Left:
-        case Clutter.KEY_Right: {
-            let direction;
-            if (symbol === Clutter.KEY_Down || symbol === Clutter.KEY_Up)
-                return Clutter.EVENT_PROPAGATE;
-            if (symbol === Clutter.KEY_Right)
-                direction = St.DirectionType.RIGHT;
-            if (symbol === Clutter.KEY_Left)
-                direction = St.DirectionType.LEFT;
-
-            let cursorPosition = this.searchEntry.clutter_text.get_cursor_position();
-
-            if (cursorPosition === Constants.CaretPosition.END && symbol === Clutter.KEY_Right)
-                cursorPosition = Constants.CaretPosition.END;
-            else if (cursorPosition === Constants.CaretPosition.START && symbol === Clutter.KEY_Left)
-                cursorPosition = Constants.CaretPosition.START;
-            else
-                cursorPosition = Constants.CaretPosition.MIDDLE;
-
-            if (cursorPosition === Constants.CaretPosition.END || cursorPosition === Constants.CaretPosition.START) {
-                let navigateActor = this.activeMenuItem;
-                if (this.searchResults.hasActiveResult()) {
-                    navigateActor = this.searchResults.getTopResult();
-                    if (navigateActor.has_style_pseudo_class('active')) {
-                        navigateActor.grab_key_focus();
-                        navigateActor.remove_style_pseudo_class('active');
-                        return this.navigate_focus(navigateActor, direction, false);
-                    }
-                    navigateActor.grab_key_focus();
-                    return Clutter.EVENT_STOP;
-                }
-                if (!navigateActor)
-                    return Clutter.EVENT_PROPAGATE;
-                return this.navigate_focus(navigateActor, direction, false);
-            }
-            return Clutter.EVENT_PROPAGATE;
-        }
-        default:
-            return Clutter.EVENT_PROPAGATE;
-        }
-    }
-
     _onMainBoxKeyPress(actor, event) {
         // Prevent a mouse hover event from setting a new active menu item, until next mouse move event.
         this.blockHoverState = true;
-
-        // Prevent Category Mouse Hover activation while search results are active.
-        this._setCategoriesBoxInactive(true);
 
         const symbol = event.get_key_symbol();
         const unicode = Clutter.keysym_to_unicode(symbol);
@@ -1085,60 +1050,44 @@ export class BaseMenuLayout extends St.BoxLayout {
                 this.searchEntry.setText(newText);
             }
             return Clutter.EVENT_PROPAGATE;
-        case Clutter.KEY_Tab:
-        case Clutter.KEY_ISO_Left_Tab:
+        case Clutter.KEY_Tab: case Clutter.KEY_ISO_Left_Tab:
         case Clutter.KEY_Up: case Clutter.KEY_KP_Up:
         case Clutter.KEY_Down: case Clutter.KEY_KP_Down:
         case Clutter.KEY_Left: case Clutter.KEY_KP_Left:
         case Clutter.KEY_Right: case Clutter.KEY_KP_Right: {
-            let direction;
-            if (symbol === Clutter.KEY_Down || symbol === Clutter.KEY_KP_Down)
-                direction = St.DirectionType.DOWN;
-            else if (symbol === Clutter.KEY_Right || symbol === Clutter.KEY_KP_Right)
-                direction = St.DirectionType.RIGHT;
-            else if (symbol === Clutter.KEY_Up || symbol === Clutter.KEY_KP_Up)
-                direction = St.DirectionType.UP;
-            else if (symbol === Clutter.KEY_Left || symbol === Clutter.KEY_KP_Left)
-                direction = St.DirectionType.LEFT;
-            else if (symbol === Clutter.KEY_Tab)
-                direction = St.DirectionType.TAB_FORWARD;
-            else if (symbol === Clutter.KEY_ISO_Left_Tab)
-                direction = St.DirectionType.TAB_BACKWARD;
-
-            if (this.searchEntry.hasKeyFocus() &&
-                this.searchResults.hasActiveResult() && this.searchResults.get_parent()) {
-                const topSearchResult = this.searchResults.getTopResult();
-                if (topSearchResult.has_style_pseudo_class('active')) {
-                    topSearchResult.grab_key_focus();
-                    topSearchResult.remove_style_pseudo_class('active');
-                    return actor.navigate_focus(global.stage.key_focus, direction, false);
-                }
-                topSearchResult.grab_key_focus();
-                return Clutter.EVENT_STOP;
-            } else if (global.stage.key_focus === this && symbol === Clutter.KEY_Up) {
-                return actor.navigate_focus(global.stage.key_focus, direction, true);
-            } else if (global.stage.key_focus === this) {
+            if (this.activeMenuItem && global.stage.get_key_focus() !== this.activeMenuItem) {
                 this.activeMenuItem.grab_key_focus();
                 return Clutter.EVENT_STOP;
             }
-            return actor.navigate_focus(global.stage.key_focus, direction, false);
+            break;
         }
-        case Clutter.KEY_KP_Enter:
-        case Clutter.KEY_Return:
-        case Clutter.KEY_Escape:
-            return Clutter.EVENT_PROPAGATE;
-        default:
-            if (unicode !== 0 && this.searchEntry) {
-                global.stage.set_key_focus(this.searchEntry.clutter_text);
-                this.searchEntry.clutter_text.event(event, false);
+        default: {
+            if (ShellVersion >= 51)
+                return Clutter.EVENT_PROPAGATE;
+
+            const forwardToEntry = unicode !== 0;
+
+            if (forwardToEntry && this.searchEntry) {
+                if (event) {
+                    if (global.stage.get_key_focus() !== this.searchEntry.clutter_text)
+                        this.searchEntry.grab_key_focus();
+
+                    return this.searchEntry.clutter_text.event(event, false)
+                        ? Clutter.EVENT_STOP
+                        : Clutter.EVENT_PROPAGATE;
+                }
             }
+        }
         }
         return Clutter.EVENT_PROPAGATE;
     }
 
     _onDestroy() {
         ArcMenuManager.settings.disconnectObject(this);
-        this._disconnectReloadApps();
+        this._disconnectMenuClosed();
+
+        this._bucketJumpListDialog?.destroy();
+        this._bucketJumpListDialog = null;
 
         AppFavorites.getAppFavorites().disconnectObject(this);
 
@@ -1175,7 +1124,6 @@ export class BaseMenuLayout extends St.BoxLayout {
                     const children = this._placesSections[id].get_children();
                     children.forEach(child => {
                         child.destroy();
-                        child = null;
                     });
                 }
             }
@@ -1189,7 +1137,6 @@ export class BaseMenuLayout extends St.BoxLayout {
         }
 
         if (this.searchResults) {
-            this.searchResults.setTerms([]);
             this.searchResults.destroy();
             this.searchResults = null;
         }
@@ -1211,7 +1158,6 @@ export class BaseMenuLayout extends St.BoxLayout {
         this.appSys = null;
         this.activeCategoryItem = null;
         this.activeMenuItem = null;
-        this._futureActiveItem = null;
     }
 
     _destroyMenuItems() {

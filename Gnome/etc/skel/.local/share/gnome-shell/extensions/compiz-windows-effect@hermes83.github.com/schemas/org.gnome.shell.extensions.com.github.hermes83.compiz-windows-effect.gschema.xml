@@ -2,6 +2,18 @@
 <schemalist>
     <schema id="org.gnome.shell.extensions.com.github.hermes83.compiz-windows-effect" path="/org/gnome/shell/extensions/com/github/hermes83/compiz-windows-effect/">
 
+        <key type="i" name="last-version">
+            <default>-1</default>
+            <summary>Last version installed</summary>
+            <description/>
+        </key>
+
+        <key type="s" name="preset">
+			<default>"P"</default>
+			<summary>Preset</summary>
+			<description/>
+		</key>
+
         <key type="d" name="friction">
             <default>3.5</default>
             <summary>Friction</summary>

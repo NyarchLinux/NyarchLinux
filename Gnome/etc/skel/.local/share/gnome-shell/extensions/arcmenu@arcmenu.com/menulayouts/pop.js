@@ -72,13 +72,11 @@ export class Layout extends BaseMenuLayout {
             row_spacing: 12,
             default_menu_width: 1050,
             ...Utils.getOrientationProp(true),
-            icon_grid_size: Constants.GridIconSize.EXTRA_LARGE,
-            category_icon_size: Constants.MEDIUM_ICON_SIZE,
-            apps_icon_size: Constants.EXTRA_LARGE_ICON_SIZE,
-            quicklinks_icon_size: Constants.MEDIUM_ICON_SIZE,
-            buttons_icon_size: Constants.LARGE_ICON_SIZE,
-            pinned_apps_icon_size: Constants.MEDIUM_ICON_SIZE,
         });
+
+        this.iconSizeGrid = Constants.GridIconSizes.XL;
+        this.iconSizeApps = Constants.IconSizes.LARGE;
+        this.iconSizeButtons = Constants.IconSizes.LARGE;
 
         this._folders = new Map();
         this._orderedItems = [];
@@ -118,6 +116,7 @@ export class Layout extends BaseMenuLayout {
             column_spacing: 6,
             row_spacing: 6,
             halign: Clutter.ActorAlign.CENTER,
+            first_row_align: Clutter.ActorAlign.CENTER,
         });
         this._setFolderGridColumns();
         this.foldersContainer.add_child(this.foldersGrid);
@@ -177,7 +176,7 @@ export class Layout extends BaseMenuLayout {
         this._tree.disconnectObject(this);
     }
 
-    reloadApplications() {
+    _reloadApplications() {
     }
 
     _redisplay() {
@@ -931,7 +930,7 @@ class GroupFolderItem extends BaseFolderItem {
             this.contextMenu.connect('open-state-changed', (menu, isOpen) => {
                 if (isOpen)
                     this.add_style_pseudo_class('active');
-                else  if (!this.isActiveCategory)
+                else if (!this.keepActiveStyle)
                     this.remove_style_pseudo_class('active');
             });
             this.contextMenu.actor.add_style_class_name('arcmenu-menu app-menu');
@@ -1052,6 +1051,12 @@ class GroupFolderItem extends BaseFolderItem {
         });
         this._menuLayout._folderSettings.set_strv('folder-children', orderedFolders);
     }
+
+    _onDestroy() {
+        this._folder = null;
+
+        super._onDestroy();
+    }
 }
 
 export class ApplicationMenuItem extends MW.DraggableMenuItem {
@@ -1092,6 +1097,7 @@ export class ApplicationMenuItem extends MW.DraggableMenuItem {
 
         this.connect('notify::hover', () => this.removeIndicator());
         this.connect('key-focus-in', () => this.removeIndicator());
+        ArcMenuManager.settings.connectObject('changed::icon-size-grid', () => this._updateIcon(), this);
     }
 
     _onDestroy() {
@@ -1166,9 +1172,9 @@ export class ApplicationMenuItem extends MW.DraggableMenuItem {
     createIcon() {
         this._iconBin.x_align = Clutter.ActorAlign.CENTER;
 
-        const iconSizeEnum = ArcMenuManager.settings.get_enum('menu-item-grid-icon-size');
-        const defaultIconSize = this._menuLayout.icon_grid_size;
-        const {iconSize} = Utils.getGridIconSize(iconSizeEnum, defaultIconSize);
+        const iconSizeSetting = ArcMenuManager.settings.get_value('icon-size-grid').deepUnpack().size;
+        const defaultIconSize = this._menuLayout.iconSizeGrid.size;
+        const iconSize = Utils.getIconSize(iconSizeSetting, defaultIconSize);
 
         const icon = this._app.create_icon_texture(iconSize);
 
@@ -1215,7 +1221,7 @@ export class ApplicationMenuItem extends MW.DraggableMenuItem {
 
         MW.launchApp(this._app, event);
 
-        this._menuLayout.arcMenu.toggle();
+        this._menuLayout.closeArcMenu();
         super.activate(event);
     }
 }

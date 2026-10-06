@@ -1,6 +1,5 @@
 .ArcMenuIconGrid {
     text-align: center;
-    border-radius: 8px;
     padding: 5px;
     spacing: 0px;
     margin: 0px;
@@ -33,7 +32,7 @@
     spacing: 12px;
 }
 
-.bottomOfScreenMenu{
+.arcmenu-menu-location-bottom{
     margin-bottom: 0px;
 }
 
@@ -67,7 +66,6 @@
 .arcmenu-plasma-button{
     width: 90px;
     height: 65px;
-    border-radius: 8px;
     text-align: center;
     padding: 5px;
     spacing: 0px;
@@ -83,17 +81,24 @@
 }
 
 .arcmenu-button{
-    -st-icon-style: symbolic;
     border-width: 1px;
-    border-radius: 8px;
     padding: 8px;
     min-height: 0px;
 }
 
 .arcmenu-small-button {
-    border-radius: 8px;
-    padding: 1px 6px;
-    min-height: auto;
+    padding: 1px 8px;
+    min-height: 0px;
+}
+
+.arcmenu-alphabet-button{
+    width: 36px;
+    height: 36px;
+    min-height: 0px;
+    padding: 0px;
+    margin: 0px;
+    font-weight: bold;
+    text-align: center;
 }
 
 .arcmenu-avatar-round{

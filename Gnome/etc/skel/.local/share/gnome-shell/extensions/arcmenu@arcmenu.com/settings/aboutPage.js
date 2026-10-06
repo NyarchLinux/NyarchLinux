@@ -93,7 +93,7 @@ class ArcMenuAboutPage extends Adw.PreferencesPage {
         const whatsNewGroup = new Adw.PreferencesGroup();
         whatsNewPage.add(whatsNewGroup);
 
-        let releaseNotes = '';
+        let releaseNotes;
         try {
             const fileContent = GLib.file_get_contents(`${path}/RELEASENOTES.md`)[1];
             const decoder = new TextDecoder('utf-8');
@@ -298,18 +298,18 @@ class ArcMenuAboutPage extends Adw.PreferencesPage {
             title: _('Contributions by'),
         });
         creditsPage.add(contributionsByGroup);
-        const contributorsRow =  this._createLinkRow(_('Contributors'), 'https://gitlab.com/arcmenu/ArcMenu#contributors');
+        const contributorsRow = this._createLinkRow(_('Contributors'), 'https://gitlab.com/arcmenu/ArcMenu#contributors');
         contributionsByGroup.add(contributorsRow);
-        const translatorsRow =  this._createLinkRow(_('Translators'), 'https://gitlab.com/arcmenu/ArcMenu#translators');
+        const translatorsRow = this._createLinkRow(_('Translators'), 'https://gitlab.com/arcmenu/ArcMenu#translators');
         contributionsByGroup.add(translatorsRow);
 
         const artworkByGroup = new Adw.PreferencesGroup({
             title: _('Artwork by'),
         });
         creditsPage.add(artworkByGroup);
-        const andycArtworkRow =  this._createLinkRow('Andy C', 'https://gitlab.com/LinxGem33', 'ArcMenu logo and other ArcMenu icon assets');
+        const andycArtworkRow = this._createLinkRow('Andy C', 'https://gitlab.com/LinxGem33', 'ArcMenu logo and other ArcMenu icon assets');
         artworkByGroup.add(andycArtworkRow);
-        const azArtworkRow =  this._createLinkRow('Andrew Zaech', 'https://gitlab.com/AndrewZaech', 'Modification and creation of some ArcMenu icon assets');
+        const azArtworkRow = this._createLinkRow('Andrew Zaech', 'https://gitlab.com/AndrewZaech', 'Modification and creation of some ArcMenu icon assets');
         artworkByGroup.add(azArtworkRow);
 
         const {subpage: legalSubPage, page: legalPage} = this._createSubPage(_('Legal'));

@@ -34,15 +34,14 @@ export class Layout extends BaseMenuLayout {
             column_spacing: 0,
             row_spacing: 0,
             ...getOrientationProp(true),
-            icon_grid_size: Constants.GridIconSize.MEDIUM_RECT,
-            category_icon_size: Constants.MEDIUM_ICON_SIZE,
-            apps_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
-            quicklinks_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
-            buttons_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
-            pinned_apps_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
             is_standalone_runner: !!isStandalone,
             can_hide_search: false,
         });
+
+        this.iconSizeApps = Constants.IconSizes.SMALL;
+        this.iconSizeShortcuts = Constants.IconSizes.SMALL;
+        this.iconSizeButtons = Constants.IconSizes.SMALL;
+        this.iconSizePinnedApps = Constants.IconSizes.SMALL;
 
         this.style = `spacing: ${Spacing}px;`;
 
@@ -257,9 +256,10 @@ export class Layout extends BaseMenuLayout {
             return;
         const height = staticHeight ? 'height' : 'max-height';
         this.style = `${height}: ${runnerHeight}px; padding: ${Spacing}px; spacing: ${Spacing}px; width: ${runnerWidth}px;`;
+        this.searchEntry.style = '';
         if (runnerFontSize > 0) {
             this.style += `font-size: ${runnerFontSize}pt;`;
-            this.searchEntry.style += `font-size: ${runnerFontSize}pt;`;
+            this.searchEntry.style = `font-size: ${runnerFontSize}pt;`;
         }
         this.updateWidth();
     }

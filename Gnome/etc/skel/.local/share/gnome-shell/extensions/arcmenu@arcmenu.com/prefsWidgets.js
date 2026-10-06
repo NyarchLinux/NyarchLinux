@@ -333,7 +333,7 @@ export const EditEntriesBox = GObject.registerClass({
         'modify-button-clicked': {},
         'entry-modified': {param_types: [GObject.TYPE_INT, GObject.TYPE_INT]},
     },
-},  class ArcMenuEditEntriesBox extends Gtk.MenuButton {
+}, class ArcMenuEditEntriesBox extends Gtk.MenuButton {
     _init(params) {
         super._init({
             icon_name: 'view-more-symbolic',

@@ -6,13 +6,15 @@ import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
+import {ArcMenuManager} from './arcmenuManager.js';
 import {ArcMenu} from './menuButton.js';
-import * as Constants from './constants.js';
 import * as LayoutHandler from './menulayouts/layoutHandler.js';
 import * as MW from './menuWidgets.js';
 
 export const StandaloneRunner = class ArcMenuStandaloneRunner {
-    constructor() {
+    constructor(monitor) {
+        this._monitor = monitor;
+
         // Link search providers to this menu
         this.searchProviderDisplayId = 'StandaloneRunner';
 
@@ -42,6 +44,10 @@ export const StandaloneRunner = class ArcMenuStandaloneRunner {
         return this.arcMenu?.isOpen;
     }
 
+    get monitor() {
+        return this._monitor;
+    }
+
     createMenuLayout() {
         this.clearTooltipShowingId();
         this.hideTooltip(true);
@@ -51,7 +57,7 @@ export const StandaloneRunner = class ArcMenuStandaloneRunner {
         this._destroyMenuLayout();
 
         const standaloneRunner = true;
-        this._menuLayout = LayoutHandler.createMenuLayout(this, Constants.MenuLayout.RUNNER, standaloneRunner);
+        this._menuLayout = LayoutHandler.createMenuLayout(this, 'runner', standaloneRunner);
 
         if (this._menuLayout)
             this.arcMenu.box.add_child(this._menuLayout);
@@ -75,8 +81,11 @@ export const StandaloneRunner = class ArcMenuStandaloneRunner {
     toggleMenu() {
         this._closeOtherMenus();
 
-        if (!this.arcMenu.isOpen)
+        if (!this.arcMenu.isOpen) {
             this._menuLayout.updateLocation();
+            this._monitor = ArcMenuManager.settings.get_boolean('runner-hotkey-open-primary-monitor')
+                ? Main.layoutManager.primaryMonitor : Main.layoutManager.currentMonitor;
+        }
 
         this.arcMenu.toggle();
 
@@ -136,10 +145,6 @@ export const StandaloneRunner = class ArcMenuStandaloneRunner {
         return this._menuLayout?.activeCategoryType;
     }
 
-    reloadApplications() {
-        this._menuLayout?.reloadApplications();
-    }
-
     displayPinnedApps() {
         this._menuLayout?.displayPinnedApps();
     }
@@ -156,7 +161,7 @@ export const StandaloneRunner = class ArcMenuStandaloneRunner {
         if (open) {
             if (Main.panel.menuManager && Main.panel.menuManager.activeMenu)
                 Main.panel.menuManager.activeMenu.toggle();
-        } else  if (!this.arcMenu.isOpen) {
+        } else if (!this.arcMenu.isOpen) {
             this.clearTooltipShowingId();
             this.hideTooltip(true);
         }

@@ -1,0 +1,12 @@
+[Icon Theme]
+Name=Hicolor
+Comment=Fallback icon theme
+Hidden=true
+Directories=scalable/emblems
+
+[scalable/emblems]
+MinSize=1
+Size=128
+MaxSize=512
+Context=Emblems
+Type=Scalable

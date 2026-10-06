@@ -14,10 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+// SPDX-License-Identifier: GPL-3.0-only
 'use strict';
 const Signals = imports.signals;
-import * as Main from 'resource:///org/gnome/shell/ui/main.js'
-import GLib from 'gi://GLib'
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import GLib from 'gi://GLib';
 
 export class VisibleArea {
     constructor() {
@@ -36,17 +37,17 @@ export class VisibleArea {
     }
 
     setMarginsForExtension(extensionUUID, margins) {
-        if (margins == null) {
-            if (!(extensionUUID in this._marginsList)) {
+        if (margins === null) {
+            if (!(extensionUUID in this._marginsList))
                 return;
-            }
+
             delete this._marginsList[extensionUUID];
         } else {
             this._marginsList[extensionUUID] = margins;
         }
-        if (this._refreshTimerId) {
+        if (this._refreshTimerId)
             GLib.source_remove(this._refreshTimerId);
-        }
+
         this._refreshTimerId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 250, () => {
             this._refreshMargins();
             this._refreshTimerId = null;
@@ -56,13 +57,13 @@ export class VisibleArea {
 
     _refreshMargins() {
         this._usableAreas = {};
-        for (let extensionUUID in this._marginsList) {
-            let margins = this._marginsList[extensionUUID];
-            for (let workspace in margins) {
+        for (const extensionUUID in this._marginsList) {
+            const margins = this._marginsList[extensionUUID];
+            for (const workspace in margins) {
                 let index = workspace;
-                if (workspace < 0) {
+                if (workspace < 0)
                     index = Main.layoutManager.primaryIndex;
-                }
+
                 if (!(index in this._usableAreas)) {
                     this._usableAreas[index] = {
                         top: 0,
@@ -71,9 +72,8 @@ export class VisibleArea {
                         right: 0,
                     };
                 }
-                for (let index2 of ['top', 'bottom', 'left', 'right']) {
+                for (const index2 of ['top', 'bottom', 'left', 'right'])
                     this._usableAreas[index][index2] = Math.max(this._usableAreas[index][index2], margins[workspace][index2]);
-                }
             }
         }
         this.emit('updated-usable-area');
@@ -106,15 +106,20 @@ export class VisibleArea {
      */
 
     getMonitorGeometry(ws, monitorIndex) {
-        let geometry = ws.get_display().get_monitor_geometry(monitorIndex);
-        let scale = ws.get_display().get_monitor_scale(monitorIndex);
-        let area = ws.get_work_area_for_monitor(monitorIndex);
+        const display = ws.get_display();
+        const geometry = display.get_monitor_geometry(monitorIndex);
+        const scale = display.get_monitor_scale(monitorIndex);
+        const area = ws.get_work_area_for_monitor(monitorIndex);
 
         // calculate the margins due to the difference between the monitor geometry and the work area, ie. the work area margins
         let marginTop = area.y - geometry.y;
         let marginLeft = area.x - geometry.x;
         let marginRight = geometry.width - area.width - marginLeft;
         let marginBottom = geometry.height - area.height - marginTop;
+        const windowMarginTop = marginTop;
+        const windowMarginBottom = marginBottom;
+        const windowMarginLeft = marginLeft;
+        const windowMarginRight = marginRight;
 
         if (monitorIndex in this._usableAreas) {
             // If the margins for this monitor are bigger than the margins calculated previously,
@@ -136,6 +141,10 @@ export class VisibleArea {
             marginBottom,
             marginLeft,
             marginRight,
+            windowMarginTop,
+            windowMarginBottom,
+            windowMarginLeft,
+            windowMarginRight,
         };
     }
 

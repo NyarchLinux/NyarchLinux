@@ -15,7 +15,7 @@ async function seekStatusNotifierItems() {
     const bus = Gio.DBus.session;
     const uniqueNames = await DBusUtils.getBusNames(bus, cancellable);
 
-    const stdErrOutputStream = new GioUnix.OutputStream({fd: 1, closeFd: true});
+    const stdOutOutputStream = new GioUnix.OutputStream({fd: 1, closeFd: true});
     const introspectName = async name => {
         const nodes = DBusUtils.introspectBusObject(bus, name, cancellable,
             ['org.kde.StatusNotifierItem']);
@@ -23,7 +23,7 @@ async function seekStatusNotifierItems() {
 
         for await (const node of nodes) {
             const {path} = node;
-            stdErrOutputStream.write(`${JSON.stringify({services, name, path})}\n`,
+            stdOutOutputStream.write(`${JSON.stringify({services, name, path})}\n`,
                 cancellable);
         }
     };

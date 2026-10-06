@@ -24,12 +24,11 @@ export class Layout extends BaseMenuLayout {
             row_spacing: 0,
             supports_category_hover_activation: true,
             ...getOrientationProp(true),
-            category_icon_size: Constants.ICON_HIDDEN,
-            apps_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
-            quicklinks_icon_size: Constants.SMALL_ICON_SIZE,
-            buttons_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
-            pinned_apps_icon_size: Constants.MEDIUM_ICON_SIZE,
         });
+
+        this.iconSizeCategories = Constants.IconSizes.HIDDEN;
+        this.iconSizeApps = Constants.IconSizes.SMALL;
+        this.iconSizeButtons = Constants.IconSizes.SMALL;
 
         this._mainBox = new St.BoxLayout({
             x_expand: true,

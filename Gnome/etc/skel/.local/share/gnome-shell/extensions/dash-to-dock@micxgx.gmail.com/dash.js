@@ -17,6 +17,7 @@ import {
 } from './dependencies/shell/ui.js';
 
 import {
+    Config,
     Util,
 } from './dependencies/shell/misc.js';
 
@@ -120,6 +121,14 @@ export const DockDash = GObject.registerClass({
             'requires-visibility', 'requires-visibility', 'requires-visibility',
             GObject.ParamFlags.READWRITE,
             false),
+        'max-width': GObject.ParamSpec.int(
+            'max-width', 'max-width', 'max-width',
+            GObject.ParamFlags.READWRITE,
+            -1, GLib.MAXINT32, -1),
+        'max-height': GObject.ParamSpec.int(
+            'max-height', 'max-height', 'max-height',
+            GObject.ParamFlags.READWRITE,
+            -1, GLib.MAXINT32, -1),
     },
     Signals: {
         'menu-opened': {},
@@ -161,7 +170,6 @@ export const DockDash = GObject.registerClass({
             name: 'dashtodockDashContainer',
             x_align: Clutter.ActorAlign.CENTER,
             y_align: Clutter.ActorAlign.CENTER,
-            vertical: !this._isHorizontal,
             y_expand: this._isHorizontal,
             x_expand: !this._isHorizontal,
         });
@@ -181,13 +189,11 @@ export const DockDash = GObject.registerClass({
             name: 'dashtodockBoxContainer',
             x_align: Clutter.ActorAlign.FILL,
             y_align: Clutter.ActorAlign.FILL,
-            vertical: !this._isHorizontal,
         });
         this._boxContainer.add_style_class_name(Theming.PositionStyleClass[this._position]);
 
         const rtl = Clutter.get_default_text_direction() === Clutter.TextDirection.RTL;
         this._box = new St.BoxLayout({
-            vertical: !this._isHorizontal,
             clip_to_allocation: false,
             ...!this._isHorizontal ? {layout_manager: new DockDashIconsVerticalLayout()} : {},
             x_align: rtl ? Clutter.ActorAlign.END : Clutter.ActorAlign.START,
@@ -195,6 +201,19 @@ export const DockDash = GObject.registerClass({
             y_expand: !this._isHorizontal,
             x_expand: this._isHorizontal,
         });
+
+        if (this._dashContainer.orientation !== undefined) {
+            this._dashContainer.orientation =
+                this._boxContainer.orientation =
+                this._box.orientation = this._isHorizontal
+                    ? Clutter.Orientation.HORIZONTAL
+                    : Clutter.Orientation.VERTICAL;
+        } else {
+            this._dashContainer.vertical =
+                this._boxContainer.vertical =
+                this._box.vertical = !this._isHorizontal;
+        }
+
         this._box._delegate = this;
         this._boxContainer.add_child(this._box);
         Utils.addActor(this._scrollView, this._boxContainer);
@@ -237,7 +256,7 @@ export const DockDash = GObject.registerClass({
         this.add_child(this._background);
         this.add_child(this._dashContainer);
 
-        this._workId = Main.initializeDeferredWork(this._box, this._redisplay.bind(this));
+        this._workId = Main.initializeDeferredWork(this._box, () => this._redisplay());
 
         this._shellSettings = new Gio.Settings({
             schema_id: 'org.gnome.shell',
@@ -322,6 +341,11 @@ export const DockDash = GObject.registerClass({
         if (this._ensureActorVisibilityTimeoutId) {
             GLib.source_remove(this._ensureActorVisibilityTimeoutId);
             delete this._ensureActorVisibilityTimeoutId;
+        }
+
+        if (this._showLabelTimeoutId) {
+            GLib.source_remove(this._showLabelTimeoutId);
+            this._showLabelTimeoutId = 0;
         }
     }
 
@@ -553,9 +577,9 @@ export const DockDash = GObject.registerClass({
             }
         }, this);
 
-        // Override default AppIcon label_actor, now the
-        // accessible_name is set at DashItemContainer.setLabelText
-        appIcon.label_actor = null;
+        // Override default AppIcon labelActor, now the
+        // accessibleName is set at DashItemContainer.setLabelText
+        appIcon.labelActor = null;
         item.setLabelText(app.get_name());
 
         appIcon.icon.setIconSize(this.iconSize);
@@ -743,7 +767,15 @@ export const DockDash = GObject.registerClass({
         }
     }
 
+    vfunc_map() {
+        super.vfunc_map();
+        this._queueRedisplay();
+    }
+
     _redisplay() {
+        if (!this.mapped)
+            return;
+
         const favorites = AppFavorites.getAppFavorites().getFavoriteMap();
 
         let running = this._appSystem.get_running();
@@ -965,10 +997,6 @@ export const DockDash = GObject.registerClass({
 
         addedItems.forEach(({item}) => item.show(animate));
 
-        // Workaround for https://bugzilla.gnome.org/show_bug.cgi?id=692744
-        // Without it, StBoxLayout may use a stale size cache
-        this._box.queue_relayout();
-
         // This will update the size, and the corresponding number for each icon
         this._updateNumberOverlay();
 
@@ -1056,6 +1084,22 @@ export const DockDash = GObject.registerClass({
         this._showAppsIcon.visible = false;
     }
 
+    get maxWidth() {
+        return this._maxWidth;
+    }
+
+    get maxHeight() {
+        return this._maxHeight;
+    }
+
+    set maxWidth(maxWidth) {
+        this.setMaxSize(maxWidth, this._maxHeight);
+    }
+
+    set maxHeight(maxHeight) {
+        this.setMaxSize(this._maxWidth, maxHeight);
+    }
+
     setMaxSize(maxWidth, maxHeight) {
         if (this._maxWidth === maxWidth &&
             this._maxHeight === maxHeight)
@@ -1074,10 +1118,13 @@ export const DockDash = GObject.registerClass({
         const notifiedProperties = [];
         const showAppsContainer = settings.showAppsAlwaysInTheEdge || !settings.dockExtended
             ? this._dashContainer : this._boxContainer;
+        const needsFirstLastChildWorkaround = Config.PACKAGE_VERSION.split('.')[0] < 49;
 
-        this._signalsHandler.addWithLabel(Labels.FIRST_LAST_CHILD_WORKAROUND,
-            showAppsContainer, 'notify',
-            (_obj, pspec) => notifiedProperties.push(pspec.name));
+        if (needsFirstLastChildWorkaround) {
+            this._signalsHandler.addWithLabel(Labels.FIRST_LAST_CHILD_WORKAROUND,
+                showAppsContainer, 'notify',
+                (_obj, pspec) => notifiedProperties.push(pspec.name));
+        }
 
         if (this._showAppsIcon.get_parent() !== showAppsContainer) {
             this._showAppsIcon.get_parent()?.remove_child(this._showAppsIcon);
@@ -1092,16 +1139,18 @@ export const DockDash = GObject.registerClass({
             showAppsContainer.set_child_above_sibling(this._showAppsIcon, null);
         }
 
-        this._signalsHandler.removeWithLabel(Labels.FIRST_LAST_CHILD_WORKAROUND);
+        if (needsFirstLastChildWorkaround) {
+            this._signalsHandler.removeWithLabel(Labels.FIRST_LAST_CHILD_WORKAROUND);
 
-        // This is indeed ugly, but we need to ensure that the last and first
-        // visible widgets are re-computed by St, that is buggy because of a
-        // mutter issue that is being fixed:
-        // https://gitlab.gnome.org/GNOME/mutter/-/merge_requests/2047
-        if (!notifiedProperties.includes('first-child'))
-            showAppsContainer.notify('first-child');
-        if (!notifiedProperties.includes('last-child'))
-            showAppsContainer.notify('last-child');
+            // This is indeed ugly, but we need to ensure that the last and first
+            // visible widgets are re-computed by St, that is buggy because of a
+            // mutter issue that is being fixed:
+            // https://gitlab.gnome.org/GNOME/mutter/-/merge_requests/2047
+            if (!notifiedProperties.includes('first-child'))
+                showAppsContainer.notify('first-child');
+            if (!notifiedProperties.includes('last-child'))
+                showAppsContainer.notify('last-child');
+        }
     }
 });
 

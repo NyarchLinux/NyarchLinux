@@ -20,80 +20,77 @@ export function resetSetting(settings, settingName, comboRow = null) {
         comboRow.selected = value;
     }
 }
+
 /**
+ * Find the corresponding menu layout information from the given `layoutId`.
+ * If no matching layout is found (e.g., due to an invalid or unrecognized layout ID string),
+ * falls back to the default 'arcmenu' layout.
  *
- * @param {Constants.MenuLayout} menuLayout menulayout enum
- * @returns 'name of menu layout'
+ * @param {string} layoutId The string of the layoutId
+ * @returns {Constants.MenuLayoutsInfo} The matching layoutInfo object, or the default 'arcmenu' layoutInfo.
  */
-export function getMenuLayoutName(menuLayout) {
-    for (const styles of Constants.MenuStyles) {
-        for (const style of styles.MENU_TYPE) {
-            if (style.LAYOUT === menuLayout)
-                return style.TITLE;
-        }
-    }
-    return '';
+export function getMenuLayoutInfo(layoutId) {
+    return Constants.MenuLayoutsInfo.find(l => l.id === layoutId) ?? Constants.MenuLayoutsInfo.find(l => l.id === 'arcmenu');
 }
 
 /**
  *
  * @param {Array} rows the array of setting rows to show/hide
- * @param {Constants.MenuLayout} menuLayout menulayout enum
+ * @param {string} layoutId menulayout id
  */
-export function setVisibleRows(rows, menuLayout) {
-    for (const row in rows)
-        rows[row].visible = true;
+export function setVisibleRows(rows, layoutId) {
+    Object.values(rows).forEach(row => {
+        row.visible = true;
+    });
 
-    switch (menuLayout) {
-    case Constants.MenuLayout.PLASMA:
-    case Constants.MenuLayout.TOGNEE:
-    case Constants.MenuLayout.ARCMENU:
-        break;
-    case Constants.MenuLayout.ELEVEN:
-    case Constants.MenuLayout.AZ:
-    case Constants.MenuLayout.INSIDER:
-    case Constants.MenuLayout.SLEEK:
+    switch (layoutId) {
+    case '11':
+    case 'az':
+    case 'insider':
+    case 'sleek':
         rows[Constants.SettingsPage.DIRECTORY_SHORTCUTS].visible = false;
         rows[Constants.SettingsPage.APPLICATION_SHORTCUTS].visible = false;
         rows[Constants.SettingsPage.EXTRA_CATEGORIES].visible = false;
         break;
-    case Constants.MenuLayout.WHISKER:
-    case Constants.MenuLayout.BRISK:
-    case Constants.MenuLayout.ENTERPRISE:
-    case Constants.MenuLayout.ZEST:
+    case 'whisker':
+    case 'brisk':
+    case 'enterprise':
+    case 'zest':
         rows[Constants.SettingsPage.DIRECTORY_SHORTCUTS].visible = false;
         rows[Constants.SettingsPage.APPLICATION_SHORTCUTS].visible = false;
         break;
-    case Constants.MenuLayout.MINT:
-    case Constants.MenuLayout.BUDGIE:
-    case Constants.MenuLayout.GNOME_MENU:
+    case 'mint':
+    case 'budgie':
+    case 'gnome-menu':
         rows[Constants.SettingsPage.DIRECTORY_SHORTCUTS].visible = false;
         rows[Constants.SettingsPage.APPLICATION_SHORTCUTS].visible = false;
         rows[Constants.SettingsPage.POWER_OPTIONS].visible = false;
         break;
-    case Constants.MenuLayout.RAVEN:
-    case Constants.MenuLayout.UNITY:
+    case 'raven':
+    case 'unity':
         rows[Constants.SettingsPage.DIRECTORY_SHORTCUTS].visible = false;
         rows[Constants.SettingsPage.POWER_OPTIONS].visible = false;
         break;
-    case Constants.MenuLayout.ELEMENTARY:
-    case Constants.MenuLayout.CHROMEBOOK:
-    case Constants.MenuLayout.RUNNER:
-    case Constants.MenuLayout.POP:
+    case 'elementary':
+    case 'chromebook':
+    case 'runner':
+    case 'pop':
         rows[Constants.SettingsPage.PINNED_APPS].visible = false;
         rows[Constants.SettingsPage.APPLICATION_SHORTCUTS].visible = false;
         rows[Constants.SettingsPage.DIRECTORY_SHORTCUTS].visible = false;
         rows[Constants.SettingsPage.POWER_OPTIONS].visible = false;
         rows[Constants.SettingsPage.EXTRA_CATEGORIES].visible = false;
         break;
-    case Constants.MenuLayout.REDMOND:
-    case Constants.MenuLayout.WINDOWS:
+    case 'redmond':
+    case 'windows':
         rows[Constants.SettingsPage.EXTRA_CATEGORIES].visible = false;
         break;
-    case Constants.MenuLayout.GNOME_OVERVIEW:
-        for (const row in rows)
-            rows[row].visible = false;
+    case 'gnome-overview':
+        Object.values(rows).forEach(row => {
+            row.visible = false;
+        });
         break;
+
     default:
         break;
     }

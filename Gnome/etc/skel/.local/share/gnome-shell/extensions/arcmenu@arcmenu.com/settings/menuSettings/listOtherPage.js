@@ -12,8 +12,8 @@ import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions
 
 export const ListOtherPage = GObject.registerClass(
 class ArcMenuListOtherPage extends SubPage {
-    _init(settings, params) {
-        super._init(settings, params);
+    _init(extension, settings, params) {
+        super._init(extension, settings, params);
 
         this.frameRows = [];
 
@@ -86,11 +86,11 @@ class ArcMenuListOtherPage extends SubPage {
 
             let name, iconString;
             if (this.list_type === Constants.MenuSettingsListType.POWER_OPTIONS) {
-                name = Constants.PowerOptions[categoryEnum].NAME;
-                iconString = Constants.PowerOptions[categoryEnum].IMAGE;
+                name = Constants.PowerOptions[categoryEnum].name;
+                iconString = Constants.PowerOptions[categoryEnum].icon;
             } else {
-                name = Constants.Categories[categoryEnum].NAME;
-                iconString = Constants.Categories[categoryEnum].IMAGE;
+                name = Constants.Categories[categoryEnum].name;
+                iconString = Constants.Categories[categoryEnum].icon;
             }
 
             const row = new PW.DragRow({

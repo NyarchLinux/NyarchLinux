@@ -1,5 +1,6 @@
 import Gio from 'gi://Gio';
 
+import * as Config from 'resource:///org/gnome/shell/misc/config.js';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
@@ -12,12 +13,11 @@ import {CustomStylesheet} from './theming.js';
 import * as Utils from './utils.js';
 import {UpdateNotification} from './updateNotifier.js';
 
+export const [ShellVersion] = Config.PACKAGE_VERSION.split('.').map(s => Number(s));
+
 export default class ArcMenu extends Extension {
     enable() {
         this.settings = this.getSettings();
-
-        // Settings changed in v68.0. Convert the old to new.
-        this._covertOldSettings();
 
         this._resource = Gio.Resource.load(`${this.path}/data/resources.gresource`);
         Gio.resources_register(this._resource);
@@ -36,6 +36,9 @@ export default class ArcMenu extends Extension {
             Main.sessionMode.hasOverview = false;
             Main.layoutManager.connectObject('startup-complete', () => {
                 Main.sessionMode.hasOverview = hadOverview;
+
+                if (ShellVersion >= 50)
+                    Main.overview.hide();
             }, this);
         }
 
@@ -98,55 +101,6 @@ export default class ArcMenu extends Extension {
         this.settings = null;
     }
 
-    _covertOldSettings() {
-        const oldButtonTextDefault = this.settings.get_default_value('custom-menu-button-text').unpack();
-        const oldButtonText = this.settings.get_string('custom-menu-button-text');
-        if (oldButtonTextDefault !== oldButtonText) {
-            this.settings.reset('custom-menu-button-text');
-            this.settings.set_string('menu-button-text', oldButtonText);
-        }
-
-        const oldButtonSizeDefault = this.settings.get_default_value('custom-menu-button-icon-size').unpack();
-        const oldButtonSize = this.settings.get_double('custom-menu-button-icon-size');
-        if (oldButtonSizeDefault !== oldButtonSize) {
-            this.settings.reset('custom-menu-button-icon-size');
-            this.settings.set_int('menu-button-icon-size', Math.round(oldButtonSize));
-        }
-
-        const oldButtonPaddingDefault = this.settings.get_default_value('button-padding').unpack();
-        const oldButtonPadding = this.settings.get_int('button-padding');
-        if (oldButtonPaddingDefault !== oldButtonPadding) {
-            this.settings.reset('button-padding');
-            this.settings.set_int('menu-button-padding', oldButtonPadding);
-        }
-
-        const menuButtonIcon = this.settings.get_string('menu-button-icon');
-        switch (menuButtonIcon) {
-        case 'Menu_Icon': {
-            const iconValue = this.settings.get_int('arc-menu-icon');
-            const icon = Constants.MenuIcons[iconValue].IMAGE;
-            if (icon === 'view-app-grid-symbolic')
-                this.settings.set_string('menu-button-icon', icon);
-            else
-                this.settings.set_string('menu-button-icon', `${Constants.RESOURCE_PATH}/actions/${icon}.svg`);
-            break;
-        }
-        case 'Distro_Icon': {
-            const iconValue = this.settings.get_int('distro-icon');
-            const icon = Constants.DistroIcons[iconValue].IMAGE;
-            this.settings.set_string('menu-button-icon', `${Constants.RESOURCE_PATH}/actions/${icon}.svg`);
-            break;
-        }
-        case 'Custom_Icon': {
-            const iconString = this.settings.get_string('custom-menu-button-icon');
-            this.settings.set_string('menu-button-icon', iconString);
-            break;
-        }
-        default:
-            break;
-        }
-    }
-
     _getPanelExtensionStates() {
         this._azTaskbarActive = this._isExtensionActive(Constants.AZTASKBAR_UUID);
         this._dtpActive = this._isExtensionActive(Constants.DASH_TO_PANEL_UUID);
@@ -178,10 +132,7 @@ export default class ArcMenu extends Extension {
             return false;
 
         const isPrimaryStandalone = panel.isPrimary && panel.isStandalone;
-        if (isPrimaryStandalone)
-            return true;
-
-        return false;
+        return isPrimaryStandalone;
     }
 
     _connectExtensionSignals() {
@@ -207,60 +158,52 @@ export default class ArcMenu extends Extension {
 
     _enableButtons() {
         const multiMonitor = this.settings.get_boolean('multi-monitor');
+        const panelExtensionEnabled = this._dtpActive || this._azTaskbarActive;
 
-        let panelExtensionEnabled = false;
-        let panels;
+        // Finds available panels from Dash to Panel or App Icons Taskbar extension.
+        // If none found, use Main.panel.
 
-        if (this._dtpActive && global.dashToPanel?.panels) {
-            panels = global.dashToPanel.panels.filter(p => p);
-            panelExtensionEnabled = true;
-        } else if (this._azTaskbarActive && global.azTaskbar?.panels) {
-            panels = global.azTaskbar.panels.filter(p => p);
-            panelExtensionEnabled = true;
-        } else {
-            panels = [Main.panel];
-        }
-
-        const primaryPanelIndex = Main.layoutManager.primaryMonitor?.index;
+        const getExtensionPanels = () => {
+            if (this._dtpActive)
+                return global.dashToPanel?.panels;
+            if (this._azTaskbarActive)
+                return global.azTaskbar?.panels;
+            return null;
+        };
+        const panels = getExtensionPanels()?.filter(p => p) ?? [Main.panel];
 
         // Register hotkeys, DBus methods, and certain settings changed events only once,
         // on the first panel processed in the loop (independent of primary monitor status).
         let isFirstPanel = true;
 
         const panelsCount = multiMonitor ? panels.length : Math.min(panels.length, 1);
-        for (var i = 0; i < panelsCount; i++) {
+        for (let i = 0; i < panelsCount; i++) {
             if (!panels[i]) {
                 console.log(`ArcMenu Error: panel ${i} not found. Skipping...`);
                 continue;
             }
 
+            const isPrimaryStandalone = this._isPrimaryStandalonePanel(panels[i], panelExtensionEnabled);
+
             let panel, panelBox, panelParent;
-            if (panelExtensionEnabled) {
+            if (panelExtensionEnabled && !isPrimaryStandalone) {
                 panel = panels[i].panel;
                 panelBox = this._dtpActive ? panels[i].panelBox : panels[i];
                 panelParent = panels[i];
             } else {
-                panel = panels[i];
+                panel = Main.panel;
                 panelBox = Main.layoutManager.panelBox;
                 panelParent = Main.panel;
             }
 
-            const isPrimaryStandalone = this._isPrimaryStandalonePanel(panelParent, panelExtensionEnabled);
-            if (isPrimaryStandalone)
-                panel = Main.panel;
-
-            let monitorIndex = 0;
-            if (panelParent.monitor) // App Icons Taskbar 'panelParent' may be Main.panel, which doesnt have a 'monitor' property.
-                monitorIndex = panelParent.monitor.index;
-            else if (panel === Main.panel)
-                monitorIndex = primaryPanelIndex ?? 0;
-
-            const panelInfo = {panel, panelBox, panelParent, isFirstPanel};
+            // 'panelParent' may be 'Main.panel' doesn't have a 'monitor' property.
+            const monitor = panelParent.monitor ?? Main.layoutManager.primaryMonitor;
+            const panelInfo = {panel, panelBox, panelParent, isFirstPanel, isPrimaryStandalone, index: i};
 
             if (isFirstPanel)
                 isFirstPanel = false;
 
-            const menuController = new MenuController(panelInfo, monitorIndex);
+            const menuController = new MenuController(monitor, panelInfo);
 
             panel.connectObject('destroy', () => this._disableButton(menuController, panel), this);
 

@@ -1,0 +1,20 @@
+/*
+SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
+SPDX-License-Identifier: CC0-1.0
+*/
+
+/*
+This ensures that the overview background is transparent, so that the background
+panorama becomes visible.
+*/
+.desktop-cube-panorama-enabled #overviewGroup {
+    background: transparent;
+}
+
+/*
+This ensures that the background during workspace switches becomes transparent, so that
+the background panorama becomes visible.
+*/
+.desktop-cube-panorama-enabled .workspace-animation {
+    background-color: transparent;
+}

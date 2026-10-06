@@ -15,24 +15,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/* exported NotifyX11UnderWayland */
+// SPDX-License-Identifier: GPL-3.0-only
 'use strict';
-const Gtk = imports.gi.Gtk;
+import Gtk from 'gi://Gtk?version=4.0';
 const Gettext = imports.gettext.domain('ding');
 
 const _ = Gettext.gettext;
 
-var NotifyX11UnderWayland = class {
+export var NotifyX11UnderWayland = class {
     constructor(closeCB) {
         this._window = new Gtk.MessageDialog({
-            window_position: Gtk.WindowPosition.CENTER_ON_PARENT,
             transient_for: null,
             message_type: Gtk.MessageType.WARNING,
             buttons: Gtk.ButtonsType.NONE,
         });
-        let area = this._window.get_message_area();
-        let labels = area.get_children();
-        labels[1].set_justify(Gtk.Justification.CENTER);
+        const area = this._window.get_message_area();
         this._window.secondary_use_markup = true;
         this._window.text = _('Desktop Icons NG is running under X11Wayland');
         this._window.secondary_text = _("It seems that you have your system configured to force GTK to use X11. This works, but it's suboptimal. You should check your system configuration to fix this.");
@@ -40,13 +37,13 @@ var NotifyX11UnderWayland = class {
         this.deleteButton.connect('clicked', () => {
             this._destroy(closeCB);
         });
-        this._window.connect('delete-event', () => {
+        this._window.connect('close-request', () => {
             this._destroy(closeCB);
         });
-        this.deleteButton.get_style_context().add_class('suggested-action');
+        this.deleteButton.add_css_class('suggested-action');
         this._stopShowing = new Gtk.CheckButton({label: _("Don't show this message anymore.")});
-        area.add(this._stopShowing);
-        this._window.show_all();
+        area.append(this._stopShowing);
+        this._window.show();
     }
 
     _destroy(closeCB) {

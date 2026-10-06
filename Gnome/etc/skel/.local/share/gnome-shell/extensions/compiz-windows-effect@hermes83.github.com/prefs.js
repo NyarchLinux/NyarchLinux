@@ -33,55 +33,84 @@ import { SettingsData } from './settings_data.js';
 export default class Prefs extends ExtensionPreferences {
 
     fillPreferencesWindow(window) {
-        const settingsData = new SettingsData(this.getSettings());
+        let fields = {
+            presetComboBox: null,
+            frictionSlider: null,
+            springKSlider: null,
+            speedupFactor: null,
+            massSlider: null,
+            xTilesSlider: null,
+            yTilesSlider: null,
+            maximizeEffectSwitch: null,
+            resizeEffectSwitch: null
+        };
 
+        let presets = [
+            { code: 'S', label: 'Subtle', friction: 1.5, springK: 1.0, speedupFactor: 6.0, mass: 80.0 },
+            { code: 'R', label: 'Realistic', friction: 3.5, springK: 3.8, speedupFactor: 12.0, mass: 70.0 },
+            { code: 'E', label: 'Exaggerated', friction: 5.0, springK: 4.2, speedupFactor: 15.0, mass: 50.0 },
+            { code: 'X', label: 'Extreme', friction: 7.0, springK: 5.5, speedupFactor: 19.0, mass: 25.0 },
+            { code: 'P', label: 'Personalized' }
+        ];
+
+        const settingsData = new SettingsData(this.getSettings());
         const width = 750;
-        const height = 580;
+        const height = 620;
         window.set_default_size(width, height);
 
         const page = Adw.PreferencesPage.new();
 
         const group1 = Adw.PreferencesGroup.new();
-        this.frictionSlider = this.addSlider(group1, "Friction", settingsData.FRICTION, 1.0, 10.0, 1);
-        this.springKSlider = this.addSlider(group1, "Spring", settingsData.SPRING_K, 1.0, 10.0, 1);
-        this.speedupFactor = this.addSlider(group1, "Speedup Factor", settingsData.SPEEDUP_FACTOR, 2.0, 40.0, 1);
-        this.massSlider = this.addSlider(group1, "Mass", settingsData.MASS, 20.0, 80.0, 0);
+        fields.presetComboBox = this.addPresetComboBox(presets, fields, group1, "Preset", settingsData);
+        fields.frictionSlider = this.addSlider(presets, fields, group1, "Friction", settingsData.FRICTION, 1.0, 10.0, 1);
+        fields.springKSlider = this.addSlider(presets, fields, group1, "Spring", settingsData.SPRING_K, 1.0, 10.0, 1);
+        fields.speedupFactor = this.addSlider(presets, fields, group1, "Speedup Factor", settingsData.SPEEDUP_FACTOR, 2.0, 40.0, 1);
+        fields.massSlider = this.addSlider(presets, fields, group1, "Mass", settingsData.MASS, 20.0, 80.0, 0);
         page.add(group1);
         
         const group2 = Adw.PreferencesGroup.new();
-        this.xTilesSlider = this.addSlider(group2, "X Tiles", settingsData.X_TILES, 3.0, 20.0, 0);
-        this.yTilesSlider = this.addSlider(group2, "Y Tiles", settingsData.Y_TILES, 3.0, 20.0, 0);
-        this.maximizeEffectSwitch = this.addBooleanSwitch(group2, "Maximize effect", settingsData.MAXIMIZE_EFFECT);
-        this.resizeEffectSwitch = this.addBooleanSwitch(group2, "Resize effect", settingsData.RESIZE_EFFECT);
+        fields.xTilesSlider = this.addSlider(presets, fields, group2, "X Tiles", settingsData.X_TILES, 3.0, 20.0, 0);
+        fields.yTilesSlider = this.addSlider(presets, fields, group2, "Y Tiles", settingsData.Y_TILES, 3.0, 20.0, 0);
+        fields.maximizeEffectSwitch = this.addBooleanSwitch(presets, fields, group2, "Maximize effect", settingsData.MAXIMIZE_EFFECT);
+        fields.resizeEffectSwitch = this.addBooleanSwitch(presets, fields, group2, "Resize effect", settingsData.RESIZE_EFFECT);
         page.add(group2);
 
-        this.addResetButton(window, settingsData);
+        this.addResetButton(presets, fields, window, settingsData);
+
+        this.applyVisibleEffect(presets, fields, settingsData.PRESET.get() === 'P');
 
         window.add(page);
     }
 
-    addResetButton(window, settingsData) {
+    addResetButton(presets, fields, window, settingsData) {
         const button = new Gtk.Button({vexpand: true, valign: Gtk.Align.END});
         button.set_icon_name('edit-clear');
 
         button.connect('clicked', () => {
-            settingsData.FRICTION.set(3.5);
-            settingsData.SPRING_K.set(3.8);
-            settingsData.SPEEDUP_FACTOR.set(12.0);
-            settingsData.MASS.set(70.0);
+            const preset = presets.find(v => v.code === 'R');
+            const presetIndex = presets.findIndex(v => v.code === 'R');
+
+            settingsData.PRESET.set(preset.code);
+            settingsData.FRICTION.set(preset.friction);
+            settingsData.SPRING_K.set(preset.springK);
+            settingsData.SPEEDUP_FACTOR.set(preset.speedupFactor);
+            settingsData.MASS.set(preset.mass);
             settingsData.X_TILES.set(6.0);
             settingsData.Y_TILES.set(6.0);
             settingsData.MAXIMIZE_EFFECT.set(true);
             settingsData.RESIZE_EFFECT.set(false);
     
-            this.frictionSlider.set_value(settingsData.FRICTION.get());
-            this.springKSlider.set_value(settingsData.SPRING_K.get());
-            this.speedupFactor.set_value(settingsData.SPEEDUP_FACTOR.get());
-            this.massSlider.set_value(settingsData.MASS.get());
-            this.xTilesSlider.set_value(settingsData.X_TILES.get());
-            this.yTilesSlider.set_value(settingsData.Y_TILES.get());
-            this.maximizeEffectSwitch.set_active(settingsData.MAXIMIZE_EFFECT.get());
-            this.resizeEffectSwitch.set_active(settingsData.RESIZE_EFFECT.get());
+            fields.presetComboBox.set_active(presetIndex);
+            fields.frictionSlider.set_value(settingsData.FRICTION.get());
+            fields.springKSlider.set_value(settingsData.SPRING_K.get());
+            fields.speedupFactor.set_value(settingsData.SPEEDUP_FACTOR.get());
+            fields.massSlider.set_value(settingsData.MASS.get());
+            fields.xTilesSlider.set_value(settingsData.X_TILES.get());
+            fields.yTilesSlider.set_value(settingsData.Y_TILES.get());
+            fields.maximizeEffectSwitch.set_active(settingsData.MAXIMIZE_EFFECT.get());
+            fields.resizeEffectSwitch.set_active(settingsData.RESIZE_EFFECT.get());
+
+            this.applyVisibleEffect(presets, fields, false);
         });
 
         const header = this.findWidgetByType(window.get_content(), Adw.HeaderBar);
@@ -91,8 +120,55 @@ export default class Prefs extends ExtensionPreferences {
         
         return button;
     }
+
+    addPresetComboBox(presets, fields, group, labelText, settingsData) {
+        let gtkComboBoxText = new Gtk.ComboBoxText({hexpand: true, halign: Gtk.Align.END});
+        gtkComboBoxText.set_valign(Gtk.Align.CENTER);
+
+        let activeIndex = 0;
+        let activeValue = settingsData.PRESET.get();
+
+        for (let i = 0; i < presets.length; i++) {
+            gtkComboBoxText.append_text(presets[i].label);
+            if (activeValue && activeValue == presets[i].code) {
+                activeIndex = i;
+            }
+        }
+
+        const self = this;
+        gtkComboBoxText.set_active(activeIndex);
+        gtkComboBoxText.connect('changed', function (sw) {
+            var newval = presets[sw.get_active()].code;
+            if (newval != settingsData.PRESET.get()) {
+                settingsData.PRESET.set(newval);
+
+                if (newval !== 'P') {
+                    const preset = presets.find(v => v.code === newval);
+                
+                    settingsData.FRICTION.set(preset.friction);
+                    settingsData.SPRING_K.set(preset.springK);
+                    settingsData.SPEEDUP_FACTOR.set(preset.speedupFactor);
+                    settingsData.MASS.set(preset.mass);
+
+                    fields.frictionSlider.set_value(settingsData.FRICTION.get());
+                    fields.springKSlider.set_value(settingsData.SPRING_K.get());
+                    fields.speedupFactor.set_value(settingsData.SPEEDUP_FACTOR.get());
+                    fields.massSlider.set_value(settingsData.MASS.get());
+                }
+
+                self.applyVisibleEffect(presets, fields, newval === 'P');
+            }
+        });
+
+        const row = Adw.ActionRow.new();
+        row.set_title(labelText);
+        row.add_suffix(gtkComboBoxText);
+        group.add(row);
+        
+        return gtkComboBoxText;
+    }
     
-    addSlider(group, labelText, settingsData, lower, upper, decimalDigits) {
+    addSlider(presets, fields, group, labelText, settingsData, lower, upper, decimalDigits) {
         const scale = new Gtk.Scale({
             digits: decimalDigits,
             adjustment: new Gtk.Adjustment({lower: lower, upper: upper}),
@@ -118,7 +194,7 @@ export default class Prefs extends ExtensionPreferences {
         return scale;
     }
     
-    addBooleanSwitch(group, labelText, settingsData) {
+    addBooleanSwitch(presets, fields, group, labelText, settingsData) {
         const gtkSwitch = new Gtk.Switch({hexpand: true, halign: Gtk.Align.END});
         gtkSwitch.set_active(settingsData.get());
         gtkSwitch.set_valign(Gtk.Align.CENTER);
@@ -135,6 +211,13 @@ export default class Prefs extends ExtensionPreferences {
         group.add(row);
         
         return gtkSwitch;
+    }
+
+    applyVisibleEffect(presets, fields, visible) {
+        fields.frictionSlider.get_parent().get_parent().get_parent().set_visible(visible);
+        fields.springKSlider.get_parent().get_parent().get_parent().set_visible(visible);
+        fields.speedupFactor.get_parent().get_parent().get_parent().set_visible(visible);
+        fields.massSlider.get_parent().get_parent().get_parent().set_visible(visible);
     }
 
     findWidgetByType(parent, type) {

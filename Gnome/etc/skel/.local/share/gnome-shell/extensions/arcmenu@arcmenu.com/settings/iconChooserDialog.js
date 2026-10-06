@@ -6,7 +6,7 @@ import Gtk from 'gi://Gtk';
 
 import {HeaderBarDialog} from '../prefsWidgets.js';
 
-import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
+import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 export const IconGroup = Object.freeze({
     ALL: 0,
@@ -39,8 +39,9 @@ export class IconChooserDialog extends HeaderBarDialog {
         GObject.registerClass(this);
     }
 
-    constructor(settings, parent) {
+    constructor(extension, settings, parent) {
         super(_('Select an Icon'), _('Select'), parent);
+        this._extension = extension;
         this._settings = settings;
         this.set_default_size(540, 620);
         this.iconString = '';
@@ -127,8 +128,7 @@ export class IconChooserDialog extends HeaderBarDialog {
         selection.selected = Gtk.INVALID_LIST_POSITION;
         selection.connect('notify::selected-item', () => this._setActionButtonSensitive(true));
 
-        const extension = ExtensionPreferences.lookupByURL(import.meta.url);
-        extension.getSystemIcons().then(allIcons => {
+        this._extension.getSystemIcons().then(allIcons => {
             this._iconsListStore.splice(0, 0, allIcons);
         }).catch(e => console.log(e));
     }

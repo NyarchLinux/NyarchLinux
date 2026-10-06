@@ -25,6 +25,18 @@
 
 export class SettingsData {
     constructor(settings) {
+        this.LAST_VERSION = {
+            key: 'last-version',
+            get: function () { return settings.get_int(this.key); },
+            set: function (v) { settings.set_int(this.key, v); }
+        };
+
+        this.PRESET = {
+            key: 'preset',
+            get: function () { return settings.get_string(this.key); },
+            set: function (v) { settings.set_string(this.key, v); }
+        };
+
         this.FRICTION = {
             key: 'friction',
             get: function () { return settings.get_double(this.key); },

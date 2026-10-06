@@ -25,12 +25,11 @@ export class Layout extends BaseMenuLayout {
             column_spacing: 0,
             row_spacing: 0,
             ...getOrientationProp(true),
-            category_icon_size: Constants.MEDIUM_ICON_SIZE,
-            apps_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
-            quicklinks_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
-            buttons_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
-            pinned_apps_icon_size: Constants.MEDIUM_ICON_SIZE,
         });
+
+        this.iconSizeApps = Constants.IconSizes.SMALL;
+        this.iconSizeShortcuts = Constants.IconSizes.SMALL;
+        this.iconSizeButtons = Constants.IconSizes.SMALL;
 
         this.connect('button-press-event', (actor, event) => {
             if (this.backButton.visible && event.get_button() === 8)
@@ -365,12 +364,20 @@ export class Layout extends BaseMenuLayout {
         }
 
         const maxFrequentApps = ArcMenuManager.settings.get_int('arcmenu-layout-max-frequent-apps');
-        for (let i = 0; i < Math.min(mostUsed.length, maxFrequentApps + 1); i++) {
-            if (mostUsed[i] && mostUsed[i].get_app_info().should_show()) {
+        const targetCount = maxFrequentApps === 0 ? mostUsed.length : maxFrequentApps;
+
+        let added = 0;
+        for (let i = 0; added < targetCount && i < mostUsed.length; i++) {
+            const app = mostUsed[i];
+            if (!app)
+                continue;
+
+            if (app.get_app_info().should_show()) {
                 const isContainedInCategory = false;
-                const item = new MW.ApplicationMenuItem(this, mostUsed[i], Constants.DisplayType.LIST,
+                const item = new MW.ApplicationMenuItem(this, app, Constants.DisplayType.LIST,
                     null, isContainedInCategory);
                 this._frequentAppsBox.add_child(item);
+                added++;
             }
         }
     }
@@ -384,12 +391,22 @@ export class Layout extends BaseMenuLayout {
 
         const mostUsed = Shell.AppUsage.get_default().get_most_used();
         const appList = [];
-        for (let i = 0; i < mostUsed.length; i++) {
-            if (mostUsed[i] && mostUsed[i].get_app_info().should_show()) {
+
+        const maxFrequentApps = ArcMenuManager.settings.get_int('arcmenu-layout-max-frequent-apps');
+        const targetCount = maxFrequentApps === 0 ? mostUsed.length : maxFrequentApps;
+
+        let added = 0;
+        for (let i = 0; added < targetCount && i < mostUsed.length; i++) {
+            const app = mostUsed[i];
+            if (!app)
+                continue;
+
+            if (app.get_app_info().should_show()) {
                 const isContainedInCategory = false;
-                const item = new MW.ApplicationMenuItem(this, mostUsed[i], Constants.DisplayType.LIST,
+                const item = new MW.ApplicationMenuItem(this, app, Constants.DisplayType.LIST,
                     null, isContainedInCategory);
                 appList.push(item);
+                added++;
             }
         }
 

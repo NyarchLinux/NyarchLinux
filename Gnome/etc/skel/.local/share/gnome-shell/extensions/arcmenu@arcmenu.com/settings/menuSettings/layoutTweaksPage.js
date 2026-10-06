@@ -4,116 +4,53 @@ import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk';
 
 import * as Constants from '../../constants.js';
+import {getMenuLayoutInfo} from '../settingsUtils.js';
 import {ListPinnedPage} from './listPinnedPage.js';
 import {ListOtherPage} from './listOtherPage.js';
 import * as PW from '../../prefsWidgets.js';
-import * as SettingsUtils from '../settingsUtils.js';
 import {SubPage} from './subPage.js';
 
 import {gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 export const LayoutTweaksPage = GObject.registerClass(
 class ArcMenuLayoutTweaksPage extends SubPage {
-    _init(settings, params) {
-        super._init(settings, params);
+    _init(extension, settings, params) {
+        super._init(extension, settings, params);
 
         this.restoreDefaultsButton.visible = false;
-        this._createLayout();
+        const layoutId = this._settings.get_string('menu-layout');
+        const layoutInfo = getMenuLayoutInfo(layoutId);
+        this._createLayout(layoutInfo);
     }
 
-    setActiveLayout(menuLayout) {
-        const layoutName = SettingsUtils.getMenuLayoutName(menuLayout);
-        this.title = _('%s Layout Tweaks').format(_(layoutName));
+    setActiveLayout(layoutId) {
+        const layoutInfo = getMenuLayoutInfo(layoutId);
+        this.title = _('%s Layout Tweaks').format(_(layoutInfo.name));
 
         for (const child of this.page.children)
             this.page.remove(child);
 
         this.page.children = [];
-        this._createLayout(menuLayout);
+        this._createLayout(layoutInfo);
     }
 
-    _createLayout(menuLayout) {
-        if (!menuLayout)
-            menuLayout = this._settings.get_enum('menu-layout');
+    _createLayout(layoutInfo) {
+        const layoutId = layoutInfo.id;
 
-        switch (menuLayout) {
-        case Constants.MenuLayout.ARCMENU:
-            this._loadArcMenuTweaks();
-            break;
-        case Constants.MenuLayout.BRISK:
-            this._loadBriskMenuTweaks();
-            break;
-        case Constants.MenuLayout.WHISKER:
-            this._loadWhiskerMenuTweaks();
-            break;
-        case Constants.MenuLayout.GNOME_MENU:
-            this._loadGnomeMenuTweaks();
-            break;
-        case Constants.MenuLayout.MINT:
-            this._loadMintMenuTweaks();
-            break;
-        case Constants.MenuLayout.ELEMENTARY:
-            this._loadElementaryTweaks();
-            break;
-        case Constants.MenuLayout.GNOME_OVERVIEW:
-            this._loadGnomeOverviewTweaks();
-            break;
-        case Constants.MenuLayout.REDMOND:
-            this._loadRedmondMenuTweaks();
-            break;
-        case Constants.MenuLayout.UNITY:
-            this._loadUnityTweaks();
-            break;
-        case Constants.MenuLayout.RAVEN:
-            this._loadRavenTweaks();
-            break;
-        case Constants.MenuLayout.BUDGIE:
-            this._loadBudgieMenuTweaks();
-            break;
-        case Constants.MenuLayout.INSIDER:
-            this._loadInsiderMenuTweaks();
-            break;
-        case Constants.MenuLayout.RUNNER:
-            this._loadRunnerMenuTweaks();
-            break;
-        case Constants.MenuLayout.CHROMEBOOK:
-            this._loadChromebookTweaks();
-            break;
-        case Constants.MenuLayout.TOGNEE:
-            this._loadTogneeMenuTweaks();
-            break;
-        case Constants.MenuLayout.PLASMA:
-            this._loadPlasmaMenuTweaks();
-            break;
-        case Constants.MenuLayout.WINDOWS:
-            this._loadWindowsTweaks();
-            break;
-        case Constants.MenuLayout.ELEVEN:
-            this._loadElevenTweaks();
-            break;
-        case Constants.MenuLayout.AZ:
-            this._loadAZTweaks();
-            break;
-        case Constants.MenuLayout.ENTERPRISE:
-            this._loadEnterpriseTweaks();
-            break;
-        case Constants.MenuLayout.POP:
-            this._loadPopTweaks();
-            break;
-        case Constants.MenuLayout.SLEEK:
-            this._loadSleekTweaks();
-            break;
-        case Constants.MenuLayout.ZEST:
-            this._loadZestTweaks();
-            break;
-        default:
+        // Convert hyphenated or lowercase to CamelCase for method name
+        const methodId = layoutId.split('-')
+            .map((part, index) => index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1))
+            .join('');
+
+        const methodName = `_${methodId}Tweaks`;
+        if (this[methodName])
+            this[methodName]();
+        else
             this._loadPlaceHolderTweaks();
-            break;
-        }
     }
 
     _createExtraShortcutsRow(setting) {
-        const extraShortcutsPage = new ListPinnedPage(this._settings, {
+        const extraShortcutsPage = new ListPinnedPage(this._extension, this._settings, {
             title: _('Extra Shortcuts'),
             setting_string: setting,
             list_type: Constants.MenuSettingsListType.EXTRA_SHORTCUTS,
@@ -239,7 +176,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         return expanderRow;
     }
 
-    _loadEnterpriseTweaks() {
+    _enterpriseTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
         tweaksGroup.add(this._createActivateOnHoverRow());
         tweaksGroup.add(this._createAvatarShapeRow());
@@ -249,7 +186,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         this.add(tweaksGroup);
     }
 
-    _loadPopTweaks() {
+    _popTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
         this.add(tweaksGroup);
 
@@ -289,7 +226,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         tweaksGroup.add(this._createSearchBarLocationRow());
     }
 
-    _loadElevenTweaks() {
+    _11Tweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
         const showFrequentAppsSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER,
@@ -312,7 +249,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         this.add(extraShortcutsGroup);
     }
 
-    _loadAZTweaks() {
+    _azTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
         this.add(tweaksGroup);
 
@@ -376,7 +313,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         this.add(extraShortcutsGroup);
     }
 
-    _loadGnomeOverviewTweaks() {
+    _gnomeOverviewTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
         const appsGridSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER,
@@ -394,7 +331,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         this.add(tweaksGroup);
     }
 
-    _loadWindowsTweaks() {
+    _windowsTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
         tweaksGroup.add(this._createVertSeparatorRow());
         const frequentAppsSwitch = new Gtk.Switch({
@@ -433,7 +370,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         this.add(extraShortcutsGroup);
     }
 
-    _loadPlasmaMenuTweaks() {
+    _plasmaTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
         tweaksGroup.add(this._createSearchBarLocationRow());
 
@@ -454,7 +391,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         this.add(tweaksGroup);
     }
 
-    _loadBriskMenuTweaks() {
+    _briskTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
         tweaksGroup.add(this._createActivateOnHoverRow());
         tweaksGroup.add(this._createSearchBarLocationRow());
@@ -468,19 +405,19 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         this.add(extraShortcutsGroup);
     }
 
-    _loadChromebookTweaks() {
+    _chromebookTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
         tweaksGroup.add(this._createSearchBarLocationRow());
         this.add(tweaksGroup);
     }
 
-    _loadElementaryTweaks() {
+    _elementaryTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
         tweaksGroup.add(this._createSearchBarLocationRow());
         this.add(tweaksGroup);
     }
 
-    _loadBudgieMenuTweaks() {
+    _budgieTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
         tweaksGroup.add(this._createActivateOnHoverRow());
         tweaksGroup.add(this._createSearchBarLocationRow());
@@ -504,7 +441,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         this.add(tweaksGroup);
     }
 
-    _loadRunnerMenuTweaks() {
+    _runnerTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
         this.add(tweaksGroup);
         const runnerPositions = new Gtk.StringList();
@@ -653,7 +590,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         miscGroup.add(showSettingsSwitch);
     }
 
-    _loadUnityTweaks() {
+    _unityTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
         this.add(tweaksGroup);
 
@@ -666,12 +603,12 @@ class ArcMenuLayoutTweaksPage extends SubPage {
             selected: this._settings.get_boolean('enable-unity-homescreen') ? 0 : 1,
         });
         defaultViewRow.connect('notify::selected', widget => {
-            const enable =  widget.selected === 0;
+            const enable = widget.selected === 0;
             this._settings.set_boolean('enable-unity-homescreen', enable);
         });
         tweaksGroup.add(defaultViewRow);
 
-        const widgetGroup = this._createWidgetsRows(Constants.MenuLayout.UNITY);
+        const widgetGroup = this._createWidgetsRows('unity');
         this.add(widgetGroup);
 
         const extraShortcutsGroup = new Adw.PreferencesGroup();
@@ -680,7 +617,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         this.add(extraShortcutsGroup);
     }
 
-    _loadRavenTweaks() {
+    _ravenTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
         this.add(tweaksGroup);
 
@@ -693,7 +630,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
             selected: this._settings.get_boolean('enable-unity-homescreen') ? 0 : 1,
         });
         defaultViewRow.connect('notify::selected', widget => {
-            const enable =  widget.selected === 0;
+            const enable = widget.selected === 0;
             this._settings.set_boolean('enable-unity-homescreen', enable);
         });
         tweaksGroup.add(defaultViewRow);
@@ -725,11 +662,11 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         });
         tweaksGroup.add(ravenPositionRow);
         tweaksGroup.add(this._createActivateOnHoverRow());
-        const widgetGroup = this._createWidgetsRows(Constants.MenuLayout.RAVEN);
+        const widgetGroup = this._createWidgetsRows('raven');
         this.add(widgetGroup);
     }
 
-    _loadMintMenuTweaks() {
+    _mintTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
         tweaksGroup.add(this._createActivateOnHoverRow());
         tweaksGroup.add(this._createSearchBarLocationRow());
@@ -743,7 +680,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         this.add(extraShortcutsGroup);
     }
 
-    _loadWhiskerMenuTweaks() {
+    _whiskerTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
         tweaksGroup.add(this._createActivateOnHoverRow());
         tweaksGroup.add(this._createAvatarShapeRow());
@@ -753,7 +690,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         this.add(tweaksGroup);
     }
 
-    _loadSleekTweaks() {
+    _sleekTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
         this.add(tweaksGroup);
 
@@ -788,7 +725,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         extraShortcutsGroup.add(extraShortcutsRow);
     }
 
-    _loadRedmondMenuTweaks() {
+    _redmondTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
 
         const defaulViews = new Gtk.StringList();
@@ -846,7 +783,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         placesGroup.add(bookmarksRow);
     }
 
-    _loadInsiderMenuTweaks() {
+    _insiderTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
         tweaksGroup.add(this._createVertSeparatorRow());
         tweaksGroup.add(this._createAvatarExpanderRow());
@@ -858,7 +795,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         this.add(extraShortcutsGroup);
     }
 
-    _loadGnomeMenuTweaks() {
+    _gnomeMenuTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
         tweaksGroup.add(this._createActivateOnHoverRow());
         tweaksGroup.add(this._createSearchBarLocationRow());
@@ -876,7 +813,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         this.add(placeHolderGroup);
     }
 
-    _loadTogneeMenuTweaks() {
+    _togneeTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
 
         const defaulViews = new Gtk.StringList();
@@ -899,7 +836,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         this.add(tweaksGroup);
     }
 
-    _loadArcMenuTweaks() {
+    _arcmenuTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
 
         const defaulViews = new Gtk.StringList();
@@ -914,7 +851,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
             selected: this._settings.get_enum('default-menu-view'),
         });
         defaultViewRow.connect('notify::selected', widget => {
-            maxFrequentAppsRow.visible = widget.selected === 4;
+            maxFrequentAppsRow.visible = widget.selected === 4 || widget.selected === 2;
             this._settings.set_enum('default-menu-view', widget.selected);
         });
         tweaksGroup.add(defaultViewRow);
@@ -922,7 +859,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         const maxFrequentAppsSpinButton = new Gtk.SpinButton({
             orientation: Gtk.Orientation.HORIZONTAL,
             adjustment: new Gtk.Adjustment({
-                lower: 1,
+                lower: 0,
                 upper: 50,
                 step_increment: 1,
                 page_increment: 1,
@@ -937,12 +874,13 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         });
         const maxFrequentAppsRow = new Adw.ActionRow({
             title: _('Max Frequent Apps'),
+            subtitle: _('0 = unlimited'),
             activatable_widget: maxFrequentAppsSpinButton,
         });
         maxFrequentAppsRow.add_suffix(maxFrequentAppsSpinButton);
         tweaksGroup.add(maxFrequentAppsRow);
 
-        maxFrequentAppsRow.visible = defaultViewRow.selected === 4;
+        maxFrequentAppsRow.visible = defaultViewRow.selected === 4 || defaultViewRow.selected === 2;
 
         const allAppsButtonActionsList = new Gtk.StringList();
         allAppsButtonActionsList.append(_('Categories List'));
@@ -1000,10 +938,9 @@ class ArcMenuLayoutTweaksPage extends SubPage {
 
         const extraCategoriesGroup = new Adw.PreferencesGroup({
             title: _('Category Quick Links'),
-            description: _('Display quick links of extra categories on the home page\n' +
-                "Must also be enabled in 'Menu -> Extra Categories' section"),
+            description: _('Display a category on the default menu view. Category must be enabled in ArcMenu Settings -> Menu -> Extra Categories section.'),
         });
-        const extraCategoriesLinksBox = new ListOtherPage(this._settings, {
+        const extraCategoriesLinksBox = new ListOtherPage(this._extension, this._settings, {
             preferences_page: false,
             list_type: Constants.MenuSettingsListType.QUICK_LINKS,
         });
@@ -1026,7 +963,7 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         this.add(extraCategoriesLocationGroup);
     }
 
-    _loadZestTweaks() {
+    _zestTweaks() {
         const tweaksGroup = new Adw.PreferencesGroup();
         this.add(tweaksGroup);
         const searchBarBottomDefault = true;
@@ -1063,16 +1000,9 @@ class ArcMenuLayoutTweaksPage extends SubPage {
         extraShortcutsGroup.add(extraShortcutsRow);
     }
 
-    _createWidgetsRows(layout) {
-        let weatherWidgetSetting = 'enable-weather-widget-raven';
-        let clockWidgetSetting = 'enable-clock-widget-raven';
-        if (layout === Constants.MenuLayout.RAVEN) {
-            weatherWidgetSetting = 'enable-weather-widget-raven';
-            clockWidgetSetting = 'enable-clock-widget-raven';
-        } else {
-            weatherWidgetSetting = 'enable-weather-widget-unity';
-            clockWidgetSetting = 'enable-clock-widget-unity';
-        }
+    _createWidgetsRows(layoutId) {
+        const weatherWidgetSetting = `enable-weather-widget-${layoutId}`;
+        const clockWidgetSetting = `enable-clock-widget-${layoutId}`;
 
         const widgetGroup = new Adw.PreferencesGroup();
 

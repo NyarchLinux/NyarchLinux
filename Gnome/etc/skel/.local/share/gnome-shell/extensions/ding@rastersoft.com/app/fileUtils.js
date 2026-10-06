@@ -14,8 +14,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+// SPDX-License-Identifier: GPL-3.0-only
 'use strict';
-const {GLib, Gio} = imports.gi;
+import GLib from 'gi://GLib';
+import Gio from 'gi://Gio';
 
 const DEFAULT_ENUMERATE_BATCH_SIZE = 100;
 const DEFAULT_QUERY_ATTRIBUTES = [
@@ -25,12 +27,12 @@ const DEFAULT_QUERY_ATTRIBUTES = [
 
 /**
  *
- * @param dir
- * @param cancellable
- * @param priority
- * @param queryAttributes
+ * @param {string} dir
+ * @param {Gio.Cancellable} cancellable
+ * @param {int} priority
+ * @param {string} queryAttributes
  */
-async function enumerateDir(dir, cancellable = null, priority = GLib.PRIORITY_DEFAULT,
+export async function enumerateDir(dir, cancellable = null, priority = GLib.PRIORITY_DEFAULT,
     queryAttributes = DEFAULT_QUERY_ATTRIBUTES) {
     const childrenEnumerator = await dir.enumerate_children_async_promise(queryAttributes,
         Gio.FileQueryInfoFlags.NONE, priority, cancellable);
@@ -45,47 +47,45 @@ async function enumerateDir(dir, cancellable = null, priority = GLib.PRIORITY_DE
             const batch = await childrenEnumerator.next_files_async_promise(
                 DEFAULT_ENUMERATE_BATCH_SIZE, priority, cancellable);
 
-            if (!batch.length) {
+            if (!batch.length)
                 return children;
-            }
+
 
             children.push(...batch);
         }
     } finally {
-        if (!childrenEnumerator.is_closed()) {
+        if (!childrenEnumerator.is_closed())
             await childrenEnumerator.close_async_promise(priority, null);
-        }
     }
 }
 
 /**
  *
- * @param dir
- * @param deleteParent
- * @param cancellable
- * @param priority
+ * @param {string} dir
+ * @param {bool} deleteParent
+ * @param {Gio.Cancellable} cancellable
+ * @param {int} priority
  */
-async function recursivelyDeleteDir(dir, deleteParent, cancellable = null,
+export async function recursivelyDeleteDir(dir, deleteParent, cancellable = null,
     priority = GLib.PRIORITY_DEFAULT) {
     const children = await enumerateDir(dir, cancellable, priority);
     /* eslint-disable no-await-in-loop */
-    for (let info of children) {
+    for (const info of children)
         await deleteFile(dir.get_child(info.get_name()), info, cancellable, priority);
-    }
 
-    if (deleteParent) {
+
+    if (deleteParent)
         await dir.delete_async_promise(priority, cancellable);
-    }
 }
 
 /**
  *
- * @param file
- * @param info
- * @param cancellable
- * @param priority
+ * @param {string} file
+ * @param {Gio.FileInfo} info
+ * @param {Gio.Cancellable} cancellable
+ * @param {int} priority
  */
-async function deleteFile(file, info = null, cancellable = null,
+export async function deleteFile(file, info = null, cancellable = null,
     priority = GLib.PRIORITY_DEFAULT) {
     if (!info) {
         info = await file.query_info_async_promise(
@@ -103,4 +103,47 @@ async function deleteFile(file, info = null, cancellable = null,
             Gio.IOErrorEnum.NOT_SUPPORTED,
             `${file.get_path()} of type ${type} cannot be removed`);
     }
+}
+
+/**
+ * Reads all possible data from the passed input stream
+ *
+ * @param {Gio.InputStream} stream The stream from where read data
+ * @returns An Uint8Array with all the read data
+ */
+export async function readAll(stream) {
+    const chunks = [];
+    let totalLength = 0;
+    try {
+        while (true) {
+            const readData = await new Promise((resolve, reject) => {
+                stream.read_bytes_async(8192, GLib.PRIORITY_DEFAULT, null, (obj, result) => {
+                    try {
+                        resolve(obj.read_bytes_finish(result));
+                    } catch (e) {
+                        reject(e);
+                    }
+                });
+            });
+            if (readData.get_size() === 0)
+                break;
+
+            const data = readData.get_data();
+            chunks.push(data);
+            totalLength += data.length;
+        }
+    } finally {
+        try {
+            stream.close(null);
+        } catch {
+            // ignore close errors
+        }
+    }
+    const returnData = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const chunk of chunks) {
+        returnData.set(chunk, offset);
+        offset += chunk.length;
+    }
+    return returnData;
 }

@@ -45,7 +45,7 @@ class ListSearchResult extends ApplicationMenuItem {
         this.metaInfo = metaInfo;
         this.provider = provider;
         this.resultsView = resultsView;
-        this.layout = ArcMenuManager.settings.get_enum('menu-layout');
+        this.layout = ArcMenuManager.settings.get_string('menu-layout');
 
         if (FILE_PROVIDERS.includes(this.provider.id))
             this.folderPath = this.metaInfo['description'];
@@ -251,7 +251,7 @@ class ListSearchResults extends SearchResultsBase {
         super(provider, resultsView);
         this._menuLayout = resultsView._menuLayout;
 
-        this.layout = ArcMenuManager.settings.get_enum('menu-layout');
+        this.layout = ArcMenuManager.settings.get_string('menu-layout');
 
         const spacing = this._menuLayout.search_results_spacing;
 
@@ -265,12 +265,12 @@ class ListSearchResults extends SearchResultsBase {
         });
 
         this.providerInfo = new ArcSearchProviderInfo(provider, this._menuLayout);
-        this.providerInfo.connect('activate', () => {
+        this.providerInfo.connectObject('activate', () => {
             if (provider.canLaunchSearch) {
                 provider.launchSearch(this._terms);
-                this._menuLayout.arcMenu.toggle();
+                this._menuLayout.closeArcMenu();
             }
-        });
+        }, this);
         this._container.add_child(this.providerInfo);
 
         this._content = new St.BoxLayout({
@@ -325,7 +325,7 @@ class AppSearchResults extends SearchResultsBase {
         this._parentContainer = resultsView;
         this._menuLayout = resultsView._menuLayout;
 
-        this.layout = ArcMenuManager.settings.get_enum('menu-layout');
+        this.layout = ArcMenuManager.settings.get_string('menu-layout');
 
         this.itemCount = 0;
         this.gridTop = -1;
@@ -451,7 +451,7 @@ export class SearchResults extends St.BoxLayout {
         const {searchProviderDisplayId} = menuLayout.menuButton;
         this._displayId = `display_${searchProviderDisplayId}`;
 
-        this.layout = ArcMenuManager.settings.get_enum('menu-layout');
+        this.layout = ArcMenuManager.settings.get_string('menu-layout');
 
         this._content = new St.BoxLayout({
             ...getOrientationProp(true),
@@ -627,23 +627,25 @@ export class SearchResults extends St.BoxLayout {
     async _doProviderSearch(provider, previousResults) {
         provider.searchInProgress = true;
 
-        let results = [];
         const terms = this._terms;
+        const cancellable = this._cancellable;
+        let results = [];
+
         try {
-            if (this._isSubSearch && previousResults) {
-                results = await provider.getSubsearchResultSet(
-                    previousResults,
-                    terms,
-                    this._cancellable);
-            } else {
-                results = await provider.getInitialResultSet(
-                    terms,
-                    this._cancellable);
-            }
-        } finally {
-            this._results[provider.id] = results;
-            await this._updateResults(provider, terms, results);
+            if (this._isSubSearch && previousResults)
+                results = await provider.getSubsearchResultSet(previousResults, terms, cancellable);
+            else
+                results = await provider.getInitialResultSet(terms, cancellable);
+        } catch (e) {
+            if (!cancellable.is_cancelled())
+                console.log(e);
         }
+
+        if (cancellable.is_cancelled())
+            return;
+
+        this._results[provider.id] = results;
+        await this._updateResults(provider, terms, results);
     }
 
     _reset() {
@@ -878,7 +880,7 @@ export class ArcSearchProviderInfo extends BaseMenuItem {
     }
 
     setMoreCount(count) {
-        this._moreLabel.text = _('+%d more').format(count);
+        this._moreLabel.text = _('%d more').format(count);
         this._moreLabel.visible = count > 0;
     }
 }

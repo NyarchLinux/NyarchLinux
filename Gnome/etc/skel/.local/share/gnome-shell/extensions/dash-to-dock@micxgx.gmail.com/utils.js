@@ -12,6 +12,8 @@ import {
     Docking,
 } from './imports.js';
 
+// Dash to dock supports replacing vfuncs in GObject classes and we need
+// this to monkey them.
 const {_gi: Gi} = imports;
 
 export const SignalsHandlerFlags = Object.freeze({
@@ -40,9 +42,19 @@ const BasicHandler = class DashToDockBasicHandler {
             if (!(parentObject instanceof GObject.Object) ||
                 GObject.signal_lookup('destroy', parentObject.constructor.$gtype)) {
                 this._parentObject = parentObject;
-                this._destroyId = parentObject.connect('destroy', () => this.destroy());
+                this._connectToParentDestroy();
             }
         }
+    }
+
+    _connectToParentDestroy() {
+        const parentObject = this._parentObject;
+        this._destroyId = parentObject.connect('destroy', () => {
+            this._onParentDestroy(parentObject);
+            this._parentObject = null;
+            this._destroyId = 0;
+            this.destroy();
+        });
     }
 
     add(...args) {
@@ -57,10 +69,18 @@ const BasicHandler = class DashToDockBasicHandler {
     }
 
     destroy() {
-        this._parentObject?.disconnect(this._destroyId);
+        const parentObject = this._parentObject;
+        const destroyId = this._destroyId;
         this._parentObject = null;
+        this._destroyId = 0;
+
+        if (destroyId)
+            parentObject.disconnect(destroyId);
 
         this.clear();
+    }
+
+    _onParentDestroy(_parentObject) {
     }
 
     block() {
@@ -188,27 +208,69 @@ export class GlobalSignalsHandler extends BasicHandler {
                 `found in ${object.constructor.name}`);
         }
 
-        const item = [object];
         const isDestroy = event === 'destroy';
         const isParentObject = object === this._parentObject;
 
         if (isDestroy && !isParentObject) {
             const originalCallback = callback;
-            callback = () => {
-                this._removeByItem(item);
-                originalCallback();
+            callback = (...args) => {
+                this._removeForObject(object);
+                originalCallback(...args);
             };
         }
         const id = connector.call(object, event, callback);
-        item.push(id);
 
         if (isDestroy && isParentObject) {
             this._parentObject.disconnect(this._destroyId);
-            this._destroyId =
-                this._parentObject.connect('destroy', () => this.destroy());
+            this._connectToParentDestroy();
+        } else if (!isParentObject && !isDestroy) {
+            this._monitorDestruction(object);
         }
 
-        return item;
+        return [object, id];
+    }
+
+    _monitorDestruction(object) {
+        if (!(object instanceof GObject.Object) ||
+            !GObject.signal_lookup('destroy', object.constructor.$gtype))
+            return;
+
+        this._destroyHandlersIds ??= new Map();
+        if (this._destroyHandlersIds.has(object))
+            return;
+
+        const connector = object.connect_after ?? object.connect;
+        const id = connector.call(object, 'destroy',
+            () => this._removeForObject(object, false));
+        this._destroyHandlersIds.set(object, id);
+    }
+
+    _removeForObject(object, disconnect = true) {
+        Object.getOwnPropertySymbols(this._storage).forEach(label =>
+            (this._storage[label] = this._storage[label].filter(it => {
+                if (it[0] !== object)
+                    return true;
+                if (disconnect)
+                    this._remove(it);
+                return false;
+            })));
+
+        const monitorId = this._destroyHandlersIds?.get(object);
+        if (monitorId) {
+            this._destroyHandlersIds.delete(object);
+            if (disconnect)
+                object.disconnect(monitorId);
+        }
+    }
+
+    clear() {
+        super.clear();
+        this._destroyHandlersIds?.forEach((id, object) => object.disconnect(id));
+        this._destroyHandlersIds?.clear();
+    }
+
+    _onParentDestroy(parentObject) {
+        this._removeForObject(parentObject, false);
     }
 
     _remove(item) {
@@ -425,11 +487,24 @@ export class PropertyInjectionsHandler extends BasicHandler {
         const originalPropertyDescriptor = Object.getOwnPropertyDescriptor(prototype, name) ??
             Object.getOwnPropertyDescriptor(instance, name);
 
-        Object.defineProperty(instance, name, {
+        const isAccessor = 'get' in injectedPropertyDescriptor ||
+            'set' in injectedPropertyDescriptor;
+
+        injectedPropertyDescriptor = {
             ...originalPropertyDescriptor,
             ...injectedPropertyDescriptor,
             ...{configurable: true},
-        });
+        };
+
+        if (isAccessor) {
+            delete injectedPropertyDescriptor.value;
+            delete injectedPropertyDescriptor.writable;
+        } else {
+            delete injectedPropertyDescriptor.get;
+            delete injectedPropertyDescriptor.set;
+        }
+
+        Object.defineProperty(instance, name, injectedPropertyDescriptor);
         return [instance, name, originalPropertyDescriptor];
     }
 
@@ -531,16 +606,11 @@ export function splitHandler(handler) {
  */
 export function getWindowsByObjectPath() {
     const windowsByObjectPath = new Map();
-    const {workspaceManager} = global;
-    const workspaces = [...new Array(workspaceManager.nWorkspaces)].map(
-        (_c, i) => workspaceManager.get_workspace_by_index(i));
 
-    workspaces.forEach(ws => {
-        ws.list_windows().forEach(w => {
-            const path = w.get_gtk_window_object_path();
-            if (path)
-                windowsByObjectPath.set(path, w);
-        });
+    global.display.list_all_windows().forEach(w => {
+        const path = w.get_gtk_window_object_path();
+        if (path)
+            windowsByObjectPath.set(path, w);
     });
 
     return windowsByObjectPath;
@@ -671,6 +741,19 @@ class CancellableChild extends Gio.Cancellable {
  */
 export function getMonitorManager() {
     return global.backend.get_monitor_manager?.() ?? Meta.MonitorManager.get();
+}
+
+/**
+ * Gets the cursor tracker, using the API available in the current
+ * GNOME Shell version: `global.backend.get_cursor_tracker()` is only
+ * available since GNOME Shell 48, while older versions require using
+ * `Meta.CursorTracker.get_for_display()`.
+ *
+ * @returns {Meta.CursorTracker} The cursor tracker.
+ */
+export function getCursorTracker() {
+    return global.backend.get_cursor_tracker?.() ??
+        Meta.CursorTracker.get_for_display(global.display);
 }
 
 /**

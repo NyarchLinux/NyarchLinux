@@ -17,43 +17,43 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+// SPDX-License-Identifier: GPL-3.0-only
 'use strict';
-imports.gi.versions.GnomeDesktop = '3.0';
-const GnomeDesktop = imports.gi.GnomeDesktop;
-const Gio = imports.gi.Gio;
+import GnomeDesktop from 'gi://GnomeDesktop?version=4.0';
+import Gio from 'gi://Gio';
 
 /**
  *
  */
-function CreateThumbnail() {
-    let thumbnailFactoryNormal = GnomeDesktop.DesktopThumbnailFactory.new(GnomeDesktop.DesktopThumbnailSize.NORMAL);
-    let thumbnailFactoryLarge = GnomeDesktop.DesktopThumbnailFactory.new(GnomeDesktop.DesktopThumbnailSize.LARGE);
+export function CreateThumbnail() {
+    const thumbnailFactoryNormal = GnomeDesktop.DesktopThumbnailFactory.new(GnomeDesktop.DesktopThumbnailSize.NORMAL);
+    const thumbnailFactoryLarge = GnomeDesktop.DesktopThumbnailFactory.new(GnomeDesktop.DesktopThumbnailSize.LARGE);
 
-    let file = Gio.File.new_for_path(ARGV[0]);
-    if (!file.query_exists(null)) {
+    const file = Gio.File.new_for_path(ARGV[0]);
+    if (!file.query_exists(null))
         return 1;
-    }
 
-    let fileUri = file.get_uri();
-    let fileInfo = file.query_info('standard::content-type,time::modified', Gio.FileQueryInfoFlags.NONE, null);
-    let modifiedTime = fileInfo.get_attribute_uint64('time::modified');
+
+    const fileUri = file.get_uri();
+    const fileInfo = file.query_info('standard::content-type,time::modified', Gio.FileQueryInfoFlags.NONE, null);
+    const modifiedTime = fileInfo.get_attribute_uint64('time::modified');
 
     // check if the thumbnail has been already created in the meantime by another program
-    let thumbnailLarge = thumbnailFactoryLarge.lookup(fileUri, modifiedTime);
-    if (thumbnailLarge != null) {
+    const thumbnailLarge = thumbnailFactoryLarge.lookup(fileUri, modifiedTime);
+    if (thumbnailLarge !== null)
         return 3;
-    }
-    let thumbnailNormal = thumbnailFactoryNormal.lookup(fileUri, modifiedTime);
-    if (thumbnailNormal != null) {
+
+    const thumbnailNormal = thumbnailFactoryNormal.lookup(fileUri, modifiedTime);
+    if (thumbnailNormal !== null)
         return 3;
-    }
-    if (thumbnailFactoryNormal.has_valid_failed_thumbnail(fileUri, modifiedTime)) {
+
+    if (thumbnailFactoryNormal.has_valid_failed_thumbnail(fileUri, modifiedTime))
         return 4;
-    }
+
 
     // now, generate the file
-    let thumbnailPixbuf = thumbnailFactoryLarge.generate_thumbnail(fileUri, fileInfo.get_content_type(), null);
-    if (thumbnailPixbuf == null) {
+    const thumbnailPixbuf = thumbnailFactoryLarge.generate_thumbnail(fileUri, fileInfo.get_content_type(), null);
+    if (thumbnailPixbuf === null) {
         thumbnailFactoryLarge.create_failed_thumbnail(fileUri, modifiedTime, null);
         return 2;
     } else {

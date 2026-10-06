@@ -26,15 +26,14 @@ export class Layout extends BaseMenuLayout {
             column_spacing: 4,
             row_spacing: 4,
             ...getOrientationProp(true),
-            default_menu_width: 450,
-            icon_grid_size: Constants.GridIconSize.LARGE_RECT,
-            category_icon_size: Constants.MEDIUM_ICON_SIZE,
-            apps_icon_size: Constants.LARGE_ICON_SIZE,
-            quicklinks_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
-            buttons_icon_size: Constants.EXTRA_SMALL_ICON_SIZE,
-            pinned_apps_icon_size: Constants.MEDIUM_ICON_SIZE,
+            default_menu_width: 505,
             can_hide_search: false,
         });
+
+        this.iconSizeGrid = Constants.GridIconSizes.LARGE_RECT;
+        this.iconSizeApps = Constants.IconSizes.LARGE;
+        this.iconSizeShortcuts = Constants.IconSizes.SMALL;
+        this.iconSizeButtons = Constants.IconSizes.SMALL;
 
         this.topBox = new St.BoxLayout({
             x_expand: true,
@@ -49,7 +48,7 @@ export class Layout extends BaseMenuLayout {
             ...getOrientationProp(false),
             x_expand: true,
         });
-        this.avatarMenuIcon = new MW.AvatarMenuIcon(this, 36, true);
+        this.avatarMenuIcon = new MW.AvatarMenuIcon(this, 32, true);
         this.avatarMenuIcon.set({
             x_expand: false,
             x_align: Clutter.ActorAlign.START,
